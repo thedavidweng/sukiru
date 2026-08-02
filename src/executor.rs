@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::error::{GinoError, Result, io_error};
 use crate::git::{GitRepository, PushMode, PushStatus};
 use crate::inventory::{InventoryScanner, Workspace};
+use crate::metadata::BackupMetadata;
 use crate::planner::{ApplyPlan, FileOperation, OperationKind};
 use crate::protocol::write_atomic;
 
@@ -54,7 +55,7 @@ impl SnapshotStore {
 
     pub fn create(&self, paths: impl IntoIterator<Item = PathBuf>) -> Result<Snapshot> {
         fs::create_dir_all(&self.root).map_err(|source| io_error(&self.root, source))?;
-        let id = snapshot_id();
+        let id = snapshot_id()?;
         let snapshot_root = self.root.join(&id);
         fs::create_dir(&snapshot_root).map_err(|source| io_error(&snapshot_root, source))?;
         let payload_root = snapshot_root.join("payload");
@@ -109,7 +110,7 @@ impl SnapshotStore {
                         .map_err(|source| io_error(&entry.path, source))?;
                 }
                 SnapshotState::Directory { payload } => {
-                    copy_entry_preserving(&payload, &entry.path)?;
+                    copy_tree_preserving(&payload, &entry.path)?;
                 }
                 SnapshotState::Symlink { target } => {
                     create_symlink(&target, &entry.path)?;
@@ -121,11 +122,14 @@ impl SnapshotStore {
 
     pub fn prune_after_success(&self) -> Result<()> {
         fs::create_dir_all(&self.root).map_err(|source| io_error(&self.root, source))?;
-        let mut snapshots: Vec<PathBuf> = fs::read_dir(&self.root)
-            .map_err(|source| io_error(&self.root, source))?
-            .filter_map(|entry| entry.ok().map(|entry| entry.path()))
-            .filter(|path| path.is_dir())
-            .collect();
+        let mut snapshots = Vec::new();
+        for entry in fs::read_dir(&self.root).map_err(|source| io_error(&self.root, source))? {
+            let entry = entry.map_err(|source| io_error(&self.root, source))?;
+            let path = entry.path();
+            if path.is_dir() {
+                snapshots.push(path);
+            }
+        }
         snapshots.sort();
         let remove_count = snapshots.len().saturating_sub(self.retention);
         for path in snapshots.into_iter().take(remove_count) {
@@ -141,6 +145,7 @@ pub struct ApplyExecutor {
     git: Option<GitRepository>,
     push_mode: PushMode,
     workspaces: Vec<Workspace>,
+    backup_metadata: BackupMetadata,
 }
 
 #[derive(Clone, Debug)]
@@ -157,6 +162,7 @@ impl ApplyExecutor {
             git: None,
             push_mode: PushMode::CommitLocally,
             workspaces: Vec::new(),
+            backup_metadata: BackupMetadata::default(),
         }
     }
 
@@ -168,6 +174,11 @@ impl ApplyExecutor {
 
     pub fn with_workspaces(mut self, workspaces: Vec<Workspace>) -> Self {
         self.workspaces = workspaces;
+        self
+    }
+
+    pub fn with_backup_metadata(mut self, metadata: BackupMetadata) -> Self {
+        self.backup_metadata = metadata;
         self
     }
 
@@ -195,10 +206,12 @@ impl ApplyExecutor {
                 .scan(plan.inventory_generation.saturating_add(1))
             {
                 Ok(inventory) => inventory,
-                Err(error) => return self.rollback_git_and_files(&snapshot, repository, error),
+                Err(error) => return self.rollback_after_failure(&snapshot, error),
             };
-            if let Err(error) = repository.materialize_inventory(&post_inventory) {
-                return self.rollback_git_and_files(&snapshot, repository, error);
+            if let Err(error) = repository
+                .materialize_inventory_with_metadata(&post_inventory, &self.backup_metadata)
+            {
+                return self.rollback_after_failure(&snapshot, error);
             }
             match repository.commit(
                 &format!("Apply {} changes", plan.operation_count()),
@@ -235,7 +248,7 @@ impl ApplyExecutor {
         error: GinoError,
     ) -> Result<ApplyResult> {
         let rollback = self.snapshots.restore(snapshot);
-        let git_cleanup = repository.discard_uncommitted();
+        let git_cleanup = repository.discard_materialized_changes();
         match (rollback, git_cleanup) {
             (Ok(()), Ok(())) => Err(error),
             (Err(rollback), Ok(())) => Err(GinoError::InvalidPlan(format!(
@@ -254,12 +267,14 @@ impl ApplyExecutor {
     }
 }
 
-fn snapshot_id() -> String {
+fn snapshot_id() -> Result<String> {
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|duration| duration.as_nanos())
-        .unwrap_or_default();
-    format!("snapshot-{nanos}")
+        .map_err(|source| GinoError::Clock {
+            cause: source.to_string(),
+        })?;
+    Ok(format!("snapshot-{nanos}"))
 }
 
 fn snapshot_paths(plan: &ApplyPlan) -> Vec<PathBuf> {
@@ -291,7 +306,7 @@ fn execute_operation(operation: &FileOperation) -> Result<()> {
     match &operation.kind {
         OperationKind::CopyTree { overwrite } => {
             ensure_source(operation)?;
-            if operation.destination.exists() && !*overwrite {
+            if path_present(&operation.destination) && !*overwrite {
                 return operation_error(operation, "Destination collision".to_owned());
             }
             copy_tree_dereferenced(source, &operation.destination, *overwrite)
@@ -299,7 +314,7 @@ fn execute_operation(operation: &FileOperation) -> Result<()> {
         }
         OperationKind::LinkTree { overwrite } => {
             ensure_source(operation)?;
-            if operation.destination.exists() && !*overwrite {
+            if path_present(&operation.destination) && !*overwrite {
                 return operation_error(operation, "Destination collision".to_owned());
             }
             if *overwrite {
@@ -315,7 +330,7 @@ fn execute_operation(operation: &FileOperation) -> Result<()> {
         }
         OperationKind::MoveTree { overwrite } => {
             ensure_source(operation)?;
-            if operation.destination.exists() && !*overwrite {
+            if path_present(&operation.destination) && !*overwrite {
                 return operation_error(operation, "Destination collision".to_owned());
             }
             if *overwrite {
@@ -341,8 +356,8 @@ fn ensure_source(operation: &FileOperation) -> Result<()> {
         .source
         .as_deref()
         .unwrap_or(&operation.destination);
-    if !source.exists() && fs::symlink_metadata(source).is_err() {
-        return operation_error(operation, "Source skill is missing".to_owned());
+    if let Err(error) = fs::metadata(source) {
+        return operation_error(operation, format!("Source skill is missing: {error}"));
     }
     Ok(())
 }
@@ -366,7 +381,7 @@ fn verify_operation(operation: &FileOperation) -> Result<()> {
         OperationKind::CopyTree { .. }
         | OperationKind::LinkTree { .. }
         | OperationKind::MoveTree { .. } => {
-            if !operation.destination.exists() {
+            if !path_present(&operation.destination) {
                 return operation_error(operation, "expected destination is missing".to_owned());
             }
         }
@@ -420,7 +435,7 @@ fn capture_state(path: &Path, payload: &Path) -> Result<SnapshotState> {
 }
 
 fn copy_tree_dereferenced(source: &Path, destination: &Path, overwrite: bool) -> Result<()> {
-    if destination.exists() && !overwrite {
+    if path_present(destination) && !overwrite {
         return Err(GinoError::Apply {
             skill: source.display().to_string(),
             action: "Copy".to_owned(),
@@ -429,7 +444,7 @@ fn copy_tree_dereferenced(source: &Path, destination: &Path, overwrite: bool) ->
             cause: "Destination collision".to_owned(),
         });
     }
-    if destination.exists() {
+    if path_present(destination) {
         remove_path(destination)?;
     }
     let metadata = fs::metadata(source).map_err(|source_error| io_error(source, source_error))?;
@@ -476,10 +491,6 @@ fn copy_tree_preserving(source: &Path, destination: &Path) -> Result<()> {
     Ok(())
 }
 
-fn copy_entry_preserving(source: &Path, destination: &Path) -> Result<()> {
-    copy_tree_preserving(source, destination)
-}
-
 fn remove_path(path: &Path) -> Result<()> {
     let metadata = match fs::symlink_metadata(path) {
         Ok(metadata) => metadata,
@@ -491,6 +502,10 @@ fn remove_path(path: &Path) -> Result<()> {
     } else {
         fs::remove_dir_all(path).map_err(|source| io_error(path, source))
     }
+}
+
+fn path_present(path: &Path) -> bool {
+    fs::symlink_metadata(path).is_ok()
 }
 
 fn create_symlink(target: &Path, link: &Path) -> Result<()> {
@@ -625,6 +640,8 @@ mod tests {
         let plan = planner.remove(&[&inventory.placements[0]]).expect("plan");
         let snapshot_root = tempdir().expect("snapshots");
         let backup_root = tempdir().expect("backup");
+        let unrelated = backup_root.path().join("user-notes.txt");
+        fs::write(&unrelated, "keep me").expect("unrelated backup file");
         let repository = GitRepository::open_or_init(backup_root.path()).expect("git init");
         let executor = ApplyExecutor::new(snapshot_root.path(), 10)
             .with_git(repository, PushMode::CommitAndPush)
@@ -634,5 +651,9 @@ mod tests {
         assert!(!skill.exists());
         assert!(result.commit_id.is_some());
         assert!(matches!(result.push_status, PushStatus::NotPushed(_)));
+        assert_eq!(
+            fs::read_to_string(unrelated).expect("unrelated file"),
+            "keep me"
+        );
     }
 }

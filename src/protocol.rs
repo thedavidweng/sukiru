@@ -130,7 +130,10 @@ fn collect_skill_files_inner(
         let name = name.to_string_lossy();
         let metadata = fs::symlink_metadata(&path).map_err(|source| io_error(&path, source))?;
         if metadata.file_type().is_symlink() {
-            let relative = path.strip_prefix(base).unwrap_or(path.as_path());
+            let relative = path.strip_prefix(base).map_err(|_| GinoError::UnsafePath {
+                path: path.clone(),
+                reason: "Skill link escaped its root".to_owned(),
+            })?;
             let relative_path = normalize_relative_path(Path::new(""), relative);
             let target = fs::read_link(&path).map_err(|source| io_error(&path, source))?;
             files.push(SkillFile {
@@ -255,6 +258,29 @@ impl SkillLockEntry {
             self.ref_name.as_deref().unwrap_or_default()
         )
     }
+
+    pub fn has_explicit_placement(&self) -> bool {
+        self.extra
+            .get("ginoPlacement")
+            .and_then(Value::as_str)
+            .is_some()
+    }
+
+    pub fn applies_to_placement(
+        &self,
+        workspace_id: &str,
+        workspace_root: &Path,
+        placement: &Path,
+    ) -> bool {
+        let Some(expected) = self.extra.get("ginoPlacement").and_then(Value::as_str) else {
+            return true;
+        };
+        let Ok(relative) = placement.strip_prefix(workspace_root) else {
+            return false;
+        };
+        let relative = normalize_relative_path(Path::new(""), relative);
+        expected == format!("{workspace_id}:{relative}")
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -306,8 +332,12 @@ impl LockFile {
 }
 
 pub fn read_lock_file(path: &Path, scope: LockScope) -> Result<LockFile> {
-    if !path.exists() {
-        return Ok(LockFile::empty(scope));
+    match fs::symlink_metadata(path) {
+        Ok(_) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return Ok(LockFile::empty(scope));
+        }
+        Err(error) => return Err(io_error(path, error)),
     }
     let bytes = fs::read(path).map_err(|source| io_error(path, source))?;
     let lock: LockFile =
@@ -339,12 +369,14 @@ pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|duration| duration.as_nanos())
-        .unwrap_or_default();
-    let temporary = parent.join(format!(
-        ".{}.{}.tmp",
-        path.file_name().unwrap_or_default().to_string_lossy(),
-        nonce
-    ));
+        .map_err(|source| GinoError::Clock {
+            cause: source.to_string(),
+        })?;
+    let file_name = path.file_name().ok_or_else(|| GinoError::UnsafePath {
+        path: path.to_path_buf(),
+        reason: "atomic replacement requires a file name".to_owned(),
+    })?;
+    let temporary = parent.join(format!(".{}.{}.tmp", file_name.to_string_lossy(), nonce));
     let mut file = OpenOptions::new()
         .write(true)
         .create_new(true)

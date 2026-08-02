@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -27,6 +27,20 @@ pub struct ActivityRecord {
     pub commit_id: Option<String>,
     pub details: String,
     pub created_at: String,
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+pub struct BackupMetadata {
+    pub tags: BTreeMap<String, BTreeSet<String>>,
+    pub presets: Vec<Preset>,
+    pub targets: Vec<LogicalTarget>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct LogicalTarget {
+    pub id: String,
+    pub kind: String,
+    pub preferred_mode: String,
 }
 
 pub struct MetadataStore {
@@ -296,6 +310,37 @@ impl MetadataStore {
         rows.map(|row| row.map_err(|error| database_error(&self.path, error)))
             .collect()
     }
+
+    pub fn backup_metadata(&self) -> Result<BackupMetadata> {
+        let mut tags = BTreeMap::<String, BTreeSet<String>>::new();
+        let mut statement = self
+            .connection
+            .prepare("SELECT skill_name, tag FROM skill_tags ORDER BY skill_name, tag")
+            .map_err(|error| database_error(&self.path, error))?;
+        let rows = statement
+            .query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            })
+            .map_err(|error| database_error(&self.path, error))?;
+        for row in rows {
+            let (skill_name, tag) = row.map_err(|error| database_error(&self.path, error))?;
+            tags.entry(skill_name).or_default().insert(tag);
+        }
+        let targets = self
+            .workspaces()?
+            .into_iter()
+            .map(|workspace| LogicalTarget {
+                id: workspace.id,
+                kind: workspace_kind_name(&workspace.kind).to_owned(),
+                preferred_mode: install_mode_name(workspace.preferred_mode).to_owned(),
+            })
+            .collect();
+        Ok(BackupMetadata {
+            tags,
+            presets: self.presets()?,
+            targets,
+        })
+    }
 }
 
 fn workspace_kind_name(kind: &WorkspaceKind) -> &'static str {
@@ -395,8 +440,15 @@ mod tests {
             .expect("workspace");
 
         assert_eq!(store.tags_for("demo").expect("tags"), tags);
-        assert_eq!(store.presets().expect("presets"), vec![preset]);
+        assert_eq!(store.presets().expect("presets"), vec![preset.clone()]);
         assert_eq!(store.workspaces().expect("workspaces").len(), 1);
+
+        let backup = store.backup_metadata().expect("backup metadata");
+        assert_eq!(backup.tags.get("demo"), Some(&tags));
+        assert_eq!(backup.presets, vec![preset]);
+        assert_eq!(backup.targets[0].id, "project-1");
+        assert_eq!(backup.targets[0].preferred_mode, "link");
+
         assert!(
             store
                 .remove_workspace("project-1")

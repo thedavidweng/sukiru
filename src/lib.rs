@@ -14,5 +14,6 @@ pub mod inventory;
 pub mod metadata;
 pub mod planner;
 pub mod protocol;
+pub mod source;
 
 pub use error::{GinoError, Result};

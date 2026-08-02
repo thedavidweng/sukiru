@@ -1,6 +1,8 @@
 use std::collections::BTreeSet;
 
+use gino_core::executor::ApplyExecutor;
 use gino_core::inventory::{Inventory, InventoryScanner, SkillState, Workspace};
+use gino_core::planner::{PendingChanges, Planner};
 use gpui::{
     Context, Entity, InteractiveElement, IntoElement, ParentElement, Render, SharedString,
     StatefulInteractiveElement, Styled, Window, div, prelude::FluentBuilder, px, rgb,
@@ -30,7 +32,9 @@ pub struct GinoWindow {
     inventory: Inventory,
     active_section: String,
     selected_names: BTreeSet<String>,
-    pending_count: usize,
+    pending: PendingChanges,
+    refresh_error: Option<String>,
+    action_error: Option<String>,
 }
 
 impl GinoWindow {
@@ -40,21 +44,28 @@ impl GinoWindow {
             inventory,
             active_section: "Library".to_owned(),
             selected_names: BTreeSet::new(),
-            pending_count: 0,
+            pending: PendingChanges::default(),
+            refresh_error: None,
+            action_error: None,
         }
     }
 
     fn refresh(&mut self) {
-        if let Ok(inventory) = InventoryScanner::new(&self.workspaces)
+        match InventoryScanner::new(&self.workspaces)
             .scan(self.inventory.generation.saturating_add(1))
         {
-            self.inventory = inventory;
-            self.selected_names.retain(|name| {
-                self.inventory
-                    .placements
-                    .iter()
-                    .any(|placement| &placement.name == name)
-            });
+            Ok(inventory) => {
+                self.inventory = inventory;
+                self.refresh_error = None;
+                self.selected_names.retain(|name| {
+                    self.inventory
+                        .placements
+                        .iter()
+                        .any(|placement| &placement.name == name)
+                });
+                self.pending.mark_unavailable();
+            }
+            Err(error) => self.refresh_error = Some(error.to_string()),
         }
     }
 
@@ -62,6 +73,88 @@ impl GinoWindow {
         if !self.selected_names.insert(name.to_owned()) {
             self.selected_names.remove(name);
         }
+    }
+
+    fn queue_remove_selected(&mut self) {
+        let placements = self
+            .inventory
+            .placements
+            .iter()
+            .filter(|placement| self.selected_names.contains(&placement.name))
+            .collect::<Vec<_>>();
+        if placements.is_empty() {
+            return;
+        }
+        let planner = Planner::new(&self.inventory, self.declared_roots());
+        match planner.remove(&placements) {
+            Ok(plan) => {
+                self.pending.add_plan(&plan);
+                self.selected_names.clear();
+                self.action_error = None;
+            }
+            Err(error) => self.action_error = Some(error.to_string()),
+        }
+    }
+
+    fn apply_pending(&mut self) {
+        if self.pending.items().is_empty() {
+            return;
+        }
+        let plan = self
+            .pending
+            .plan(self.inventory.generation, self.declared_roots());
+        let snapshot_root = std::env::temp_dir().join("gino-snapshots");
+        let executor =
+            ApplyExecutor::new(snapshot_root, 10).with_workspaces(self.workspaces.clone());
+        match executor.apply(&plan) {
+            Ok(_) => {
+                self.pending.clear();
+                self.action_error = None;
+                self.refresh();
+            }
+            Err(error) => self.action_error = Some(error.to_string()),
+        }
+    }
+
+    fn declared_roots(&self) -> Vec<std::path::PathBuf> {
+        self.workspaces
+            .iter()
+            .flat_map(|workspace| {
+                let lock_root = workspace
+                    .lock
+                    .as_ref()
+                    .and_then(|lock| lock.path.parent())
+                    .map(std::path::Path::to_path_buf);
+                std::iter::once(workspace.root.clone()).chain(lock_root)
+            })
+            .collect()
+    }
+
+    fn visible_placements(&self) -> Vec<&gino_core::inventory::SkillPlacement> {
+        let duplicate_indexes = self
+            .inventory
+            .duplicate_groups
+            .iter()
+            .flat_map(|group| group.placement_indexes.iter().copied())
+            .collect::<BTreeSet<_>>();
+        self.inventory
+            .placements
+            .iter()
+            .enumerate()
+            .filter(|(index, placement)| match self.active_section.as_str() {
+                "Global" => placement.workspace_kind == gino_core::inventory::WorkspaceKind::Global,
+                "Projects" => {
+                    placement.workspace_kind == gino_core::inventory::WorkspaceKind::Project
+                }
+                "Agents" => placement.workspace_kind == gino_core::inventory::WorkspaceKind::Agent,
+                "Custom Workspaces" => {
+                    placement.workspace_kind == gino_core::inventory::WorkspaceKind::Custom
+                }
+                "Duplicates" => duplicate_indexes.contains(index),
+                _ => true,
+            })
+            .map(|(_, placement)| placement)
+            .collect()
     }
 }
 
@@ -94,7 +187,35 @@ impl Render for GinoWindow {
             .text_color(rgb(0x475569))
             .hover(|this| this.bg(rgb(0xe2e8f0)))
             .child("Refresh");
-        let content = self.render_content(entity.clone(), refresh);
+        let remove_entity = entity.clone();
+        let remove_selected = div()
+            .id("remove-selected")
+            .cursor_pointer()
+            .on_click(move |_, _, cx| {
+                remove_entity.update(cx, |window, _| window.queue_remove_selected());
+            })
+            .px_3()
+            .py_1()
+            .rounded_md()
+            .text_sm()
+            .text_color(rgb(0x475569))
+            .hover(|this| this.bg(rgb(0xe2e8f0)))
+            .child("Queue Remove");
+        let apply_entity = entity.clone();
+        let apply_pending = div()
+            .id("apply-pending")
+            .cursor_pointer()
+            .on_click(move |_, _, cx| {
+                apply_entity.update(cx, |window, _| window.apply_pending());
+            })
+            .px_3()
+            .py_1()
+            .rounded_md()
+            .text_sm()
+            .text_color(rgb(0x1d4ed8))
+            .hover(|this| this.bg(rgb(0xdbeafe)))
+            .child(format!("Apply {}", self.pending.items().len()));
+        let content = self.render_content(entity.clone(), refresh, remove_selected, apply_pending);
         div()
             .size_full()
             .bg(rgb(0xf8fafc))
@@ -124,10 +245,11 @@ impl GinoWindow {
         &self,
         entity: Entity<GinoWindow>,
         refresh: impl IntoElement,
+        remove_selected: impl IntoElement,
+        apply_pending: impl IntoElement,
     ) -> impl IntoElement {
-        let rows = self
-            .inventory
-            .placements
+        let visible_placements = self.visible_placements();
+        let rows = visible_placements
             .iter()
             .enumerate()
             .map(|(index, placement)| {
@@ -166,7 +288,7 @@ impl GinoWindow {
                             .child(format!("{:?}", placement.workspace_kind)),
                     )
             });
-        let empty = self.inventory.placements.is_empty();
+        let empty = visible_placements.is_empty();
         let body = if empty {
             div()
                 .flex_1()
@@ -189,6 +311,13 @@ impl GinoWindow {
                 .children(rows)
                 .overflow_y_scrollbar()
                 .into_any_element()
+        };
+        let refresh_error = self.refresh_error.clone().unwrap_or_default();
+        let action_error = self.action_error.clone().unwrap_or_default();
+        let issue_summary = if self.inventory.issues.is_empty() {
+            String::new()
+        } else {
+            format!("{} scan issues", self.inventory.issues.len())
         };
         div()
             .flex_1()
@@ -218,12 +347,27 @@ impl GinoWindow {
                             .text_color(rgb(0x64748b))
                             .child(format!("{} placements", self.inventory.placements.len())),
                     )
+                    .child(
+                        div()
+                            .text_xs()
+                            .text_color(rgb(0xb45309))
+                            .child(issue_summary),
+                    )
+                    .child(
+                        div()
+                            .flex_1()
+                            .text_xs()
+                            .text_color(rgb(0xb91c1c))
+                            .child(format!("{refresh_error} {action_error}")),
+                    )
+                    .child(remove_selected)
                     .child(refresh)
+                    .child(apply_pending)
                     .child(
                         div()
                             .text_sm()
                             .text_color(rgb(0x2563eb))
-                            .child(format!("{} pending", self.pending_count)),
+                            .child(format!("{} pending", self.pending.items().len())),
                     ),
             )
             .child(

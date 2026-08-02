@@ -57,6 +57,9 @@ pub enum GinoError {
 
     #[error("metadata database at {path}: {cause}")]
     Database { path: PathBuf, cause: String },
+
+    #[error("system clock error: {cause}")]
+    Clock { cause: String },
 }
 
 pub fn io_error(path: impl Into<PathBuf>, source: io::Error) -> GinoError {
