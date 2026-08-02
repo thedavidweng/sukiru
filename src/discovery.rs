@@ -75,6 +75,20 @@ pub fn discover_skills(base: impl AsRef<Path>, full_depth: bool) -> Result<Disco
     Ok(result)
 }
 
+pub fn discover_source_root(base: impl AsRef<Path>, full_depth: bool) -> Result<DiscoveryResult> {
+    let base = base.as_ref();
+    let mut result = DiscoveryResult {
+        skills: Vec::new(),
+        issues: Vec::new(),
+    };
+    let mut names = BTreeSet::new();
+    discover_container(base, full_depth, &mut names, &mut result)?;
+    result
+        .skills
+        .sort_by(|left, right| left.metadata.name.cmp(&right.metadata.name));
+    Ok(result)
+}
+
 fn discover_container(
     container: &Path,
     full_depth: bool,

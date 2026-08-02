@@ -81,10 +81,6 @@ pub struct FileOperation {
 }
 
 impl FileOperation {
-    pub fn is_write(&self) -> bool {
-        true
-    }
-
     pub fn paths(&self) -> impl Iterator<Item = &Path> {
         self.source
             .iter()
@@ -153,18 +149,7 @@ impl ApplyPlan {
                     .unwrap_or_else(|| "plan contains unavailable changes".to_owned()),
             ));
         }
-        for operation in &self.operations {
-            for path in operation.paths() {
-                if !path_allowed(path, &self.declared_roots) {
-                    return Err(GinoError::UnsafePath {
-                        path: path.to_path_buf(),
-                        reason:
-                            "operation is outside the explicitly declared workspace/source roots"
-                                .to_owned(),
-                    });
-                }
-            }
-        }
+        validate_paths(self)?;
         Ok(())
     }
 
@@ -173,12 +158,12 @@ impl ApplyPlan {
             let missing = change
                 .source
                 .as_ref()
-                .filter(|source| !source.exists())
+                .filter(|source| !path_present(source))
                 .cloned()
                 .or_else(|| {
                     (change.source.is_none()
                         && matches!(change.action, PlanAction::Remove)
-                        && !change.destination.exists())
+                        && !path_present(&change.destination))
                     .then(|| change.destination.clone())
                 });
             change.unavailable_reason = missing.map(|path| {
@@ -211,6 +196,10 @@ impl<'a> Planner<'a> {
     pub fn remove(&self, placements: &[&SkillPlacement]) -> Result<ApplyPlan> {
         let mut plan = ApplyPlan::new(self.inventory.generation, self.declared_roots.clone());
         let mut lock_edits = Vec::new();
+        let selected_paths = placements
+            .iter()
+            .map(|placement| placement.path.clone())
+            .collect::<BTreeSet<_>>();
         for placement in placements {
             let id = plan.changes.len() as u64 + 1;
             let change = PendingChange {
@@ -236,12 +225,21 @@ impl<'a> Planner<'a> {
                 destination: placement.path.clone(),
                 kind: OperationKind::RemovePath,
             });
-            if let (Some(lock_path), Some(scope)) = (&placement.lock_file, placement.lock_scope) {
-                lock_edits.push(LockEdit::Remove {
-                    path: lock_path.clone(),
-                    scope,
-                    skill_name: placement.name.clone(),
-                });
+            let lock_still_referenced = self.inventory.placements.iter().any(|other| {
+                other.name == placement.name
+                    && other.lock_file == placement.lock_file
+                    && other.lock_scope == placement.lock_scope
+                    && !selected_paths.contains(&other.path)
+            });
+            if !lock_still_referenced {
+                if let (Some(lock_path), Some(scope)) = (&placement.lock_file, placement.lock_scope)
+                {
+                    lock_edits.push(LockEdit::Remove {
+                        path: lock_path.clone(),
+                        scope,
+                        skill_name: placement.name.clone(),
+                    });
+                }
             }
         }
         self.finish_lock_edits(&mut plan, lock_edits)?;
@@ -256,10 +254,31 @@ impl<'a> Planner<'a> {
         lock: Option<(&Path, LockScope)>,
     ) -> Result<ApplyPlan> {
         let source_dir = source_dir.into();
-        let destination = destination.into();
+        let source = SkillSource::parse(&source_dir.to_string_lossy())?;
+        self.install_with_source(&source, source_dir, destination.into(), mode, lock)
+    }
+
+    pub fn install_source(
+        &self,
+        source: &SkillSource,
+        source_dir: impl Into<PathBuf>,
+        destination: impl Into<PathBuf>,
+        mode: InstallMode,
+        lock: Option<(&Path, LockScope)>,
+    ) -> Result<ApplyPlan> {
+        self.install_with_source(source, source_dir.into(), destination.into(), mode, lock)
+    }
+
+    fn install_with_source(
+        &self,
+        source: &SkillSource,
+        source_dir: PathBuf,
+        destination: PathBuf,
+        mode: InstallMode,
+        lock: Option<(&Path, LockScope)>,
+    ) -> Result<ApplyPlan> {
         let metadata = parse_skill_metadata(&source_dir)?;
         let source_hash = skill_folder_hash(&source_dir)?;
-        let source = SkillSource::parse(&source_dir.to_string_lossy())?;
         let mut declared_roots = self.declared_roots.clone();
         declared_roots.push(source_dir.clone());
         let mut plan = ApplyPlan::new(self.inventory.generation, declared_roots);
@@ -392,6 +411,11 @@ impl<'a> Planner<'a> {
                 }
             }
         }
+        if let Some(lock) = &target.lock {
+            if let Some(parent) = lock.path.parent() {
+                plan.declared_roots.push(parent.to_path_buf());
+            }
+        }
         append_lock_edits(&mut plan, lock_edits)?;
         self.validate_plan(&plan)
     }
@@ -430,6 +454,54 @@ impl<'a> Planner<'a> {
                 }
             }
         }
+        self.validate_plan(&plan)
+    }
+
+    pub fn attach_source(
+        &self,
+        placement: &SkillPlacement,
+        source: &SkillSource,
+        source_dir: impl Into<PathBuf>,
+        lock: (&Path, LockScope),
+    ) -> Result<ApplyPlan> {
+        let source_dir = source_dir.into();
+        let source_metadata = parse_skill_metadata(&source_dir)?;
+        if source_metadata.name != placement.name {
+            return Err(GinoError::InvalidPlan(format!(
+                "source Skill `{}` does not match placement `{}`",
+                source_metadata.name, placement.name
+            )));
+        }
+        let source_hash = skill_folder_hash(&source_dir)?;
+        let mut plan = ApplyPlan::new(self.inventory.generation, self.declared_roots.clone());
+        plan.declared_roots.push(source_dir.clone());
+        if placement.content_hash.as_deref() != Some(source_hash.as_str()) {
+            plan.blockers.push(format!(
+                "Local content for `{}` differs from the selected source; choose Keep Local or Use Upstream",
+                placement.name
+            ));
+        }
+        let entry = source.lock_entry(source_hash);
+        plan = self.with_lock_edit(
+            plan,
+            LockEdit::Upsert {
+                path: lock.0.to_path_buf(),
+                scope: lock.1,
+                skill_name: placement.name.clone(),
+                entry,
+            },
+        )?;
+        let id = plan.changes.len() as u64 + 1;
+        plan.changes.push(PendingChange {
+            id,
+            action: PlanAction::AttachSource,
+            skill_name: placement.name.clone(),
+            source: Some(source_dir),
+            destination: placement.path.clone(),
+            mode: None,
+            summary: format!("Attach source to {}", placement.name),
+            unavailable_reason: None,
+        });
         self.validate_plan(&plan)
     }
 
@@ -518,7 +590,7 @@ impl<'a> Planner<'a> {
                 OperationKind::CopyTree { overwrite: false }
                     | OperationKind::LinkTree { overwrite: false }
                     | OperationKind::MoveTree { overwrite: false }
-            ) && operation.destination.exists()
+            ) && path_present(&operation.destination)
             {
                 plan.blockers.push(format!(
                     "Destination already exists for Skill `{}`: {}",
@@ -665,7 +737,7 @@ fn merge_plans(destination: &mut ApplyPlan, source: ApplyPlan) {
 fn validate_paths(plan: &ApplyPlan) -> Result<()> {
     for operation in &plan.operations {
         for path in operation.paths() {
-            if !path_allowed(path, &plan.declared_roots) {
+            if !path_allowed(path, &plan.declared_roots)? {
                 return Err(GinoError::UnsafePath {
                     path: path.to_path_buf(),
                     reason: "operation is outside the explicitly declared workspace/source roots"
@@ -677,34 +749,51 @@ fn validate_paths(plan: &ApplyPlan) -> Result<()> {
     Ok(())
 }
 
-fn path_allowed(path: &Path, roots: &[PathBuf]) -> bool {
-    roots.iter().any(|root| {
-        let root = security_path(root);
-        let candidate = security_path(path);
-        candidate.starts_with(root)
-    })
+fn path_allowed(path: &Path, roots: &[PathBuf]) -> Result<bool> {
+    let candidate = security_path(path)?;
+    roots
+        .iter()
+        .map(|root| security_path(root).map(|root| candidate.starts_with(root)))
+        .collect::<Result<Vec<_>>>()
+        .map(|allowed| allowed.into_iter().any(|allowed| allowed))
 }
 
-fn security_path(path: &Path) -> PathBuf {
-    if path.exists() {
-        return fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+fn path_present(path: &Path) -> bool {
+    fs::symlink_metadata(path).is_ok()
+}
+
+fn security_path(path: &Path) -> Result<PathBuf> {
+    if fs::symlink_metadata(path).is_ok() {
+        return fs::canonicalize(path).map_err(|source| io_error(path, source));
     }
+
+    // A destination may not exist yet. Resolve its nearest existing ancestor
+    // before appending the missing suffix so `..` and symlinked parents cannot
+    // escape the declared root during the containment check.
     let mut missing = Vec::new();
     let mut existing = path;
-    while !existing.exists() {
+    loop {
+        match fs::symlink_metadata(existing) {
+            Ok(_) => break,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(io_error(existing, error)),
+        }
         if let Some(name) = existing.file_name() {
             missing.push(name.to_owned());
         }
         let Some(parent) = existing.parent() else {
-            return path.to_path_buf();
+            return Err(GinoError::UnsafePath {
+                path: path.to_path_buf(),
+                reason: "path has no existing ancestor".to_owned(),
+            });
         };
         existing = parent;
     }
-    let mut resolved = fs::canonicalize(existing).unwrap_or_else(|_| existing.to_path_buf());
+    let mut resolved = fs::canonicalize(existing).map_err(|source| io_error(existing, source))?;
     for component in missing.iter().rev() {
         resolved.push(component);
     }
-    resolved
+    Ok(resolved)
 }
 
 /// Session-only plan collection. The collection intentionally stores plans,
@@ -777,12 +866,12 @@ impl PendingChanges {
             let missing = item
                 .source
                 .as_ref()
-                .filter(|source| !source.exists())
+                .filter(|source| !path_present(source))
                 .cloned()
                 .or_else(|| {
                     (item.source.is_none()
                         && matches!(item.action, PlanAction::Remove)
-                        && !item.destination.exists())
+                        && !path_present(&item.destination))
                     .then(|| item.destination.clone())
                 });
             item.unavailable_reason = missing.map(|path| {
@@ -951,5 +1040,43 @@ mod tests {
         assert!(skill.exists());
         pending.remove(ids[0]);
         assert!(pending.operations().is_empty());
+    }
+
+    #[test]
+    fn attach_source_only_writes_compatible_metadata() {
+        let root = tempdir().expect("root");
+        let source_root = tempdir().expect("source");
+        let skill = write_skill(root.path(), "demo");
+        let source = write_skill(source_root.path(), "demo");
+        let workspace = Workspace::new("custom", "Custom", WorkspaceKind::Custom, root.path());
+        let lock_path = root.path().join(".skill-lock.json");
+        let inventory = InventoryScanner::new(&[workspace]).scan(1).expect("scan");
+        let planner = Planner::new(
+            &inventory,
+            vec![root.path().to_path_buf(), source_root.path().to_path_buf()],
+        );
+        let source_identity = SkillSource::parse(&source.to_string_lossy()).expect("source");
+
+        let plan = planner
+            .attach_source(
+                &inventory.placements[0],
+                &source_identity,
+                source,
+                (&lock_path, LockScope::Global),
+            )
+            .expect("attach plan");
+
+        assert!(skill.exists());
+        assert!(plan.can_apply());
+        assert!(
+            plan.changes
+                .iter()
+                .any(|change| change.action == PlanAction::AttachSource)
+        );
+        assert!(
+            plan.operations
+                .iter()
+                .all(|operation| matches!(operation.kind, OperationKind::WriteFile { .. }))
+        );
     }
 }

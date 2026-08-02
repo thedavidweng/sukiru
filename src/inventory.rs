@@ -107,7 +107,7 @@ impl SkillPlacement {
     pub fn source_identity(&self) -> Option<String> {
         self.lock_entry
             .as_ref()
-            .filter(|entry| entry.managed())
+            .filter(|entry| entry.managed() && self.state == SkillState::Managed)
             .map(SkillLockEntry::source_identity)
     }
 }
@@ -180,6 +180,7 @@ impl<'a> InventoryScanner<'a> {
             };
             self.scan_workspace(workspace, lock.as_ref(), &mut inventory)?;
         }
+        resolve_ambiguous_lock_entries(&mut inventory.placements);
         inventory.duplicate_groups = duplicate_groups(&inventory.placements);
         Ok(inventory)
     }
@@ -190,29 +191,55 @@ impl<'a> InventoryScanner<'a> {
         lock: Option<&LockFile>,
         inventory: &mut Inventory,
     ) -> Result<()> {
-        if !workspace.root.exists() {
-            return Ok(());
-        }
-        let root_metadata = fs::symlink_metadata(&workspace.root)
-            .map_err(|source| io_error(&workspace.root, source))?;
+        let root_metadata = match fs::symlink_metadata(&workspace.root) {
+            Ok(metadata) => metadata,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+            Err(error) => return Err(io_error(&workspace.root, error)),
+        };
         if root_metadata.file_type().is_symlink() {
-            if fs::metadata(&workspace.root).is_err() {
-                inventory.issues.push(InventoryIssue {
-                    path: workspace.root.clone(),
-                    reason: "broken workspace symlink".to_owned(),
-                });
-                return Ok(());
+            match fs::metadata(&workspace.root) {
+                Ok(target) if target.is_dir() => {}
+                Ok(_) => {
+                    inventory.issues.push(InventoryIssue {
+                        path: workspace.root.clone(),
+                        reason: "workspace link does not target a directory".to_owned(),
+                    });
+                    return Ok(());
+                }
+                Err(error) => {
+                    inventory.issues.push(InventoryIssue {
+                        path: workspace.root.clone(),
+                        reason: error.to_string(),
+                    });
+                    return Ok(());
+                }
             }
-        }
-        if workspace.root.join("SKILL.md").exists() {
-            self.inspect_placement(workspace, &workspace.root, lock, inventory);
+        } else if !root_metadata.is_dir() {
+            inventory.issues.push(InventoryIssue {
+                path: workspace.root.clone(),
+                reason: "workspace root is not a directory".to_owned(),
+            });
             return Ok(());
         }
-        let entries =
-            fs::read_dir(&workspace.root).map_err(|source| io_error(&workspace.root, source))?;
-        let mut children: Vec<PathBuf> = entries
-            .filter_map(|entry| entry.ok().map(|entry| entry.path()))
-            .collect();
+        self.scan_container(&workspace.root, workspace, lock, inventory)
+    }
+
+    fn scan_container(
+        &self,
+        container: &Path,
+        workspace: &Workspace,
+        lock: Option<&LockFile>,
+        inventory: &mut Inventory,
+    ) -> Result<()> {
+        if container.join("SKILL.md").is_file() {
+            self.inspect_placement(workspace, container, lock, inventory);
+            return Ok(());
+        }
+        let mut children = Vec::new();
+        for entry in fs::read_dir(container).map_err(|source| io_error(container, source))? {
+            let entry = entry.map_err(|source| io_error(container, source))?;
+            children.push(entry.path());
+        }
         children.sort();
         for child in children {
             let metadata = match fs::symlink_metadata(&child) {
@@ -226,22 +253,22 @@ impl<'a> InventoryScanner<'a> {
                 }
             };
             if metadata.file_type().is_symlink() {
-                if fs::metadata(&child)
-                    .map(|target| target.is_dir())
-                    .unwrap_or(false)
-                {
-                    self.inspect_placement(workspace, &child, lock, inventory);
-                } else {
-                    inventory.issues.push(InventoryIssue {
+                match fs::metadata(&child) {
+                    Ok(target) if target.is_dir() && child.join("SKILL.md").is_file() => {
+                        self.inspect_placement(workspace, &child, lock, inventory);
+                    }
+                    Ok(_) => {}
+                    Err(error) => inventory.issues.push(InventoryIssue {
                         path: child.clone(),
-                        reason: "broken or non-directory Skill link".to_owned(),
-                    });
+                        reason: error.to_string(),
+                    }),
                 }
                 continue;
             }
-            if metadata.is_dir() && child.join("SKILL.md").exists() {
-                self.inspect_placement(workspace, &child, lock, inventory);
+            if !metadata.is_dir() || is_ignored_container(&child) {
+                continue;
             }
+            self.scan_container(&child, workspace, lock, inventory)?;
         }
         Ok(())
     }
@@ -263,18 +290,62 @@ impl<'a> InventoryScanner<'a> {
                 return;
             }
         };
-        let link_target = fs::symlink_metadata(path)
-            .ok()
-            .filter(|metadata| metadata.file_type().is_symlink())
-            .and_then(|_| fs::read_link(path).ok());
+        let link_metadata = match fs::symlink_metadata(path) {
+            Ok(metadata) => metadata,
+            Err(error) => {
+                inventory.issues.push(InventoryIssue {
+                    path: path.to_path_buf(),
+                    reason: error.to_string(),
+                });
+                return;
+            }
+        };
+        let link_target = if link_metadata.file_type().is_symlink() {
+            match fs::read_link(path) {
+                Ok(target) => Some(target),
+                Err(error) => {
+                    inventory.issues.push(InventoryIssue {
+                        path: path.to_path_buf(),
+                        reason: error.to_string(),
+                    });
+                    return;
+                }
+            }
+        } else {
+            None
+        };
         let placement_kind = if link_target.is_some() {
             PlacementKind::Symlink
         } else {
             PlacementKind::Directory
         };
-        let canonical_path = fs::canonicalize(path).ok();
-        let content_hash = skill_folder_hash(path).ok();
-        let lock_entry = lock.and_then(|lock| lock.skills.get(&metadata.name).cloned());
+        let canonical_path = match fs::canonicalize(path) {
+            Ok(path) => Some(path),
+            Err(error) => {
+                inventory.issues.push(InventoryIssue {
+                    path: path.to_path_buf(),
+                    reason: error.to_string(),
+                });
+                None
+            }
+        };
+        let content_hash = match skill_folder_hash(path) {
+            Ok(hash) => Some(hash),
+            Err(error) => {
+                inventory.issues.push(InventoryIssue {
+                    path: path.to_path_buf(),
+                    reason: error.to_string(),
+                });
+                None
+            }
+        };
+        let lock_entry = lock.and_then(|lock| {
+            lock.skills.get(&metadata.name).and_then(|entry| {
+                entry
+                    .applies_to_placement(&workspace.id, &workspace.root, path)
+                    .then(|| entry.clone())
+            })
+        });
         let state = lock_entry
             .as_ref()
             .filter(|entry| entry.managed())
@@ -301,6 +372,33 @@ impl<'a> InventoryScanner<'a> {
             state,
             lock_entry,
         });
+    }
+}
+
+fn is_ignored_container(path: &Path) -> bool {
+    matches!(
+        path.file_name().and_then(|name| name.to_str()),
+        Some(".git" | "node_modules" | "__pycache__" | "__pypackages__" | "dist" | "build")
+    )
+}
+
+fn resolve_ambiguous_lock_entries(placements: &mut [SkillPlacement]) {
+    let mut counts = BTreeMap::new();
+    for placement in placements.iter() {
+        *counts.entry(placement.name.clone()).or_insert(0usize) += 1;
+    }
+    for placement in placements {
+        let Some(count) = counts.get(&placement.name) else {
+            continue;
+        };
+        if *count > 1
+            && placement
+                .lock_entry
+                .as_ref()
+                .is_some_and(|entry| !entry.has_explicit_placement())
+        {
+            placement.state = SkillState::Untracked;
+        }
     }
 }
 
@@ -423,6 +521,59 @@ mod tests {
         assert_eq!(inventory.placements.len(), 1);
         assert_eq!(inventory.placements[0].name, "demo");
         assert_eq!(inventory.placements[0].state, SkillState::Untracked);
+    }
+
+    #[test]
+    fn scan_discovers_nested_skill_directories() {
+        let root = tempdir().expect("root");
+        let nested_root = root.path().join("catalog/category");
+        write_skill(&nested_root, "demo", "nested");
+        let workspace = Workspace::new("custom", "Custom", WorkspaceKind::Custom, root.path());
+
+        let inventory = InventoryScanner::new(&[workspace]).scan(1).expect("scan");
+
+        assert_eq!(inventory.placements.len(), 1);
+        assert_eq!(inventory.placements[0].path, nested_root.join("demo"));
+    }
+
+    #[test]
+    fn shared_name_lock_entry_is_not_assigned_to_ambiguous_placements() {
+        let first_root = tempdir().expect("first root");
+        let second_root = tempdir().expect("second root");
+        write_skill(first_root.path(), "demo", "first");
+        write_skill(second_root.path(), "demo", "second");
+        let lock_path = first_root.path().join(".skill-lock.json");
+        fs::write(
+            &lock_path,
+            r#"{
+              "version": 3,
+              "skills": {
+                "demo": {"source": "owner/repo", "sourceType": "github"}
+              }
+            }"#,
+        )
+        .expect("lockfile");
+        let first = Workspace::new("first", "First", WorkspaceKind::Custom, first_root.path())
+            .with_lock(&lock_path, LockScope::Global);
+        let second = Workspace::new(
+            "second",
+            "Second",
+            WorkspaceKind::Custom,
+            second_root.path(),
+        )
+        .with_lock(&lock_path, LockScope::Global);
+
+        let inventory = InventoryScanner::new(&[first, second])
+            .scan(1)
+            .expect("scan");
+
+        assert_eq!(inventory.placements.len(), 2);
+        assert!(
+            inventory
+                .placements
+                .iter()
+                .all(|placement| placement.state == SkillState::Untracked)
+        );
     }
 
     #[cfg(unix)]
