@@ -1,0 +1,6 @@
+# The upstream contract is intentionally pinned. Change this value only with
+# differential fixture evidence against the official CLI.
+upstream = "vercel-labs/skills"
+version = "1.5.9"
+global_lock_version = 3
+project_lock_version = 1
