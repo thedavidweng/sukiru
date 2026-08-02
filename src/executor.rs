@@ -92,6 +92,8 @@ impl SnapshotStore {
     pub fn restore(&self, snapshot: &Snapshot) -> Result<()> {
         let mut entries = snapshot.entries.clone();
         entries.sort_by(|left, right| {
+            // Restore children before parents so removing a parent path cannot
+            // erase a later entry that must recreate a nested path.
             right
                 .path
                 .components()
@@ -299,12 +301,9 @@ fn snapshot_paths(plan: &ApplyPlan) -> Vec<PathBuf> {
 }
 
 fn execute_operation(operation: &FileOperation) -> Result<()> {
-    let source = operation
-        .source
-        .as_deref()
-        .unwrap_or(&operation.destination);
     match &operation.kind {
         OperationKind::CopyTree { overwrite } => {
+            let source = required_source(operation)?;
             ensure_source(operation)?;
             if path_present(&operation.destination) && !*overwrite {
                 return operation_error(operation, "Destination collision".to_owned());
@@ -313,6 +312,7 @@ fn execute_operation(operation: &FileOperation) -> Result<()> {
                 .map_err(|error| operation_failure(operation, error.to_string()))
         }
         OperationKind::LinkTree { overwrite } => {
+            let source = required_source(operation)?;
             ensure_source(operation)?;
             if path_present(&operation.destination) && !*overwrite {
                 return operation_error(operation, "Destination collision".to_owned());
@@ -329,6 +329,7 @@ fn execute_operation(operation: &FileOperation) -> Result<()> {
                 .map_err(|error| operation_failure(operation, error.to_string()))
         }
         OperationKind::MoveTree { overwrite } => {
+            let source = required_source(operation)?;
             ensure_source(operation)?;
             if path_present(&operation.destination) && !*overwrite {
                 return operation_error(operation, "Destination collision".to_owned());
@@ -352,14 +353,20 @@ fn execute_operation(operation: &FileOperation) -> Result<()> {
 }
 
 fn ensure_source(operation: &FileOperation) -> Result<()> {
-    let source = operation
-        .source
-        .as_deref()
-        .unwrap_or(&operation.destination);
+    let source = required_source(operation)?;
     if let Err(error) = fs::metadata(source) {
         return operation_error(operation, format!("Source skill is missing: {error}"));
     }
     Ok(())
+}
+
+fn required_source(operation: &FileOperation) -> Result<&Path> {
+    operation.source.as_deref().ok_or_else(|| {
+        GinoError::InvalidPlan(format!(
+            "{:?} operation for `{}` requires a source path",
+            operation.action, operation.skill_name
+        ))
+    })
 }
 
 fn verify_operation(operation: &FileOperation) -> Result<()> {

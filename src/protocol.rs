@@ -258,29 +258,6 @@ impl SkillLockEntry {
             self.ref_name.as_deref().unwrap_or_default()
         )
     }
-
-    pub fn has_explicit_placement(&self) -> bool {
-        self.extra
-            .get("ginoPlacement")
-            .and_then(Value::as_str)
-            .is_some()
-    }
-
-    pub fn applies_to_placement(
-        &self,
-        workspace_id: &str,
-        workspace_root: &Path,
-        placement: &Path,
-    ) -> bool {
-        let Some(expected) = self.extra.get("ginoPlacement").and_then(Value::as_str) else {
-            return true;
-        };
-        let Ok(relative) = placement.strip_prefix(workspace_root) else {
-            return false;
-        };
-        let relative = normalize_relative_path(Path::new(""), relative);
-        expected == format!("{workspace_id}:{relative}")
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

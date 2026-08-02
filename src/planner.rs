@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{GinoError, Result, io_error};
-use crate::inventory::{Inventory, SkillPlacement, Workspace};
+use crate::inventory::{Inventory, LockReference, SkillPlacement, Workspace};
 use crate::protocol::{
     LockScope, SkillLockEntry, SkillSource, parse_skill_metadata, read_lock_file, skill_folder_hash,
 };
@@ -514,6 +514,66 @@ impl<'a> Planner<'a> {
         self.copy_or_move(placement, destination.into(), mode, PlanAction::Move)
     }
 
+    pub fn move_placement_with_lock(
+        &self,
+        placement: &SkillPlacement,
+        destination: impl Into<PathBuf>,
+        mode: InstallMode,
+        target_lock: Option<&LockReference>,
+    ) -> Result<ApplyPlan> {
+        let mut plan = self.copy_or_move(placement, destination.into(), mode, PlanAction::Move)?;
+        let Some(target_lock) = target_lock else {
+            return Ok(plan);
+        };
+        let source_lock = placement
+            .lock_file
+            .as_ref()
+            .zip(placement.lock_scope)
+            .map(|(path, scope)| (path, scope));
+        let same_lock = source_lock
+            .is_some_and(|(path, scope)| path == &target_lock.path && scope == target_lock.scope);
+        if !same_lock {
+            if let Some((path, scope)) = source_lock {
+                let still_referenced = self.inventory.placements.iter().any(|other| {
+                    other.path != placement.path
+                        && other.name == placement.name
+                        && other.lock_file.as_ref() == Some(path)
+                        && other.lock_scope == Some(scope)
+                });
+                if !still_referenced {
+                    append_lock_edits(
+                        &mut plan,
+                        vec![LockEdit::Remove {
+                            path: path.clone(),
+                            scope,
+                            skill_name: placement.name.clone(),
+                        }],
+                    )?;
+                }
+            }
+            if let Some(entry) = &placement.lock_entry {
+                append_lock_edits(
+                    &mut plan,
+                    vec![LockEdit::Upsert {
+                        path: target_lock.path.clone(),
+                        scope: target_lock.scope,
+                        skill_name: placement.name.clone(),
+                        entry: entry.clone(),
+                    }],
+                )?;
+            }
+        }
+        if let Some(parent) = target_lock.path.parent() {
+            plan.declared_roots.push(parent.to_path_buf());
+        }
+        if let Some((path, _)) = source_lock {
+            if let Some(parent) = path.parent() {
+                plan.declared_roots.push(parent.to_path_buf());
+            }
+        }
+        self.validate_plan(&plan)
+    }
+
     pub fn relink(
         &self,
         placement: &SkillPlacement,
@@ -689,7 +749,7 @@ fn append_lock_edits(plan: &mut ApplyPlan, edits: Vec<LockEdit>) -> Result<()> {
         let skill_name = edits
             .first()
             .map(LockEdit::skill_name)
-            .unwrap_or("lockfile")
+            .ok_or_else(|| GinoError::InvalidPlan("lock edit group is empty".to_owned()))?
             .to_owned();
         let path = operation.path;
         plan.operations.push(FileOperation {

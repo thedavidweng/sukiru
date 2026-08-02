@@ -136,6 +136,18 @@ impl Inventory {
         }
     }
 
+    pub fn with_issue(generation: u64, path: PathBuf, reason: impl Into<String>) -> Self {
+        Self {
+            generation,
+            placements: Vec::new(),
+            duplicate_groups: Vec::new(),
+            issues: vec![InventoryIssue {
+                path,
+                reason: reason.into(),
+            }],
+        }
+    }
+
     pub fn by_name(&self, name: &str) -> Vec<&SkillPlacement> {
         self.placements
             .iter()
@@ -339,13 +351,7 @@ impl<'a> InventoryScanner<'a> {
                 None
             }
         };
-        let lock_entry = lock.and_then(|lock| {
-            lock.skills.get(&metadata.name).and_then(|entry| {
-                entry
-                    .applies_to_placement(&workspace.id, &workspace.root, path)
-                    .then(|| entry.clone())
-            })
-        });
+        let lock_entry = lock.and_then(|lock| lock.skills.get(&metadata.name).cloned());
         let state = lock_entry
             .as_ref()
             .filter(|entry| entry.managed())
@@ -391,12 +397,7 @@ fn resolve_ambiguous_lock_entries(placements: &mut [SkillPlacement]) {
         let Some(count) = counts.get(&placement.name) else {
             continue;
         };
-        if *count > 1
-            && placement
-                .lock_entry
-                .as_ref()
-                .is_some_and(|entry| !entry.has_explicit_placement())
-        {
+        if *count > 1 && placement.lock_entry.is_some() {
             placement.state = SkillState::Untracked;
         }
     }

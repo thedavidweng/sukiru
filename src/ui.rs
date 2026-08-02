@@ -1,6 +1,8 @@
 use std::collections::BTreeSet;
+use std::path::PathBuf;
 
 use gino_core::executor::ApplyExecutor;
+use gino_core::git::{GitRepository, PushMode};
 use gino_core::inventory::{Inventory, InventoryScanner, SkillState, Workspace};
 use gino_core::planner::{PendingChanges, Planner};
 use gpui::{
@@ -31,22 +33,34 @@ pub struct GinoWindow {
     workspaces: Vec<Workspace>,
     inventory: Inventory,
     active_section: String,
-    selected_names: BTreeSet<String>,
+    selected_paths: BTreeSet<PathBuf>,
     pending: PendingChanges,
     refresh_error: Option<String>,
     action_error: Option<String>,
+    backup: Option<GitRepository>,
+    backup_error: Option<String>,
 }
 
 impl GinoWindow {
-    pub fn new(workspaces: Vec<Workspace>, inventory: Inventory) -> Self {
+    pub fn new(
+        workspaces: Vec<Workspace>,
+        inventory: Inventory,
+        backup: gino_core::Result<GitRepository>,
+    ) -> Self {
+        let (backup, backup_error) = match backup {
+            Ok(repository) => (Some(repository), None),
+            Err(error) => (None, Some(error.to_string())),
+        };
         Self {
             workspaces,
             inventory,
             active_section: "Library".to_owned(),
-            selected_names: BTreeSet::new(),
+            selected_paths: BTreeSet::new(),
             pending: PendingChanges::default(),
             refresh_error: None,
             action_error: None,
+            backup,
+            backup_error,
         }
     }
 
@@ -57,11 +71,11 @@ impl GinoWindow {
             Ok(inventory) => {
                 self.inventory = inventory;
                 self.refresh_error = None;
-                self.selected_names.retain(|name| {
+                self.selected_paths.retain(|path| {
                     self.inventory
                         .placements
                         .iter()
-                        .any(|placement| &placement.name == name)
+                        .any(|placement| &placement.path == path)
                 });
                 self.pending.mark_unavailable();
             }
@@ -69,9 +83,9 @@ impl GinoWindow {
         }
     }
 
-    fn toggle_selected(&mut self, name: &str) {
-        if !self.selected_names.insert(name.to_owned()) {
-            self.selected_names.remove(name);
+    fn toggle_selected(&mut self, path: &PathBuf) {
+        if !self.selected_paths.insert(path.clone()) {
+            self.selected_paths.remove(path);
         }
     }
 
@@ -80,7 +94,7 @@ impl GinoWindow {
             .inventory
             .placements
             .iter()
-            .filter(|placement| self.selected_names.contains(&placement.name))
+            .filter(|placement| self.selected_paths.contains(&placement.path))
             .collect::<Vec<_>>();
         if placements.is_empty() {
             return;
@@ -89,7 +103,7 @@ impl GinoWindow {
         match planner.remove(&placements) {
             Ok(plan) => {
                 self.pending.add_plan(&plan);
-                self.selected_names.clear();
+                self.selected_paths.clear();
                 self.action_error = None;
             }
             Err(error) => self.action_error = Some(error.to_string()),
@@ -100,12 +114,20 @@ impl GinoWindow {
         if self.pending.items().is_empty() {
             return;
         }
+        let Some(repository) = self.backup.clone() else {
+            self.action_error = self
+                .backup_error
+                .clone()
+                .or_else(|| Some("Git backup is unavailable; Apply is disabled".to_owned()));
+            return;
+        };
         let plan = self
             .pending
             .plan(self.inventory.generation, self.declared_roots());
         let snapshot_root = std::env::temp_dir().join("gino-snapshots");
-        let executor =
-            ApplyExecutor::new(snapshot_root, 10).with_workspaces(self.workspaces.clone());
+        let executor = ApplyExecutor::new(snapshot_root, 10)
+            .with_git(repository, PushMode::CommitLocally)
+            .with_workspaces(self.workspaces.clone());
         match executor.apply(&plan) {
             Ok(_) => {
                 self.pending.clear();
@@ -253,14 +275,14 @@ impl GinoWindow {
             .iter()
             .enumerate()
             .map(|(index, placement)| {
-                let selected = self.selected_names.contains(&placement.name);
-                let name = placement.name.clone();
+                let selected = self.selected_paths.contains(&placement.path);
+                let path = placement.path.clone();
                 let row_entity = entity.clone();
                 div()
                     .id(SharedString::from(format!("skill-row-{index}")))
                     .cursor_pointer()
                     .on_click(move |_, _, cx| {
-                        row_entity.update(cx, |window, _| window.toggle_selected(&name));
+                        row_entity.update(cx, |window, _| window.toggle_selected(&path));
                     })
                     .h(px(56.))
                     .w_full()

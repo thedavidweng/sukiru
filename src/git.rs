@@ -344,11 +344,11 @@ fn placement_repository_key(placement: &crate::inventory::SkillPlacement) -> Res
             }
         })
         .collect::<String>();
-    let workspace = if workspace.is_empty() {
-        "workspace".to_owned()
-    } else {
-        workspace
-    };
+    if workspace.is_empty() {
+        return Err(GinoError::InvalidPlan(
+            "backup placement requires a non-empty workspace id".to_owned(),
+        ));
+    }
     Ok(format!("{workspace}-{}", &digest[..12]))
 }
 
