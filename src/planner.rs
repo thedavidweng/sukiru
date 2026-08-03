@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize};
 use crate::error::{GinoError, Result, io_error};
 use crate::inventory::{Inventory, LockReference, SkillPlacement, Workspace};
 use crate::protocol::{
-    LockScope, SkillLockEntry, SkillSource, parse_skill_metadata, read_lock_file, skill_folder_hash,
+    LockScope, SkillLockEntry, SkillSource, parse_skill_metadata, project_computed_hash,
+    read_lock_file, skill_folder_hash,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -297,7 +298,7 @@ impl<'a> Planner<'a> {
             id,
             action: PlanAction::Install,
             skill_name: metadata.name.clone(),
-            source: Some(source_dir),
+            source: Some(source_dir.clone()),
             destination,
             kind: match mode {
                 InstallMode::Copy => OperationKind::CopyTree { overwrite: false },
@@ -305,7 +306,8 @@ impl<'a> Planner<'a> {
             },
         });
         if let Some((path, scope)) = lock {
-            let entry = source.lock_entry(source_hash);
+            let scope_hash = scope_hash_for(source_hash, &source_dir, scope)?;
+            let entry = source.lock_entry_for(scope_hash, scope);
             plan = self.with_lock_edit(
                 plan,
                 LockEdit::Upsert {
@@ -373,7 +375,10 @@ impl<'a> Planner<'a> {
                     path: lock.path.clone(),
                     scope: lock.scope,
                     skill_name: source_metadata.name,
-                    entry: source.lock_entry(source_hash),
+                    entry: source.lock_entry_for(
+                        scope_hash_for(source_hash, source_dir, lock.scope)?,
+                        lock.scope,
+                    ),
                 });
             }
         }
@@ -481,7 +486,7 @@ impl<'a> Planner<'a> {
                 placement.name
             ));
         }
-        let entry = source.lock_entry(source_hash);
+        let entry = source.lock_entry_for(scope_hash_for(source_hash, &source_dir, lock.1)?, lock.1);
         plan = self.with_lock_edit(
             plan,
             LockEdit::Upsert {
@@ -693,6 +698,15 @@ impl LockEdit {
     }
 }
 
+/// Choose the content hash that matches the lock scope. Global locks use the
+/// deterministic local proxy; project locks use the scope-limited `computedHash`.
+fn scope_hash_for(global_hash: String, source_dir: &Path, scope: LockScope) -> Result<String> {
+    Ok(match scope {
+        LockScope::Global => global_hash,
+        LockScope::Project => project_computed_hash(source_dir)?,
+    })
+}
+
 struct PendingLockWrite {
     path: PathBuf,
     bytes: Vec<u8>,
@@ -722,6 +736,7 @@ fn lock_edits_operation(edits: &[LockEdit]) -> Result<Option<PendingLockWrite>> 
             }
         }
     }
+    lock.normalize_for_scope(scope);
     let bytes = serde_json::to_vec_pretty(&lock)
         .map_err(|source| crate::error::json_error(path, source))?;
     if original.as_deref() == Some(bytes.as_slice()) {
