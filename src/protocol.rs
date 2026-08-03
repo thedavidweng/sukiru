@@ -107,12 +107,31 @@ pub struct SkillFile {
     pub bytes: Vec<u8>,
 }
 
+/// Which paths participate in a content hash. The upstream global and project
+/// locks disagree on exclusions: the global lock omits generated artifacts and
+/// `metadata.json`, while the project `computedHash` only omits `.git` and
+/// `node_modules`. Keeping them distinct is required for differential parity.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum HashScope {
+    Global,
+    Project,
+}
+
 /// Hashing follows the upstream local lock convention: paths are normalized
-/// to `/`, sorted, and included before each file's bytes. Excluded metadata
-/// files and generated directories are not part of Skill identity.
+/// to `/`, sorted, and included before each file's bytes. Uses the global
+/// exclusion set (global lock / tree-SHA proxy).
 pub fn collect_skill_files(skill_dir: &Path) -> Result<Vec<SkillFile>> {
+    collect_skill_files_with(skill_dir, HashScope::Global)
+}
+
+/// Collect skill files using the project `computedHash` exclusion set.
+pub fn collect_project_skill_files(skill_dir: &Path) -> Result<Vec<SkillFile>> {
+    collect_skill_files_with(skill_dir, HashScope::Project)
+}
+
+fn collect_skill_files_with(skill_dir: &Path, scope: HashScope) -> Result<Vec<SkillFile>> {
     let mut files = Vec::new();
-    collect_skill_files_inner(skill_dir, skill_dir, &mut files)?;
+    collect_skill_files_inner(skill_dir, skill_dir, scope, &mut files)?;
     files.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
     Ok(files)
 }
@@ -120,6 +139,7 @@ pub fn collect_skill_files(skill_dir: &Path) -> Result<Vec<SkillFile>> {
 fn collect_skill_files_inner(
     base: &Path,
     current: &Path,
+    scope: HashScope,
     files: &mut Vec<SkillFile>,
 ) -> Result<()> {
     let entries = fs::read_dir(current).map_err(|source| io_error(current, source))?;
@@ -143,11 +163,11 @@ fn collect_skill_files_inner(
             continue;
         }
         if metadata.is_dir() {
-            if is_excluded_directory(&name) {
+            if is_excluded_directory(&name, scope) {
                 continue;
             }
-            collect_skill_files_inner(base, &path, files)?;
-        } else if metadata.is_file() && !is_excluded_file(&name) {
+            collect_skill_files_inner(base, &path, scope, files)?;
+        } else if metadata.is_file() && !is_excluded_file(&name, scope) {
             let bytes = fs::read(&path).map_err(|source| io_error(&path, source))?;
             let relative_path = path
                 .strip_prefix(base)
@@ -165,15 +185,23 @@ fn collect_skill_files_inner(
     Ok(())
 }
 
-fn is_excluded_directory(name: &str) -> bool {
-    matches!(
-        name,
-        ".git" | "node_modules" | "__pycache__" | "__pypackages__" | "dist" | "build"
-    )
+fn is_excluded_directory(name: &str, scope: HashScope) -> bool {
+    match scope {
+        // Project `computedHash` only excludes `.git` and `node_modules`.
+        HashScope::Project => matches!(name, ".git" | "node_modules"),
+        HashScope::Global => matches!(
+            name,
+            ".git" | "node_modules" | "__pycache__" | "__pypackages__" | "dist" | "build"
+        ),
+    }
 }
 
-fn is_excluded_file(name: &str) -> bool {
-    name == "metadata.json"
+fn is_excluded_file(name: &str, scope: HashScope) -> bool {
+    match scope {
+        // Project `computedHash` includes `metadata.json`.
+        HashScope::Project => false,
+        HashScope::Global => name == "metadata.json",
+    }
 }
 
 fn normalize_relative_path(base: &Path, path: &Path) -> String {
@@ -188,8 +216,18 @@ fn normalize_relative_path(base: &Path, path: &Path) -> String {
 }
 
 pub fn skill_folder_hash(skill_dir: &Path) -> Result<String> {
+    hash_files(&collect_skill_files(skill_dir)?)
+}
+
+/// Project-scope `computedHash`: deterministic local SHA-256 over the project
+/// exclusion set (only `.git` and `node_modules` are omitted).
+pub fn project_computed_hash(skill_dir: &Path) -> Result<String> {
+    hash_files(&collect_project_skill_files(skill_dir)?)
+}
+
+fn hash_files(files: &[SkillFile]) -> Result<String> {
     let mut hasher = Sha256::new();
-    for file in collect_skill_files(skill_dir)? {
+    for file in files {
         hasher.update(file.relative_path.as_bytes());
         hasher.update(&file.bytes);
     }
@@ -222,23 +260,30 @@ pub struct SkillLockEntry {
     pub source: String,
     #[serde(rename = "sourceType")]
     pub source_type: String,
-    #[serde(rename = "sourceUrl")]
+    #[serde(rename = "sourceUrl", skip_serializing_if = "Option::is_none")]
     pub source_url: Option<String>,
-    #[serde(rename = "ref")]
+    #[serde(rename = "ref", skip_serializing_if = "Option::is_none")]
     pub ref_name: Option<String>,
-    #[serde(rename = "skillPath")]
+    #[serde(rename = "skillPath", skip_serializing_if = "Option::is_none")]
     pub skill_path: Option<String>,
-    #[serde(rename = "skillFolderHash")]
+    /// Global-scope lock hash. The upstream global lock stores a GitHub tree
+    /// SHA on `skillFolderHash`; Gino fills this with the deterministic local
+    /// hash as a faithful proxy until the offline tree-SHA oracle is wired in.
+    #[serde(rename = "skillFolderHash", skip_serializing_if = "Option::is_none")]
     pub skill_folder_hash: Option<String>,
-    #[serde(rename = "installedAt")]
+    /// Project-scope lock hash. The upstream project lock stores the locally
+    /// computed content SHA-256 on `computedHash`, NOT `skillFolderHash`.
+    #[serde(rename = "computedHash", skip_serializing_if = "Option::is_none")]
+    pub computed_hash: Option<String>,
+    #[serde(rename = "installedAt", skip_serializing_if = "Option::is_none")]
     pub installed_at: Option<String>,
-    #[serde(rename = "updatedAt")]
+    #[serde(rename = "updatedAt", skip_serializing_if = "Option::is_none")]
     pub updated_at: Option<String>,
-    #[serde(rename = "pluginName")]
+    #[serde(rename = "pluginName", skip_serializing_if = "Option::is_none")]
     pub plugin_name: Option<String>,
-    #[serde(rename = "sourceBaseUrl")]
+    #[serde(rename = "sourceBaseUrl", skip_serializing_if = "Option::is_none")]
     pub source_base_url: Option<String>,
-    #[serde(rename = "wellKnownDigest")]
+    #[serde(rename = "wellKnownDigest", skip_serializing_if = "Option::is_none")]
     pub well_known_digest: Option<String>,
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -306,6 +351,29 @@ impl LockFile {
     pub fn remove_skill(&mut self, name: &str) -> bool {
         self.skills.remove(name).is_some()
     }
+
+    /// Normalize scope-only fields so a written lock matches the upstream
+    /// schema for its scope. Global locks carry `skillFolderHash`; project
+    /// locks carry `computedHash`. The call is idempotent.
+    pub fn normalize_for_scope(&mut self, scope: LockScope) {
+        match scope {
+            LockScope::Global => {
+                for entry in self.skills.values_mut() {
+                    entry.computed_hash = None;
+                }
+            }
+            LockScope::Project => {
+                for entry in self.skills.values_mut() {
+                    if entry.computed_hash.is_none() {
+                        entry.computed_hash = entry.skill_folder_hash.take();
+                    } else {
+                        entry.skill_folder_hash = None;
+                    }
+                }
+            }
+        }
+        self.version = scope.expected_version();
+    }
 }
 
 pub fn read_lock_file(path: &Path, scope: LockScope) -> Result<LockFile> {
@@ -317,7 +385,7 @@ pub fn read_lock_file(path: &Path, scope: LockScope) -> Result<LockFile> {
         Err(error) => return Err(io_error(path, error)),
     }
     let bytes = fs::read(path).map_err(|source| io_error(path, source))?;
-    let lock: LockFile =
+    let mut lock: LockFile =
         serde_json::from_slice(&bytes).map_err(|source| json_error(path, source))?;
     if lock.version < scope.expected_version() {
         return Err(GinoError::IncompatibleLockfile {
@@ -328,6 +396,16 @@ pub fn read_lock_file(path: &Path, scope: LockScope) -> Result<LockFile> {
                 scope.expected_version()
             ),
         });
+    }
+    // Internally the engine uses `skill_folder_hash` as the canonical content
+    // hash. A project lock stores it under `computedHash`, so map it back so
+    // update/inventory logic is consistent regardless of scope.
+    if scope == LockScope::Project {
+        for entry in lock.skills.values_mut() {
+            if entry.skill_folder_hash.is_none() {
+                entry.skill_folder_hash = entry.computed_hash.take();
+            }
+        }
     }
     Ok(lock)
 }
@@ -525,6 +603,20 @@ impl SkillSource {
             ..SkillLockEntry::default()
         }
     }
+
+    /// Produce a lock entry that already places `folder_hash` on the field
+    /// used by the target scope, so the value is not rewritten later.
+    pub fn lock_entry_for(&self, folder_hash: String, scope: LockScope) -> SkillLockEntry {
+        let mut entry = self.lock_entry(folder_hash.clone());
+        match scope {
+            LockScope::Global => entry.computed_hash = None,
+            LockScope::Project => {
+                entry.computed_hash = Some(folder_hash);
+                entry.skill_folder_hash = None;
+            }
+        }
+        entry
+    }
 }
 
 pub fn sanitize_skill_name(name: &str) -> Result<String> {
@@ -625,5 +717,57 @@ mod tests {
             SkillSource::parse("vercel-labs/agent-skills@demo").expect("shorthand source");
         assert_eq!(shorthand.source_type, SourceType::Github);
         assert_eq!(shorthand.skill_path.as_deref(), Some("demo"));
+    }
+
+    #[test]
+    fn global_and_project_locks_use_distinct_schema_and_versions() {
+        let global_path = tempdir().expect("global").path().join("g.json");
+        let project_path = tempdir().expect("project").path().join("p.json");
+        let source = SkillSource::parse("owner/repo@demo").expect("source");
+
+        let mut global = LockFile::empty(LockScope::Global);
+        global.set_skill("demo", source.lock_entry("abc".to_owned()));
+        write_lock_file(&global_path, &global).expect("write global");
+        let global_text = fs::read_to_string(&global_path).expect("read global");
+        assert!(global_text.contains("\"skillFolderHash\""));
+        assert!(!global_text.contains("computedHash"));
+        assert!(global_text.contains("\"version\": 3"));
+        assert!(global_text.contains("\"dismissed\""));
+
+        let mut project = LockFile::empty(LockScope::Project);
+        project.set_skill("demo", source.lock_entry_for("def".to_owned(), LockScope::Project));
+        project.normalize_for_scope(LockScope::Project);
+        write_lock_file(&project_path, &project).expect("write project");
+        let project_text = fs::read_to_string(&project_path).expect("read project");
+        assert!(project_text.contains("\"computedHash\""));
+        assert!(!project_text.contains("skillFolderHash"));
+        assert!(project_text.contains("\"version\": 1"));
+
+        // Re-reading maps the project hash back to the canonical field.
+        let reread = read_lock_file(&project_path, LockScope::Project).expect("reread project");
+        assert_eq!(reread.skills["demo"].skill_folder_hash.as_deref(), Some("def"));
+    }
+
+    #[test]
+    fn project_computed_hash_includes_metadata_but_skip_git_and_node_modules() {
+        let root = tempdir().expect("skill");
+        fs::write(
+            root.path().join("SKILL.md"),
+            "---\nname: demo\ndescription: Demo\n---\n",
+        )
+        .expect("skill file");
+        fs::write(root.path().join("metadata.json"), "ignored").expect("metadata");
+
+        let before = project_computed_hash(root.path()).expect("hash");
+        fs::write(root.path().join("metadata.json"), "changed").expect("change metadata");
+        let after = project_computed_hash(root.path()).expect("hash");
+        // Project computedHash is NOT stable under metadata.json changes.
+        assert_ne!(before, after);
+
+        // `.git` and `node_modules` remain excluded for the project hash.
+        let stable = project_computed_hash(root.path()).expect("hash");
+        fs::create_dir(root.path().join("node_modules")).expect("node_modules");
+        fs::write(root.path().join("node_modules/x"), "ignored").expect("nm file");
+        assert_eq!(project_computed_hash(root.path()).expect("hash"), stable);
     }
 }
