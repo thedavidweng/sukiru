@@ -4,6 +4,8 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
+use sha2::{Digest, Sha256};
+
 use crate::agents::AgentId;
 use crate::error::{Result, io_error};
 use crate::protocol::{
@@ -270,10 +272,10 @@ impl<'a> InventoryScanner<'a> {
                         self.inspect_placement(workspace, &child, lock, inventory);
                     }
                     Ok(_) => {}
-                    Err(error) => inventory.issues.push(InventoryIssue {
-                        path: child.clone(),
-                        reason: error.to_string(),
-                    }),
+                    Err(_) => {
+                        let link_target = fs::read_link(&child).ok();
+                        self.record_broken_symlink(workspace, &child, link_target, lock, inventory);
+                    }
                 }
                 continue;
             }
@@ -379,6 +381,68 @@ impl<'a> InventoryScanner<'a> {
             lock_entry,
         });
     }
+
+    /// Record a broken symlink as a placement so it is visible in the Library
+    /// and can be queued for cleanup. The metadata cannot be parsed (the target
+    /// is gone), so the name is derived from the link's file name and the
+    /// description reports the dangling target. A friendly issue is also pushed
+    /// so the issue bar shows what happened.
+    fn record_broken_symlink(
+        &self,
+        workspace: &Workspace,
+        path: &Path,
+        link_target: Option<PathBuf>,
+        lock: Option<&LockFile>,
+        inventory: &mut Inventory,
+    ) {
+        let name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("unknown")
+            .to_owned();
+        let target_display = link_target
+            .as_ref()
+            .map(|target| target.display().to_string())
+            .unwrap_or_else(|| "<unreadable>".to_owned());
+        let description = format!("Broken symlink → {}", target_display);
+        let lock_entry = lock.and_then(|lock| lock.skills.get(&name).cloned());
+        let state = lock_entry
+            .as_ref()
+            .filter(|entry| entry.managed())
+            .map(|_| SkillState::Managed)
+            .unwrap_or(SkillState::Untracked);
+        inventory.placements.push(SkillPlacement {
+            name: name.clone(),
+            description: description.clone(),
+            metadata: SkillMetadata {
+                name: name.clone(),
+                description: description.clone(),
+                path: path.to_path_buf(),
+                skill_file: String::new(),
+                internal: false,
+            },
+            workspace_id: workspace.id.clone(),
+            workspace_kind: workspace.kind.clone(),
+            workspace_root: workspace.root.clone(),
+            lock_file: workspace
+                .lock
+                .as_ref()
+                .map(|reference| reference.path.clone()),
+            lock_scope: workspace.lock.as_ref().map(|reference| reference.scope),
+            agent_id: workspace.agent_id.clone(),
+            path: path.to_path_buf(),
+            canonical_path: None,
+            link_target,
+            placement_kind: PlacementKind::BrokenSymlink,
+            content_hash: None,
+            state,
+            lock_entry,
+        });
+        inventory.issues.push(InventoryIssue {
+            path: path.to_path_buf(),
+            reason: format!("broken symlink → {}", target_display),
+        });
+    }
 }
 
 fn is_ignored_container(path: &Path) -> bool {
@@ -416,6 +480,11 @@ pub struct DuplicateGroup {
     pub skill_name: String,
     pub placement_indexes: Vec<usize>,
     pub identity: String,
+    /// Deterministic fingerprint of the group's member source/content
+    /// identities. Any change to a member's source identity or content hash
+    /// changes this value, so ignored duplicate decisions keyed on it stop
+    /// hiding the group when the underlying identities change.
+    pub fingerprint: String,
 }
 
 pub fn duplicate_groups(placements: &[SkillPlacement]) -> Vec<DuplicateGroup> {
@@ -445,11 +514,13 @@ pub fn duplicate_groups(placements: &[SkillPlacement]) -> Vec<DuplicateGroup> {
             .map(|index| placements[*index].canonical_path.clone())
             .collect();
         if indexes.len() > 1 && physical.len() > 1 {
+            let fingerprint = group_fingerprint(&indexes, placements);
             groups.push(DuplicateGroup {
                 class: DuplicateClass::ExactDuplicate,
                 skill_name: name,
                 placement_indexes: indexes,
-                identity: hash,
+                identity: hash.clone(),
+                fingerprint,
             });
         }
     }
@@ -459,11 +530,13 @@ pub fn duplicate_groups(placements: &[SkillPlacement]) -> Vec<DuplicateGroup> {
             .map(|index| placements[*index].content_hash.clone())
             .collect();
         if indexes.len() > 1 && hashes.len() > 1 {
+            let fingerprint = group_fingerprint(&indexes, placements);
             groups.push(DuplicateGroup {
                 class: DuplicateClass::SourceDuplicate,
                 skill_name: name,
                 placement_indexes: indexes,
                 identity: source_identity,
+                fingerprint,
             });
         }
     }
@@ -477,11 +550,13 @@ pub fn duplicate_groups(placements: &[SkillPlacement]) -> Vec<DuplicateGroup> {
             .map(|index| placements[*index].content_hash.clone())
             .collect();
         if indexes.len() > 1 && (source_identities.len() > 1 || hashes.len() > 1) {
+            let fingerprint = group_fingerprint(&indexes, placements);
             groups.push(DuplicateGroup {
                 class: DuplicateClass::NameCollision,
                 skill_name: name,
                 placement_indexes: indexes,
                 identity: "name".to_owned(),
+                fingerprint,
             });
         }
     }
@@ -491,6 +566,31 @@ pub fn duplicate_groups(placements: &[SkillPlacement]) -> Vec<DuplicateGroup> {
             .then_with(|| left.identity.cmp(&right.identity))
     });
     groups
+}
+
+/// Deterministic group fingerprint: SHA-256 over the sorted member
+/// `source_identity|content_hash` pairs. Paths and workspace placement do not
+/// participate, so moving a Skill does not invalidate an ignore decision, but
+/// any source or content change does.
+fn group_fingerprint(indexes: &[usize], placements: &[SkillPlacement]) -> String {
+    let mut identities = indexes
+        .iter()
+        .map(|index| {
+            let placement = &placements[*index];
+            format!(
+                "{}|{}",
+                placement.source_identity().unwrap_or_default(),
+                placement.content_hash.clone().unwrap_or_default()
+            )
+        })
+        .collect::<Vec<_>>();
+    identities.sort();
+    let mut hasher = Sha256::new();
+    for identity in identities {
+        hasher.update(identity.as_bytes());
+        hasher.update(b"\n");
+    }
+    format!("{:x}", hasher.finalize())
 }
 
 #[cfg(test)]
@@ -591,5 +691,46 @@ mod tests {
                 .iter()
                 .all(|group| group.class != DuplicateClass::ExactDuplicate)
         );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn broken_symlink_becomes_placement_with_friendly_issue() {
+        let root = tempdir().expect("root");
+        write_skill(root.path(), "real", "body");
+        // Create a broken symlink: target does not exist.
+        symlink(
+            root.path().join("nonexistent-target"),
+            root.path().join("dangling"),
+        )
+        .expect("broken link");
+        let workspace = Workspace::new("custom", "Custom", WorkspaceKind::Custom, root.path());
+
+        let inventory = InventoryScanner::new(&[workspace]).scan(1).expect("scan");
+
+        let broken = inventory
+            .placements
+            .iter()
+            .find(|placement| placement.name == "dangling")
+            .expect("broken symlink placement");
+        assert_eq!(broken.placement_kind, PlacementKind::BrokenSymlink);
+        assert!(
+            broken
+                .link_target
+                .as_ref()
+                .map(|t| t.ends_with("nonexistent-target"))
+                .unwrap_or(false)
+        );
+        assert!(broken.description.contains("Broken symlink"));
+        assert!(broken.content_hash.is_none());
+        assert_eq!(broken.state, SkillState::Untracked);
+
+        let issue = inventory
+            .issues
+            .iter()
+            .find(|issue| issue.path == root.path().join("dangling"))
+            .expect("issue for broken symlink");
+        assert!(issue.reason.starts_with("broken symlink →"));
+        assert!(issue.reason.contains("nonexistent-target"));
     }
 }
