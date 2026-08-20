@@ -121,7 +121,19 @@ fn discover_container(
         record_skill(path, names, result);
     }
     for path in children {
+        // Detect broken symlinks: the link exists but its target is gone, so
+        // `is_dir()` returns false and the child would otherwise be silently
+        // skipped. Report it as a discovery issue instead.
         if !path.is_dir() {
+            if fs::symlink_metadata(&path).is_ok_and(|metadata| metadata.file_type().is_symlink()) {
+                let target = fs::read_link(&path)
+                    .map(|target| target.display().to_string())
+                    .unwrap_or_else(|_| "<unreadable>".to_owned());
+                result.issues.push(DiscoveryIssue {
+                    path: path.clone(),
+                    reason: format!("broken symlink → {target}"),
+                });
+            }
             continue;
         }
         if path.join("SKILL.md").exists() {
@@ -218,5 +230,36 @@ mod tests {
         let result = discover_skills(root.path(), false).expect("discover");
         assert_eq!(result.skills.len(), 1);
         assert_eq!(result.skills[0].metadata.description, "flat");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn broken_symlink_is_reported_as_an_issue_not_silently_skipped() {
+        use std::os::unix::fs::symlink;
+
+        let root = tempdir().expect("repo");
+        fs::create_dir_all(root.path().join("skills/demo")).expect("skill dir");
+        fs::write(
+            root.path().join("skills/demo/SKILL.md"),
+            "---\nname: demo\ndescription: ok\n---\n",
+        )
+        .expect("skill file");
+        // Broken symlink inside the skills container.
+        symlink(
+            root.path().join("skills/nonexistent-target"),
+            root.path().join("skills/dangling"),
+        )
+        .expect("broken link");
+
+        let result = discover_skills(root.path(), false).expect("discover");
+
+        assert_eq!(result.skills.len(), 1, "real skill still discovered");
+        let issue = result
+            .issues
+            .iter()
+            .find(|issue| issue.path == root.path().join("skills/dangling"))
+            .expect("broken symlink issue");
+        assert!(issue.reason.starts_with("broken symlink →"));
+        assert!(issue.reason.contains("nonexistent-target"));
     }
 }
