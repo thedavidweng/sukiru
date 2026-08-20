@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Gino
+Comment=Native manager for Vercel-compatible agent skills
+Exec=gino
+Icon=gino
+Terminal=false
+Categories=Development;
+StartupNotify=true

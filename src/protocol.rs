@@ -21,6 +21,11 @@ pub fn global_lock_path(home: &Path) -> PathBuf {
         .unwrap_or_else(|| home.join(".agents/.skill-lock.json"))
 }
 
+/// Upstream project lock (`local-lock.ts`): `skills-lock.json` at the project root.
+pub fn project_lock_path(project_root: &Path) -> PathBuf {
+    project_root.join("skills-lock.json")
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct SkillMetadata {
     pub name: String,
@@ -132,8 +137,20 @@ pub fn collect_project_skill_files(skill_dir: &Path) -> Result<Vec<SkillFile>> {
 fn collect_skill_files_with(skill_dir: &Path, scope: HashScope) -> Result<Vec<SkillFile>> {
     let mut files = Vec::new();
     collect_skill_files_inner(skill_dir, skill_dir, scope, &mut files)?;
-    files.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
+    files.sort_by(|left, right| match scope {
+        // Upstream `local-lock.ts` sorts with `String.localeCompare`, which
+        // puts `SKILL.md` after `agents/` (case-insensitive). Byte order
+        // would disagree with official `computedHash`.
+        HashScope::Project => cmp_project_hash_path(&left.relative_path, &right.relative_path),
+        HashScope::Global => left.relative_path.cmp(&right.relative_path),
+    });
     Ok(files)
+}
+
+fn cmp_project_hash_path(left: &str, right: &str) -> std::cmp::Ordering {
+    left.to_lowercase()
+        .cmp(&right.to_lowercase())
+        .then_with(|| left.cmp(right))
 }
 
 fn collect_skill_files_inner(
@@ -309,9 +326,13 @@ impl SkillLockEntry {
 pub struct LockFile {
     pub version: u64,
     pub skills: BTreeMap<String, SkillLockEntry>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub dismissed: Option<DismissedPrompts>,
-    #[serde(rename = "lastSelectedAgents", default)]
+    #[serde(
+        rename = "lastSelectedAgents",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
     pub last_selected_agents: Option<Vec<String>>,
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -319,7 +340,11 @@ pub struct LockFile {
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct DismissedPrompts {
-    #[serde(rename = "findSkillsPrompt", default)]
+    #[serde(
+        rename = "findSkillsPrompt",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
     pub find_skills_prompt: Option<bool>,
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -354,7 +379,9 @@ impl LockFile {
 
     /// Normalize scope-only fields so a written lock matches the upstream
     /// schema for its scope. Global locks carry `skillFolderHash`; project
-    /// locks carry `computedHash`. The call is idempotent.
+    /// locks carry `computedHash` and are intentionally timestamp-free
+    /// (upstream `local-lock.ts` writes no `installedAt`/`updatedAt` and no
+    /// prompt or agent-selection state). The call is idempotent.
     pub fn normalize_for_scope(&mut self, scope: LockScope) {
         match scope {
             LockScope::Global => {
@@ -369,10 +396,26 @@ impl LockFile {
                     } else {
                         entry.skill_folder_hash = None;
                     }
+                    entry.installed_at = None;
+                    entry.updated_at = None;
                 }
+                self.dismissed = None;
+                self.last_selected_agents = None;
             }
         }
         self.version = scope.expected_version();
+    }
+
+    /// Serialize for a scope with upstream byte parity: the project lock is
+    /// written with a trailing newline (upstream `writeLocalLock`), the
+    /// global lock without one.
+    pub fn to_bytes_for_scope(&self, path: &Path, scope: LockScope) -> Result<Vec<u8>> {
+        let mut bytes =
+            serde_json::to_vec_pretty(self).map_err(|source| json_error(path, source))?;
+        if scope == LockScope::Project {
+            bytes.push(b'\n');
+        }
+        Ok(bytes)
     }
 }
 
@@ -411,8 +454,16 @@ pub fn read_lock_file(path: &Path, scope: LockScope) -> Result<LockFile> {
 }
 
 pub fn write_lock_file(path: &Path, lock: &LockFile) -> Result<()> {
-    let bytes = serde_json::to_vec_pretty(lock).map_err(|source| json_error(path, source))?;
-    write_atomic(path, &bytes)
+    let scope = if lock.version == GLOBAL_LOCK_VERSION {
+        LockScope::Global
+    } else {
+        LockScope::Project
+    };
+    write_lock_file_for_scope(path, lock, scope)
+}
+
+pub fn write_lock_file_for_scope(path: &Path, lock: &LockFile, scope: LockScope) -> Result<()> {
+    write_atomic(path, &lock.to_bytes_for_scope(path, scope)?)
 }
 
 pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
@@ -442,14 +493,25 @@ pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
         return Err(io_error(&temporary, source));
     }
     drop(file);
-    #[cfg(windows)]
-    if path.exists() {
-        fs::remove_file(path).map_err(|source| io_error(path, source))?;
+    // Prefer a pure rename (atomic on POSIX and on Windows when the target is
+    // absent). Only when the destination already exists on Windows do we fall
+    // back to remove-then-rename, which still avoids the gap for the common
+    // first-write path. A fully guaranteed `ReplaceFile` on Windows would
+    // require unsafe FFI, which this crate forbids.
+    if let Err(source) = fs::rename(&temporary, path) {
+        if cfg!(windows) && path.exists() {
+            let _ = fs::remove_file(path);
+            fs::rename(&temporary, path).map_err(|second| {
+                let _ = fs::remove_file(&temporary);
+                io_error(path, second)
+            })
+        } else {
+            let _ = fs::remove_file(&temporary);
+            Err(io_error(path, source))
+        }
+    } else {
+        Ok(())
     }
-    fs::rename(&temporary, path).map_err(|source| {
-        let _ = fs::remove_file(&temporary);
-        io_error(path, source)
-    })
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -459,6 +521,7 @@ pub enum SourceType {
     Git,
     Local,
     Direct,
+    WellKnown,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -468,118 +531,92 @@ pub struct SkillSource {
     pub source_type: SourceType,
     pub source_url: String,
     pub ref_name: Option<String>,
+    /// Repository subpath (`owner/repo/skills/demo` or `/tree/<ref>/...`).
     pub skill_path: Option<String>,
+    /// Skill name from `@skill` / `#ref@skill` syntax. Not a lock `skillPath`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub skill_filter: Option<String>,
 }
 
 impl SkillSource {
     pub fn parse(input: &str) -> Result<Self> {
-        let input = input.trim();
-        if input.is_empty() {
+        let original = input.trim();
+        if original.is_empty() {
             return Err(GinoError::InvalidSource {
-                input: input.to_owned(),
+                input: original.to_owned(),
                 reason: "source is empty".to_owned(),
             });
         }
-        let is_local = input.starts_with('.')
-            || input.starts_with('/')
-            || input.starts_with('~')
-            || input.starts_with("\\")
-            || Path::new(input).exists();
-        if is_local {
-            let path = PathBuf::from(input);
-            return Ok(Self {
-                input: input.to_owned(),
-                normalized: path.to_string_lossy().replace('\\', "/"),
-                source_type: SourceType::Local,
-                source_url: input.to_owned(),
-                ref_name: None,
-                skill_path: None,
-            });
+        if is_local_path(original) {
+            let path = PathBuf::from(original);
+            return Ok(skill_source(
+                original,
+                path.to_string_lossy().replace('\\', "/"),
+                SourceType::Local,
+                original,
+                None,
+                None,
+                None,
+            ));
         }
 
-        if let Some((_, hosted)) = input.split_once("://") {
-            let (host, path) = hosted.split_once('/').unwrap_or((hosted, ""));
-            return Self::parse_hosted(input, host, path);
+        let (without_fragment, fragment_ref, fragment_skill) = split_fragment(original);
+        let current = resolve_alias(&without_fragment);
+
+        if let Some(rest) = current.strip_prefix("github:") {
+            let mut parsed = Self::parse(&append_fragment(
+                rest,
+                fragment_ref.as_deref(),
+                fragment_skill.as_deref(),
+            ))?;
+            parsed.input = original.to_owned();
+            return Ok(parsed);
         }
-        if input.starts_with("git@") || input.starts_with("ssh:") {
-            return Ok(Self {
-                input: input.to_owned(),
-                normalized: input.trim_end_matches(".git").to_owned(),
-                source_type: SourceType::Git,
-                source_url: input.to_owned(),
-                ref_name: None,
-                skill_path: None,
-            });
-        }
-        let shorthand = input.trim_end_matches(".git");
-        let mut segments = shorthand.split('/');
-        let owner = segments.next().unwrap_or_default();
-        let repo_with_skill = segments.next().unwrap_or_default();
-        if !owner.is_empty() && !repo_with_skill.is_empty() && segments.next().is_none() {
-            let (repo, skill_path) = repo_with_skill
-                .split_once('@')
-                .map(|(repo, skill)| (repo, Some(skill.to_owned())))
-                .unwrap_or((repo_with_skill, None));
-            if !repo.is_empty() {
-                return Ok(Self {
-                    input: input.to_owned(),
-                    normalized: format!("{owner}/{repo}"),
-                    source_type: SourceType::Github,
-                    source_url: format!("https://github.com/{owner}/{repo}"),
-                    ref_name: None,
-                    skill_path,
-                });
-            }
+        if let Some(rest) = current.strip_prefix("gitlab:") {
+            let mut parsed = Self::parse(&append_fragment(
+                &format!("https://gitlab.com/{rest}"),
+                fragment_ref.as_deref(),
+                fragment_skill.as_deref(),
+            ))?;
+            parsed.input = original.to_owned();
+            return Ok(parsed);
         }
 
-        Ok(Self {
-            input: input.to_owned(),
-            normalized: input.to_owned(),
-            source_type: SourceType::Direct,
-            source_url: input.to_owned(),
-            ref_name: None,
-            skill_path: None,
-        })
-    }
-
-    fn parse_hosted(input: &str, host: &str, path: &str) -> Result<Self> {
-        let kind = match host.to_ascii_lowercase().as_str() {
-            "github.com" | "www.github.com" => SourceType::Github,
-            "gitlab.com" | "www.gitlab.com" => SourceType::Gitlab,
-            _ => SourceType::Direct,
-        };
-        let segments: Vec<&str> = path
-            .trim_matches('/')
-            .split('/')
-            .filter(|part| !part.is_empty())
-            .collect();
-        if matches!(kind, SourceType::Github | SourceType::Gitlab) && segments.len() < 2 {
-            return Err(GinoError::InvalidSource {
-                input: input.to_owned(),
-                reason: "hosted source must include an owner and repository".to_owned(),
-            });
+        if let Some(parsed) = parse_github(&current, fragment_ref.as_deref())? {
+            return Ok(with_original_input(parsed, original));
         }
-        let normalized = if matches!(kind, SourceType::Github | SourceType::Gitlab) {
-            format!("{}/{}", segments[0], segments[1].trim_end_matches(".git"))
-        } else {
-            input.to_owned()
-        };
-        let (ref_name, skill_path) = match segments.get(2).copied() {
-            Some("tree") | Some("blob") if segments.len() >= 4 => {
-                let ref_name = Some(segments[3].to_owned());
-                let path = (segments.len() > 4).then(|| segments[4..].join("/"));
-                (ref_name, path)
-            }
-            _ => (None, None),
-        };
-        Ok(Self {
-            input: input.to_owned(),
-            normalized,
-            source_type: kind,
-            source_url: input.to_owned(),
-            ref_name,
-            skill_path,
-        })
+        if let Some(parsed) = parse_gitlab_tree(&current, fragment_ref.as_deref())? {
+            return Ok(with_original_input(parsed, original));
+        }
+        if let Some(parsed) = parse_gitlab_com(&current, fragment_ref.as_deref()) {
+            return Ok(with_original_input(parsed, original));
+        }
+        if let Some(parsed) =
+            parse_github_shorthand(&current, fragment_ref.as_deref(), fragment_skill.as_deref())?
+        {
+            return Ok(with_original_input(parsed, original));
+        }
+        if is_well_known_url(&current) {
+            return Ok(skill_source(
+                original,
+                current.clone(),
+                SourceType::WellKnown,
+                current,
+                None,
+                None,
+                None,
+            ));
+        }
+
+        Ok(skill_source(
+            original,
+            current.trim_end_matches(".git").to_owned(),
+            SourceType::Git,
+            current,
+            fragment_ref,
+            None,
+            None,
+        ))
     }
 
     pub fn source_type_name(&self) -> &'static str {
@@ -589,6 +626,7 @@ impl SkillSource {
             SourceType::Git => "git",
             SourceType::Local => "local",
             SourceType::Direct => "direct",
+            SourceType::WellKnown => "well-known",
         }
     }
 
@@ -617,6 +655,351 @@ impl SkillSource {
         }
         entry
     }
+}
+
+fn skill_source(
+    original: &str,
+    normalized: impl Into<String>,
+    source_type: SourceType,
+    source_url: impl Into<String>,
+    ref_name: Option<String>,
+    skill_path: Option<String>,
+    skill_filter: Option<String>,
+) -> SkillSource {
+    SkillSource {
+        input: original.to_owned(),
+        normalized: normalized.into(),
+        source_type,
+        source_url: source_url.into(),
+        ref_name,
+        skill_path,
+        skill_filter,
+    }
+}
+
+fn with_original_input(mut parsed: SkillSource, original: &str) -> SkillSource {
+    parsed.input = original.to_owned();
+    parsed
+}
+
+fn is_local_path(input: &str) -> bool {
+    input == "."
+        || input == ".."
+        || input.starts_with("./")
+        || input.starts_with("../")
+        || input.starts_with('/')
+        || input.starts_with('~')
+        || input.starts_with('\\')
+        || (input.len() >= 3
+            && input.as_bytes()[0].is_ascii_alphabetic()
+            && input.as_bytes()[1] == b':'
+            && (input.as_bytes()[2] == b'\\' || input.as_bytes()[2] == b'/'))
+}
+
+fn resolve_alias(input: &str) -> String {
+    match input {
+        "coinbase/agentWallet" => "coinbase/agentic-wallet-skills".to_owned(),
+        _ => input.to_owned(),
+    }
+}
+
+fn split_fragment(input: &str) -> (String, Option<String>, Option<String>) {
+    let Some((base, fragment)) = input.split_once('#') else {
+        return (input.to_owned(), None, None);
+    };
+    if fragment.is_empty() || !looks_like_git_source(base) {
+        return (input.to_owned(), None, None);
+    }
+    if let Some((reference, skill)) = fragment.split_once('@') {
+        (
+            base.to_owned(),
+            (!reference.is_empty()).then(|| decode_fragment(reference)),
+            (!skill.is_empty()).then(|| decode_fragment(skill)),
+        )
+    } else {
+        (base.to_owned(), Some(decode_fragment(fragment)), None)
+    }
+}
+
+fn looks_like_git_source(input: &str) -> bool {
+    if input.starts_with("github:") || input.starts_with("gitlab:") || input.starts_with("git@") {
+        return true;
+    }
+    if input.len() >= 6 && input[..6].eq_ignore_ascii_case("ssh://") && git_suffix_present(input) {
+        return true;
+    }
+    if let Some(rest) = input
+        .strip_prefix("https://")
+        .or_else(|| input.strip_prefix("http://"))
+    {
+        let (host, path) = rest.split_once('/').unwrap_or((rest, ""));
+        let host = host.split('@').next_back().unwrap_or(host);
+        let host = host.split(':').next().unwrap_or(host).to_ascii_lowercase();
+        let path = format!("/{path}");
+        if host == "github.com" {
+            return github_path_is_repo_or_tree(&path);
+        }
+        if host == "gitlab.com" {
+            return gitlab_path_is_repo_or_tree(&path);
+        }
+        return git_suffix_present(input);
+    }
+    !input.contains(':')
+        && !input.starts_with('.')
+        && !input.starts_with('/')
+        && input.contains('/')
+}
+
+fn git_suffix_present(input: &str) -> bool {
+    let before_query = input.split(['?', '#']).next().unwrap_or(input);
+    before_query.ends_with(".git") || before_query.contains(".git/")
+}
+
+fn github_path_is_repo_or_tree(path: &str) -> bool {
+    let path = path.split('?').next().unwrap_or(path).trim_end_matches('/');
+    let parts: Vec<&str> = path.split('/').filter(|part| !part.is_empty()).collect();
+    matches!(
+        parts.as_slice(),
+        [_, _] | [_, _, "tree", _] | [_, _, "tree", _, ..]
+    )
+}
+
+fn gitlab_path_is_repo_or_tree(path: &str) -> bool {
+    let path = path.split('?').next().unwrap_or(path).trim_end_matches('/');
+    if let Some((repo, tree)) = path.split_once("/-/tree/") {
+        return repo.contains('/') && !tree.is_empty();
+    }
+    let path = path.trim_start_matches('/');
+    let path = path.strip_suffix(".git").unwrap_or(path);
+    path.contains('/')
+}
+
+fn decode_fragment(value: &str) -> String {
+    percent_decode(value).unwrap_or_else(|| value.to_owned())
+}
+
+fn percent_decode(value: &str) -> Option<String> {
+    let mut bytes = Vec::new();
+    let chars: Vec<char> = value.chars().collect();
+    let mut index = 0;
+    while index < chars.len() {
+        if chars[index] == '%' && index + 2 < chars.len() {
+            let hex: String = chars[index + 1..index + 3].iter().collect();
+            bytes.push(u8::from_str_radix(&hex, 16).ok()?);
+            index += 3;
+        } else {
+            let mut buffer = [0; 4];
+            bytes.extend(chars[index].encode_utf8(&mut buffer).as_bytes());
+            index += 1;
+        }
+    }
+    String::from_utf8(bytes).ok()
+}
+
+fn append_fragment(input: &str, reference: Option<&str>, skill: Option<&str>) -> String {
+    match (reference, skill) {
+        (Some(reference), Some(skill)) => format!("{input}#{reference}@{skill}"),
+        (Some(reference), None) => format!("{input}#{reference}"),
+        _ => input.to_owned(),
+    }
+}
+
+fn sanitize_subpath(subpath: &str) -> Result<String> {
+    if subpath
+        .replace('\\', "/")
+        .split('/')
+        .any(|segment| segment == "..")
+    {
+        return Err(GinoError::InvalidSource {
+            input: subpath.to_owned(),
+            reason: "subpath must not contain path traversal segments".to_owned(),
+        });
+    }
+    Ok(subpath.to_owned())
+}
+
+fn parse_github(input: &str, fragment_ref: Option<&str>) -> Result<Option<SkillSource>> {
+    let Some(index) = input.find("github.com/") else {
+        return Ok(None);
+    };
+    let rest = input[index + "github.com/".len()..]
+        .split('?')
+        .next()
+        .unwrap_or_default()
+        .trim_end_matches('/');
+    let parts: Vec<&str> = rest.split('/').filter(|part| !part.is_empty()).collect();
+    if parts.len() < 2 {
+        return Ok(None);
+    }
+    let owner = parts[0];
+    let repo = parts[1].trim_end_matches(".git");
+    if owner.is_empty() || repo.is_empty() {
+        return Ok(None);
+    }
+    let normalized = format!("{owner}/{repo}");
+    let source_url = format!("https://github.com/{owner}/{repo}.git");
+    if parts.get(2) == Some(&"tree") && parts.len() >= 4 {
+        let ref_name = parts[3].to_owned();
+        let subpath = if parts.len() > 4 {
+            Some(sanitize_subpath(&parts[4..].join("/"))?)
+        } else {
+            None
+        };
+        return Ok(Some(skill_source(
+            input,
+            normalized,
+            SourceType::Github,
+            source_url,
+            Some(ref_name).or_else(|| fragment_ref.map(ToOwned::to_owned)),
+            subpath,
+            None,
+        )));
+    }
+    Ok(Some(skill_source(
+        input,
+        normalized,
+        SourceType::Github,
+        source_url,
+        fragment_ref.map(ToOwned::to_owned),
+        None,
+        None,
+    )))
+}
+
+fn parse_gitlab_tree(input: &str, fragment_ref: Option<&str>) -> Result<Option<SkillSource>> {
+    let Some((scheme, rest)) = input.split_once("://") else {
+        return Ok(None);
+    };
+    if scheme != "http" && scheme != "https" {
+        return Ok(None);
+    }
+    let Some((host, path)) = rest.split_once('/') else {
+        return Ok(None);
+    };
+    if host.eq_ignore_ascii_case("github.com") {
+        return Ok(None);
+    }
+    let marker = "/-/tree/";
+    let Some(index) = path.find(marker) else {
+        return Ok(None);
+    };
+    let repo_path = path[..index].trim_end_matches(".git");
+    if repo_path.is_empty() {
+        return Ok(None);
+    }
+    let after = path[index + marker.len()..]
+        .split('?')
+        .next()
+        .unwrap_or_default();
+    let mut parts = after.split('/');
+    let Some(reference) = parts.next().filter(|part| !part.is_empty()) else {
+        return Ok(None);
+    };
+    let subpath = parts.collect::<Vec<_>>().join("/");
+    let skill_path = if subpath.is_empty() {
+        None
+    } else {
+        Some(sanitize_subpath(&subpath)?)
+    };
+    Ok(Some(skill_source(
+        input,
+        repo_path.to_owned(),
+        SourceType::Gitlab,
+        format!("{scheme}://{host}/{repo_path}.git"),
+        Some(reference.to_owned()).or_else(|| fragment_ref.map(ToOwned::to_owned)),
+        skill_path,
+        None,
+    )))
+}
+
+fn parse_gitlab_com(input: &str, fragment_ref: Option<&str>) -> Option<SkillSource> {
+    let index = input.find("gitlab.com/")?;
+    let rest = input[index + "gitlab.com/".len()..]
+        .split('?')
+        .next()
+        .unwrap_or_default();
+    if rest.contains("/-/") {
+        return None;
+    }
+    let rest = rest.trim_end_matches('/');
+    let rest = rest.strip_suffix(".git").unwrap_or(rest);
+    if rest.is_empty() || !rest.contains('/') {
+        return None;
+    }
+    Some(skill_source(
+        input,
+        rest.to_owned(),
+        SourceType::Gitlab,
+        format!("https://gitlab.com/{rest}.git"),
+        fragment_ref.map(ToOwned::to_owned),
+        None,
+        None,
+    ))
+}
+
+fn parse_github_shorthand(
+    input: &str,
+    fragment_ref: Option<&str>,
+    fragment_skill: Option<&str>,
+) -> Result<Option<SkillSource>> {
+    if input.contains(':') || input.starts_with('.') || input.starts_with('/') {
+        return Ok(None);
+    }
+    if let Some((left, skill)) = input.split_once('@') {
+        let mut parts = left.split('/');
+        let owner = parts.next().unwrap_or_default();
+        let repo = parts.next().unwrap_or_default();
+        if parts.next().is_none() && !owner.is_empty() && !repo.is_empty() && !skill.is_empty() {
+            return Ok(Some(skill_source(
+                input,
+                format!("{owner}/{repo}"),
+                SourceType::Github,
+                format!("https://github.com/{owner}/{repo}.git"),
+                fragment_ref.map(ToOwned::to_owned),
+                None,
+                Some(fragment_skill.unwrap_or(skill).to_owned()),
+            )));
+        }
+        return Ok(None);
+    }
+    let trimmed = input.trim_end_matches('/');
+    let mut parts = trimmed.split('/');
+    let owner = parts.next().unwrap_or_default();
+    let repo = parts.next().unwrap_or_default();
+    if owner.is_empty() || repo.is_empty() {
+        return Ok(None);
+    }
+    let subpath = parts.collect::<Vec<_>>().join("/");
+    let skill_path = if subpath.is_empty() {
+        None
+    } else {
+        Some(sanitize_subpath(&subpath)?)
+    };
+    Ok(Some(skill_source(
+        input,
+        format!("{owner}/{repo}"),
+        SourceType::Github,
+        format!("https://github.com/{owner}/{repo}.git"),
+        fragment_ref.map(ToOwned::to_owned),
+        skill_path,
+        fragment_skill.map(ToOwned::to_owned),
+    )))
+}
+
+fn is_well_known_url(input: &str) -> bool {
+    let rest = input
+        .strip_prefix("https://")
+        .or_else(|| input.strip_prefix("http://"));
+    let Some(rest) = rest else {
+        return false;
+    };
+    let host = rest.split('/').next().unwrap_or_default();
+    let host = host.split('@').next_back().unwrap_or(host);
+    let host = host.split(':').next().unwrap_or(host).to_ascii_lowercase();
+    !matches!(
+        host.as_str(),
+        "github.com" | "gitlab.com" | "raw.githubusercontent.com"
+    ) && !input.ends_with(".git")
 }
 
 pub fn sanitize_skill_name(name: &str) -> Result<String> {
@@ -677,6 +1060,14 @@ mod tests {
     }
 
     #[test]
+    fn project_lock_matches_upstream_filename() {
+        assert_eq!(
+            project_lock_path(Path::new("/repo")),
+            PathBuf::from("/repo/skills-lock.json")
+        );
+    }
+
+    #[test]
     fn lock_round_trip_preserves_unknown_fields() {
         let root = tempdir().expect("tempdir");
         let lock_path = root.path().join(".skill-lock.json");
@@ -709,14 +1100,140 @@ mod tests {
         let github =
             SkillSource::parse("https://github.com/vercel-labs/agent-skills/tree/main/skills/demo")
                 .expect("github source");
+        assert_eq!(github.source_type, SourceType::Github);
         assert_eq!(github.normalized, "vercel-labs/agent-skills");
+        assert_eq!(
+            github.source_url,
+            "https://github.com/vercel-labs/agent-skills.git"
+        );
         assert_eq!(github.ref_name.as_deref(), Some("main"));
         assert_eq!(github.skill_path.as_deref(), Some("skills/demo"));
+        assert_eq!(github.skill_filter, None);
 
         let shorthand =
             SkillSource::parse("vercel-labs/agent-skills@demo").expect("shorthand source");
         assert_eq!(shorthand.source_type, SourceType::Github);
-        assert_eq!(shorthand.skill_path.as_deref(), Some("demo"));
+        assert_eq!(shorthand.skill_path, None);
+        assert_eq!(shorthand.skill_filter.as_deref(), Some("demo"));
+        assert_eq!(
+            shorthand.source_url,
+            "https://github.com/vercel-labs/agent-skills.git"
+        );
+
+        let nested = SkillSource::parse("owner/repo/skills/demo").expect("nested");
+        assert_eq!(nested.skill_path.as_deref(), Some("skills/demo"));
+        assert_eq!(nested.skill_filter, None);
+
+        let gitlab = SkillSource::parse("https://gitlab.com/group/repo/-/tree/main/skills/demo")
+            .expect("gitlab");
+        assert_eq!(gitlab.source_type, SourceType::Gitlab);
+        assert_eq!(gitlab.normalized, "group/repo");
+        assert_eq!(gitlab.source_url, "https://gitlab.com/group/repo.git");
+        assert_eq!(gitlab.ref_name.as_deref(), Some("main"));
+        assert_eq!(gitlab.skill_path.as_deref(), Some("skills/demo"));
+
+        let well_known =
+            SkillSource::parse("https://skills.example.com/catalog").expect("well-known");
+        assert_eq!(well_known.source_type, SourceType::WellKnown);
+
+        let prefixed = SkillSource::parse("github:owner/repo#main@demo").expect("prefixed");
+        assert_eq!(prefixed.normalized, "owner/repo");
+        assert_eq!(prefixed.ref_name.as_deref(), Some("main"));
+        assert_eq!(prefixed.skill_filter.as_deref(), Some("demo"));
+        assert_eq!(prefixed.skill_path, None);
+    }
+
+    #[test]
+    fn parses_upstream_source_parser_fixtures() {
+        let custom =
+            SkillSource::parse("https://git.corp.com/group/subgroup/project/-/tree/main/src")
+                .expect("custom gitlab");
+        assert_eq!(custom.source_type, SourceType::Gitlab);
+        assert_eq!(custom.normalized, "group/subgroup/project");
+        assert_eq!(
+            custom.source_url,
+            "https://git.corp.com/group/subgroup/project.git"
+        );
+        assert_eq!(custom.ref_name.as_deref(), Some("main"));
+        assert_eq!(custom.skill_path.as_deref(), Some("src"));
+
+        let branch_only =
+            SkillSource::parse("https://gitlab.example.com/org/repo/-/tree/v1.0").expect("branch");
+        assert_eq!(branch_only.source_type, SourceType::Gitlab);
+        assert_eq!(
+            branch_only.source_url,
+            "https://gitlab.example.com/org/repo.git"
+        );
+        assert_eq!(branch_only.ref_name.as_deref(), Some("v1.0"));
+        assert_eq!(branch_only.skill_path, None);
+
+        let with_port =
+            SkillSource::parse("https://git.corp.com:8443/group/repo/-/tree/main").expect("port");
+        assert_eq!(with_port.source_type, SourceType::Gitlab);
+        assert_eq!(
+            with_port.source_url,
+            "https://git.corp.com:8443/group/repo.git"
+        );
+
+        let http = SkillSource::parse("http://git.local/group/repo/-/tree/dev").expect("http");
+        assert_eq!(http.source_url, "http://git.local/group/repo.git");
+
+        let personal =
+            SkillSource::parse("https://gitlab.com/~user/project/-/tree/main").expect("personal");
+        assert_eq!(personal.source_url, "https://gitlab.com/~user/project.git");
+
+        let custom_git =
+            SkillSource::parse("https://git.mycompany.com/my-group/my-repo.git").expect("git");
+        assert_eq!(custom_git.source_type, SourceType::Git);
+        assert_eq!(
+            custom_git.source_url,
+            "https://git.mycompany.com/my-group/my-repo.git"
+        );
+
+        let generic = SkillSource::parse("https://google.com/search/result").expect("well-known");
+        assert_eq!(generic.source_type, SourceType::WellKnown);
+
+        let gitlab_com = SkillSource::parse("https://gitlab.com/owner/repo").expect("gitlab.com");
+        assert_eq!(gitlab_com.source_type, SourceType::Gitlab);
+        assert_eq!(gitlab_com.source_url, "https://gitlab.com/owner/repo.git");
+
+        let subgroup = SkillSource::parse("https://gitlab.com/group/subgroup/repo").expect("sub");
+        assert_eq!(subgroup.normalized, "group/subgroup/repo");
+        assert_eq!(
+            subgroup.source_url,
+            "https://gitlab.com/group/subgroup/repo.git"
+        );
+
+        let gitlab_prefix = SkillSource::parse("gitlab:group/repo#main").expect("gitlab prefix");
+        assert_eq!(gitlab_prefix.source_type, SourceType::Gitlab);
+        assert_eq!(gitlab_prefix.ref_name.as_deref(), Some("main"));
+
+        let blob = SkillSource::parse("https://github.com/owner/repo/blob/main/README.md#L10")
+            .expect("blob");
+        assert_eq!(blob.source_type, SourceType::Github);
+        assert_eq!(blob.ref_name, None);
+        assert_eq!(blob.skill_path, None);
+
+        let hashed = SkillSource::parse("vercel-labs/agent-skills#feature/install").expect("hash");
+        assert_eq!(hashed.ref_name.as_deref(), Some("feature/install"));
+        assert_eq!(hashed.skill_path, None);
+
+        let trailing = SkillSource::parse("vercel-labs/agent-skills/").expect("slash");
+        assert_eq!(trailing.normalized, "vercel-labs/agent-skills");
+        assert_eq!(trailing.skill_path, None);
+
+        let ssh = SkillSource::parse("git@github.com:owner/repo.git#feature/install").expect("ssh");
+        assert_eq!(ssh.source_type, SourceType::Git);
+        assert_eq!(ssh.source_url, "git@github.com:owner/repo.git");
+        assert_eq!(ssh.ref_name.as_deref(), Some("feature/install"));
+
+        let alias = SkillSource::parse("coinbase/agentWallet").expect("alias");
+        assert_eq!(alias.normalized, "coinbase/agentic-wallet-skills");
+
+        let local = SkillSource::parse("./skills/demo").expect("local");
+        assert_eq!(local.source_type, SourceType::Local);
+
+        assert!(SkillSource::parse("owner/repo/foo/../escape").is_err());
     }
 
     #[test]
@@ -735,17 +1252,49 @@ mod tests {
         assert!(global_text.contains("\"dismissed\""));
 
         let mut project = LockFile::empty(LockScope::Project);
-        project.set_skill("demo", source.lock_entry_for("def".to_owned(), LockScope::Project));
+        project.set_skill(
+            "demo",
+            source.lock_entry_for("def".to_owned(), LockScope::Project),
+        );
         project.normalize_for_scope(LockScope::Project);
         write_lock_file(&project_path, &project).expect("write project");
         let project_text = fs::read_to_string(&project_path).expect("read project");
         assert!(project_text.contains("\"computedHash\""));
         assert!(!project_text.contains("skillFolderHash"));
         assert!(project_text.contains("\"version\": 1"));
+        assert!(project_text.ends_with('\n'));
+
+        // The project lock is intentionally minimal and timestamp-free
+        // (upstream `local-lock.ts`): no prompt state, no agent selection,
+        // no install/update timestamps, and no serialized null fields.
+        for forbidden in [
+            "installedAt",
+            "updatedAt",
+            "dismissed",
+            "lastSelectedAgents",
+            "pluginName",
+            "null",
+        ] {
+            assert!(
+                !project_text.contains(forbidden),
+                "project lock must not contain {forbidden}"
+            );
+        }
+        // The global lock never emits prompt-state nulls either.
+        let global_without_dismissed = LockFile::empty(LockScope::Global);
+        let global_bytes = global_without_dismissed
+            .to_bytes_for_scope(&global_path, LockScope::Global)
+            .expect("serialize global");
+        let global_text = String::from_utf8(global_bytes).expect("utf8");
+        assert!(!global_text.contains("null"));
+        assert!(!global_text.ends_with('\n'));
 
         // Re-reading maps the project hash back to the canonical field.
         let reread = read_lock_file(&project_path, LockScope::Project).expect("reread project");
-        assert_eq!(reread.skills["demo"].skill_folder_hash.as_deref(), Some("def"));
+        assert_eq!(
+            reread.skills["demo"].skill_folder_hash.as_deref(),
+            Some("def")
+        );
     }
 
     #[test]
