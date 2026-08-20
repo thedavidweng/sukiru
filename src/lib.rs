@@ -5,15 +5,21 @@
 //! second installation authority.
 
 pub mod agents;
+pub mod command;
 pub mod comparison;
 pub mod discovery;
 pub mod error;
 pub mod executor;
 pub mod git;
 pub mod inventory;
+pub mod marketplace;
 pub mod metadata;
 pub mod planner;
+pub mod platform;
 pub mod protocol;
 pub mod source;
 
+pub use command::{equivalent_command, find_command};
 pub use error::{GinoError, Result};
+pub use metadata::{APP_VERSION, RELEASES_URL};
+pub use protocol::{SkillSource, SourceType};

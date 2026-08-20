@@ -1,5 +1,6 @@
-# The upstream contract is intentionally pinned. Change this value only with
-# differential fixture evidence against the official CLI.
+# Pinned protocol reference. CI e2e also runs `skills@latest` against
+# https://github.com/thedavidweng/skills (`stale-docs-cleanup`) so a latest-only
+# drift shows up without silently rewriting this pin.
 upstream = "vercel-labs/skills"
 version = "1.5.9"
 global_lock_version = 3

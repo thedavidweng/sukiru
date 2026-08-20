@@ -89,34 +89,41 @@ impl SourceCache {
             .as_deref()
             .map(|path| resolved.root.join(path))
             .unwrap_or_else(|| resolved.root.clone());
-        if root.join("SKILL.md").exists() {
+        let mut discovered = if root.join("SKILL.md").exists() {
             let metadata = parse_skill_metadata(&root)?;
-            return Ok(DiscoveryResult {
+            DiscoveryResult {
                 skills: vec![crate::discovery::DiscoveredSkill {
                     metadata,
                     path: root,
                 }],
                 issues: Vec::new(),
-            });
-        }
-        let discovered = discover_skills(&root, full_depth)?;
-        if discovered.skills.is_empty() && discovered.issues.is_empty() {
-            discover_source_root(root, full_depth)
+            }
         } else {
-            Ok(discovered)
+            let discovered = discover_skills(&root, full_depth)?;
+            if discovered.skills.is_empty() && discovered.issues.is_empty() {
+                discover_source_root(root, full_depth)?
+            } else {
+                discovered
+            }
+        };
+        if let Some(filter) = &source.skill_filter {
+            discovered
+                .skills
+                .retain(|skill| skill.metadata.name.eq_ignore_ascii_case(filter));
         }
+        Ok(discovered)
     }
 }
 
 fn clone_url(source: &SkillSource) -> Result<String> {
     match source.source_type {
-        SourceType::Github => Ok(format!("https://github.com/{}.git", source.normalized)),
-        SourceType::Gitlab => Ok(format!("https://gitlab.com/{}.git", source.normalized)),
-        SourceType::Git | SourceType::Direct => Ok(source.source_url.clone()),
-        SourceType::Local => Err(GinoError::InvalidSource {
+        SourceType::Local | SourceType::WellKnown => Err(GinoError::InvalidSource {
             input: source.input.clone(),
-            reason: "local sources do not use a Git clone".to_owned(),
+            reason: "this source type does not use a Git clone".to_owned(),
         }),
+        SourceType::Github | SourceType::Gitlab | SourceType::Git | SourceType::Direct => {
+            Ok(source.source_url.clone())
+        }
     }
 }
 
@@ -144,5 +151,27 @@ mod tests {
 
         assert_eq!(discovered.skills.len(), 1);
         assert_eq!(discovered.skills[0].metadata.name, "demo");
+    }
+
+    #[test]
+    fn at_skill_filter_is_not_a_repository_subpath() {
+        let source_root = tempdir().expect("source");
+        fs::create_dir_all(source_root.path().join("skills/demo")).expect("skill");
+        fs::write(
+            source_root.path().join("skills/demo/SKILL.md"),
+            "---\nname: demo\ndescription: demo\n---\n",
+        )
+        .expect("skill file");
+        let cache = SourceCache::new(tempdir().expect("cache").path());
+        let mut source = SkillSource::parse(&source_root.path().to_string_lossy()).expect("source");
+        source.skill_filter = Some("demo".to_owned());
+
+        let discovered = cache.discover(&source, false).expect("discover");
+        assert_eq!(discovered.skills.len(), 1);
+        assert_eq!(discovered.skills[0].metadata.name, "demo");
+
+        source.skill_filter = Some("missing".to_owned());
+        let filtered = cache.discover(&source, false).expect("discover");
+        assert!(filtered.skills.is_empty());
     }
 }

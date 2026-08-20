@@ -2,8 +2,9 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::time::{SystemTime, UNIX_EPOCH};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::error::{GinoError, Result, io_error};
 use crate::inventory::Inventory;
@@ -29,33 +30,71 @@ pub enum PushStatus {
     NotPushed(String),
 }
 
-#[derive(Clone, Debug, Serialize)]
-struct BackupManifest {
-    version: u64,
-    metadata: BackupMetadata,
-    skills: BTreeMap<String, BackupSkill>,
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BackupManifest {
+    pub version: u64,
+    pub metadata: BackupMetadata,
+    pub skills: BTreeMap<String, BackupSkill>,
 }
 
-#[derive(Clone, Debug, Serialize)]
-struct BackupSkill {
-    source: Option<String>,
-    source_type: Option<String>,
-    source_ref: Option<String>,
-    content_hash: Option<String>,
-    placements: Vec<BackupPlacement>,
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BackupSkill {
+    pub source: Option<String>,
+    pub source_type: Option<String>,
+    pub source_ref: Option<String>,
+    pub content_hash: Option<String>,
+    pub placements: Vec<BackupPlacement>,
 }
 
-#[derive(Clone, Debug, Serialize)]
-struct BackupPlacement {
-    workspace_id: String,
-    workspace_kind: String,
-    agent_id: Option<String>,
-    source: Option<String>,
-    source_type: Option<String>,
-    source_ref: Option<String>,
-    content_hash: Option<String>,
-    repository_path: String,
-    relative_path: String,
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BackupPlacement {
+    pub workspace_id: String,
+    pub workspace_kind: String,
+    pub agent_id: Option<String>,
+    pub source: Option<String>,
+    pub source_type: Option<String>,
+    pub source_ref: Option<String>,
+    pub content_hash: Option<String>,
+    pub repository_path: String,
+    pub relative_path: String,
+}
+
+/// One Skill placement as seen through the remote backup manifest (US-017).
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RemoteSkillChange {
+    pub skill_name: String,
+    pub workspace_id: String,
+    pub relative_path: String,
+    pub status: RemoteChangeStatus,
+    pub remote_content_hash: Option<String>,
+    pub local_content_hash: Option<String>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RemoteChangeStatus {
+    /// Present on the remote, not installed locally.
+    Available,
+    /// Same placement installed locally with different content.
+    Conflict,
+    /// Identical on both sides.
+    Unchanged,
+    /// Installed locally but absent from the remote manifest.
+    Removed,
+}
+
+/// Read-only remote comparison (US-017): remote differences are proposed,
+/// never applied, until the user selects a resolution and applies the batch.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SyncProposal {
+    pub remote_commit: String,
+    pub changes: Vec<RemoteSkillChange>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CommitInfo {
+    pub id: String,
+    pub created_at: String,
+    pub subject: String,
 }
 
 impl GitRepository {
@@ -265,6 +304,198 @@ impl GitRepository {
         Ok(())
     }
 
+    /// One `git fetch` per session (§16.5): refreshes remote refs without
+    /// touching the working tree.
+    pub fn fetch(&self) -> Result<()> {
+        self.run(&["fetch", "--quiet", "--all"])?;
+        Ok(())
+    }
+
+    /// The remote tracking ref for the current branch, e.g. `origin/main`.
+    /// `None` when the repository has no upstream configured.
+    pub fn upstream_ref(&self) -> Result<Option<String>> {
+        let output = self.run(&[
+            "rev-parse",
+            "--abbrev-ref",
+            "--symbolic-full-name",
+            "@{upstream}",
+        ])?;
+        let reference = String::from_utf8_lossy(&output).trim().to_owned();
+        if reference.is_empty() {
+            return Ok(None);
+        }
+        Ok(Some(reference))
+    }
+
+    /// Read the backup manifest recorded at `revision` (US-017/US-019).
+    pub fn manifest_from_ref(&self, revision: &str) -> Result<BackupManifest> {
+        let target = format!("{revision}:manifest.json");
+        let bytes = self.run(&["show", &target])?;
+        let manifest: BackupManifest =
+            serde_json::from_slice(&bytes).map_err(|source| GinoError::Git {
+                directory: self.root.clone(),
+                command: format!("git show {revision}:manifest.json"),
+                cause: format!("manifest at `{revision}` is not valid backup JSON: {source}"),
+            })?;
+        if manifest.version != 1 {
+            return Err(GinoError::Git {
+                directory: self.root.clone(),
+                command: format!("git show {revision}:manifest.json"),
+                cause: format!(
+                    "manifest at `{revision}` uses unsupported version {}",
+                    manifest.version
+                ),
+            });
+        }
+        Ok(manifest)
+    }
+
+    /// Materialize the tree at `repository_path` (e.g. `skills/demo/abc123`)
+    /// from `revision` into `destination`. The tree's leading path components
+    /// are stripped so the Skill contents land directly in `destination`.
+    pub fn extract_tree(
+        &self,
+        revision: &str,
+        repository_path: &str,
+        destination: &Path,
+    ) -> Result<()> {
+        fs::create_dir_all(destination).map_err(|source| io_error(destination, source))?;
+        let tar_bytes = self.run(&["archive", "--format=tar", revision, "--", repository_path])?;
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|duration| duration.as_nanos())
+            .map_err(|source| GinoError::Clock {
+                cause: source.to_string(),
+            })?;
+        let tar_path = self.root.join(format!(".gino-extract-{stamp}.tar"));
+        fs::write(&tar_path, &tar_bytes).map_err(|source| io_error(&tar_path, source))?;
+        let strip = repository_path.split('/').count().to_string();
+        let output = Command::new("tar")
+            .args(["-xf", tar_path.to_string_lossy().as_ref()])
+            .arg("--strip-components")
+            .arg(&strip)
+            .arg("-C")
+            .arg(destination)
+            .output()
+            .map_err(|source| io_error(&tar_path, source))?;
+        let _ = fs::remove_file(&tar_path);
+        if !output.status.success() {
+            return Err(GinoError::Git {
+                directory: self.root.clone(),
+                command: format!("tar -xf ... --strip-components={strip}"),
+                cause: String::from_utf8_lossy(&output.stderr).trim().to_owned(),
+            });
+        }
+        Ok(())
+    }
+
+    /// Recent backup history for restore proposals (US-019).
+    pub fn log(&self, limit: usize) -> Result<Vec<CommitInfo>> {
+        let format = "%H%x1f%cI%x1f%s";
+        let bytes = self.run(&["log", &format!("--format={format}"), &format!("-n {limit}")])?;
+        let text = String::from_utf8_lossy(&bytes);
+        Ok(text
+            .lines()
+            .filter(|line| !line.is_empty())
+            .map(|line| {
+                let mut parts = line.split('\u{1f}');
+                CommitInfo {
+                    id: parts.next().unwrap_or_default().to_owned(),
+                    created_at: parts.next().unwrap_or_default().to_owned(),
+                    subject: parts.next().unwrap_or_default().to_owned(),
+                }
+            })
+            .collect())
+    }
+
+    /// Compare the local inventory against the remote backup manifest
+    /// (§16.5/16.6, US-017). Read-only: differences are proposed per Skill
+    /// and become Pending Changes only after the user selects a resolution.
+    pub fn propose_sync(&self, inventory: &Inventory) -> Result<SyncProposal> {
+        let reference = self.upstream_ref()?.ok_or_else(|| GinoError::Git {
+            directory: self.root.clone(),
+            command: "git rev-parse @{upstream}".to_owned(),
+            cause: "no upstream remote is configured for the backup repository".to_owned(),
+        })?;
+        let remote_commit = String::from_utf8_lossy(&self.run(&["rev-parse", &reference])?)
+            .trim()
+            .to_owned();
+        let manifest = self.manifest_from_ref(&reference)?;
+        let mut remote_placements = BTreeMap::<(String, String), (String, Option<String>)>::new();
+        for (skill_name, skill) in &manifest.skills {
+            for placement in &skill.placements {
+                remote_placements.insert(
+                    (
+                        placement.workspace_id.clone(),
+                        placement.relative_path.clone(),
+                    ),
+                    (skill_name.clone(), placement.content_hash.clone()),
+                );
+            }
+        }
+        let mut changes = Vec::new();
+        for ((workspace_id, relative_path), (skill_name, remote_hash)) in &remote_placements {
+            let local = inventory.placements.iter().find(|placement| {
+                placement.workspace_id == *workspace_id
+                    && placement_relative_path(placement)
+                        .map(|relative| relative == *relative_path)
+                        .unwrap_or(false)
+            });
+            changes.push(match local {
+                None => RemoteSkillChange {
+                    skill_name: skill_name.clone(),
+                    workspace_id: workspace_id.clone(),
+                    relative_path: relative_path.clone(),
+                    status: RemoteChangeStatus::Available,
+                    remote_content_hash: remote_hash.clone(),
+                    local_content_hash: None,
+                },
+                Some(local) => {
+                    let local_hash = local.content_hash.clone();
+                    let status = if local_hash == *remote_hash {
+                        RemoteChangeStatus::Unchanged
+                    } else {
+                        RemoteChangeStatus::Conflict
+                    };
+                    RemoteSkillChange {
+                        skill_name: skill_name.clone(),
+                        workspace_id: workspace_id.clone(),
+                        relative_path: relative_path.clone(),
+                        status,
+                        remote_content_hash: remote_hash.clone(),
+                        local_content_hash: local_hash,
+                    }
+                }
+            });
+        }
+        for placement in &inventory.placements {
+            let key = (
+                placement.workspace_id.clone(),
+                placement_relative_path(placement)?,
+            );
+            if !remote_placements.contains_key(&key) {
+                changes.push(RemoteSkillChange {
+                    skill_name: placement.name.clone(),
+                    workspace_id: placement.workspace_id.clone(),
+                    relative_path: key.1,
+                    status: RemoteChangeStatus::Removed,
+                    remote_content_hash: None,
+                    local_content_hash: placement.content_hash.clone(),
+                });
+            }
+        }
+        changes.sort_by(|left, right| {
+            left.skill_name
+                .cmp(&right.skill_name)
+                .then_with(|| left.workspace_id.cmp(&right.workspace_id))
+                .then_with(|| left.relative_path.cmp(&right.relative_path))
+        });
+        Ok(SyncProposal {
+            remote_commit,
+            changes,
+        })
+    }
+
     fn run(&self, args: &[&str]) -> Result<Vec<u8>> {
         self.run_with_env(args)
     }
@@ -469,5 +700,112 @@ mod tests {
             fs::read_to_string(backup.path().join("skills/user-change.txt")).expect("user file"),
             "keep"
         );
+    }
+
+    fn write_skill(root: &Path, name: &str, body: &str) {
+        fs::create_dir_all(root.join(name)).expect("skill dir");
+        fs::write(
+            root.join(name).join("SKILL.md"),
+            format!("---\nname: {name}\ndescription: demo\n---\n{body}\n"),
+        )
+        .expect("skill file");
+    }
+
+    fn scan(root: &Path) -> Inventory {
+        let workspace = Workspace::new("dev", "Dev", WorkspaceKind::Custom, root);
+        InventoryScanner::new(&[workspace]).scan(1).expect("scan")
+    }
+
+    #[test]
+    fn fetch_and_propose_sync_report_available_unchanged_and_removed_skills() {
+        let remote_root = tempdir().expect("remote device");
+        let remote_repo = GitRepository::open_or_init(remote_root.path()).expect("git init");
+        write_skill(remote_root.path(), "demo", "remote body");
+        write_skill(remote_root.path(), "remote-extra", "remote extra");
+        let remote_inventory = scan(remote_root.path());
+        remote_repo
+            .materialize_inventory(&remote_inventory)
+            .expect("remote materialize");
+        remote_repo
+            .run(&["branch", "-M", "main"])
+            .expect("remote branch");
+        remote_repo
+            .commit("Apply 1 change", PushMode::CommitLocally)
+            .expect("remote commit");
+
+        // The backup repository clones the remote device's repository and
+        // installs its own Skill set locally.
+        let local_root = tempdir().expect("local device");
+        let local_repo = GitRepository::open_or_init(local_root.path()).expect("git init");
+        let _ = local_repo.run(&[
+            "remote",
+            "add",
+            "origin",
+            remote_root.path().to_string_lossy().as_ref(),
+        ]);
+        write_skill(local_root.path(), "demo", "remote body");
+        write_skill(local_root.path(), "local-only", "local only");
+        let local_inventory = scan(local_root.path());
+        local_repo
+            .materialize_inventory(&local_inventory)
+            .expect("local materialize");
+        local_repo
+            .run(&["branch", "-M", "main"])
+            .expect("local branch");
+        local_repo
+            .commit("Apply 1 change", PushMode::CommitLocally)
+            .expect("local commit");
+        local_repo.fetch().expect("fetch");
+        local_repo
+            .run(&["branch", "--set-upstream-to=origin/main", "main"])
+            .expect("set upstream");
+
+        let proposal = local_repo.propose_sync(&local_inventory).expect("proposal");
+        assert_eq!(proposal.remote_commit.len(), 40);
+        let status_of = |name: &str| {
+            proposal
+                .changes
+                .iter()
+                .find(|change| change.skill_name == name)
+                .map(|change| change.status)
+        };
+        assert_eq!(status_of("demo"), Some(RemoteChangeStatus::Unchanged));
+        assert_eq!(
+            status_of("remote-extra"),
+            Some(RemoteChangeStatus::Available)
+        );
+        assert_eq!(status_of("local-only"), Some(RemoteChangeStatus::Removed));
+    }
+
+    #[test]
+    fn manifest_from_ref_and_extract_tree_restore_remote_content() {
+        let device_root = tempdir().expect("device");
+        let device_repo = GitRepository::open_or_init(device_root.path()).expect("git init");
+        write_skill(device_root.path(), "demo", "backup body");
+        let inventory = scan(device_root.path());
+        device_repo
+            .materialize_inventory(&inventory)
+            .expect("materialize");
+        device_repo.run(&["branch", "-M", "main"]).expect("branch");
+        device_repo
+            .commit("Apply 1 change", PushMode::CommitLocally)
+            .expect("commit");
+
+        let head = device_repo.run(&["rev-parse", "HEAD"]).expect("head");
+        let head = String::from_utf8_lossy(&head).trim().to_owned();
+        let manifest = device_repo.manifest_from_ref(&head).expect("manifest");
+        assert_eq!(manifest.version, 1);
+        let placement = manifest.skills["demo"].placements[0].clone();
+        let restored = tempdir().expect("restored");
+        device_repo
+            .extract_tree(&head, &placement.repository_path, restored.path())
+            .expect("extract");
+
+        let contents = fs::read_to_string(restored.path().join("SKILL.md")).expect("restored file");
+        assert!(contents.contains("backup body"));
+
+        let history = device_repo.log(5).expect("log");
+        assert!(!history.is_empty());
+        assert_eq!(history[0].id, head);
     }
 }

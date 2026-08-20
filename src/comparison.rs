@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 
 use crate::error::Result;
 use crate::protocol::{collect_skill_files, skill_folder_hash};
@@ -95,6 +96,34 @@ pub fn compare_skill_dirs(
     })
 }
 
+/// Stable key for an "ignore this upstream update" decision. It binds the
+/// decision to the exact upstream content that was compared; when upstream
+/// publishes new content (`upstream_hash` changes) the decision no longer
+/// matches and the update is surfaced again. Local modifications do not
+/// invalidate it.
+pub fn update_ignore_fingerprint(skill_name: &str, upstream_hash: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(skill_name.as_bytes());
+    hasher.update(b"\n");
+    hasher.update(upstream_hash.as_bytes());
+    format!("{:x}", hasher.finalize())
+}
+
+/// Match a comparison against a persisted ignore decision. A comparison is
+/// ignored only when it reports `UpdateAvailable` for the same upstream
+/// content that was ignored; local modifications are always surfaced.
+pub fn is_ignored_update(
+    ignored: impl Fn(&str, &str) -> bool,
+    skill_name: &str,
+    comparison: &SkillComparison,
+) -> bool {
+    comparison.status == UpdateStatus::UpdateAvailable
+        && ignored(
+            skill_name,
+            &update_ignore_fingerprint(skill_name, &comparison.upstream_hash),
+        )
+}
+
 #[cfg(test)]
 mod tests {
     use std::fs;
@@ -113,26 +142,41 @@ mod tests {
     }
 
     #[test]
-    fn distinguishes_clean_upstream_updates_from_local_modifications() {
+    fn update_ignore_fingerprint_binds_skill_and_upstream_content() {
+        let first = update_ignore_fingerprint("demo", "hash-1");
+        assert_eq!(first, update_ignore_fingerprint("demo", "hash-1"));
+        assert_ne!(first, update_ignore_fingerprint("demo", "hash-2"));
+        assert_ne!(first, update_ignore_fingerprint("other", "hash-1"));
+    }
+
+    #[test]
+    fn ignored_update_only_matches_clean_available_updates() {
         let local = tempdir().expect("local");
         let upstream = tempdir().expect("upstream");
         write_skill(local.path(), "same");
         write_skill(upstream.path(), "new");
         let local_hash = skill_folder_hash(local.path()).expect("hash");
-
-        let comparison = compare_skill_dirs(local.path(), upstream.path(), Some(&local_hash))
-            .expect("comparison");
+        let comparison =
+            compare_skill_dirs(local.path(), upstream.path(), Some(&local_hash)).expect("compare");
         assert_eq!(comparison.status, UpdateStatus::UpdateAvailable);
+
+        let store = |name: &str, _: &str| name == "demo";
         assert!(
-            comparison
-                .files
-                .iter()
-                .any(|file| file.relative_path == "SKILL.md")
+            is_ignored_update(store, "demo", &comparison),
+            "available update is ignored"
+        );
+        assert!(
+            !is_ignored_update(store, "other", &comparison),
+            "other skill is not ignored"
         );
 
         write_skill(local.path(), "local edit");
-        let modified = compare_skill_dirs(local.path(), upstream.path(), Some(&local_hash))
-            .expect("comparison");
+        let modified =
+            compare_skill_dirs(local.path(), upstream.path(), Some(&local_hash)).expect("compare");
         assert_eq!(modified.status, UpdateStatus::LocallyModified);
+        assert!(
+            !is_ignored_update(store, "demo", &modified),
+            "local modifications are never hidden"
+        );
     }
 }
