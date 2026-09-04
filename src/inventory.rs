@@ -463,19 +463,69 @@ impl<'a> InventoryScanner<'a> {
     }
 }
 
-/// Entries never treated as Skill placements: hidden dot-prefixed names
-/// (archives such as `.archive`, tool state such as `.git`) and common
-/// build-output directories. Archived or machine-owned content must not
-/// surface as placements or validation issues.
+/// Entries never treated as Skill placements: hidden tool state (.git),
+/// archives (.archive), and common build-output directories. Known agent
+/// directories (.agents, .claude, etc.) and curated subdirectories are
+/// explicitly preserved.
 pub(crate) fn is_ignored_container(path: &Path) -> bool {
     let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
         return false;
     };
-    name.starts_with('.')
-        || matches!(
-            name,
-            "node_modules" | "__pycache__" | "__pypackages__" | "dist" | "build"
-        )
+    if matches!(
+        name,
+        "node_modules" | "__pycache__" | "__pypackages__" | "dist" | "build" | ".git" | ".archive"
+    ) {
+        return true;
+    }
+    if name.starts_with('.') {
+        !is_known_agent_or_skill_container(path, name)
+    } else {
+        false
+    }
+}
+
+fn is_known_agent_or_skill_container(path: &Path, name: &str) -> bool {
+    if path.join("skills").is_dir() || path.join("SKILL.md").is_file() {
+        return true;
+    }
+    if let Some(parent) = path
+        .parent()
+        .and_then(|p| p.file_name())
+        .and_then(|n| n.to_str())
+    {
+        if parent == "skills" {
+            return true;
+        }
+    }
+    matches!(
+        name,
+        ".agents"
+            | ".aider-desk"
+            | ".autohand"
+            | ".augment"
+            | ".bob"
+            | ".claude"
+            | ".codebuddy"
+            | ".codemaker"
+            | ".continue"
+            | ".crush"
+            | ".cursor"
+            | ".devin"
+            | ".factory"
+            | ".goose"
+            | ".openhands"
+            | ".opencode"
+            | ".pi"
+            | ".qoder"
+            | ".qwen"
+            | ".roo"
+            | ".trae"
+            | ".windsurf"
+            | ".zencoder"
+            | ".curated"
+            | ".experimental"
+            | ".system"
+    )
 }
 
 fn resolve_ambiguous_lock_entries(placements: &mut [SkillPlacement]) {
