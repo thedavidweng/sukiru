@@ -286,9 +286,8 @@ impl GinoWindow {
                 window,
                 |this, _, event: &InputEvent, _, cx| {
                     if let InputEvent::Change = event {
-                        this.session.set_search(
-                            this.library_search_input.read(cx).value().to_string(),
-                        );
+                        this.session
+                            .set_search(this.library_search_input.read(cx).value().to_string());
                         cx.notify();
                     }
                 },
@@ -1138,16 +1137,11 @@ impl Render for GinoWindow {
                     .min_w(px(0.))
                     .gap_2()
                     .items_center()
-                    .child(
-                        div()
-                            .text_lg()
-                            .font_semibold()
-                            .child(if browsing_library {
-                                "Skills Library".to_owned()
-                            } else {
-                                self.session.active_section.label().to_owned()
-                            }),
-                    )
+                    .child(div().text_lg().font_semibold().child(if browsing_library {
+                        "Skills Library".to_owned()
+                    } else {
+                        self.session.active_section.label().to_owned()
+                    }))
                     .when(browsing_library, |this| {
                         this.child(
                             div()
@@ -1170,7 +1164,9 @@ impl Render for GinoWindow {
                     .ghost()
                     .small()
                     .label("Shortcuts")
-                    .child(Kbd::new(Keystroke::parse("cmd-k").expect("valid keystroke")))
+                    .child(Kbd::new(
+                        Keystroke::parse("cmd-k").expect("valid keystroke"),
+                    ))
                     .on_click({
                         let entity = entity.clone();
                         move |_, window, cx| {
