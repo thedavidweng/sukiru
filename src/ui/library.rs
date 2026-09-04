@@ -65,7 +65,9 @@ impl GinoWindow {
                     .small()
                     .text_color(cx.theme().muted_foreground),
             )
-            .suffix(Kbd::new(Keystroke::parse("cmd-f").expect("valid keystroke")))
+            .suffix(Kbd::new(
+                Keystroke::parse("cmd-f").expect("valid keystroke"),
+            ))
     }
 
     /// Tag/workspace filters as native dropdowns. Option lists and the active
@@ -81,8 +83,11 @@ impl GinoWindow {
             .child(muted(cx, "Tags"))
             .child(Select::new(&self.tag_filter_select).small().w(px(160.)))
             .when(self.session.workspace_filter_options().len() > 1, |this| {
-                this.child(muted(cx, "Workspace"))
-                    .child(Select::new(&self.workspace_filter_select).small().w(px(180.)))
+                this.child(muted(cx, "Workspace")).child(
+                    Select::new(&self.workspace_filter_select)
+                        .small()
+                        .w(px(180.)),
+                )
             })
     }
 
@@ -139,25 +144,9 @@ impl GinoWindow {
                         .child(format!("{selected} selected")),
                 )
             })
-            .child(
-                div()
-                    .w(px(1.))
-                    .h(px(14.))
-                    .mx_1()
-                    .bg(cx.theme().border),
-            )
-            .child(self.render_target_menu(
-                entity.clone(),
-                "move-menu",
-                "Move to…",
-                true,
-            ))
-            .child(self.render_target_menu(
-                entity.clone(),
-                "copy-menu",
-                "Copy to…",
-                false,
-            ))
+            .child(div().w(px(1.)).h(px(14.)).mx_1().bg(cx.theme().border))
+            .child(self.render_target_menu(entity.clone(), "move-menu", "Move to…", true))
+            .child(self.render_target_menu(entity.clone(), "copy-menu", "Copy to…", false))
             .child(div().flex_1())
             .child(
                 Button::new("more-menu")
@@ -401,8 +390,7 @@ impl GinoWindow {
                                     move |_, _, cx| {
                                         entity.update(cx, |app, cx| {
                                             if let Err(error) = reveal_in_file_manager(&path) {
-                                                app.session.action_error =
-                                                    Some(error.to_string());
+                                                app.session.action_error = Some(error.to_string());
                                             }
                                             cx.notify();
                                         });
@@ -423,8 +411,7 @@ impl GinoWindow {
                                                 (!editor_pref.is_empty())
                                                     .then_some(editor_pref.as_str()),
                                             ) {
-                                                app.session.action_error =
-                                                    Some(error.to_string());
+                                                app.session.action_error = Some(error.to_string());
                                             }
                                             cx.notify();
                                         });
@@ -509,12 +496,14 @@ impl GinoWindow {
             PreviewTab::Readme => readme.unwrap_or_else(|| "_No README.md_".to_owned()),
         };
         let preview_id = format!("preview-{}", placement.path.display());
-        let tracked_source = placement.lock_entry.as_ref().map(|entry| {
-            match entry.ref_name.as_deref() {
-                Some(reference) => format!("{} · {}", entry.source, reference),
-                None => entry.source.clone(),
-            }
-        });
+        let tracked_source =
+            placement
+                .lock_entry
+                .as_ref()
+                .map(|entry| match entry.ref_name.as_deref() {
+                    Some(reference) => format!("{} · {}", entry.source, reference),
+                    None => entry.source.clone(),
+                });
 
         // Region 1 — header: identity, status, primary actions.
         let header = v_flex()
@@ -564,8 +553,7 @@ impl GinoWindow {
                                                 (!editor_pref.is_empty())
                                                     .then_some(editor_pref.as_str()),
                                             ) {
-                                                app.session.action_error =
-                                                    Some(error.to_string());
+                                                app.session.action_error = Some(error.to_string());
                                             }
                                             cx.notify();
                                         });
@@ -583,8 +571,7 @@ impl GinoWindow {
                                         let path = reveal_path.clone();
                                         reveal.update(cx, |app, cx| {
                                             if let Err(error) = reveal_in_file_manager(&path) {
-                                                app.session.action_error =
-                                                    Some(error.to_string());
+                                                app.session.action_error = Some(error.to_string());
                                             }
                                             cx.notify();
                                         });
@@ -744,7 +731,9 @@ impl GinoWindow {
                 Some(reference) => format!("{} · {}", entry.source, reference),
                 None => entry.source.clone(),
             });
-        let path_display = self.session.compact_home_display(&path.display().to_string());
+        let path_display = self
+            .session
+            .compact_home_display(&path.display().to_string());
         let path_string = path.display().to_string();
         Popover::new("skill-details")
             .anchor(Corner::TopRight)
@@ -766,16 +755,12 @@ impl GinoWindow {
                 }
                 items.extend([
                     DescriptionItem::new("Equivalent CLI").value(command.clone()),
-                    DescriptionItem::new("Placements")
-                        .value(truncated(placements.join(" | "))),
+                    DescriptionItem::new("Placements").value(truncated(placements.join(" | "))),
                     DescriptionItem::new("Files").value(truncated(files.join(", "))),
                     DescriptionItem::new("Tags").value(if tags.is_empty() {
                         "none".to_owned()
                     } else {
-                        tags.clone()
-                            .into_iter()
-                            .collect::<Vec<_>>()
-                            .join(", ")
+                        tags.clone().into_iter().collect::<Vec<_>>().join(", ")
                     }),
                 ]);
                 v_flex()
@@ -783,9 +768,9 @@ impl GinoWindow {
                     .gap_2()
                     .child(DescriptionList::vertical().small().children(items))
                     .child(
-                        h_flex().justify_end().child(
-                            Clipboard::new("copy-skill-path").value(path_string.clone()),
-                        ),
+                        h_flex()
+                            .justify_end()
+                            .child(Clipboard::new("copy-skill-path").value(path_string.clone())),
                     )
             })
     }
