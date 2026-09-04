@@ -16,8 +16,8 @@ use gino_core::git::{
     SyncProposal,
 };
 use gino_core::inventory::{
-    DuplicateClass, DuplicateGroup, Inventory, InventoryScanner, PlacementKind, SkillPlacement,
-    SkillState, Workspace, WorkspaceKind,
+    DuplicateClass, DuplicateGroup, Inventory, InventoryIssue, InventoryScanner, PlacementKind,
+    SkillPlacement, SkillState, Workspace, WorkspaceKind,
 };
 use gino_core::marketplace::{self, MarketplaceSkill};
 use gino_core::metadata::{
@@ -79,19 +79,16 @@ impl Section {
     }
 
     pub fn from_digit(digit: &str) -> Option<Self> {
-        Some(match digit {
-            "1" => Self::Library,
-            "2" => Self::Marketplace,
-            "3" => Self::Global,
-            "4" => Self::Projects,
-            "5" => Self::Agents,
-            "6" => Self::CustomWorkspaces,
-            "7" => Self::Duplicates,
-            "8" => Self::Presets,
-            "9" => Self::Backup,
-            "0" => Self::Activity,
-            _ => return None,
-        })
+        match digit {
+            "0" => Some(Self::Activity),
+            other => {
+                let position = other.parse::<usize>().ok()?;
+                if position == 0 {
+                    return None;
+                }
+                Self::SIDEBAR.get(position - 1).copied()
+            }
+        }
     }
 }
 
@@ -153,14 +150,6 @@ impl BusyOp {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum TargetMenu {
-    None,
-    Move,
-    Copy,
-    Install,
-}
-
 #[derive(Clone, Debug)]
 pub struct DetailPreview {
     pub path: PathBuf,
@@ -174,7 +163,9 @@ pub struct ApplyJob {
     selected_ids: Vec<u64>,
     snapshot_root: PathBuf,
     snapshot_retention: usize,
-    backup: GitRepository,
+    /// Present only when local backup is enabled; the transaction snapshot
+    /// below guards Apply either way.
+    backup: Option<GitRepository>,
     push_mode: PushMode,
     workspaces: Vec<Workspace>,
     metadata_path: Option<PathBuf>,
@@ -217,8 +208,10 @@ impl ApplyJob {
             .as_ref()
             .and_then(|path| MetadataStore::open(path).ok());
         let mut executor = ApplyExecutor::new(self.snapshot_root.clone(), self.snapshot_retention)
-            .with_git(self.backup.clone(), self.push_mode)
             .with_workspaces(self.workspaces.clone());
+        if let Some(repository) = &self.backup {
+            executor = executor.with_git(repository.clone(), self.push_mode);
+        }
         if let Some(store) = metadata {
             if let Ok(backup_metadata) = store.backup_metadata() {
                 executor = executor.with_backup_metadata(backup_metadata);
@@ -306,9 +299,10 @@ pub struct Session {
     pub sync_proposal: Option<SyncProposal>,
     pub focused_sync_index: Option<usize>,
     pub tag_filter: TagFilter,
+    pub workspace_filter: Option<String>,
+    pub search: String,
     pub preview_tab: PreviewTab,
     pub preset_mode: PresetMode,
-    pub target_menu: TargetMenu,
     tag_index: BTreeMap<String, BTreeSet<String>>,
     all_tags_cache: BTreeSet<String>,
     ignored_duplicates: BTreeSet<(String, String)>,
@@ -357,9 +351,10 @@ impl Session {
             sync_proposal: None,
             focused_sync_index: None,
             tag_filter: TagFilter::All,
+            workspace_filter: None,
+            search: String::new(),
             preview_tab: PreviewTab::SkillMd,
             preset_mode: PresetMode::AddMissing,
-            target_menu: TargetMenu::None,
             tag_index: BTreeMap::new(),
             all_tags_cache: BTreeSet::new(),
             ignored_duplicates: BTreeSet::new(),
@@ -400,47 +395,73 @@ impl Session {
         self.warm_detail_preview();
     }
 
-    pub fn toggle_target_menu(&mut self, menu: TargetMenu) {
-        self.target_menu = if self.target_menu == menu {
-            TargetMenu::None
-        } else {
-            menu
-        };
-    }
-
-    pub fn close_target_menu(&mut self) {
-        self.target_menu = TargetMenu::None;
-    }
-
     pub fn issue_summaries(&self) -> Vec<String> {
         self.inventory
             .issues
             .iter()
-            .map(|issue| format!("{}: {}", issue.path.display(), issue.reason))
+            .map(|issue| match self.workspace_for_issue(issue) {
+                Some(name) => format!("[{name}] {}: {}", issue.path.display(), issue.reason),
+                None => format!("{}: {}", issue.path.display(), issue.reason),
+            })
             .collect()
     }
 
-    pub fn has_broken_symlinks(&self) -> bool {
+    /// Resolve the workspace an issue belongs to by joining its path back to
+    /// the placement recorded for it (broken symlinks always get one).
+    fn workspace_for_issue(&self, issue: &InventoryIssue) -> Option<String> {
         self.inventory
             .placements
             .iter()
-            .any(|placement| placement.placement_kind == PlacementKind::BrokenSymlink)
+            .find(|placement| placement.path == issue.path)
+            .map(|placement| self.workspace_display_name(&placement.workspace_id))
     }
 
-    pub fn theme_label(&self) -> &'static str {
-        match self.preferences.theme.as_str() {
-            "dark" => "Dark",
-            "system" => "System",
-            _ => "Light",
-        }
+    /// Human-facing name for a workspace id, falling back to the raw id when
+    /// the workspace is no longer registered.
+    pub fn workspace_display_name(&self, id: &str) -> String {
+        self.workspaces
+            .iter()
+            .find(|workspace| workspace.id == id)
+            .map(|workspace| workspace.display_name.clone())
+            .unwrap_or_else(|| id.to_owned())
     }
 
-    pub fn text_size_label(&self) -> &'static str {
-        match self.preferences.text_size.as_str() {
-            "small" => "Small",
-            "large" => "Large",
-            _ => "Medium",
+    /// Whether the client behind a workspace is installed on this machine.
+    /// Unknown ids count as installed so explicitly registered workspaces
+    /// never vanish from lists.
+    pub fn workspace_installed(&self, id: &str) -> bool {
+        self.workspaces
+            .iter()
+            .find(|workspace| workspace.id == id)
+            .is_none_or(|workspace| workspace.installed)
+    }
+
+    /// Shorten absolute paths under the user's home directory to `~/…` so
+    /// review rows read as locations, not filesystem dumps.
+    pub fn compact_home_display(&self, text: &str) -> String {
+        let Some(home) = self
+            .metadata_path
+            .as_ref()
+            .and_then(|path| path.parent())
+            .and_then(|parent| parent.parent())
+        else {
+            return text.to_owned();
+        };
+        let Some(home_str) = home.to_str() else {
+            return text.to_owned();
+        };
+        if home_str.is_empty() || home_str == "/" || !text.contains(home_str) {
+            return text.to_owned();
         }
+        text.replace(home_str, "~")
+    }
+
+    /// How many of the currently visible placements are dangling symlinks.
+    pub fn visible_broken_symlink_count(&self) -> usize {
+        self.visible_placements()
+            .iter()
+            .filter(|placement| placement.placement_kind == PlacementKind::BrokenSymlink)
+            .count()
     }
 
     pub fn push_mode_label(&self) -> &'static str {
@@ -573,6 +594,12 @@ impl Session {
     }
 
     pub fn visible_placements(&self) -> Vec<&SkillPlacement> {
+        self.visible_placements_filtered(self.workspace_filter.as_deref())
+    }
+
+    /// Like [`Self::visible_placements`] but with an explicit workspace scope,
+    /// so filter-option lists can ignore the active workspace filter.
+    fn visible_placements_filtered(&self, workspace_id: Option<&str>) -> Vec<&SkillPlacement> {
         let duplicate_indexes = self
             .inventory
             .duplicate_groups
@@ -588,13 +615,22 @@ impl Session {
                 let in_section = match self.active_section {
                     Section::Global => placement.workspace_kind == WorkspaceKind::Global,
                     Section::Projects => placement.workspace_kind == WorkspaceKind::Project,
-                    Section::Agents => placement.workspace_kind == WorkspaceKind::Agent,
+                    // Agents of clients that are not installed stay reachable
+                    // through Library (for cleanup) but not as a browsable
+                    // agent list.
+                    Section::Agents => {
+                        placement.workspace_kind == WorkspaceKind::Agent
+                            && self.workspace_installed(&placement.workspace_id)
+                    }
                     Section::CustomWorkspaces => placement.workspace_kind == WorkspaceKind::Custom,
                     Section::Duplicates => duplicate_indexes.contains(index),
                     Section::Library => true,
                     _ => false,
                 };
-                in_section && self.matches_tag_filter(placement)
+                in_section
+                    && self.matches_tag_filter(placement)
+                    && self.matches_search(placement)
+                    && workspace_id.is_none_or(|id| placement.workspace_id == id)
             })
             .map(|(_, placement)| placement)
             .collect()
@@ -608,6 +644,52 @@ impl Session {
         }
     }
 
+    /// Case-insensitive substring match over the fields a user would search
+    /// by: name, description, tags, install path and tracked source.
+    fn matches_search(&self, placement: &SkillPlacement) -> bool {
+        let query = self.search.trim().to_lowercase();
+        if query.is_empty() {
+            return true;
+        }
+        placement.name.to_lowercase().contains(&query)
+            || placement.description.to_lowercase().contains(&query)
+            || placement
+                .path
+                .display()
+                .to_string()
+                .to_lowercase()
+                .contains(&query)
+            || self
+                .tags_for(&placement.name)
+                .iter()
+                .any(|tag| tag.to_lowercase().contains(&query))
+            || placement
+                .lock_entry
+                .as_ref()
+                .is_some_and(|entry| entry.source.to_lowercase().contains(&query))
+    }
+
+    pub fn set_search(&mut self, query: String) {
+        self.search = query;
+    }
+
+    /// Distinct installed workspaces present under the active section/tag
+    /// filters (ignoring the workspace filter itself), as (id, display_name)
+    /// pairs. Uninstalled leftovers are excluded so the chip row only lists
+    /// clients that actually exist on this machine.
+    pub fn workspace_filter_options(&self) -> Vec<(String, String)> {
+        let mut pairs: BTreeMap<String, String> = BTreeMap::new();
+        for placement in self.visible_placements_filtered(None) {
+            if !self.workspace_installed(&placement.workspace_id) {
+                continue;
+            }
+            pairs
+                .entry(placement.workspace_id.clone())
+                .or_insert_with(|| self.workspace_display_name(&placement.workspace_id));
+        }
+        pairs.into_iter().collect()
+    }
+
     pub fn selected_placement(&self) -> Option<&SkillPlacement> {
         let path = self.selected_detail.as_ref()?;
         self.inventory
@@ -616,11 +698,12 @@ impl Session {
             .find(|placement| &placement.path == path)
     }
 
-    pub fn click_placement(&mut self, path: PathBuf, shift: bool) {
+    /// Row activation opens the detail pane. It never mutates the bulk
+    /// selection; Shift still extends the bulk range from the anchor.
+    pub fn open_placement(&mut self, path: PathBuf, shift: bool) {
         if shift {
             self.select_range_to(&path);
         } else {
-            self.toggle_selected(&path);
             self.selection_anchor = Some(path.clone());
         }
         self.selected_detail = Some(path);
@@ -712,25 +795,32 @@ impl Session {
         }
     }
 
-    /// Queue removal of every broken symlink found across all workspaces.
-    /// Produces a single Apply plan (snapshot + git backup) that the user
-    /// reviews before anything is written.
-    pub fn queue_cleanup_broken_symlinks(&mut self) {
-        let broken_count = self
-            .inventory
-            .placements
-            .iter()
+    /// Queue removal of the broken symlinks currently visible under the
+    /// active section and workspace filter, so one agent's links can be
+    /// cleaned without touching the rest. Returns the queued change count.
+    /// With no filters active this covers every dangling link on disk.
+    pub fn queue_cleanup_visible_broken_symlinks(&mut self) -> usize {
+        let broken = self
+            .visible_placements()
+            .into_iter()
             .filter(|placement| placement.placement_kind == PlacementKind::BrokenSymlink)
-            .count();
-        if broken_count == 0 {
-            self.action_error = Some("No broken symlinks found".to_owned());
-            return;
+            .cloned()
+            .collect::<Vec<_>>();
+        if broken.is_empty() {
+            self.action_error = Some("No broken symlinks in the visible set".to_owned());
+            return 0;
         }
-        match Planner::new(&self.inventory, self.declared_roots()).cleanup_broken_symlinks() {
+        let refs = broken.iter().collect::<Vec<_>>();
+        match Planner::new(&self.inventory, self.declared_roots()).remove(&refs) {
             Ok(plan) => {
+                let count = plan.operation_count();
                 self.enqueue_plan(plan);
+                count
             }
-            Err(error) => self.action_error = Some(error.to_string()),
+            Err(error) => {
+                self.action_error = Some(error.to_string());
+                0
+            }
         }
     }
 
@@ -892,20 +982,23 @@ impl Session {
         }
     }
 
-    pub fn drop_pending(&mut self, id: u64) {
-        for sibling in self.pending.sibling_ids(id) {
-            self.pending_selected.remove(&sibling);
-        }
-        self.pending.remove(id);
-        self.status = "Removed a pending plan".to_owned();
-    }
-
     pub fn selected_pending_count(&self) -> usize {
         self.pending
             .items()
             .iter()
             .filter(|item| self.pending_selected.contains(&item.id))
             .count()
+    }
+
+    /// Include every pending change in the next Apply.
+    pub fn select_all_pending(&mut self) {
+        self.pending_selected
+            .extend(self.pending.items().iter().map(|item| item.id));
+    }
+
+    /// Exclude every pending change; Apply becomes a no-op until re-selected.
+    pub fn clear_pending_selection(&mut self) {
+        self.pending_selected.clear();
     }
 
     pub fn apply_label(&self) -> String {
@@ -974,10 +1067,15 @@ impl Session {
         if let Some(reason) = self.apply_block_reason() {
             return Err(reason);
         }
-        let repository = self
-            .backup
-            .clone()
-            .ok_or_else(|| "Git backup is unavailable; Apply is disabled".to_owned())?;
+        // Local backup is opt-in; the transaction snapshot guards Apply
+        // either way, so a disabled repository must not block Apply.
+        let repository = if self.preferences.backup_enabled {
+            Some(self.backup.clone().ok_or_else(|| {
+                "Git backup is enabled but its repository failed to open".to_owned()
+            })?)
+        } else {
+            None
+        };
         Ok(ApplyJob {
             plan: self.apply_plan(),
             selected_ids: self
@@ -1709,34 +1807,44 @@ impl Session {
         }
     }
 
-    pub fn toggle_push_mode(&mut self) {
-        self.preferences.push_mode = if self.preferences.commit_locally() {
-            "commit_and_push".to_owned()
-        } else {
-            "commit_locally".to_owned()
-        };
+    /// Select-driven preference setters. These persist immediately; the Save
+    /// button only covers the free-text fields.
+    pub(crate) fn set_theme(&mut self, value: &str) {
+        self.preferences.theme = value.to_owned();
+        self.save_preferences();
+    }
+
+    pub(crate) fn set_text_size(&mut self, value: &str) {
+        self.preferences.text_size = value.to_owned();
+        self.save_preferences();
+    }
+
+    pub(crate) fn set_push_mode(&mut self, value: &str) {
+        self.preferences.push_mode = value.to_owned();
         self.save_preferences();
         self.status = format!("Push mode: {}", self.preferences.push_mode);
     }
 
-    pub fn cycle_theme(&mut self) {
-        self.preferences.theme = match self.preferences.theme.as_str() {
-            "light" => "dark",
-            "dark" => "system",
-            _ => "light",
+    /// Switch-backed backup opt-in/out. Opting in creates the repository
+    /// right away so the Backup section tells the truth; opting out leaves
+    /// any existing repository untouched but stops all commits.
+    pub(crate) fn set_backup_enabled(&mut self, enabled: bool) {
+        if self.preferences.backup_enabled == enabled {
+            return;
         }
-        .to_owned();
-        self.save_preferences();
-    }
-
-    pub fn cycle_text_size(&mut self) {
-        self.preferences.text_size = match self.preferences.text_size.as_str() {
-            "small" => "medium",
-            "medium" => "large",
-            _ => "small",
+        self.preferences.backup_enabled = enabled;
+        if enabled {
+            if let Some(repository) = &self.backup {
+                if let Err(error) = repository.ensure_initialized() {
+                    self.action_error = Some(error.to_string());
+                }
+            }
         }
-        .to_owned();
         self.save_preferences();
+        self.status = format!(
+            "Local backup repository: {}",
+            if enabled { "On" } else { "Off" }
+        );
     }
 
     pub fn about() -> (&'static str, &'static str) {
@@ -1985,6 +2093,25 @@ pub fn remote_status_label(status: RemoteChangeStatus) -> &'static str {
     }
 }
 
+/// Semantic color family for a remote sync status, feeding `Tag` variants in
+/// the Backup view.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum StatusTone {
+    Neutral,
+    Positive,
+    Warning,
+    Danger,
+}
+
+pub fn remote_status_tone(status: RemoteChangeStatus) -> StatusTone {
+    match status {
+        RemoteChangeStatus::Available => StatusTone::Positive,
+        RemoteChangeStatus::Conflict => StatusTone::Danger,
+        RemoteChangeStatus::Unchanged => StatusTone::Neutral,
+        RemoteChangeStatus::Removed => StatusTone::Warning,
+    }
+}
+
 fn path_under(path: &Path, root: &Path) -> bool {
     path == root || path.starts_with(root)
 }
@@ -2021,6 +2148,8 @@ mod tests {
         let preferences = Preferences {
             snapshot_root: root.join("snapshots"),
             push_mode: "commit_locally".to_owned(),
+            // Most fixtures exercise the opted-in backup path.
+            backup_enabled: true,
             snapshot_retention: 5,
             ..Preferences::default()
         };
@@ -2105,10 +2234,10 @@ mod tests {
             .expect("meta")
             .modified()
             .expect("mtime");
-        session.click_placement(path.clone(), false);
+        session.open_placement(path.clone(), false);
         session.select_visible();
         session.clear_selection();
-        session.click_placement(path.clone(), true);
+        session.open_placement(path.clone(), true);
         assert_eq!(
             fs::metadata(&path)
                 .expect("meta")
@@ -2129,9 +2258,41 @@ mod tests {
             .map(|placement| placement.path.clone())
             .collect::<Vec<_>>();
         assert_eq!(paths.len(), 3);
-        session.click_placement(paths[0].clone(), false);
-        session.click_placement(paths[2].clone(), true);
+        session.open_placement(paths[0].clone(), false);
+        session.open_placement(paths[2].clone(), true);
         assert_eq!(session.selected_paths.len(), 3);
+    }
+
+    #[test]
+    fn row_open_never_mutates_bulk_selection() {
+        let root = tempdir().expect("root");
+        let mut session = session_at(root.path(), &["alpha", "beta"]);
+        let path = session.inventory.placements[0].path.clone();
+        session.open_placement(path.clone(), false);
+        assert_eq!(session.selected_detail.as_ref(), Some(&path));
+        assert!(session.selected_paths.is_empty());
+        session.toggle_selected(&path);
+        assert_eq!(session.selected_paths.len(), 1);
+    }
+
+    #[test]
+    fn search_filters_visible_placements_by_field() {
+        let root = tempdir().expect("root");
+        let mut session = session_at(root.path(), &["alpha", "beta"]);
+        session.add_tag("alpha", "web");
+        assert_eq!(session.visible_placements().len(), 2);
+
+        session.set_search("alp".to_owned());
+        let visible = session.visible_placements();
+        assert_eq!(visible.len(), 1);
+        assert_eq!(visible[0].name, "alpha");
+
+        // Tags participate in search even though the name does not match.
+        session.set_search("web".to_owned());
+        assert_eq!(session.visible_placements().len(), 1);
+
+        session.set_search("  ".to_owned());
+        assert_eq!(session.visible_placements().len(), 2);
     }
 
     #[test]
@@ -2139,7 +2300,8 @@ mod tests {
         let root = tempdir().expect("root");
         let mut session = session_at(root.path(), &["demo"]);
         let path = session.inventory.placements[0].path.clone();
-        session.click_placement(path.clone(), false);
+        session.open_placement(path.clone(), false);
+        session.toggle_selected(&path);
         session.handle_key("backspace");
         assert!(path.join("SKILL.md").is_file());
         assert_eq!(session.selected_pending_count(), 1);
@@ -2249,7 +2411,9 @@ mod tests {
         let root = tempdir().expect("root");
         let mut session = session_at(root.path(), &["demo"]);
         assert_eq!(session.request_quit(), QuitDecision::Exit);
-        session.click_placement(session.inventory.placements[0].path.clone(), false);
+        session.open_placement(session.inventory.placements[0].path.clone(), false);
+        let selected = session.inventory.placements[0].path.clone();
+        session.toggle_selected(&selected);
         session.queue_remove_selected();
         assert_eq!(session.request_quit(), QuitDecision::Prompt);
         assert_eq!(session.handle_key("escape"), KeyEffect::Handled);
@@ -2285,7 +2449,9 @@ mod tests {
         session.add_tag("demo", "web");
         assert_eq!(session.tags_for("demo"), BTreeSet::from(["web".to_owned()]));
         assert!(root.path().join("skills/demo/SKILL.md").is_file());
-        session.click_placement(session.inventory.placements[0].path.clone(), false);
+        session.open_placement(session.inventory.placements[0].path.clone(), false);
+        let selected = session.inventory.placements[0].path.clone();
+        session.toggle_selected(&selected);
         session.save_preset_from_selection("Daily");
         assert_eq!(session.presets().len(), 1);
         session.preset_mode = PresetMode::MatchExactly;
@@ -2333,7 +2499,8 @@ mod tests {
         );
         assert_ne!(session.preferences.snapshot_root, std::env::temp_dir());
         let path = session.inventory.placements[0].path.clone();
-        session.click_placement(path.clone(), false);
+        session.open_placement(path.clone(), false);
+        session.toggle_selected(&path);
         session.queue_remove_selected();
         assert!(session.apply_pending());
         assert!(!path.exists());
@@ -2373,7 +2540,8 @@ mod tests {
         let root = tempdir().expect("root");
         let mut session = session_at(root.path(), &["demo"]);
         let path = session.inventory.placements[0].path.clone();
-        session.click_placement(path.clone(), false);
+        session.open_placement(path.clone(), false);
+        session.toggle_selected(&path);
         session.queue_remove_selected();
         assert!(session.apply_pending());
         let snapshot_id = session.list_snapshots()[0].id.clone();
@@ -2385,5 +2553,227 @@ mod tests {
                 .iter()
                 .any(|item| item.action == PlanAction::Restore)
         );
+    }
+
+    /// Two agent workspaces, each holding one real Skill and one dangling
+    /// symlink into a store that no longer exists.
+    #[cfg(unix)]
+    fn agent_session_with_broken_links(root: &Path) -> (Session, PathBuf, PathBuf) {
+        use gino_core::agents::AgentId;
+        use std::os::unix::fs::symlink;
+
+        let make_agent = |id: &str, label: &str| -> Workspace {
+            let skills = root.join(id).join("skills");
+            write_skill(&skills, "keep");
+            symlink(
+                root.join("missing-store").join("gone"),
+                skills.join("dangling"),
+            )
+            .expect("symlink");
+            Workspace::new(format!("agent:{id}"), label, WorkspaceKind::Agent, &skills)
+                .with_agent(AgentId(id.to_owned()))
+        };
+        let workspaces = vec![
+            make_agent("adal", "AdaL"),
+            make_agent("claude-code", "Claude Code"),
+        ];
+        let inventory = InventoryScanner::new(&workspaces).scan(1).expect("scan");
+        assert_eq!(
+            inventory
+                .placements
+                .iter()
+                .filter(|placement| placement.placement_kind == PlacementKind::BrokenSymlink)
+                .count(),
+            2,
+            "both dangling links should be scanned as broken placements"
+        );
+        let metadata = root.join("state.sqlite");
+        let preferences = Preferences {
+            snapshot_root: root.join("snapshots"),
+            push_mode: "commit_locally".to_owned(),
+            backup_enabled: true,
+            snapshot_retention: 5,
+            ..Preferences::default()
+        };
+        MetadataStore::open(&metadata)
+            .expect("store")
+            .save_preferences(&preferences)
+            .expect("prefs");
+        let backup = GitRepository::open_or_init(root.join("backup")).expect("git");
+        (
+            Session::new(workspaces, inventory, Ok(backup), metadata, preferences),
+            root.join("adal/skills/dangling"),
+            root.join("claude-code/skills/dangling"),
+        )
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn broken_link_issues_are_attributed_to_their_agent() {
+        let root = tempdir().expect("root");
+        let (session, adal_link, claude_link) = agent_session_with_broken_links(root.path());
+
+        assert_eq!(session.workspace_display_name("agent:adal"), "AdaL");
+        assert_eq!(session.workspace_display_name("agent:nope"), "agent:nope");
+
+        let summaries = session.issue_summaries();
+        let adal_summary = summaries
+            .iter()
+            .find(|summary| summary.contains(adal_link.to_string_lossy().as_ref()))
+            .expect("AdaL issue summary");
+        assert!(adal_summary.starts_with("[AdaL] "), "got: {adal_summary}");
+        assert!(adal_summary.contains("broken symlink"));
+        let claude_summary = summaries
+            .iter()
+            .find(|summary| summary.contains(claude_link.to_string_lossy().as_ref()))
+            .expect("Claude issue summary");
+        assert!(
+            claude_summary.starts_with("[Claude Code] "),
+            "got: {claude_summary}"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn workspace_filter_narrows_visible_placements() {
+        let root = tempdir().expect("root");
+        let (mut session, _, _) = agent_session_with_broken_links(root.path());
+
+        let mut options = session.workspace_filter_options();
+        options.sort();
+        assert_eq!(
+            options,
+            vec![
+                ("agent:adal".to_owned(), "AdaL".to_owned()),
+                ("agent:claude-code".to_owned(), "Claude Code".to_owned()),
+            ]
+        );
+
+        assert_eq!(session.visible_placements().len(), 4);
+        assert!(session.visible_broken_symlink_count() > 0);
+
+        session.workspace_filter = Some("agent:adal".to_owned());
+        let visible = session.visible_placements();
+        assert_eq!(visible.len(), 2);
+        assert!(
+            visible
+                .iter()
+                .all(|placement| placement.workspace_id == "agent:adal")
+        );
+        assert!(session.visible_broken_symlink_count() > 0);
+
+        session.workspace_filter = Some("agent:global".to_owned());
+        assert_eq!(session.visible_placements().len(), 0);
+        // Options must ignore the active filter so switching chips stays possible.
+        assert_eq!(session.workspace_filter_options().len(), 2);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn visible_cleanup_queues_only_filtered_links_until_apply() {
+        let root = tempdir().expect("root");
+        let (mut session, adal_link, claude_link) = agent_session_with_broken_links(root.path());
+
+        session.workspace_filter = Some("agent:claude-code".to_owned());
+        let queued = session.queue_cleanup_visible_broken_symlinks();
+        assert_eq!(queued, 1, "only Claude's dangling link should be queued");
+
+        let destinations = session
+            .pending_items()
+            .iter()
+            .map(|item| item.destination.clone())
+            .collect::<Vec<_>>();
+        assert!(destinations.contains(&claude_link));
+        assert!(
+            !destinations.contains(&adal_link),
+            "filtered-out agents must not be touched"
+        );
+        // Review-first contract: nothing is written until Apply.
+        assert!(adal_link.symlink_metadata().is_ok());
+        assert!(claude_link.symlink_metadata().is_ok());
+
+        session.workspace_filter = None;
+        assert_eq!(
+            session.queue_cleanup_visible_broken_symlinks(),
+            2,
+            "unfiltered cleanup covers the remaining links"
+        );
+        assert!(session.pending_items().len() >= 3);
+        assert!(adal_link.symlink_metadata().is_ok());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn uninstalled_agent_stays_cleanable_but_hidden() {
+        let root = tempdir().expect("root");
+        let (mut session, adal_link, claude_link) = agent_session_with_broken_links(root.path());
+        // Only Claude Code's client is gone; its sprayed links remain.
+        session
+            .workspaces
+            .iter_mut()
+            .find(|workspace| workspace.id == "agent:claude-code")
+            .expect("claude workspace")
+            .installed = false;
+
+        // Chips list only installed clients.
+        let options = session.workspace_filter_options();
+        assert_eq!(options, vec![("agent:adal".to_owned(), "AdaL".to_owned())]);
+
+        // The Agents section hides the uninstalled client…
+        session.active_section = Section::Agents;
+        let visible = session.visible_placements();
+        assert!(
+            visible
+                .iter()
+                .all(|placement| placement.workspace_id == "agent:adal")
+        );
+        assert!(session.visible_broken_symlink_count() > 0);
+
+        // …while Library keeps its placements reachable for cleanup.
+        session.active_section = Section::Library;
+        assert_eq!(session.visible_placements().len(), 4);
+        session.workspace_filter = Some("agent:claude-code".to_owned());
+        assert_eq!(session.visible_placements().len(), 2);
+        assert_eq!(session.queue_cleanup_visible_broken_symlinks(), 1);
+        assert!(
+            session
+                .pending_items()
+                .iter()
+                .any(|item| item.destination == claude_link)
+        );
+        assert!(
+            !session
+                .pending_items()
+                .iter()
+                .any(|item| item.destination == adal_link)
+        );
+        // Nothing is written until Apply.
+        assert!(claude_link.symlink_metadata().is_ok());
+    }
+
+    #[test]
+    fn backup_opt_out_still_applies_with_snapshot_but_no_commits() {
+        let root = tempdir().expect("root");
+        let mut session = session_at(root.path(), &["demo"]);
+        // Opt out: no git history may be produced, yet Apply must work —
+        // the transaction snapshot is independent of the repository.
+        session.preferences.backup_enabled = false;
+        let path = session.inventory.placements[0].path.clone();
+
+        session.open_placement(path.clone(), false);
+        session.toggle_selected(&path);
+        session.queue_remove_selected();
+        assert!(session.apply_pending());
+        assert!(!path.exists(), "Apply must still take effect");
+        assert!(
+            session.last_commit().is_none(),
+            "opted-out backup must not create commits"
+        );
+        assert!(!session.list_snapshots().is_empty());
+        // The transaction snapshot remains restorable.
+        let snapshot_id = session.list_snapshots()[0].id.clone();
+        session.queue_restore_snapshot(&snapshot_id);
+        assert!(session.apply_pending());
+        assert!(path.exists(), "snapshot restore must bring the skill back");
     }
 }

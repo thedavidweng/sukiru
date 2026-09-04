@@ -4,10 +4,12 @@ use gpui::{
     prelude::FluentBuilder as _,
 };
 use gpui_component::{
-    ActiveTheme, StyledExt,
+    ActiveTheme, Sizable as _, StyledExt,
     button::{Button, ButtonVariants as _},
     h_flex,
+    list::ListItem,
     scroll::ScrollableElement,
+    tag::Tag,
     v_flex,
 };
 
@@ -38,41 +40,49 @@ impl GinoWindow {
                         .gap_2()
                         .border_b_1()
                         .border_color(cx.theme().border)
-                        .child(div().font_medium().child(format!(
-                            "{} · {}",
-                            duplicate_label(&group.class),
-                            group.skill_name
-                        )))
+                        .child(
+                            h_flex()
+                                .items_center()
+                                .gap_2()
+                                .child(duplicate_class_tag(&group.class))
+                                .child(div().font_medium().child(group.skill_name.clone())),
+                        )
                         .children(members.iter().enumerate().map(|(member_ix, placement)| {
                             let keep = entity.clone();
                             let keep_index = group.placement_indexes[member_ix];
-                            h_flex()
-                                .w_full()
-                                .gap_2()
-                                .items_center()
-                                .child(div().flex_1().text_xs().child(format!(
-                                "{} · hash {}",
-                                placement.path.display(),
-                                placement
-                                    .content_hash
-                                    .clone()
-                                    .unwrap_or_else(|| "n/a".to_owned())
+                            ListItem::new(SharedString::from(format!(
+                                "dup-{:?}-{}",
+                                group.class,
+                                placement.path.display()
                             )))
-                                .child(
-                                    Button::new(SharedString::from(format!(
-                                        "keep-{group_index}-{keep_index}"
-                                    )))
-                                    .ghost()
-                                    .label("Keep this")
-                                    .on_click(
-                                        move |_, _, cx| {
-                                            keep.update(cx, |app, cx| {
-                                                app.session.keep_duplicate(group_index, keep_index);
-                                                cx.notify();
-                                            });
-                                        },
+                            .child(
+                                h_flex()
+                                    .w_full()
+                                    .child(div().flex_1().text_xs().child(format!(
+                                    "{} · hash {}",
+                                    placement.path.display(),
+                                    placement
+                                        .content_hash
+                                        .clone()
+                                        .unwrap_or_else(|| "n/a".to_owned())
+                                )))
+                                    .child(
+                                        Button::new(SharedString::from(format!(
+                                            "keep-{group_index}-{keep_index}"
+                                        )))
+                                        .ghost()
+                                        .label("Keep this")
+                                        .on_click(
+                                            move |_, _, cx| {
+                                                keep.update(cx, |app, cx| {
+                                                    app.session
+                                                        .keep_duplicate(group_index, keep_index);
+                                                    cx.notify();
+                                                });
+                                            },
+                                        ),
                                     ),
-                                )
+                            )
                         }))
                         .when(group.class == DuplicateClass::NameCollision, |this| {
                             let ignore = entity.clone();
@@ -103,4 +113,16 @@ impl GinoWindow {
             })
             .child(div().flex_1().overflow_y_scrollbar().children(groups))
     }
+}
+
+/// Outline tags separate duplicate classes without saturating the list.
+fn duplicate_class_tag(class: &DuplicateClass) -> Tag {
+    match class {
+        DuplicateClass::ExactDuplicate => Tag::warning(),
+        DuplicateClass::SourceDuplicate => Tag::info(),
+        DuplicateClass::NameCollision => Tag::secondary(),
+    }
+    .outline()
+    .small()
+    .child(duplicate_label(class))
 }

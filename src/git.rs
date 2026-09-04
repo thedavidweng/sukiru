@@ -99,15 +99,23 @@ pub struct CommitInfo {
 
 impl GitRepository {
     pub fn open_or_init(root: impl Into<PathBuf>) -> Result<Self> {
-        let root = root.into();
-        fs::create_dir_all(&root).map_err(|source| io_error(&root, source))?;
-        let repository = Self { root };
-        if !repository.root.join(".git").exists() {
-            repository.run(&["init", "--quiet"])?;
-        }
+        let repository = Self { root: root.into() };
+        repository.ensure_initialized()?;
         Ok(repository)
     }
 
+    /// Create the directory and run `git init` when needed. Lets an opted-in
+    /// backup materialize immediately without reopening the handle.
+    pub fn ensure_initialized(&self) -> Result<()> {
+        fs::create_dir_all(&self.root).map_err(|source| io_error(&self.root, source))?;
+        if !self.root.join(".git").exists() {
+            self.run(&["init", "--quiet"])?;
+        }
+        Ok(())
+    }
+
+    /// Lazy handle only: never creates the directory or runs git. Used when
+    /// local backup is disabled so startup has zero side effects.
     pub fn open(root: impl Into<PathBuf>) -> Self {
         Self { root: root.into() }
     }

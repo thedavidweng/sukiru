@@ -21,6 +21,11 @@ pub struct Preferences {
     pub editor: String,
     pub snapshot_retention: usize,
     pub snapshot_root: PathBuf,
+    /// Opt-in local git backup (`~/.gino/backup`). Off by default: no
+    /// repository is created, no commits are made, nothing is pushed. The
+    /// transaction snapshot taken by every Apply is independent of this and
+    /// always runs.
+    pub backup_enabled: bool,
     pub backup_remote: String,
     pub push_mode: String,
     pub size_policy_bytes: u64,
@@ -37,6 +42,7 @@ impl Default for Preferences {
             editor: String::new(),
             snapshot_retention: 10,
             snapshot_root: default_snapshot_root(),
+            backup_enabled: false,
             backup_remote: String::new(),
             push_mode: "commit_and_push".to_owned(),
             size_policy_bytes: 50 * 1024 * 1024,
@@ -521,6 +527,7 @@ impl MetadataStore {
                     }
                 }
                 "backup_remote" => prefs.backup_remote = value,
+                "backup_enabled" => prefs.backup_enabled = value == "true",
                 "push_mode" => prefs.push_mode = value,
                 "size_policy_bytes" => {
                     if let Ok(bytes) = value.parse() {
@@ -576,6 +583,11 @@ impl MetadataStore {
         let snapshot_root = prefs.snapshot_root.to_string_lossy().into_owned();
         let retention = prefs.snapshot_retention.to_string();
         let size_policy = prefs.size_policy_bytes.to_string();
+        let backup_enabled = if prefs.backup_enabled {
+            "true"
+        } else {
+            "false"
+        };
         let pairs = [
             ("theme", prefs.theme.as_str()),
             ("text_size", prefs.text_size.as_str()),
@@ -583,6 +595,7 @@ impl MetadataStore {
             ("editor", prefs.editor.as_str()),
             ("snapshot_retention", retention.as_str()),
             ("snapshot_root", snapshot_root.as_str()),
+            ("backup_enabled", backup_enabled),
             ("backup_remote", prefs.backup_remote.as_str()),
             ("push_mode", prefs.push_mode.as_str()),
             ("size_policy_bytes", size_policy.as_str()),
@@ -806,10 +819,13 @@ mod tests {
     fn preferences_round_trip() {
         let root = tempdir().expect("metadata root");
         let store = MetadataStore::open(root.path().join("state.sqlite")).expect("database");
+        // Backup starts off (opt-in) and survives a save/load cycle when on.
+        assert!(!store.preferences().expect("fresh").backup_enabled);
         let prefs = Preferences {
             theme: "dark".to_owned(),
             push_mode: "commit_locally".to_owned(),
             snapshot_retention: 3,
+            backup_enabled: true,
             ..Preferences::default()
         };
         store.save_preferences(&prefs).expect("save");
@@ -818,6 +834,7 @@ mod tests {
         assert!(loaded.commit_locally());
         assert_eq!(loaded.snapshot_retention, 3);
         assert_eq!(loaded.snapshot_root, prefs.snapshot_root);
+        assert!(loaded.backup_enabled);
     }
 
     #[test]

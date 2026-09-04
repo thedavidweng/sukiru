@@ -107,6 +107,11 @@ impl AgentDefinition {
     }
 
     /// Upstream `detectInstalled` with an injectable cwd (Replit / CodeBuddy / Continue).
+    ///
+    /// Deliberately stricter than upstream on one point: a directory whose
+    /// sole content is a `skills` entry is treated as residue left by the
+    /// skills CLI spraying symlinks into every known agent layout, not as
+    /// proof that the client itself is installed.
     pub fn is_detected_at<F>(&self, home: &Path, cwd: &Path, get_env: F) -> bool
     where
         F: Fn(&str) -> Option<std::ffi::OsString> + Copy,
@@ -114,7 +119,7 @@ impl AgentDefinition {
         if self.id.0 == "universal" {
             return false;
         }
-        if self.id.0 == "codex" && Path::new("/etc/codex").exists() {
+        if self.id.0 == "codex" && marks_installation(Path::new("/etc/codex")) {
             return true;
         }
         // Replit is cwd-only: `existsSync(join(process.cwd(), '.replit'))`.
@@ -140,8 +145,8 @@ impl AgentDefinition {
                 .is_some_and(|flatpak| PathBuf::from(flatpak).join("zed").exists());
         }
         if self.detect_in_project
-            && (cwd.join(&self.detection_marker).exists()
-                || cwd.join(&self.project_skills_dir).exists())
+            && (marks_installation(&cwd.join(&self.detection_marker))
+                || marks_installation(&cwd.join(&self.project_skills_dir)))
         {
             return true;
         }
@@ -149,16 +154,46 @@ impl AgentDefinition {
         // Env-home agents (Claude / Codex / Vibe) detect the config root itself.
         // An empty marker must not fall through to `home.join("")`, which is `$HOME`.
         if self.detection_marker.as_os_str().is_empty() {
-            return base.exists();
+            return marks_installation(&base);
         }
-        if base.join(&self.detection_marker).exists() || home.join(&self.detection_marker).exists()
+        if marks_installation(&base.join(&self.detection_marker))
+            || marks_installation(&home.join(&self.detection_marker))
         {
             return true;
         }
         self.extra_markers
             .iter()
-            .any(|marker| home.join(marker).exists())
+            .any(|marker| marks_installation(&home.join(marker)))
     }
+}
+
+/// Whether a path is real evidence that an agent client exists. A plain file
+/// always counts; a directory counts unless its entire content is a bare
+/// `skills` entry — that exact layout is what the skills CLI leaves behind in
+/// every known agent home when spraying symlinks, installed or not.
+fn marks_installation(path: &Path) -> bool {
+    if path.is_file() {
+        return true;
+    }
+    if !path.is_dir() {
+        return false;
+    }
+    let Ok(entries) = std::fs::read_dir(path) else {
+        // Unreadable directories fall back to plain existence.
+        return true;
+    };
+    let mut saw_skills = false;
+    let mut saw_other = false;
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        if name == "skills" {
+            saw_skills = true;
+        } else if name != ".DS_Store" && name != ".localized" {
+            // macOS metadata noise never counts as content.
+            saw_other = true;
+        }
+    }
+    !(saw_skills && !saw_other)
 }
 
 #[derive(Clone, Debug)]
@@ -198,6 +233,21 @@ impl AgentRegistry {
         self.detected()
             .into_iter()
             .map(|agent| (agent, agent.global_skills_path(&self.home)))
+            .collect()
+    }
+
+    /// Global skill roots of agents that are *not* detected but whose skills
+    /// directory exists on disk — typically residue from a previous install
+    /// or from the skills CLI spraying links. They stay scannable so leftover
+    /// placements remain visible and cleanable, while the UI hides the agent
+    /// itself.
+    pub fn leftover_global_skill_roots(&self) -> Vec<(&AgentDefinition, PathBuf)> {
+        self.definitions
+            .iter()
+            .filter_map(|agent| {
+                let root = agent.global_skills_path(&self.home);
+                (root.exists() && !agent.is_detected(&self.home)).then_some((agent, root))
+            })
             .collect()
     }
 
@@ -1036,6 +1086,42 @@ mod tests {
             home.path().join(".codex/skills")
         );
         assert!(codex.is_detected_with(home.path(), |_| None));
+    }
+
+    #[test]
+    fn skills_only_directories_do_not_prove_installation() {
+        let home = tempdir().expect("home");
+        let registry = AgentRegistry::from_home(home.path());
+        let adal = registry.by_id("adal").expect("adal");
+
+        // Residue of the skills CLI spraying symlinks: ~/.adal holds nothing
+        // but a skills directory.
+        fs::create_dir_all(home.path().join(".adal/skills/store-entry")).expect("spray");
+        assert!(!adal.is_detected_with(home.path(), |_| None));
+        assert!(
+            registry
+                .leftover_global_skill_roots()
+                .iter()
+                .any(|(agent, _)| agent.id.0 == "adal"),
+            "the leftover root must stay scannable"
+        );
+
+        // Any additional real content proves the client exists.
+        fs::write(home.path().join(".adal/config.json"), "{}").expect("config");
+        assert!(adal.is_detected_with(home.path(), |_| None));
+        assert!(
+            !registry
+                .leftover_global_skill_roots()
+                .iter()
+                .any(|(agent, _)| agent.id.0 == "adal")
+        );
+
+        // macOS metadata noise never counts as content.
+        let other = tempdir().expect("other");
+        let bob = registry.by_id("bob").expect("bob");
+        fs::create_dir_all(other.path().join(".bob/skills")).expect("spray");
+        fs::write(other.path().join(".bob/.DS_Store"), b"").expect("metadata");
+        assert!(!bob.is_detected_with(other.path(), |_| None));
     }
 
     #[test]
