@@ -1,12 +1,16 @@
+use std::hash::{Hash, Hasher};
+
 use gpui::{
     Context, Entity, IntoElement, ParentElement, SharedString, Styled, Window, div,
-    prelude::FluentBuilder as _, px, uniform_list,
+    prelude::FluentBuilder as _, rems, uniform_list,
 };
 use gpui_component::{
-    ActiveTheme,
+    Disableable as _, Sizable as _,
+    alert::Alert,
     button::{Button, ButtonVariants as _},
     checkbox::Checkbox,
     h_flex,
+    list::ListItem,
     tag::Tag,
     v_flex,
 };
@@ -28,40 +32,88 @@ impl GinoWindow {
         let count = items.len();
         v_flex()
             .flex_1()
-            .min_w(px(0.))
+            .min_w(rems(0.))
             .child(
                 v_flex()
                     .p_4()
                     .gap_1()
-                    .child(div().text_sm().child(format!(
-                        "Review {selected} selected of {} pending changes. Apply is disabled while any selected item is Unavailable. Plans are session-only.",
-                        count
-                    )))
-                    .child(muted(
-                        cx,
-                        format!(
-                            "Unavailable: {unavailable}. Snapshot will be created at {}. Git commit uses {}.",
-                            self.session.preferences.snapshot_root.display(),
-                            self.session.push_mode_label()
-                        ),
-                    ))
+                    .child(
+                        h_flex()
+                            .w_full()
+                            .justify_between()
+                            .flex_wrap()
+                            .items_center()
+                            .gap_2()
+                            .child(div().text_sm().child(if count == 0 {
+                                "Nothing queued yet.".to_owned()
+                            } else {
+                                format!(
+                                    "{count} changes ready · {selected} selected · nothing touches disk until Apply"
+                                )
+                            }))
+                            .child(
+                                h_flex()
+                                    .gap_1()
+                                    .items_center()
+                                    .child(
+                                        Button::new("pending-select-all")
+                                            .ghost()
+                                            .xsmall()
+                                            .disabled(count == 0)
+                                            .label("Select all")
+                                            .on_click({
+                                                let entity = entity.clone();
+                                                move |_, _, cx| {
+                                                    entity.update(cx, |app, cx| {
+                                                        app.session.select_all_pending();
+                                                        cx.notify();
+                                                    });
+                                                }
+                                            }),
+                                    )
+                                    .child(
+                                        Button::new("pending-deselect-all")
+                                            .ghost()
+                                            .xsmall()
+                                            .disabled(selected == 0)
+                                            .label("Deselect all")
+                                            .on_click({
+                                                let entity = entity.clone();
+                                                move |_, _, cx| {
+                                                    entity.update(cx, |app, cx| {
+                                                        app.session.clear_pending_selection();
+                                                        cx.notify();
+                                                    });
+                                                }
+                                            }),
+                                    ),
+                            ),
+                    )
+                    .when(count > 0, |this| {
+                        let mut line =
+                            String::from("Undoable: a snapshot is saved before anything changes.");
+                        if unavailable > 0 {
+                            line.push_str(&format!(
+                                " {unavailable} item(s) are unavailable and will block Apply while selected."
+                            ));
+                        }
+                        this.child(muted(cx, line))
+                    })
                     .children(
                         self.session
                             .pending_warnings()
                             .into_iter()
                             .map(|warning| muted(cx, format!("Warning: {warning}"))),
                     )
-                    .children(
-                        self.session
-                            .pending_blockers()
-                            .into_iter()
-                            .map(|blocker| {
-                                div()
-                                    .text_xs()
-                                    .text_color(cx.theme().danger)
-                                    .child(format!("Blocked: {blocker}"))
-                            }),
-                    ),
+                    // Alerts are reserved for true blockers; informational
+                    // warnings above stay plain muted lines.
+                    .children(self.session.pending_blockers().into_iter().map(|blocker| {
+                        Alert::error(
+                            blocker_element_id(&blocker),
+                            format!("Blocked: {blocker}"),
+                        )
+                        .small()
+                    })),
             )
             .child(
                 uniform_list("pending-list", count, {
@@ -83,62 +135,68 @@ impl GinoWindow {
         let items = self.session.pending_items();
         items
             .into_iter()
-            .enumerate()
             .skip(range.start)
             .take(range.end.saturating_sub(range.start))
-            .map(|(_, item)| {
+            .map(|item| {
+                // The checkbox is the single include/exclude control for a
+                // row; no competing per-row button beside it.
                 let id = item.id;
                 let checked = self.session.pending_selected.contains(&id);
                 let toggle = cx.entity();
-                let remove = cx.entity();
                 let available = item.available();
-                let state = item
-                    .unavailable_reason
-                    .clone()
-                    .unwrap_or_else(|| item.summary.clone());
-                h_flex()
-                    .w_full()
-                    .h(px(48.))
-                    .px_4()
-                    .gap_x_3()
-                    .items_center()
-                    .border_b_1()
-                    .border_color(cx.theme().border)
-                    .child(
-                        Checkbox::new(SharedString::from(format!("pending-{id}")))
-                            .label(format!("{} {}", action_label(item.action), item.skill_name))
-                            .checked(checked)
-                            .on_click(move |_, _, cx| {
-                                toggle.update(cx, |app, cx| {
-                                    app.session.toggle_pending(id);
-                                    cx.notify();
-                                });
-                            }),
-                    )
-                    .when(!available, |this| {
-                        this.child(Tag::warning().child("Unavailable"))
+                let detail = match &item.unavailable_reason {
+                    Some(reason) => reason.clone(),
+                    None => self.session.compact_home_display(&item.summary),
+                };
+                ListItem::new(SharedString::from(format!("pending-row-{id}")))
+                    .on_click(move |_, _, cx| {
+                        toggle.update(cx, |app, cx| {
+                            app.session.toggle_pending(id);
+                            cx.notify();
+                        });
                     })
+                    // ListItem centers its children inside a full-width
+                    // justify-between flex, so the row goes in as one child
+                    // that owns its internal layout.
                     .child(
-                        div()
-                            .flex_1()
-                            .min_w(px(0.))
-                            .text_xs()
-                            .truncate()
-                            .child(state),
-                    )
-                    .child(
-                        Button::new(SharedString::from(format!("drop-{id}")))
-                            .ghost()
-                            .label("Remove from plan")
-                            .on_click(move |_, _, cx| {
-                                remove.update(cx, |app, cx| {
-                                    app.session.drop_pending(id);
-                                    cx.notify();
-                                });
-                            }),
+                        h_flex()
+                            .w_full()
+                            .items_center()
+                            .gap_x_3()
+                            .child(
+                                // The row click above is the single toggle
+                                // path; a checkbox handler would bubble up to
+                                // it and flip the selection twice.
+                                Checkbox::new(SharedString::from(format!("pending-check-{id}")))
+                                    .label(format!(
+                                        "{} {}",
+                                        action_label(item.action),
+                                        item.skill_name
+                                    ))
+                                    .checked(checked),
+                            )
+                            .when(!available, |this| {
+                                this.child(Tag::warning().child("Unavailable"))
+                            })
+                            .child(
+                                div()
+                                    .flex_1()
+                                    .min_w(rems(0.))
+                                    .text_xs()
+                                    .truncate()
+                                    .child(detail),
+                            ),
                     )
                     .into_any_element()
             })
             .collect()
     }
+}
+
+/// Stable element id derived from blocker content so ids survive plan
+/// reordering without leaking list positions into element ids.
+fn blocker_element_id(blocker: &str) -> SharedString {
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    blocker.hash(&mut hasher);
+    SharedString::from(format!("pending-blocker-{:016x}", hasher.finish()))
 }

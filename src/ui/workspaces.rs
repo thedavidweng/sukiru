@@ -4,9 +4,12 @@ use gpui::{
     prelude::FluentBuilder as _,
 };
 use gpui_component::{
-    ActiveTheme,
+    ActiveTheme, Sizable as _,
     button::{Button, ButtonVariants as _},
-    h_flex, v_flex,
+    h_flex,
+    list::ListItem,
+    tag::Tag,
+    v_flex,
 };
 
 use super::GinoWindow;
@@ -57,50 +60,57 @@ impl GinoWindow {
                         .children(bookmarks.into_iter().map(|bookmark| {
                             let remove = entity.clone();
                             let id = bookmark.id.clone();
-                            h_flex()
-                                .w_full()
-                                .gap_2()
-                                .items_center()
-                                .child(div().flex_1().child(format!(
-                                    "{} — {}",
-                                    bookmark.display_name,
-                                    bookmark.path.display()
-                                )))
-                                .child(
-                                    Button::new(SharedString::from(format!("remove-{id}")))
-                                        .ghost()
-                                        .label("Remove bookmark")
-                                        .on_click(move |_, _, cx| {
-                                            let id = id.clone();
-                                            remove.update(cx, |app, cx| {
-                                                app.session.remove_bookmark(&id);
-                                                cx.notify();
-                                            });
-                                        }),
-                                )
+                            ListItem::new(SharedString::from(format!("bookmark-{id}"))).child(
+                                h_flex().w_full()
+                                    .child(div().flex_1().child(format!(
+                                        "{} — {}",
+                                        bookmark.display_name,
+                                        bookmark.path.display()
+                                    )))
+                                    .child(
+                                        Button::new(SharedString::from(format!("remove-{id}")))
+                                            .ghost()
+                                            .label("Remove bookmark")
+                                            .on_click(move |_, _, cx| {
+                                                let id = id.clone();
+                                                remove.update(cx, |app, cx| {
+                                                    app.session.remove_bookmark(&id);
+                                                    cx.notify();
+                                                });
+                                            }),
+                                    ),
+                            )
                         })),
                 )
             })
             .when(self.session.active_section == Section::Agents, |this| {
-                this.child(
-                    v_flex().p_4().gap_1().children(
-                        self.session
-                            .workspaces
-                            .iter()
-                            .filter(|workspace| workspace.kind == WorkspaceKind::Agent)
-                            .map(|workspace| {
-                                muted(
-                                    cx,
-                                    format!(
-                                        "{} · {} · {}",
-                                        workspace.display_name,
-                                        kind_label(&workspace.kind),
-                                        workspace.root.display()
-                                    ),
+                this.child(v_flex().p_4().gap_1().children(
+                    self.session
+                        .workspaces
+                        .iter()
+                        .filter(|workspace| workspace.kind == WorkspaceKind::Agent)
+                        .map(|workspace| {
+                            h_flex()
+                                .w_full()
+                                .items_center()
+                                .gap_2()
+                                .child(div().text_sm().child(workspace.display_name.clone()))
+                                .child(
+                                    Tag::secondary()
+                                        .outline()
+                                        .small()
+                                        .child(kind_label(&workspace.kind)),
                                 )
-                            }),
-                    ),
-                )
+                                .child(
+                                    div()
+                                        .flex_1()
+                                        .text_sm()
+                                        .text_color(cx.theme().muted_foreground)
+                                        .truncate()
+                                        .child(workspace.root.display().to_string()),
+                                )
+                        }),
+                ))
             })
             .child(self.render_library(entity, window, cx))
     }

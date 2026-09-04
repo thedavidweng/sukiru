@@ -1,27 +1,34 @@
-use gino_core::inventory::SkillState;
+use gino_core::inventory::{PlacementKind, SkillState};
 use gino_core::platform::{open_in_editor, reveal_in_file_manager};
 use gpui::{
-    ClickEvent, Context, Entity, InteractiveElement, IntoElement, ParentElement, SharedString,
-    StatefulInteractiveElement, Styled, Window, div, prelude::FluentBuilder as _, px, uniform_list,
+    ClickEvent, ClipboardItem, Context, Corner, Entity, IntoElement, Keystroke, ParentElement,
+    SharedString, Styled, Window, div, prelude::FluentBuilder as _, px, rems, uniform_list,
 };
 use gpui_component::{
-    ActiveTheme, Selectable, StyledExt,
+    ActiveTheme, Disableable as _, Icon, IconName, Sizable as _, StyledExt,
     button::{Button, ButtonVariants as _},
     checkbox::Checkbox,
+    clipboard::Clipboard,
+    description_list::{DescriptionItem, DescriptionList},
     h_flex,
     input::Input,
-    scroll::ScrollableElement,
+    kbd::Kbd,
+    list::ListItem,
+    menu::{ContextMenuExt as _, DropdownMenu as _, PopupMenuItem},
+    popover::Popover,
+    scroll::ScrollableElement as _,
+    select::Select,
+    tab::{Tab, TabBar},
     tag::Tag,
     text::TextView,
     v_flex,
 };
 
 use super::GinoWindow;
-use super::session::TagFilter;
 use super::session::{
-    PreviewTab, TargetMenu, duplicate_label, equivalent_cli, kind_label, state_label,
+    PreviewTab, Section, duplicate_label, equivalent_cli, kind_label, state_label,
 };
-use super::widgets::{empty_state, field_label, muted, row_shell, status_badge};
+use super::widgets::{empty_state, muted, status_dot};
 
 impl GinoWindow {
     pub(crate) fn render_library(
@@ -30,196 +37,235 @@ impl GinoWindow {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> impl IntoElement {
-        let placements = self.session.visible_placements();
-        let count = placements.len();
+        let count = self.session.visible_placements().len();
         h_flex()
             .flex_1()
-            .min_w(px(0.))
+            .min_h(px(0.))
             .child(
                 v_flex()
                     .flex_1()
-                    .min_w(px(240.))
+                    .min_w(px(360.))
                     .h_full()
-                    .child(self.render_list_toolbar(entity.clone(), cx))
-                    .when(count == 0, |this| {
-                        this.child(empty_state(
-                            cx,
-                            "No Skills discovered. Refresh after installing with npx skills, or open Marketplace.",
-                        ))
-                    })
-                    .child(
-                        uniform_list("skill-list", count, {
-                            let entity = entity.clone();
-                            move |range, _, cx| {
-                                entity.update(cx, |app, cx| app.render_skill_rows(range, cx))
-                            }
-                        })
-                        .flex_1()
-                        .h_full(),
-                    ),
+                    .min_h(px(0.))
+                    .px_4()
+                    .pt_3()
+                    .gap_2()
+                    .child(self.render_search_row(cx))
+                    .child(self.render_filter_row(cx))
+                    .child(self.render_selection_row(entity.clone(), cx))
+                    .child(self.render_skill_list(count, entity.clone(), cx)),
             )
             .child(self.render_detail(entity, window, cx))
     }
 
-    fn render_list_toolbar(
+    fn render_search_row(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        Input::new(&self.library_search_input)
+            .prefix(
+                Icon::new(IconName::Search)
+                    .small()
+                    .text_color(cx.theme().muted_foreground),
+            )
+            .suffix(Kbd::new(Keystroke::parse("cmd-f").expect("valid keystroke")))
+    }
+
+    /// Tag/workspace filters as native dropdowns. Option lists and the active
+    /// selection are rebuilt by `sync_filter_options`; Confirm handlers on the
+    /// select states write back into `session.tag_filter`/`workspace_filter`.
+    /// The workspace filter only earns its slot when more than one workspace
+    /// is installed.
+    fn render_filter_row(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        h_flex()
+            .w_full()
+            .items_center()
+            .gap_2()
+            .child(muted(cx, "Tags"))
+            .child(Select::new(&self.tag_filter_select).small().w(px(160.)))
+            .when(self.session.workspace_filter_options().len() > 1, |this| {
+                this.child(muted(cx, "Workspace"))
+                    .child(Select::new(&self.workspace_filter_select).small().w(px(180.)))
+            })
+    }
+
+    /// Bulk-selection controls. Move/Copy target pickers sit behind native
+    /// dropdown menus; rare maintenance lives in the overflow menu so the
+    /// primary row stays scannable.
+    fn render_selection_row(
         &self,
         entity: Entity<Self>,
         cx: &mut Context<Self>,
     ) -> impl IntoElement {
         let selected = self.session.selected_paths.len();
-        v_flex()
+        let broken = self.session.visible_broken_symlink_count();
+        h_flex()
             .w_full()
-            .px_4()
-            .py_2()
-            .gap_2()
-            .border_b_1()
-            .border_color(cx.theme().border)
+            .items_center()
+            .gap_1()
             .child(
-                h_flex()
-                    .w_full()
-                    .gap_2()
-                    .flex_wrap()
-                    .items_center()
-                    .child(muted(
-                        cx,
-                        format!(
-                            "{} visible · {} selected · selection never writes files",
-                            self.session.visible_placements().len(),
-                            selected
-                        ),
-                    ))
-                    .child(
-                        Button::new("select-visible")
-                            .ghost()
-                            .label("Select visible")
-                            .on_click({
-                                let entity = entity.clone();
-                                move |_, _, cx| {
-                                    entity.update(cx, |app, cx| {
-                                        app.session.select_visible();
-                                        cx.notify();
-                                    });
-                                }
-                            }),
-                    )
-                    .child(
-                        Button::new("clear-selection")
-                            .ghost()
-                            .label("Clear")
-                            .on_click({
-                                let entity = entity.clone();
-                                move |_, _, cx| {
-                                    entity.update(cx, |app, cx| {
-                                        app.session.clear_selection();
-                                        cx.notify();
-                                    });
-                                }
-                            }),
-                    )
-                    .child(self.render_target_toggle(
-                        entity.clone(),
-                        "move-menu",
-                        "Move to…",
-                        TargetMenu::Move,
-                    ))
-                    .child(self.render_target_toggle(
-                        entity.clone(),
-                        "copy-menu",
-                        "Copy to…",
-                        TargetMenu::Copy,
-                    )),
+                Button::new("select-visible")
+                    .ghost()
+                    .xsmall()
+                    .label("Select visible")
+                    .on_click({
+                        let entity = entity.clone();
+                        move |_, _, cx| {
+                            entity.update(cx, |app, cx| {
+                                app.session.select_visible();
+                                cx.notify();
+                            });
+                        }
+                    }),
             )
-            .when(
-                matches!(
-                    self.session.target_menu,
-                    TargetMenu::Move | TargetMenu::Copy
-                ),
-                |this| this.child(self.render_workspace_targets(entity.clone())),
+            .child(
+                Button::new("clear-selection")
+                    .ghost()
+                    .xsmall()
+                    .disabled(selected == 0)
+                    .label("Clear")
+                    .on_click({
+                        let entity = entity.clone();
+                        move |_, _, cx| {
+                            entity.update(cx, |app, cx| {
+                                app.session.clear_selection();
+                                cx.notify();
+                            });
+                        }
+                    }),
             )
-            .child(self.render_tag_filters(entity, cx))
+            .when(selected > 0, |this| {
+                this.child(
+                    div()
+                        .text_xs()
+                        .text_color(cx.theme().muted_foreground)
+                        .child(format!("{selected} selected")),
+                )
+            })
+            .child(
+                div()
+                    .w(px(1.))
+                    .h(px(14.))
+                    .mx_1()
+                    .bg(cx.theme().border),
+            )
+            .child(self.render_target_menu(
+                entity.clone(),
+                "move-menu",
+                "Move to…",
+                true,
+            ))
+            .child(self.render_target_menu(
+                entity.clone(),
+                "copy-menu",
+                "Copy to…",
+                false,
+            ))
+            .child(div().flex_1())
+            .child(
+                Button::new("more-menu")
+                    .ghost()
+                    .xsmall()
+                    .label("More")
+                    .dropdown_caret(true)
+                    .dropdown_menu(move |menu, _, _| {
+                        menu.item(
+                            PopupMenuItem::new(format!("Clean Broken Links ({broken})"))
+                                .disabled(broken == 0)
+                                .on_click({
+                                    let entity = entity.clone();
+                                    move |_, window, cx| {
+                                        entity.update(cx, |app, cx| {
+                                            let count =
+                                                app.session.queue_cleanup_visible_broken_symlinks();
+                                            if count > 0 {
+                                                app.session.active_section = Section::Pending;
+                                            }
+                                            app.push_status(window, cx);
+                                            cx.notify();
+                                        });
+                                    }
+                                }),
+                        )
+                    }),
+            )
     }
 
-    fn render_target_toggle(
+    fn render_skill_list(
+        &self,
+        count: usize,
+        entity: Entity<Self>,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
+        div()
+            .flex_1()
+            .min_h(px(0.))
+            .border_1()
+            .border_color(cx.theme().border)
+            .rounded_lg()
+            .overflow_hidden()
+            .when(count == 0, |this| {
+                this.child(empty_state(
+                    cx,
+                    if self.session.search.trim().is_empty() {
+                        "No Skills discovered. Refresh after installing with npx skills, or open Marketplace."
+                    } else {
+                        "No Skills match the current search and filters."
+                    },
+                ))
+            })
+            .when(count > 0, |this| {
+                this.child(
+                    uniform_list("skill-list", count, {
+                        let entity = entity.clone();
+                        move |range, _, cx| {
+                            entity.update(cx, |app, cx| app.render_skill_rows(range, cx))
+                        }
+                    })
+                    .flex_1()
+                    .h_full(),
+                )
+            })
+    }
+
+    /// Move/Copy targets behind a native dropdown menu; open/close state lives
+    /// in the popover itself instead of `session.target_menu`.
+    fn render_target_menu(
         &self,
         entity: Entity<Self>,
         id: &'static str,
         label: &'static str,
-        menu: TargetMenu,
+        move_mode: bool,
     ) -> impl IntoElement {
+        let targets: Vec<(String, String)> = self
+            .session
+            .workspaces
+            .iter()
+            .filter(|workspace| workspace.installed)
+            .map(|workspace| (workspace.id.clone(), workspace.display_name.clone()))
+            .collect();
         Button::new(id)
             .ghost()
-            .selected(self.session.target_menu == menu)
+            .xsmall()
             .label(label)
-            .on_click(move |_, _, cx| {
-                entity.update(cx, |app, cx| {
-                    app.session.toggle_target_menu(menu);
-                    cx.notify();
-                });
+            .dropdown_caret(true)
+            .dropdown_menu(move |menu, _, _| {
+                let mut built = menu;
+                for (target_id, name) in targets.iter() {
+                    let target_id = target_id.clone();
+                    let entity = entity.clone();
+                    built =
+                        built.item(PopupMenuItem::new(name.clone()).on_click(move |_, _, cx| {
+                            let target_id = target_id.clone();
+                            entity.update(cx, |app, cx| {
+                                if move_mode {
+                                    app.session.queue_move_to(&target_id);
+                                } else {
+                                    app.session.queue_copy_to(&target_id);
+                                }
+                                cx.notify();
+                            });
+                        }));
+                }
+                built
             })
-    }
-
-    fn render_workspace_targets(&self, entity: Entity<Self>) -> impl IntoElement {
-        let menu = self.session.target_menu;
-        h_flex()
-            .gap_1()
-            .flex_wrap()
-            .children(self.session.workspaces.iter().map(|workspace| {
-                let id = workspace.id.clone();
-                let label = workspace.display_name.clone();
-                let target = entity.clone();
-                Button::new(SharedString::from(format!("target-{menu:?}-{id}")))
-                    .ghost()
-                    .label(label)
-                    .on_click(move |_, _, cx| {
-                        let id = id.clone();
-                        target.update(cx, |app, cx| {
-                            match menu {
-                                TargetMenu::Move => app.session.queue_move_to(&id),
-                                TargetMenu::Copy => app.session.queue_copy_to(&id),
-                                _ => {}
-                            }
-                            app.session.close_target_menu();
-                            cx.notify();
-                        });
-                    })
-            }))
-    }
-
-    pub(crate) fn render_tag_filters(
-        &self,
-        entity: Entity<Self>,
-        cx: &mut Context<Self>,
-    ) -> impl IntoElement {
-        let tags = self.session.all_tags();
-        h_flex()
-            .gap_2()
-            .flex_wrap()
-            .child(muted(cx, "Filter:"))
-            .child(filter_chip(
-                entity.clone(),
-                "filter-all",
-                "All",
-                matches!(self.session.tag_filter, TagFilter::All),
-                TagFilter::All,
-            ))
-            .child(filter_chip(
-                entity.clone(),
-                "filter-untagged",
-                "Untagged",
-                matches!(self.session.tag_filter, TagFilter::Untagged),
-                TagFilter::Untagged,
-            ))
-            .children(tags.into_iter().map(|tag| {
-                let selected =
-                    matches!(&self.session.tag_filter, TagFilter::Tag(current) if current == &tag);
-                filter_chip(
-                    entity.clone(),
-                    SharedString::from(format!("filter-{tag}")),
-                    tag.clone(),
-                    selected,
-                    TagFilter::Tag(tag),
-                )
-            }))
     }
 
     fn render_skill_rows(
@@ -230,66 +276,180 @@ impl GinoWindow {
         let placements = self.session.visible_placements();
         placements
             .into_iter()
-            .enumerate()
             .skip(range.start)
             .take(range.end.saturating_sub(range.start))
-            .map(|(index, placement)| {
+            .map(|placement| {
                 let checked = self.session.selected_paths.contains(&placement.path);
                 let focused = self.session.selected_detail.as_ref() == Some(&placement.path);
                 let path = placement.path.clone();
                 let toggle_path = path.clone();
                 let row_entity = cx.entity();
                 let check_entity = cx.entity();
-                row_shell(cx, focused)
-                    .id(SharedString::from(format!("skill-row-{index}")))
-                    .on_click(move |event: &ClickEvent, _, cx| {
-                        let path = path.clone();
-                        let shift = event.modifiers().shift;
-                        row_entity.update(cx, |app, cx| {
-                            app.session.click_placement(path, shift);
-                            cx.notify();
-                        });
-                    })
-                    .child(
-                        Checkbox::new(SharedString::from(format!("skill-check-{index}")))
-                            .label(placement.name.clone())
+                ListItem::new(SharedString::from(format!(
+                    "skill-row-{}",
+                    placement.path.display()
+                )))
+                .selected(focused)
+                .on_click(move |event: &ClickEvent, _, cx| {
+                    let path = path.clone();
+                    let shift = event.modifiers().shift;
+                    row_entity.update(cx, |app, cx| {
+                        app.session.open_placement(path, shift);
+                        cx.notify();
+                    });
+                })
+                .child(
+                    h_flex()
+                        .w_full()
+                        .items_center()
+                        .gap_x_3()
+                        .child(
+                            Checkbox::new(SharedString::from(format!(
+                                "skill-check-{}",
+                                placement.path.display()
+                            )))
                             .checked(checked)
                             .on_click(move |_, _, cx| {
                                 let path = toggle_path.clone();
                                 check_entity.update(cx, |app, cx| {
                                     app.session.toggle_selected(&path);
-                                    app.session.selected_detail = Some(path);
-                                    app.session.warm_detail_preview();
                                     cx.notify();
                                 });
+                                // The checkbox owns bulk selection only; stop the
+                                // row underneath from also opening the detail pane.
+                                cx.stop_propagation();
                             }),
-                    )
-                    .child(
-                        div()
-                            .flex_1()
-                            .min_w(px(0.))
-                            .text_sm()
-                            .text_color(cx.theme().muted_foreground)
-                            .truncate()
-                            .child(placement.description.clone()),
-                    )
-                    .child(status_badge(placement.state.clone()))
-                    .children(
-                        self.session
-                            .duplicate_class_for(&placement.path)
-                            .map(|class| {
-                                Tag::warning()
-                                    .child(duplicate_label(&class))
-                                    .into_any_element()
-                            }),
-                    )
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(cx.theme().muted_foreground)
-                            .child(kind_label(&placement.workspace_kind)),
-                    )
-                    .into_any_element()
+                        )
+                        .child(
+                            v_flex()
+                                .flex_1()
+                                .min_w(px(0.))
+                                .gap(px(2.))
+                                .child(
+                                    div()
+                                        .text_sm()
+                                        .font_medium()
+                                        .text_color(cx.theme().foreground)
+                                        .truncate()
+                                        .child(placement.name.clone()),
+                                )
+                                .child(if placement.description.is_empty() {
+                                    div()
+                                        .text_xs()
+                                        .text_color(cx.theme().muted_foreground.opacity(0.6))
+                                        .child("No description")
+                                } else {
+                                    div()
+                                        .text_xs()
+                                        .text_color(cx.theme().muted_foreground)
+                                        .truncate()
+                                        // Frontmatter descriptions may contain hard
+                                        // line breaks; `truncate` only suppresses
+                                        // soft wraps, so flatten them first or the
+                                        // row grows and collides with its neighbors
+                                        // in the uniform list.
+                                        .child(placement.description.replace('\n', " "))
+                                }),
+                        )
+                        .child(
+                            // Right cluster: anomaly badges first, then the
+                            // tracking dot. Quiet rows stay quiet.
+                            h_flex()
+                                .flex_shrink_0()
+                                .justify_end()
+                                .gap_1()
+                                .items_center()
+                                .children(self.session.duplicate_class_for(&placement.path).map(
+                                    |class| {
+                                        Tag::warning()
+                                            .outline()
+                                            .small()
+                                            .child(duplicate_label(&class))
+                                            .into_any_element()
+                                    },
+                                ))
+                                .when(
+                                    placement.placement_kind == PlacementKind::BrokenSymlink,
+                                    |this| {
+                                        // Attribute dangling links to the agent whose
+                                        // skills directory they sit in.
+                                        this.child(
+                                            Tag::warning()
+                                                .outline()
+                                                .small()
+                                                .child(self.session.workspace_display_name(
+                                                    &placement.workspace_id,
+                                                ))
+                                                .into_any_element(),
+                                        )
+                                    },
+                                )
+                                .child(status_dot(&placement.state, cx)),
+                        ),
+                )
+                .context_menu({
+                    let menu_path = placement.path.clone();
+                    let menu_entity = cx.entity();
+                    let editor_pref = self.session.preferences.editor.clone();
+                    move |menu, _, _| {
+                        menu.item(
+                            PopupMenuItem::new("Reveal in Finder")
+                                .icon(IconName::Folder)
+                                .on_click({
+                                    let path = menu_path.clone();
+                                    let entity = menu_entity.clone();
+                                    move |_, _, cx| {
+                                        entity.update(cx, |app, cx| {
+                                            if let Err(error) = reveal_in_file_manager(&path) {
+                                                app.session.action_error =
+                                                    Some(error.to_string());
+                                            }
+                                            cx.notify();
+                                        });
+                                    }
+                                }),
+                        )
+                        .item(
+                            PopupMenuItem::new("Open in Editor")
+                                .icon(IconName::SquareTerminal)
+                                .on_click({
+                                    let path = menu_path.clone();
+                                    let editor_pref = editor_pref.clone();
+                                    let entity = menu_entity.clone();
+                                    move |_, _, cx| {
+                                        entity.update(cx, |app, cx| {
+                                            if let Err(error) = open_in_editor(
+                                                &path,
+                                                (!editor_pref.is_empty())
+                                                    .then_some(editor_pref.as_str()),
+                                            ) {
+                                                app.session.action_error =
+                                                    Some(error.to_string());
+                                            }
+                                            cx.notify();
+                                        });
+                                    }
+                                }),
+                        )
+                        .item(
+                            PopupMenuItem::new("Copy Path")
+                                .icon(IconName::Copy)
+                                .on_click({
+                                    let path = menu_path.clone();
+                                    let entity = menu_entity.clone();
+                                    move |_, _, cx| {
+                                        entity.update(cx, |_app, cx| {
+                                            cx.write_to_clipboard(ClipboardItem::new_string(
+                                                path.display().to_string(),
+                                            ));
+                                            cx.notify();
+                                        });
+                                    }
+                                }),
+                        )
+                    }
+                })
+                .into_any_element()
             })
             .collect()
     }
@@ -303,18 +463,19 @@ impl GinoWindow {
         let Some(placement) = self.session.selected_placement() else {
             return v_flex()
                 .flex_1()
-                .min_w(px(240.))
-                .max_w(px(520.))
+                .min_w(px(320.))
+                .max_w(px(560.))
                 .h_full()
-                .p_4()
+                .min_h(px(0.))
                 .border_l_1()
                 .border_color(cx.theme().border)
-                .child(muted(
+                .child(empty_state(
                     cx,
                     "Select a Skill to inspect it. Preview is read-only.",
                 ))
                 .into_any_element();
         };
+
         let preview = self.session.detail_preview();
         let skill_md = preview
             .map(|preview| preview.skill_md.clone())
@@ -335,207 +496,297 @@ impl GinoWindow {
                 format!(
                     "{} · {} · {}",
                     kind_label(&other.workspace_kind),
-                    other.workspace_id,
+                    self.session.workspace_display_name(&other.workspace_id),
                     other.path.display()
                 )
             })
             .collect::<Vec<_>>();
-        let source = placement.lock_entry.as_ref().map(|entry| {
-            format!(
-                "{} ({}) ref={} path={}",
-                entry.source,
-                entry.source_type,
-                entry.ref_name.as_deref().unwrap_or("-"),
-                entry.skill_path.as_deref().unwrap_or("-")
-            )
-        });
         let tags = self.session.tags_for(&placement.name);
         let untracked = placement.state == SkillState::Untracked;
+        let state_text = state_label(&placement.state);
         let preview_body = match self.session.preview_tab {
             PreviewTab::SkillMd => skill_md,
             PreviewTab::Readme => readme.unwrap_or_else(|| "_No README.md_".to_owned()),
         };
         let preview_id = format!("preview-{}", placement.path.display());
-        v_flex()
-            .flex_1()
-            .min_w(px(240.))
-            .max_w(px(520.))
-            .h_full()
-            .p_4()
+        let tracked_source = placement.lock_entry.as_ref().map(|entry| {
+            match entry.ref_name.as_deref() {
+                Some(reference) => format!("{} · {}", entry.source, reference),
+                None => entry.source.clone(),
+            }
+        });
+
+        // Region 1 — header: identity, status, primary actions.
+        let header = v_flex()
+            .flex_shrink_0()
+            .px_4()
+            .pt_4()
             .gap_2()
-            .border_l_1()
-            .border_color(cx.theme().border)
-            .child(
-                div()
-                    .text_lg()
-                    .font_semibold()
-                    .child(placement.name.clone()),
-            )
-            .child(div().text_sm().child(placement.description.clone()))
-            .child(muted(cx, format!("Path: {}", placement.path.display())))
-            .child(muted(
-                cx,
-                format!(
-                    "Hash: {}",
-                    placement
-                        .content_hash
-                        .clone()
-                        .unwrap_or_else(|| "n/a".to_owned())
-                ),
-            ))
-            .child(muted(
-                cx,
-                format!("State: {}", state_label(&placement.state)),
-            ))
-            .children(source.map(|source| muted(cx, format!("Source: {source}"))))
-            .child(muted(cx, format!("Equivalent CLI: {command}")))
-            .child(muted(cx, format!("Placements: {}", placements.join(" | "))))
-            .child(muted(cx, format!("Files: {}", files.join(", "))))
-            .child(muted(
-                cx,
-                format!(
-                    "Tags: {}",
-                    if tags.is_empty() {
-                        "none".to_owned()
-                    } else {
-                        tags.into_iter().collect::<Vec<_>>().join(", ")
-                    }
-                ),
-            ))
             .child(
                 h_flex()
+                    .items_center()
+                    .justify_between()
                     .gap_2()
-                    .flex_wrap()
-                    .child({
-                        let reveal = entity.clone();
-                        let reveal_path = path.clone();
-                        Button::new("reveal")
-                            .ghost()
-                            .label("Reveal")
-                            .on_click(move |_, _, cx| {
-                                let path = reveal_path.clone();
-                                reveal.update(cx, |app, cx| {
-                                    if let Err(error) = reveal_in_file_manager(&path) {
-                                        app.session.action_error = Some(error.to_string());
-                                    }
-                                    cx.notify();
-                                });
+                    .child(
+                        h_flex()
+                            .flex_1()
+                            .min_w(px(0.))
+                            .items_center()
+                            .gap_2()
+                            .child(
+                                div()
+                                    .text_xl()
+                                    .font_semibold()
+                                    .truncate()
+                                    .child(placement.name.clone()),
+                            )
+                            .child(Tag::success().small().child(state_text)),
+                    )
+                    .child(
+                        h_flex()
+                            .flex_shrink_0()
+                            .items_center()
+                            .gap_1()
+                            .child({
+                                let editor = entity.clone();
+                                let editor_path = path.clone();
+                                Button::new("editor")
+                                    .primary()
+                                    .small()
+                                    .icon(Icon::new(IconName::SquareTerminal))
+                                    .label("Open in Editor")
+                                    .on_click(move |_, _, cx| {
+                                        let path = editor_path.clone();
+                                        let editor_pref = editor_pref.clone();
+                                        editor.update(cx, |app, cx| {
+                                            if let Err(error) = open_in_editor(
+                                                &path,
+                                                (!editor_pref.is_empty())
+                                                    .then_some(editor_pref.as_str()),
+                                            ) {
+                                                app.session.action_error =
+                                                    Some(error.to_string());
+                                            }
+                                            cx.notify();
+                                        });
+                                    })
                             })
-                    })
-                    .child({
-                        let editor = entity.clone();
-                        let editor_path = path.clone();
-                        Button::new("editor")
-                            .ghost()
-                            .label("Open in Editor")
-                            .on_click(move |_, _, cx| {
-                                let path = editor_path.clone();
-                                let editor_pref = editor_pref.clone();
-                                editor.update(cx, |app, cx| {
-                                    if let Err(error) = open_in_editor(
-                                        &path,
-                                        (!editor_pref.is_empty()).then_some(editor_pref.as_str()),
-                                    ) {
-                                        app.session.action_error = Some(error.to_string());
-                                    }
-                                    cx.notify();
-                                });
+                            .child({
+                                let reveal = entity.clone();
+                                let reveal_path = path.clone();
+                                Button::new("reveal")
+                                    .ghost()
+                                    .small()
+                                    .icon(Icon::new(IconName::Folder))
+                                    .label("Reveal in Finder")
+                                    .on_click(move |_, _, cx| {
+                                        let path = reveal_path.clone();
+                                        reveal.update(cx, |app, cx| {
+                                            if let Err(error) = reveal_in_file_manager(&path) {
+                                                app.session.action_error =
+                                                    Some(error.to_string());
+                                            }
+                                            cx.notify();
+                                        });
+                                    })
                             })
-                    }),
+                            .child(self.render_details_popover(
+                                path.clone(),
+                                command,
+                                placements,
+                                files,
+                                tags,
+                                state_label(&placement.state),
+                            )),
+                    ),
+            )
+            .child(
+                div()
+                    .text_sm()
+                    .line_clamp(3)
+                    .text_color(cx.theme().foreground)
+                    .child(placement.description.clone()),
+            );
+
+        // Region 2 — source card: tracking status plus its one relevant action.
+        let state_tag = || Tag::success().small().child(state_label(&placement.state));
+        let source_card = v_flex()
+            .flex_shrink_0()
+            .mx_4()
+            .mt_3()
+            .p_3()
+            .gap_2()
+            .border_1()
+            .border_color(cx.theme().border)
+            .rounded_lg()
+            .child(
+                h_flex()
+                    .items_center()
+                    .gap_2()
+                    .child(div().text_sm().font_semibold().child("Source"))
+                    .child(state_tag()),
             )
             .when(untracked, |this| {
-                let attach = entity.clone();
                 this.child(muted(
                     cx,
-                    "Untracked: attach an explicit source to enable updates.",
+                    "This Skill has no tracked source. Attach a repository, local path, or URL to enable updates.",
                 ))
-                .child(field_label("Source for this Skill"))
-                .child(Input::new(&self.attach_input))
                 .child(
-                    Button::new("attach-source")
-                        .ghost()
-                        .label("Queue Attach Source")
-                        .on_click(move |_, window, cx| {
-                            attach.update(cx, |app, cx| {
-                                app.queue_attach_from_input(window, cx);
-                                cx.notify();
-                            });
+                    h_flex()
+                        .w_full()
+                        .gap_2()
+                        .child(Input::new(&self.attach_input).flex_1())
+                        .child({
+                            let attach = entity.clone();
+                            Button::new("attach-source")
+                                .primary()
+                                .small()
+                                .label("Attach Source")
+                                .on_click(move |_, window, cx| {
+                                    attach.update(cx, |app, cx| {
+                                        app.queue_attach_from_input(window, cx);
+                                        cx.notify();
+                                    });
+                                })
                         }),
                 )
             })
-            .child(
-                h_flex()
-                    .gap_2()
-                    .child(preview_tab_button(
-                        entity.clone(),
-                        "tab-skill",
-                        "SKILL.md",
-                        self.session.preview_tab == PreviewTab::SkillMd,
-                        PreviewTab::SkillMd,
-                    ))
-                    .child(preview_tab_button(
-                        entity,
-                        "tab-readme",
-                        "README.md",
-                        self.session.preview_tab == PreviewTab::Readme,
-                        PreviewTab::Readme,
-                    )),
-            )
+            .when(!untracked, |this| {
+                this.child(
+                    div()
+                        .text_sm()
+                        .truncate()
+                        .text_color(cx.theme().muted_foreground)
+                        .child(tracked_source.unwrap_or_else(|| "—".to_owned())),
+                )
+            });
+
+        // Region 3 — file tabs.
+        let tabs = div().flex_shrink_0().px_4().pt_2().child(
+            TabBar::new("preview-tabs")
+                .selected_index(usize::from(self.session.preview_tab == PreviewTab::Readme))
+                .on_click(move |ix: &usize, _, cx| {
+                    let tab = if *ix == 1 {
+                        PreviewTab::Readme
+                    } else {
+                        PreviewTab::SkillMd
+                    };
+                    entity.update(cx, |app, cx| {
+                        app.session.preview_tab = tab;
+                        cx.notify();
+                    });
+                })
+                .children([Tab::new().label("SKILL.md"), Tab::new().label("README.md")]),
+        );
+
+        // Region 4 — document viewer: the only scrolling region.
+        let viewer = div()
+            .flex_1()
+            .min_h(px(0.))
+            .mx_4()
+            .my_3()
+            .border_1()
+            .border_color(cx.theme().border)
+            .rounded_lg()
+            .overflow_y_scrollbar()
             .child(
                 div()
-                    .flex_1()
-                    .p_2()
-                    .bg(cx.theme().secondary)
-                    .overflow_y_scrollbar()
-                    .child(
-                        TextView::markdown(
-                            SharedString::from(preview_id),
-                            preview_body,
-                            window,
-                            cx,
+                    .p_4()
+                    .when(preview_body.trim().is_empty(), |this| {
+                        this.child(empty_state(cx, "This file has no content."))
+                    })
+                    .when(!preview_body.trim().is_empty(), |this| {
+                        this.child(
+                            TextView::markdown(
+                                SharedString::from(preview_id),
+                                preview_body,
+                                window,
+                                cx,
+                            )
+                            .selectable(true),
                         )
-                        .selectable(true),
-                    ),
-            )
+                    }),
+            );
+
+        v_flex()
+            .flex_1()
+            .min_w(px(320.))
+            .max_w(px(560.))
+            .h_full()
+            .min_h(px(0.))
+            .border_l_1()
+            .border_color(cx.theme().border)
+            .overflow_hidden()
+            .child(header)
+            .child(source_card)
+            .child(tabs)
+            .child(viewer)
             .into_any_element()
     }
-}
 
-fn preview_tab_button(
-    entity: Entity<GinoWindow>,
-    id: &'static str,
-    label: &'static str,
-    active: bool,
-    tab: PreviewTab,
-) -> impl IntoElement {
-    Button::new(id)
-        .ghost()
-        .selected(active)
-        .label(label)
-        .on_click(move |_, _, cx| {
-            entity.update(cx, |app, cx| {
-                app.session.preview_tab = tab;
-                cx.notify();
+    /// Overflow menu behind the ⋯ button: the long-tail metadata that would
+    /// otherwise turn the header into a debug panel, plus Copy Path.
+    #[allow(clippy::too_many_arguments)]
+    fn render_details_popover(
+        &self,
+        path: std::path::PathBuf,
+        command: String,
+        placements: Vec<String>,
+        files: Vec<String>,
+        tags: std::collections::BTreeSet<String>,
+        state: &'static str,
+    ) -> impl IntoElement {
+        let source = self
+            .session
+            .selected_placement()
+            .and_then(|placement| placement.lock_entry.as_ref())
+            .map(|entry| match entry.ref_name.as_deref() {
+                Some(reference) => format!("{} · {}", entry.source, reference),
+                None => entry.source.clone(),
             });
-        })
-}
-
-fn filter_chip(
-    entity: Entity<GinoWindow>,
-    id: impl Into<SharedString>,
-    label: impl Into<SharedString>,
-    selected: bool,
-    filter: TagFilter,
-) -> impl IntoElement {
-    Button::new(id.into())
-        .ghost()
-        .selected(selected)
-        .label(label.into())
-        .on_click(move |_, _, cx| {
-            let filter = filter.clone();
-            entity.update(cx, |app, cx| {
-                app.session.tag_filter = filter;
-                cx.notify();
-            });
-        })
+        let path_display = self.session.compact_home_display(&path.display().to_string());
+        let path_string = path.display().to_string();
+        Popover::new("skill-details")
+            .anchor(Corner::TopRight)
+            .trigger(
+                Button::new("skill-details-trigger")
+                    .ghost()
+                    .small()
+                    .icon(Icon::new(IconName::EllipsisVertical)),
+            )
+            .content(move |_, _, _| {
+                let truncated =
+                    |text: String| div().text_sm().truncate().child(text).into_any_element();
+                let mut items = vec![
+                    DescriptionItem::new("Path").value(truncated(path_display.clone())),
+                    DescriptionItem::new("State").value(state.to_string()),
+                ];
+                if let Some(source) = source.clone() {
+                    items.push(DescriptionItem::new("Source").value(truncated(source)));
+                }
+                items.extend([
+                    DescriptionItem::new("Equivalent CLI").value(command.clone()),
+                    DescriptionItem::new("Placements")
+                        .value(truncated(placements.join(" | "))),
+                    DescriptionItem::new("Files").value(truncated(files.join(", "))),
+                    DescriptionItem::new("Tags").value(if tags.is_empty() {
+                        "none".to_owned()
+                    } else {
+                        tags.clone()
+                            .into_iter()
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    }),
+                ]);
+                v_flex()
+                    .w(rems(30.))
+                    .gap_2()
+                    .child(DescriptionList::vertical().small().children(items))
+                    .child(
+                        h_flex().justify_end().child(
+                            Clipboard::new("copy-skill-path").value(path_string.clone()),
+                        ),
+                    )
+            })
+    }
 }

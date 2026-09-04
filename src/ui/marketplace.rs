@@ -1,18 +1,19 @@
 use gpui::{
-    Context, Entity, InteractiveElement, IntoElement, ParentElement, SharedString, Styled, Window,
-    div, prelude::FluentBuilder as _, px, uniform_list,
+    Context, Entity, IntoElement, ParentElement, SharedString, Styled, Window, div,
+    prelude::FluentBuilder as _, rems, uniform_list,
 };
 use gpui_component::{
-    ActiveTheme, Selectable,
+    ActiveTheme, IconName,
     button::{Button, ButtonVariants as _},
     checkbox::Checkbox,
     h_flex,
     input::Input,
+    list::ListItem,
+    menu::{DropdownMenu as _, PopupMenuItem},
     v_flex,
 };
 
 use super::GinoWindow;
-use super::session::TargetMenu;
 use super::widgets::{empty_state, muted};
 
 impl GinoWindow {
@@ -28,7 +29,7 @@ impl GinoWindow {
         let queue_selected = entity.clone();
         v_flex()
             .flex_1()
-            .min_w(px(0.))
+            .min_w(rems(0.))
             .p_4()
             .gap_3()
             .child(muted(
@@ -39,7 +40,7 @@ impl GinoWindow {
                 h_flex()
                     .gap_2()
                     .flex_wrap()
-                    .child(div().flex_1().min_w(px(200.)).child(Input::new(&self.query_input)))
+                    .child(div().flex_1().min_w(rems(12.5)).child(Input::new(&self.query_input)))
                     .child(Button::new("search").primary().label("Search").on_click(
                         move |_, window, cx| {
                             search.update(cx, |app, cx| {
@@ -53,7 +54,7 @@ impl GinoWindow {
                 h_flex()
                     .gap_2()
                     .flex_wrap()
-                    .child(div().flex_1().min_w(px(200.)).child(Input::new(&self.source_input)))
+                    .child(div().flex_1().min_w(rems(12.5)).child(Input::new(&self.source_input)))
                     .child(
                         Button::new("queue-source")
                             .ghost()
@@ -122,6 +123,9 @@ impl GinoWindow {
             .skip(range.start)
             .take(range.end.saturating_sub(range.start))
             .map(|(index, skill)| {
+                // Row and control ids come from the skill's stable marketplace
+                // id so they survive result reordering; `index` only feeds the
+                // existing selection bookkeeping.
                 let source = if skill.source.is_empty() {
                     skill.id.clone()
                 } else {
@@ -131,52 +135,65 @@ impl GinoWindow {
                 let checked = self.session.marketplace_selected.contains(&index);
                 let toggle = cx.entity();
                 let install = cx.entity();
-                h_flex()
-                    .id(SharedString::from(format!("market-{index}")))
-                    .h(px(48.))
-                    .w_full()
-                    .px_4()
-                    .gap_x_3()
-                    .items_center()
-                    .border_b_1()
-                    .border_color(cx.theme().border)
+                ListItem::new(SharedString::from(format!("market-row-{}", skill.id)))
+                    .on_click(move |_, _, cx| {
+                        toggle.update(cx, |app, cx| {
+                            app.session.toggle_marketplace(index);
+                            cx.notify();
+                        });
+                    })
+                    // ListItem centers its children inside a full-width
+                    // justify-between flex, so the row goes in as one child
+                    // that owns its internal layout.
                     .child(
-                        Checkbox::new(SharedString::from(format!("market-check-{index}")))
-                            .label(skill.name.clone())
-                            .checked(checked)
-                            .on_click(move |_, _, cx| {
-                                toggle.update(cx, |app, cx| {
-                                    app.session.toggle_marketplace(index);
-                                    cx.notify();
-                                });
-                            }),
-                    )
-                    .child(
-                        div()
-                            .flex_1()
-                            .min_w(px(0.))
-                            .text_xs()
-                            .text_color(cx.theme().muted_foreground)
-                            .truncate()
-                            .child(source.clone()),
-                    )
-                    .child(
-                        div()
-                            .text_xs()
-                            .child(format!("{} installs", skill.installs)),
-                    )
-                    .child(
-                        Button::new(SharedString::from(format!("install-{index}")))
-                            .ghost()
-                            .label("Queue install")
-                            .on_click(move |_, window, cx| {
-                                let source = source.clone();
-                                let hint = hint.clone();
-                                install.update(cx, |app, cx| {
-                                    app.start_discover(source, Some(hint), window, cx);
-                                    cx.notify();
-                                });
-                            }),
+                        h_flex()
+                            .w_full()
+                            .items_center()
+                            .gap_x_3()
+                            .child(
+                                // The row click above is the single toggle
+                                // path; a checkbox handler would bubble up to
+                                // it and flip the selection twice.
+                                Checkbox::new(SharedString::from(format!(
+                                    "market-check-{}",
+                                    skill.id
+                                )))
+                                .label(skill.name.clone())
+                                .checked(checked),
+                            )
+                            .child(
+                                div()
+                                    .flex_1()
+                                    .min_w(rems(0.))
+                                    .text_xs()
+                                    .text_color(cx.theme().muted_foreground)
+                                    .truncate()
+                                    .child(source.clone()),
+                            )
+                            .child(
+                                div()
+                                    .text_xs()
+                                    .child(format!("{} installs", skill.installs)),
+                            )
+                            .child(
+                                Button::new(SharedString::from(format!("install-{}", skill.id)))
+                                    .ghost()
+                                    .label("Queue install")
+                                    .on_click({
+                                        let install = install.clone();
+                                        move |_, window, cx| {
+                                            // Keep the queueing click from also
+                                            // toggling the row's selection.
+                                            cx.stop_propagation();
+                                            let source = source.clone();
+                                            let hint = hint.clone();
+                                            install.update(cx, |app, cx| {
+                                                app.start_discover(source, Some(hint), window, cx);
+                                                cx.notify();
+                                            });
+                                        }
+                                    }),
+                            ),
                     )
                     .into_any_element()
             })
@@ -188,59 +205,50 @@ impl GinoWindow {
         entity: Entity<Self>,
         cx: &mut Context<Self>,
     ) -> impl IntoElement {
-        v_flex()
+        let selected_label = self
+            .session
+            .workspaces
+            .iter()
+            .find(|workspace| workspace.id == self.session.install_target_id)
+            .map(|workspace| workspace.display_name.clone())
+            .unwrap_or_else(|| "Choose workspace".to_owned());
+        h_flex()
             .gap_2()
+            .items_center()
+            .flex_wrap()
+            .child(muted(cx, "Install target:"))
             .child(
-                h_flex()
-                    .gap_2()
-                    .items_center()
-                    .flex_wrap()
-                    .child(muted(cx, "Install target:"))
-                    .child(
-                        Button::new("install-menu")
-                            .ghost()
-                            .selected(self.session.target_menu == TargetMenu::Install)
-                            .label(
-                                self.session
-                                    .workspaces
-                                    .iter()
-                                    .find(|workspace| {
-                                        workspace.id == self.session.install_target_id
-                                    })
-                                    .map(|workspace| workspace.display_name.clone())
-                                    .unwrap_or_else(|| "Choose workspace".to_owned()),
-                            )
-                            .on_click({
-                                let entity = entity.clone();
-                                move |_, _, cx| {
-                                    entity.update(cx, |app, cx| {
-                                        app.session.toggle_target_menu(TargetMenu::Install);
-                                        cx.notify();
-                                    });
-                                }
-                            }),
-                    ),
-            )
-            .when(self.session.target_menu == TargetMenu::Install, |this| {
-                this.child(h_flex().gap_1().flex_wrap().children(
-                    self.session.workspaces.iter().map(|workspace| {
-                        let id = workspace.id.clone();
-                        let active = self.session.install_target_id == workspace.id;
-                        let target = entity.clone();
-                        Button::new(SharedString::from(format!("target-{}", workspace.id)))
-                            .ghost()
-                            .selected(active)
-                            .label(workspace.display_name.clone())
-                            .on_click(move |_, _, cx| {
-                                let id = id.clone();
-                                target.update(cx, |app, cx| {
-                                    app.session.install_target_id = id;
-                                    app.session.close_target_menu();
-                                    cx.notify();
-                                });
-                            })
+                Button::new("install-target")
+                    .ghost()
+                    .icon(IconName::ChevronDown)
+                    .label(selected_label)
+                    .dropdown_menu({
+                        let entity = entity.clone();
+                        // The component owns open/close state; items are read
+                        // from live session state each time the menu opens.
+                        move |menu, _, cx| {
+                            let session = &entity.read(cx).session;
+                            let mut menu = menu;
+                            for workspace in session.workspaces.iter().filter(|w| w.installed) {
+                                let active = session.install_target_id == workspace.id;
+                                menu = menu.item(
+                                    PopupMenuItem::new(workspace.display_name.clone())
+                                        .checked(active)
+                                        .on_click({
+                                            let entity = entity.clone();
+                                            let id = workspace.id.clone();
+                                            move |_, _, cx| {
+                                                entity.update(cx, |app, cx| {
+                                                    app.session.install_target_id = id.clone();
+                                                    cx.notify();
+                                                });
+                                            }
+                                        }),
+                                );
+                            }
+                            menu
+                        }
                     }),
-                ))
-            })
+            )
     }
 }

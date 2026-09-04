@@ -1,14 +1,18 @@
 use gino_core::inventory::SkillState;
 use gino_core::metadata::Preferences;
 use gpui::{
-    App, ClipboardItem, Entity, IntoElement, ParentElement, SharedString, Styled, Window, div,
-    prelude::FluentBuilder as _, px,
+    App, Corner, Entity, InteractiveElement, IntoElement, ParentElement, SharedString, Styled,
+    Window, div, px, rems,
 };
 use gpui_component::{
-    ActiveTheme, Disableable, IconName, StyledExt,
+    ActiveTheme, Disableable, Icon, IconName, Sizable as _, StyledExt,
+    alert::Alert,
     button::{Button, ButtonVariants as _},
+    clipboard::Clipboard,
     h_flex,
-    tag::Tag,
+    popover::Popover,
+    scroll::ScrollableElement as _,
+    spinner::Spinner,
     v_flex,
 };
 use gpui_component::{Theme, ThemeMode};
@@ -26,10 +30,11 @@ pub fn apply_appearance(preferences: &Preferences, window: Option<&mut Window>, 
             .unwrap_or(ThemeMode::Light),
     };
     Theme::change(mode, window, cx);
-    Theme::global_mut(cx).font_size = match preferences.text_size.as_str() {
-        "small" => px(13.),
-        "large" => px(18.),
-        _ => px(16.),
+    let theme = Theme::global_mut(cx);
+    theme.font_size = match preferences.text_size.as_str() {
+        "small" => px(12.),
+        "large" => px(16.),
+        _ => px(13.),
     };
 }
 
@@ -56,9 +61,10 @@ pub fn toolbar_button(
     label: impl Into<SharedString>,
     disabled: bool,
     on_click: impl Fn(&mut GinoWindow, &mut Window, &mut gpui::Context<GinoWindow>) + 'static,
-) -> impl IntoElement {
+) -> Button {
     Button::new(id.into())
         .ghost()
+        .xsmall()
         .disabled(disabled)
         .label(label.into())
         .on_click(move |_, window, cx| {
@@ -75,9 +81,10 @@ pub fn primary_button(
     label: impl Into<SharedString>,
     disabled: bool,
     on_click: impl Fn(&mut GinoWindow, &mut Window, &mut gpui::Context<GinoWindow>) + 'static,
-) -> impl IntoElement {
+) -> Button {
     Button::new(id.into())
         .primary()
+        .xsmall()
         .disabled(disabled)
         .label(label.into())
         .on_click(move |_, window, cx| {
@@ -95,49 +102,94 @@ pub fn muted(cx: &App, text: impl Into<SharedString>) -> impl IntoElement {
         .child(text.into())
 }
 
-pub fn status_badge(state: SkillState) -> impl IntoElement {
+/// Compact tracking indicator for list rows: filled dot for Managed skills,
+/// hollow ring for Untracked ones.
+pub fn status_dot(state: &SkillState, cx: &App) -> impl IntoElement {
     match state {
-        SkillState::Managed => Tag::success().child("Managed"),
-        SkillState::Untracked => Tag::warning().child("Untracked"),
+        SkillState::Managed => div()
+            .size_2()
+            .rounded_full()
+            .bg(cx.theme().success)
+            .into_any_element(),
+        SkillState::Untracked => div()
+            .size_2()
+            .rounded_full()
+            .bg(gpui::transparent_black())
+            .border_1()
+            .border_color(cx.theme().muted_foreground)
+            .into_any_element(),
     }
 }
 
 pub fn empty_state(cx: &App, text: impl Into<SharedString>) -> impl IntoElement {
-    div()
+    v_flex()
+        .flex_1()
+        .items_center()
+        .justify_center()
+        .gap_2()
         .p_8()
-        .text_sm()
-        .text_color(cx.theme().muted_foreground)
-        .child(text.into())
+        .child(
+            div()
+                .size_10()
+                .rounded_full()
+                .bg(cx.theme().muted)
+                .flex()
+                .items_center()
+                .justify_center()
+                .child(
+                    Icon::new(IconName::Inbox)
+                        .size_4()
+                        .text_color(cx.theme().muted_foreground),
+                ),
+        )
+        .child(
+            div()
+                .max_w(px(420.))
+                .text_center()
+                .text_sm()
+                .text_color(cx.theme().muted_foreground)
+                .child(text.into()),
+        )
 }
 
-pub fn settings_heading(text: impl Into<SharedString>) -> impl IntoElement {
-    div().pt_3().text_sm().font_semibold().child(text.into())
-}
-
-pub fn field_label(text: impl Into<SharedString>) -> impl IntoElement {
-    div().text_sm().child(text.into())
-}
-
+/// Slim strip shown while a background job runs, with an animated spinner.
 pub fn progress_bar(cx: &App, busy: Option<BusyOp>) -> impl IntoElement {
     match busy {
-        Some(op) => div()
+        Some(op) => h_flex()
             .w_full()
             .px_4()
-            .py_2()
-            .bg(cx.theme().info.opacity(0.10))
-            .text_sm()
-            .child(op.label())
+            .py_1()
+            .gap_2()
+            .items_center()
+            .border_b_1()
+            .border_color(cx.theme().border)
+            .bg(cx.theme().info.opacity(0.06))
+            .child(Spinner::new().color(cx.theme().info))
+            .child(
+                div()
+                    .text_xs()
+                    .font_medium()
+                    .text_color(cx.theme().info)
+                    .child(op.label()),
+            )
             .into_any_element(),
         None => div().into_any_element(),
     }
 }
 
-pub fn issue_bar(
-    cx: &App,
+/// Collapsed attention banner for scan/action errors and inventory issues.
+///
+/// One native Alert line carries the headline and the dismiss button; the
+/// full list lives one click away in the Details popover, with a copy
+/// button. Dismissing only hides the banner until the next refresh produces
+/// a fresh scan.
+pub fn issue_banner(
+    _cx: &App,
     entity: Entity<GinoWindow>,
     refresh: &Option<String>,
     action: &Option<String>,
     issues: &[String],
+    open: bool,
 ) -> impl IntoElement {
     let mut lines = Vec::new();
     if let Some(refresh) = refresh {
@@ -147,52 +199,75 @@ pub fn issue_bar(
         lines.push(action.clone());
     }
     lines.extend(issues.iter().cloned());
-    if lines.is_empty() {
+    if lines.is_empty() || !open {
         return div().into_any_element();
     }
+    let total = lines.len();
     let details = lines.join("\n");
+    let dismiss_entity = entity;
+    let headline = if total == 1 {
+        "1 issue needs attention".to_owned()
+    } else {
+        format!("{total} issues need attention")
+    };
+    // A failed refresh or action outranks inventory warnings in severity.
+    let alert = if refresh.is_some() || action.is_some() {
+        Alert::error("issue-banner", headline)
+    } else {
+        Alert::warning("issue-banner", headline)
+    };
+
     h_flex()
         .w_full()
-        .px_4()
-        .py_2()
+        .items_center()
         .gap_2()
-        .items_start()
-        .bg(cx.theme().danger.opacity(0.08))
+        .pr_2()
         .child(
-            v_flex()
+            div()
                 .flex_1()
-                .gap_1()
-                .children(lines.into_iter().map(|line| {
-                    div()
-                        .text_xs()
-                        .text_color(cx.theme().danger)
-                        .child(line)
-                        .into_any_element()
+                .min_w(px(0.))
+                .child(alert.banner().on_close(move |_, _, cx| {
+                    dismiss_entity.update(cx, |app, cx| {
+                        app.issues_open = false;
+                        cx.notify();
+                    });
                 })),
         )
         .child(
-            Button::new("copy-details")
-                .ghost()
-                .label("Copy details")
-                .on_click(move |_, _, cx| {
-                    cx.write_to_clipboard(ClipboardItem::new_string(details.clone()));
-                    entity.update(cx, |app, cx| {
-                        app.session.status = "Copied error details".to_owned();
-                        cx.notify();
-                    });
+            Popover::new("issue-details")
+                .trigger(
+                    Button::new("issue-details-trigger")
+                        .ghost()
+                        .xsmall()
+                        .label(format!("{total} details")),
+                )
+                .anchor(Corner::TopRight)
+                .content({
+                    let muted_foreground = _cx.theme().muted_foreground;
+                    move |_, _, _| {
+                        v_flex()
+                            .w(rems(28.))
+                            .gap_1()
+                            .child(
+                                div()
+                                    .id("issue-details-lines")
+                                    .max_h(rems(16.))
+                                    .overflow_y_scrollbar()
+                                    .children(lines.iter().map(|line| {
+                                        div()
+                                            .text_xs()
+                                            .text_color(muted_foreground)
+                                            .truncate()
+                                            .child(line.clone())
+                                    })),
+                            )
+                            .child(
+                                h_flex().justify_end().child(
+                                    Clipboard::new("copy-issue-details").value(details.clone()),
+                                ),
+                            )
+                    }
                 }),
         )
         .into_any_element()
-}
-
-pub fn row_shell(cx: &App, selected: bool) -> gpui::Div {
-    h_flex()
-        .h(px(48.))
-        .w_full()
-        .px_4()
-        .gap_x_3()
-        .items_center()
-        .border_b_1()
-        .border_color(cx.theme().border)
-        .when(selected, |this| this.bg(cx.theme().list_active))
 }

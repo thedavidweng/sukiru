@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Result, io_error};
+use crate::inventory::is_ignored_container;
 use crate::protocol::{SkillMetadata, parse_skill_metadata};
 
 const CONTAINERS: &[&str] = &[
@@ -114,13 +115,17 @@ fn discover_container(
         })
         .collect::<Result<Vec<_>>>()?;
     children.sort();
-    for path in children
-        .iter()
-        .filter(|path| path.is_dir() && path.join("SKILL.md").exists())
-    {
+    for path in children.iter().filter(|path| {
+        path.is_dir() && path.join("SKILL.md").exists() && !is_ignored_container(path)
+    }) {
         record_skill(path, names, result);
     }
     for path in children {
+        // Hidden or machine-owned entries (`.archive`, `.git`, build output)
+        // are neither Skills nor reportable issues.
+        if is_ignored_container(&path) {
+            continue;
+        }
         // Detect broken symlinks: the link exists but its target is gone, so
         // `is_dir()` returns false and the child would otherwise be silently
         // skipped. Report it as a discovery issue instead.
@@ -141,7 +146,7 @@ fn discover_container(
         }
         if full_depth {
             discover_all(&path, names, result)?;
-        } else if path.file_name().is_some_and(|name| name != ".git") {
+        } else if !is_ignored_container(&path) {
             let nested = fs::read_dir(&path).map_err(|source| io_error(&path, source))?;
             for nested in nested {
                 let nested = nested.map_err(|source| io_error(&path, source))?.path();
@@ -163,10 +168,7 @@ fn discover_all(
         record_skill(path, names, result);
         return Ok(());
     }
-    if matches!(
-        path.file_name().and_then(|name| name.to_str()),
-        Some(".git" | "node_modules" | "dist" | "build")
-    ) {
+    if is_ignored_container(path) {
         return Ok(());
     }
     for entry in fs::read_dir(path).map_err(|source| io_error(path, source))? {
@@ -230,6 +232,30 @@ mod tests {
         let result = discover_skills(root.path(), false).expect("discover");
         assert_eq!(result.skills.len(), 1);
         assert_eq!(result.skills[0].metadata.description, "flat");
+    }
+
+    #[test]
+    fn hidden_children_are_not_discovered_or_reported() {
+        let root = tempdir().expect("repo");
+        fs::create_dir_all(root.path().join("skills/demo")).expect("skill dir");
+        fs::write(
+            root.path().join("skills/demo/SKILL.md"),
+            "---\nname: demo\ndescription: ok\n---\n",
+        )
+        .expect("skill file");
+        let archived = root.path().join("skills/.archive/wiki-invoice-import");
+        fs::create_dir_all(&archived).expect("archive dir");
+        fs::write(
+            archived.join("SKILL.md"),
+            "---\nname: invoice-wiki-import\ncategory: note-taking\n---\n",
+        )
+        .expect("legacy skill");
+
+        let result = discover_source_root(root.path(), false).expect("discover");
+
+        assert_eq!(result.skills.len(), 1);
+        assert_eq!(result.skills[0].metadata.name, "demo");
+        assert!(result.issues.is_empty());
     }
 
     #[cfg(unix)]

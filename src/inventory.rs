@@ -35,6 +35,16 @@ pub struct Workspace {
     pub root: PathBuf,
     pub agent_id: Option<AgentId>,
     pub lock: Option<LockReference>,
+    /// False when the client behind this workspace is not installed on this
+    /// machine (only a leftover skills directory exists). Such workspaces are
+    /// still scanned so their placements stay cleanable, but the UI hides
+    /// them from agent lists and install/move targets.
+    #[serde(default = "default_true")]
+    pub installed: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 impl Workspace {
@@ -51,11 +61,19 @@ impl Workspace {
             root: root.into(),
             agent_id: None,
             lock: None,
+            installed: true,
         }
     }
 
     pub fn with_agent(mut self, agent_id: AgentId) -> Self {
         self.agent_id = Some(agent_id);
+        self
+    }
+
+    /// Flag a workspace whose client is not installed on this machine; its
+    /// placements remain scannable and cleanable but the UI hides the agent.
+    pub fn with_installed(mut self, installed: bool) -> Self {
+        self.installed = installed;
         self
     }
 
@@ -445,11 +463,19 @@ impl<'a> InventoryScanner<'a> {
     }
 }
 
-fn is_ignored_container(path: &Path) -> bool {
-    matches!(
-        path.file_name().and_then(|name| name.to_str()),
-        Some(".git" | "node_modules" | "__pycache__" | "__pypackages__" | "dist" | "build")
-    )
+/// Entries never treated as Skill placements: hidden dot-prefixed names
+/// (archives such as `.archive`, tool state such as `.git`) and common
+/// build-output directories. Archived or machine-owned content must not
+/// surface as placements or validation issues.
+pub(crate) fn is_ignored_container(path: &Path) -> bool {
+    let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+        return false;
+    };
+    name.starts_with('.')
+        || matches!(
+            name,
+            "node_modules" | "__pycache__" | "__pypackages__" | "dist" | "build"
+        )
 }
 
 fn resolve_ambiguous_lock_entries(placements: &mut [SkillPlacement]) {
@@ -690,6 +716,32 @@ mod tests {
                 .duplicate_groups
                 .iter()
                 .all(|group| group.class != DuplicateClass::ExactDuplicate)
+        );
+    }
+
+    #[test]
+    fn hidden_directories_are_neither_placements_nor_issues() {
+        let root = tempdir().expect("root");
+        write_skill(root.path(), "live", "body");
+        // Archived legacy Skill missing the required `description` field:
+        // it must not become a placement nor raise a validation issue.
+        let archived = root.path().join(".archive/wiki-invoice-import");
+        fs::create_dir_all(&archived).expect("archive dir");
+        fs::write(
+            archived.join("SKILL.md"),
+            "---\nname: invoice-wiki-import\ncategory: note-taking\n---\n",
+        )
+        .expect("legacy skill");
+        let workspace = Workspace::new("custom", "Custom", WorkspaceKind::Custom, root.path());
+
+        let inventory = InventoryScanner::new(&[workspace]).scan(1).expect("scan");
+
+        assert_eq!(inventory.placements.len(), 1);
+        assert_eq!(inventory.placements[0].name, "live");
+        assert!(
+            inventory.issues.is_empty(),
+            "archived content must not raise issues: {:?}",
+            inventory.issues
         );
     }
 
