@@ -44,6 +44,9 @@ tempfile = "3"
 [lints.rust]
 unsafe_code = "forbid"
 
+[lints.clippy]
+result_large_err = "allow"
+
 [profile.release]
 lto = true
 codegen-units = 1
