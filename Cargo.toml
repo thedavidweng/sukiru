@@ -29,7 +29,7 @@ serde_yaml = "0.9"
 sha2 = "0.10"
 thiserror = "2"
 ureq = { version = "2.12", default-features = false, features = ["json", "tls"] }
-zip = { version = "2", default-features = false, features = ["deflate"] }
+zip = { version = "7", default-features = false, features = ["deflate"] }
 
 # Vendored gpui-component 0.5.1 with one fix: markdown headings render as a
 # block div instead of an h_flex row so long headings wrap instead of
