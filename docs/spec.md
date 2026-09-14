@@ -126,7 +126,11 @@ Application metadata used only for classification, filtering, and search.
 
 ### Duplicate Group
 
-A deterministic relationship among two or more installed Skills classified as Exact Duplicate, Source Duplicate, or Name Collision.
+A deterministic relationship among two or more installed Skills classified as
+Exact Duplicate, Source Duplicate, Name Collision, or Path Alias. A Path
+Alias is a second Skill entry whose path resolves to the same physical
+directory as another entry, so an agent can report duplicate definitions even
+though there is only one underlying Skill.
 
 ## 5. Supported Scope
 
@@ -464,6 +468,13 @@ Two Skills resolve to the same source identity, source path, and ref but have di
 
 Two Skills declare the same Skill name while differing in source identity or content.
 
+#### Path Alias
+
+Two Skill entries declare the same Skill name and resolve to the same physical
+directory, normally because one agent-specific directory contains a symlink to
+a shared Skill directory. Cleanup removes only redundant symlink entries and
+never moves or deletes the shared Skill content.
+
 No semantic, embedding-based, or AI duplicate detection exists.
 
 ### 13.2 Duplicates workspace
@@ -475,7 +486,7 @@ The Duplicates workspace displays groups by class and provides:
 - file hash comparison;
 - read-only diff;
 - affected agent and workspace badges;
-- batch selection for Exact Duplicates;
+- batch selection for Exact Duplicates and Path Aliases;
 - per-group decisions for Source Duplicates and Name Collisions.
 
 The normal Library displays only a lightweight duplicate badge.
@@ -666,7 +677,7 @@ Executes one plan transaction, creates/restores snapshots, writes lockfiles, ver
 
 #### Duplicate Engine
 
-Computes Exact Duplicate, Source Duplicate, and Name Collision groups from normalized inventory.
+Computes Exact Duplicate, Source Duplicate, Name Collision, and Path Alias groups from normalized inventory.
 
 #### Git Sync Core
 
@@ -876,9 +887,10 @@ As a user, I can inspect groups of byte-equivalent Skills and plan batch cleanup
 Acceptance:
 
 1. Deterministic hashing identifies exact copies.
-2. Legitimate shared links do not appear as redundant copied content.
-3. Cleanup does not execute before Apply.
-4. The user chooses which placement remains.
+2. Shared links are classified as Path Aliases, not redundant copied content.
+3. Path Alias cleanup removes links only and retains shared Skill directories.
+4. Cleanup does not execute before Apply.
+5. The user chooses which placement remains for copied-content duplicates.
 
 ### US-008 — Inspect divergent copies
 
@@ -1337,7 +1349,7 @@ The product is complete for 1.0 when:
 4. Every successful Apply creates one recoverable transaction and one Git commit.
 5. Every failed Apply restores its pre-Apply state and creates no commit.
 6. Manual Refresh removes ghost Skills and correctly marks invalid plan items.
-7. Exact Duplicate, Source Duplicate, and Name Collision detection pass deterministic fixtures.
+7. Exact Duplicate, Source Duplicate, Name Collision, and Path Alias detection pass deterministic fixtures.
 8. Git backup, remote comparison, push retry, new-device restore, and per-Skill conflicts pass multi-clone tests.
 9. Read-only preview and external-editor behavior are complete.
 10. All primary flows work by keyboard.

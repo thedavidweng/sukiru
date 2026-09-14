@@ -795,6 +795,68 @@ mod tests {
         assert!(snapshot_root.path().join(result.snapshot_id).exists());
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn applying_alias_cleanup_keeps_the_shared_skill_directory() {
+        use std::os::unix::fs::symlink;
+
+        let global_root = tempdir().expect("global");
+        let first_agent_root = tempdir().expect("first agent");
+        let second_agent_root = tempdir().expect("second agent");
+        let skill = write_skill(global_root.path(), "demo", "body");
+        let first_alias = first_agent_root.path().join("demo");
+        let second_alias = second_agent_root.path().join("demo");
+        symlink(&skill, &first_alias).expect("first alias");
+        symlink(&skill, &second_alias).expect("second alias");
+        let workspaces = vec![
+            Workspace::new(
+                "global",
+                "Global",
+                WorkspaceKind::Global,
+                global_root.path(),
+            ),
+            Workspace::new(
+                "agent:first",
+                "First agent",
+                WorkspaceKind::Agent,
+                first_agent_root.path(),
+            ),
+            Workspace::new(
+                "agent:second",
+                "Second agent",
+                WorkspaceKind::Agent,
+                second_agent_root.path(),
+            ),
+        ];
+        let inventory = InventoryScanner::new(&workspaces).scan(1).expect("scan");
+        let planner = Planner::new(
+            &inventory,
+            vec![
+                global_root.path().to_path_buf(),
+                first_agent_root.path().to_path_buf(),
+                second_agent_root.path().to_path_buf(),
+            ],
+        );
+        let plan = planner
+            .cleanup_alias_duplicates()
+            .expect("cleanup alias plan");
+        let snapshot_root = tempdir().expect("snapshots");
+        let executor = ApplyExecutor::new(snapshot_root.path(), 10);
+
+        executor.apply(&plan).expect("apply");
+
+        assert!(skill.join("SKILL.md").is_file());
+        assert!(fs::symlink_metadata(&first_alias).is_err());
+        assert!(fs::symlink_metadata(&second_alias).is_err());
+        assert!(
+            InventoryScanner::new(&workspaces)
+                .scan(2)
+                .expect("rescan")
+                .duplicate_groups
+                .is_empty()
+        );
+    }
+
     #[test]
     fn failure_after_first_operation_restores_everything_and_creates_no_commit() {
         let root = tempdir().expect("root");

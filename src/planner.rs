@@ -305,6 +305,73 @@ impl<'a> Planner<'a> {
         self.validate_plan(&plan)
     }
 
+    /// Plan removal of redundant symlink entries that expose a shared Skill
+    /// directory through multiple paths. The shared directory always remains
+    /// in place; this repair never moves or removes Skill content.
+    pub fn cleanup_alias_duplicates(&self) -> Result<ApplyPlan> {
+        let mut plan = ApplyPlan::new(self.inventory.generation, self.declared_roots.clone());
+        let mut selected_paths = BTreeSet::new();
+        let mut next_id = 1u64;
+        for group in self
+            .inventory
+            .duplicate_groups
+            .iter()
+            .filter(|group| group.class == crate::inventory::DuplicateClass::AliasDuplicate)
+        {
+            let members = group
+                .placement_indexes
+                .iter()
+                .filter_map(|index| self.inventory.placements.get(*index))
+                .collect::<Vec<_>>();
+            let has_shared_directory = members
+                .iter()
+                .any(|placement| placement.placement_kind == PlacementKind::Directory);
+            if !has_shared_directory {
+                continue;
+            }
+            for placement in members {
+                if placement.placement_kind != PlacementKind::Symlink
+                    || !selected_paths.insert(placement.path.clone())
+                {
+                    continue;
+                }
+                plan.changes.push(PendingChange {
+                    id: next_id,
+                    action: PlanAction::Remove,
+                    skill_name: placement.name.clone(),
+                    source: None,
+                    destination: placement.path.clone(),
+                    mode: None,
+                    summary: format!("Remove redundant alias {}", placement.path.display()),
+                    unavailable_reason: None,
+                    restore_origin: None,
+                });
+                plan.operations.push(FileOperation {
+                    id: next_id,
+                    action: PlanAction::Remove,
+                    skill_name: placement.name.clone(),
+                    source: None,
+                    destination: placement.path.clone(),
+                    kind: OperationKind::RemovePath,
+                });
+                next_id += 1;
+            }
+        }
+
+        if plan.changes.is_empty() {
+            plan.warnings
+                .push("No redundant Skill aliases found".to_owned());
+            return Ok(plan);
+        }
+
+        plan.warnings.push(format!(
+            "Cleaned {} redundant shared Skill entr{}; shared content was kept",
+            plan.changes.len(),
+            if plan.changes.len() == 1 { "y" } else { "ies" }
+        ));
+        self.validate_plan(&plan)
+    }
+
     pub fn install_local(
         &self,
         source_dir: impl Into<PathBuf>,
@@ -738,6 +805,21 @@ impl<'a> Planner<'a> {
             )));
         }
         let placements = self.inventory.placements.clone();
+        if group.class == crate::inventory::DuplicateClass::AliasDuplicate
+            && placements.get(keep_index).is_some_and(|placement| {
+                placement.placement_kind != PlacementKind::Directory
+                    && group.placement_indexes.iter().any(|index| {
+                        placements
+                            .get(*index)
+                            .is_some_and(|member| member.placement_kind == PlacementKind::Directory)
+                    })
+            })
+        {
+            return Err(GinoError::InvalidPlan(format!(
+                "alias duplicate `{}` must keep its real directory; remove the redundant symlink instead",
+                group.skill_name
+            )));
+        }
         let removed = group
             .placement_indexes
             .iter()
@@ -1819,6 +1901,61 @@ mod tests {
             plan.warnings
                 .iter()
                 .any(|w| w.contains("No broken symlinks"))
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn cleanup_alias_duplicates_only_removes_the_symlink_entry() {
+        use std::os::unix::fs::symlink;
+
+        let root = tempdir().expect("root");
+        let real = write_skill(root.path(), "demo");
+        let alias = root.path().join("alias");
+        symlink(&real, &alias).expect("alias");
+        let workspace = Workspace::new("custom", "Custom", WorkspaceKind::Custom, root.path());
+        let inventory = InventoryScanner::new(&[workspace]).scan(1).expect("scan");
+        let planner = Planner::new(&inventory, vec![root.path().to_path_buf()]);
+
+        let plan = planner
+            .cleanup_alias_duplicates()
+            .expect("cleanup alias plan");
+
+        assert!(plan.can_apply());
+        assert_eq!(plan.operation_count(), 1);
+        assert_eq!(plan.changes[0].action, PlanAction::Remove);
+        assert_eq!(plan.changes[0].destination, alias);
+        assert!(real.join("SKILL.md").is_file());
+        assert!(fs::symlink_metadata(root.path().join("alias")).is_ok());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn alias_group_cannot_keep_the_symlink_member() {
+        use std::os::unix::fs::symlink;
+
+        let root = tempdir().expect("root");
+        let real = write_skill(root.path(), "demo");
+        symlink(&real, root.path().join("alias")).expect("alias");
+        let workspace = Workspace::new("custom", "Custom", WorkspaceKind::Custom, root.path());
+        let inventory = InventoryScanner::new(&[workspace]).scan(1).expect("scan");
+        let planner = Planner::new(&inventory, vec![root.path().to_path_buf()]);
+        let group = inventory
+            .duplicate_groups
+            .iter()
+            .find(|group| group.class == crate::inventory::DuplicateClass::AliasDuplicate)
+            .expect("alias group");
+        let symlink_index = group
+            .placement_indexes
+            .iter()
+            .copied()
+            .find(|index| inventory.placements[*index].placement_kind == PlacementKind::Symlink)
+            .expect("symlink member");
+
+        assert!(
+            planner
+                .resolve_duplicate_group(group, symlink_index)
+                .is_err()
         );
     }
 }
