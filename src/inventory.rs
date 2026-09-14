@@ -548,6 +548,12 @@ pub enum DuplicateClass {
     ExactDuplicate,
     SourceDuplicate,
     NameCollision,
+    /// Multiple Skill entries resolve to the same physical directory.
+    ///
+    /// Agent loaders still see these as separate definitions because they
+    /// discover entries by path, even though the entries expose one shared
+    /// Skill directory through different workspace paths.
+    AliasDuplicate,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -568,8 +574,15 @@ pub fn duplicate_groups(placements: &[SkillPlacement]) -> Vec<DuplicateGroup> {
     let mut exact: BTreeMap<(String, String), Vec<usize>> = BTreeMap::new();
     let mut source: BTreeMap<(String, String), Vec<usize>> = BTreeMap::new();
     let mut names: BTreeMap<String, Vec<usize>> = BTreeMap::new();
+    let mut aliases: BTreeMap<(String, PathBuf), Vec<usize>> = BTreeMap::new();
     for (index, placement) in placements.iter().enumerate() {
         names.entry(placement.name.clone()).or_default().push(index);
+        if let Some(canonical_path) = &placement.canonical_path {
+            aliases
+                .entry((placement.name.clone(), canonical_path.clone()))
+                .or_default()
+                .push(index);
+        }
         if let Some(hash) = &placement.content_hash {
             exact
                 .entry((placement.name.clone(), hash.clone()))
@@ -581,6 +594,22 @@ pub fn duplicate_groups(placements: &[SkillPlacement]) -> Vec<DuplicateGroup> {
                 .entry((placement.name.clone(), source_identity))
                 .or_default()
                 .push(index);
+        }
+    }
+
+    for ((name, canonical_path), indexes) in aliases {
+        let has_symlink_alias = indexes
+            .iter()
+            .any(|index| placements[*index].placement_kind == PlacementKind::Symlink);
+        if indexes.len() > 1 && has_symlink_alias {
+            let fingerprint = group_fingerprint(&indexes, placements);
+            groups.push(DuplicateGroup {
+                class: DuplicateClass::AliasDuplicate,
+                skill_name: name,
+                placement_indexes: indexes,
+                identity: canonical_path.display().to_string(),
+                fingerprint,
+            });
         }
     }
 
@@ -766,6 +795,49 @@ mod tests {
                 .duplicate_groups
                 .iter()
                 .all(|group| group.class != DuplicateClass::ExactDuplicate)
+        );
+        let alias = inventory
+            .duplicate_groups
+            .iter()
+            .find(|group| group.class == DuplicateClass::AliasDuplicate)
+            .expect("shared physical directory is an alias duplicate");
+        assert_eq!(alias.placement_indexes.len(), 2);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn alias_duplicate_has_a_real_directory_and_a_symlink_member() {
+        let root = tempdir().expect("root");
+        write_skill(root.path(), "demo", "same");
+        symlink(root.path().join("demo"), root.path().join("alias")).expect("link");
+        let workspace = Workspace::new("custom", "Custom", WorkspaceKind::Custom, root.path());
+
+        let inventory = InventoryScanner::new(&[workspace]).scan(1).expect("scan");
+        let group = inventory
+            .duplicate_groups
+            .iter()
+            .find(|group| group.class == DuplicateClass::AliasDuplicate)
+            .expect("alias group");
+
+        assert_eq!(
+            group
+                .placement_indexes
+                .iter()
+                .filter(|index| {
+                    inventory.placements[**index].placement_kind == PlacementKind::Directory
+                })
+                .count(),
+            1
+        );
+        assert_eq!(
+            group
+                .placement_indexes
+                .iter()
+                .filter(|index| {
+                    inventory.placements[**index].placement_kind == PlacementKind::Symlink
+                })
+                .count(),
+            1
         );
     }
 

@@ -24,6 +24,13 @@ impl GinoWindow {
         _window: &mut Window,
         cx: &mut Context<Self>,
     ) -> impl IntoElement {
+        let alias_count = self
+            .session
+            .visible_duplicate_groups()
+            .iter()
+            .filter(|(_, group)| group.class == DuplicateClass::AliasDuplicate)
+            .count();
+        let cleanup_entity = entity.clone();
         let groups =
             self.session
                 .visible_duplicate_groups()
@@ -59,29 +66,29 @@ impl GinoWindow {
                                 h_flex()
                                     .w_full()
                                     .child(div().flex_1().text_xs().child(format!(
-                                    "{} · hash {}",
-                                    placement.path.display(),
-                                    placement
-                                        .content_hash
-                                        .clone()
-                                        .unwrap_or_else(|| "n/a".to_owned())
-                                )))
-                                    .child(
-                                        Button::new(SharedString::from(format!(
-                                            "keep-{group_index}-{keep_index}"
-                                        )))
-                                        .ghost()
-                                        .label("Keep this")
-                                        .on_click(
-                                            move |_, _, cx| {
+                                        "{} · hash {}",
+                                        placement.path.display(),
+                                        placement
+                                            .content_hash
+                                            .clone()
+                                            .unwrap_or_else(|| "n/a".to_owned())
+                                    )))
+                                    .when(group.class != DuplicateClass::AliasDuplicate, |this| {
+                                        this.child(
+                                            Button::new(SharedString::from(format!(
+                                                "keep-{group_index}-{keep_index}"
+                                            )))
+                                            .ghost()
+                                            .label("Keep this")
+                                            .on_click(move |_, _, cx| {
                                                 keep.update(cx, |app, cx| {
                                                     app.session
                                                         .keep_duplicate(group_index, keep_index);
                                                     cx.notify();
                                                 });
-                                            },
-                                        ),
-                                    ),
+                                            }),
+                                        )
+                                    }),
                             )
                         }))
                         .when(group.class == DuplicateClass::NameCollision, |this| {
@@ -101,10 +108,29 @@ impl GinoWindow {
                 });
         v_flex()
             .flex_1()
-            .child(div().p_4().child(muted(
-                cx,
-                "Deterministic duplicates only. Keep-one queues removals; Apply writes.",
-            )))
+            .child(
+                h_flex()
+                    .p_4()
+                    .gap_2()
+                    .items_center()
+                    .child(div().flex_1().child(muted(
+                        cx,
+                        "Keep-one queues removals. Path aliases use the batch cleanup; Apply writes.",
+                    )))
+                    .when(alias_count > 0, |this| {
+                        this.child(
+                            Button::new("cleanup-alias-duplicates")
+                                .ghost()
+                                .label(format!("Clean {alias_count} path aliases"))
+                                .on_click(move |_, _, cx| {
+                                    cleanup_entity.update(cx, |app, cx| {
+                                        app.session.queue_cleanup_alias_duplicates();
+                                        cx.notify();
+                                    });
+                                }),
+                        )
+                    }),
+            )
             .when(self.session.visible_duplicate_groups().is_empty(), |this| {
                 this.child(empty_state(
                     cx,
@@ -121,6 +147,7 @@ fn duplicate_class_tag(class: &DuplicateClass) -> Tag {
         DuplicateClass::ExactDuplicate => Tag::warning(),
         DuplicateClass::SourceDuplicate => Tag::info(),
         DuplicateClass::NameCollision => Tag::secondary(),
+        DuplicateClass::AliasDuplicate => Tag::warning(),
     }
     .outline()
     .small()

@@ -824,6 +824,27 @@ impl Session {
         }
     }
 
+    /// Queue removal of every redundant symlink entry detected by the
+    /// inventory. The target directory remains untouched and all writes wait
+    /// for Apply.
+    pub fn queue_cleanup_alias_duplicates(&mut self) -> usize {
+        match Planner::new(&self.inventory, self.declared_roots()).cleanup_alias_duplicates() {
+            Ok(plan) if plan.changes.is_empty() => {
+                self.action_error = Some("No redundant Skill aliases found".to_owned());
+                0
+            }
+            Ok(plan) => {
+                let count = plan.operation_count();
+                self.enqueue_plan(plan);
+                count
+            }
+            Err(error) => {
+                self.action_error = Some(error.to_string());
+                0
+            }
+        }
+    }
+
     pub fn queue_move_to(&mut self, workspace_id: &str) {
         let Some(target) = self
             .workspaces
@@ -2081,6 +2102,7 @@ pub fn duplicate_label(class: &DuplicateClass) -> &'static str {
         DuplicateClass::ExactDuplicate => "Exact Duplicate",
         DuplicateClass::SourceDuplicate => "Source Duplicate",
         DuplicateClass::NameCollision => "Name Collision",
+        DuplicateClass::AliasDuplicate => "Path Alias",
     }
 }
 
