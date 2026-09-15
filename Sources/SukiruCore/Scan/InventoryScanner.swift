@@ -46,7 +46,8 @@ public struct DiscoveredPlacement: Equatable, Sendable {
 
 /// The scanner's full output for a set of workspaces.
 public struct InventoryResult: Equatable, Sendable {
-    /// Every discovered placement, sorted by path.
+    /// Every discovered placement, sorted by (path, workspaceID) — the
+    /// tiebreak matters because overlapping roots can yield equal paths.
     public let placements: [DiscoveredPlacement]
     /// Non-fatal problems, sorted by (path, kind, message).
     public let issues: [Issue]
@@ -110,7 +111,13 @@ public struct InventoryScanner: Sendable {
         for workspace in workspaces where seenRoots.insert(workspace.workspace.root).inserted {
             scanWorkspace(workspace, into: &outcome)
         }
-        outcome.placements.sort { $0.placement.path < $1.placement.path }
+        // Swift's sort is NOT stable: overlapping workspace roots (a nested
+        // root, or a host dir inside another workspace's tree) can discover
+        // the same placement path twice, so path alone is not a total order.
+        // workspaceID breaks the tie, keeping output byte-deterministic.
+        outcome.placements.sort {
+            ($0.placement.path, $0.workspaceID) < ($1.placement.path, $1.workspaceID)
+        }
         outcome.issues.sort { ($0.path, $0.kind, $0.message) < ($1.path, $1.kind, $1.message) }
         outcome.findings.sort {
             ($0.ruleID, $0.workspaceID, $0.skillName ?? "")

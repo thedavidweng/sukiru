@@ -25,6 +25,39 @@ public protocol CommandRunning: Sendable {
     func run(_ executable: String, _ arguments: [String]) -> ProcessOutcome?
 }
 
+/// Reads a pipe to EOF on a shared background queue, concurrently with the
+/// child's execution (see the drain note in `SystemCommandRunner.run`).
+/// `@unchecked Sendable`: the mutable buffer is guarded by the lock; the
+/// captured `FileHandle` is only ever read by the one drain block.
+private final class PipeDrain: @unchecked Sendable {
+    private static let queue = DispatchQueue(label: "app.sukiru.probe-drain")
+
+    private let handle: FileHandle
+    private let lock = NSLock()
+    private var collected = Data()
+
+    init(_ pipe: Pipe) {
+        handle = pipe.fileHandleForReading
+    }
+
+    func start(group: DispatchGroup) {
+        group.enter()
+        Self.queue.async {
+            let data = self.handle.readDataToEndOfFile()
+            self.lock.lock()
+            self.collected = data
+            self.lock.unlock()
+            group.leave()
+        }
+    }
+
+    var data: Data {
+        lock.lock()
+        defer { lock.unlock() }
+        return collected
+    }
+}
+
 /// Runs real subprocesses against the live process environment.
 ///
 /// Per the mission CLI rules the child environment carries
@@ -66,16 +99,26 @@ public struct SystemCommandRunner: CommandRunning {
         } catch {
             return nil
         }
+        // Drain both pipes CONCURRENTLY with execution: a child emitting more
+        // than the ~64KB pipe buffer blocks on write, so reading only after
+        // termination would deadlock parent against child until the timeout
+        // (a silent nil outcome). Today's probes (`--version`, `--help`) are
+        // tiny, but the drain must not depend on that.
+        let drainGroup = DispatchGroup()
+        let stdoutDrain = PipeDrain(stdoutPipe)
+        let stderrDrain = PipeDrain(stderrPipe)
+        stdoutDrain.start(group: drainGroup)
+        stderrDrain.start(group: drainGroup)
         if done.wait(timeout: .now() + timeout) == .timedOut {
             process.terminate()
             process.waitUntilExit()
             return nil
         }
         process.waitUntilExit()
-        let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-        let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-        let stdout = String(bytes: stdoutData, encoding: .utf8) ?? ""
-        let stderr = String(bytes: stderrData, encoding: .utf8) ?? ""
+        // EOF follows process exit; the drains finish promptly.
+        _ = drainGroup.wait(timeout: .now() + 10)
+        let stdout = String(bytes: stdoutDrain.data, encoding: .utf8) ?? ""
+        let stderr = String(bytes: stderrDrain.data, encoding: .utf8) ?? ""
         return ProcessOutcome(
             exitCode: process.terminationStatus, stdout: stdout, stderr: stderr)
     }

@@ -97,6 +97,23 @@ struct HealthAnalyzerDriftTests {
             "metadata.json is hashed but never copied — a mismatch cannot be verified")
     }
 
+    @Test("Drift gate: a DIRECTORY named metadata.json also suppresses the finding")
+    func driftGatedByMetadataJsonDirectory() throws {
+        // The install copy filter excludes `metadata.json` by NAME, file or
+        // directory; the hasher recurses INTO such a directory, so its
+        // contents are hashed but never copied — the same unverifiable
+        // divergence the file case gates.
+        let home = try TempTree()
+        let project = try TempTree()
+        try project.file(
+            ".agents/skills/tool/SKILL.md", contents: OwnershipBuilders.skillMD("tool"))
+        try project.file(".agents/skills/tool/metadata.json/inner.md", contents: "x")
+        try project.file("skills-lock.json", contents: projectLock("tool", hash: staleHash))
+
+        let report = try scan(home: home, project: project)
+        #expect(!report.findings.contains { $0.ruleID == "vercel-lock-drift" })
+    }
+
     @Test("Drift gate: a symlink inside the tree suppresses the finding")
     func driftGatedBySymlink() throws {
         let home = try TempTree()

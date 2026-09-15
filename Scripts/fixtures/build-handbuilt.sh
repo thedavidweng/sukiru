@@ -1338,6 +1338,65 @@ the pair is also legitimate; the assertion targets symlink-authenticity.)
 EOF
 
 # =====================================================================
+# FIX-USER-SCOPE-COPY-MODE — a LEGITIMATE user-scope copy-mode install:
+# global lock entry + canonical store copy + physical host copies. The
+# symlink-authenticity heuristic false-positives on this shape in v1
+# (accepted limitation; see EXPECTATION.md).
+# =====================================================================
+d="$(reset_fixture FIX-USER-SCOPE-COPY-MODE)"
+mkdir -p "$d/.claude"; : >"$d/.claude/config.json"
+mkdir -p "$d/.cursor"; : >"$d/.cursor/config.json"
+skill "$d/.agents/skills/copy-tool" "copy-tool" "Installed in user scope with copy mode."
+skill "$d/.claude/skills/copy-tool" "copy-tool" "Installed in user scope with copy mode."
+skill "$d/.cursor/skills/copy-tool" "copy-tool" "Installed in user scope with copy mode."
+cat >"$d/.agents/.skill-lock.json" <<'EOF'
+{
+  "version": 3,
+  "skills": {
+    "copy-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/copy-tool/SKILL.md",
+      "skillFolderHash": "3434343434343434343434343434343434343434",
+      "installedAt": "2026-06-16T10:00:00.000Z",
+      "updatedAt": "2026-06-16T10:00:00.000Z"
+    }
+  },
+  "dismissed": {}
+}
+EOF
+note "$d" <<'EOF'
+# FIX-USER-SCOPE-COPY-MODE — expectation (accepted v1 false positive)
+
+Contents: `copy-tool` is a LEGITIMATE user-scope COPY-MODE install — the
+global v3 lock claims it, the canonical store holds the real directory
+(`.agents/skills/copy-tool`), and the claude-code and cursor host dirs hold
+byte-identical PHYSICAL copies (not symlinks). This is what a copy-mode
+install (`add --copy`, or older CLI versions that always copied) produces at
+user scope. Nothing is rotted; nothing needs repair.
+
+KNOWN v1 LIMITATION (accepted per the health-analyzer handoff): the
+`symlink-authenticity` rule is a structural heuristic — a user-scope managed
+layout implies host placements are symlinks into the canonical store, so it
+flags every physical host copy as an impostor. The global lock records no
+install-mode bit, so this legitimate shape is indistinguishable from a rotted
+link-mode install (see `impostor-copy`).
+
+PINNED CURRENT BEHAVIOR: a correct v1 scan MUST exit 0, resolve
+ownership=vercel with ambiguous=false, emit the exact-subtype
+cross-host-duplicate warning (three physical copies, one hash), NO drift and
+NO lock-without-files — AND emit TWO `symlink-authenticity` warnings, one per
+host copy (`.claude/skills/copy-tool`, `.cursor/skills/copy-tool`), each
+carrying `canonicalPath` = the store copy. Those two findings are FALSE
+POSITIVES by design in v1.
+
+A future fix (e.g. flagging only when SIBLING host placements are symlinks
+into the same store — mixed link/copy shape is the true rot signal) must flip
+this expectation deliberately, with the fixture updated in the same commit.
+EOF
+
+# =====================================================================
 # own-per-project — the SAME name locked in one project root and
 # unprovenanced in another (VAL-SCAN-055). Two project roots, one scan.
 # Layout: .home (fake HOME, empty) + p1 + p2 (no `proj`, so the corpus smoke
@@ -1469,9 +1528,11 @@ gh_stub "$d" "2.80.0" 1
 note "$d" <<'EOF'
 # cap-gh-old — expectation (VAL-SCAN-038)
 
-Contents: `bin/gh` — a stub reporting `gh version 2.80.0 (2025-01-15)`, BELOW
+Contents: `bin/gh` — a stub reporting `gh version 2.80.0 (2026-01-15)`, BELOW
 the 2.90.0 `gh skill` floor (its `skill --help` exits 1, but a correct
-detector never probes a below-minimum gh).
+detector never probes a below-minimum gh). The date string comes from the
+shared `gh_stub` heredoc in Scripts/fixtures/build-handbuilt.sh (the
+generator is the source of truth); version parsing reads only the number.
 
 Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
 

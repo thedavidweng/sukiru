@@ -22,7 +22,7 @@ public struct SkillGroup: Equatable, Sendable {
     /// hashes (computed by `SkillInventory.groups`, which needs the scope's
     /// lock claim).
     public let ambiguous: Bool
-    /// The group's placements, sorted by path.
+    /// The group's placements, sorted by (path, workspaceID).
     public let members: [DiscoveredPlacement]
 
     public init(
@@ -84,7 +84,11 @@ public enum SkillInventory {
                 return lhs.scopeGroup < rhs.scopeGroup
             }
             .map { bucket in
-                let members = bucket.members.sorted { $0.placement.path < $1.placement.path }
+                // (path, workspaceID): Swift's sort is not stable, and
+                // overlapping roots can place one path in two workspaces.
+                let members = bucket.members.sorted {
+                    ($0.placement.path, $0.workspaceID) < ($1.placement.path, $1.workspaceID)
+                }
                 return SkillGroup(
                     name: bucket.name,
                     scopeGroup: bucket.scopeGroup,
@@ -122,18 +126,20 @@ public enum SkillInventory {
         members: [DiscoveredPlacement],
         claim: ScopeLockClaim?
     ) -> Bool {
-        let hashed = members.filter {
-            $0.placement.kind != .brokenSymlink && $0.placement.contentHash != nil
+        let hashed: [(member: DiscoveredPlacement, hash: String)] = members.compactMap { member in
+            guard member.placement.kind != .brokenSymlink,
+                let hash = member.placement.contentHash
+            else { return nil }
+            return (member, hash)
         }
         let lockClaims = claim?.lock.entries[name] != nil
-        let canonicalHash = hashed.first { member in
-            member.workspaceID == member.scopeGroup
-        }?.placement.contentHash
-        let ghHashes = Set(
-            hashed.filter { $0.githubProvenance != nil }.compactMap(\.placement.contentHash))
+        // D23(a) anchors on THE canonical-store placement. Scanner invariant
+        // this relies on: one skills dir per workspace per name, so at most
+        // one placement per name carries `workspaceID == scopeGroup`.
+        let canonicalHash = hashed.first { $0.member.workspaceID == $0.member.scopeGroup }?.hash
+        let ghHashes = Set(hashed.filter { $0.member.githubProvenance != nil }.map { $0.hash })
         var unexplainedHashes: Set<String> = []
-        for member in hashed {
-            guard let hash = member.placement.contentHash else { continue }
+        for (member, hash) in hashed {
             if lockClaims, let canonicalHash, hash == canonicalHash {
                 continue
             }

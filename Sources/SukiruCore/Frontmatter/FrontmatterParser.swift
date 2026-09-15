@@ -118,12 +118,12 @@ public struct FrontmatterParser: Sendable {
         } else {
             return nil
         }
+        // The LF pattern alone finds EVERY close: a CRLF close (`\r\n---`)
+        // contains `\n---` at index+1, so a separate CRLF arm would be
+        // unreachable. The returned slice keeps each line's trailing `\r`,
+        // exactly as upstream's byte search does.
         let newlineClose = Self.firstIndex(of: [lineFeed, dash, dash, dash], in: remainder)
-        let crlfClose = Self.firstIndex(
-            of: [carriageReturn, lineFeed, dash, dash, dash],
-            in: remainder
-        )
-        guard let end = newlineClose ?? crlfClose else {
+        guard let end = newlineClose else {
             return nil
         }
         // The slice is valid UTF-8 (the whole file was validated above).

@@ -207,6 +207,20 @@ struct VercelLockReaderTests {
         #expect(result.lock == nil)
     }
 
+    @Test("A lock with NO `skills` key is unreadable, not an empty lock")
+    func missingSkillsKeyIsUnreadable() throws {
+        // Deliberate edge-case decision (documented on VercelLockReader):
+        // `{"version": 3}` is well-formed JSON but violates the lock schema —
+        // upstream's lock struct requires the `skills` field, so a serde
+        // decode would fail there too. Missing FILE = empty lock; missing
+        // KEY = ledger-unreadable.
+        let tree = try TempTree()
+        try tree.file(".agents/.skill-lock.json", contents: "{\"version\": 3}")
+        let result = reader(["SUKIRU_HOME": tree.path]).readGlobalLock()
+        #expect(result.issue?.kind == IssueKind.ledgerUnreadable)
+        #expect(result.lock == nil)
+    }
+
     // MARK: Field extraction and unknown-field preservation
 
     @Test("All known entry fields are extracted per architecture §4.1")

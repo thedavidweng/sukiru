@@ -198,6 +198,33 @@ struct ContentHasherTests {
         #expect(!ContentHasher.isSHA256FolderHash("xyz"))
     }
 
+    @Test("Non-ASCII 'hex' digits never classify — upstream's discriminator is ASCII-only")
+    func hashFamilyDiscriminatorRejectsNonASCII() {
+        // Character.isHexDigit is Unicode-aware: U+FF11 FULLWIDTH DIGIT ONE
+        // satisfies it. Upstream's discriminator is /^[0-9a-f]{40|64}$/i —
+        // ASCII only — so a fullwidth string must NOT classify.
+        #expect(Character("\u{FF11}").isHexDigit)
+        let fullwidth40 = String(repeating: "\u{FF11}", count: 40)
+        let fullwidth64 = String(repeating: "\u{FF11}", count: 64)
+        #expect(!ContentHasher.isGitTreeSHA(fullwidth40))
+        #expect(!ContentHasher.isSHA256FolderHash(fullwidth64))
+        // Mixed ASCII + one non-ASCII digit is also out.
+        let almostASCII = String(repeating: "a", count: 39) + "\u{FF11}"
+        #expect(!ContentHasher.isGitTreeSHA(almostASCII))
+    }
+
+    @Test("An uninspectable directory entry yields an issue, never a silent drop")
+    func uninspectableEntryYieldsIssue() {
+        // entryKind == nil covers a symlink whose target cannot be read
+        // (readlink failure): the hasher must report it, not skip the entry.
+        let stub = StubFileSystem(
+            existing: ["/s"], directories: ["/s"], entries: ["/s": ["mystery"]])
+        let result = ContentHasher(fileSystem: stub).computedHash(ofSkillAtPath: "/s")
+        let issue = failure(of: result)
+        #expect(issue?.kind == IssueKind.contentHashUnreadable)
+        #expect(issue?.path == "/s/mystery")
+    }
+
     // MARK: - Upstream parity canary (VAL-SCAN-036)
 
     @Test("Canary fixture: recomputed hash equals the real CLI's lock value")

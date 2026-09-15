@@ -93,11 +93,3 @@ struct GitHubProvenanceReaderTests {
         #expect(parsed.githubProvenance == nil)
     }
 }
-
-extension Result {
-    /// The success value, or nil — convenience for tests.
-    var successValue: Success? {
-        if case .success(let value) = self { return value }
-        return nil
-    }
-}

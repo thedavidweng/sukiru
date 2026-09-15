@@ -90,9 +90,12 @@ struct CLIIntegrationTests {
 
     @Test("VAL-SCAN-003: byte-identical repeat scans and root-order independence")
     func determinism() throws {
+        // The contract names THREE roots (a:b:c vs c:a:b): own-per-project's
+        // p1/p2 plus clean-copy-mode's proj as the third.
         let inputs = FixturePaths.homeAndRoots("own-per-project")
-        #expect(inputs.roots.count == 2)
-        let base = CLIRunner.fixtureEnvironment(home: inputs.home, roots: inputs.roots)
+        let roots = inputs.roots + [FixturePaths.tree("clean-copy-mode") + "/proj"]
+        #expect(roots.count == 3)
+        let base = CLIRunner.fixtureEnvironment(home: inputs.home, roots: roots)
 
         let first = try CLIRunner.run(["scan", "--format", "json"], environment: base)
         let second = try CLIRunner.run(["scan", "--format", "json"], environment: base)
@@ -100,7 +103,7 @@ struct CLIIntegrationTests {
         #expect(first.stdout == second.stdout)
 
         var permuted = base
-        permuted["SUKIRU_ROOTS"] = inputs.roots.reversed().joined(separator: ":")
+        permuted["SUKIRU_ROOTS"] = roots.reversed().joined(separator: ":")
         let third = try CLIRunner.run(["scan", "--format", "json"], environment: permuted)
         #expect(third.exitCode == 0)
         #expect(first.stdout == third.stdout)

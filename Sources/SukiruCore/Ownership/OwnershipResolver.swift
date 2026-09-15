@@ -143,7 +143,11 @@ public struct OwnershipResolver: Sendable {
     }
 
     /// `ambiguous-name` (warning): one placementPath per DISTINCT canonical
-    /// path (D1), the first path-sorted member standing in for each.
+    /// path, the first path-sorted member standing in for each. The TRIGGER
+    /// is the D23 unexplained-hash partition (computed by `SkillInventory`),
+    /// but the evidence deliberately lists EVERY physical location of the
+    /// name — including lock- or gh-explained copies — because it answers
+    /// "where does this name live", not "which copies collided".
     private func ambiguousFinding(group: SkillGroup, workspaceID: String) -> Finding {
         var seen: Set<String> = []
         var evidence: [Evidence] = []

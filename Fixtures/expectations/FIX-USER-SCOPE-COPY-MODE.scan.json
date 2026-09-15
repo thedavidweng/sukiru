@@ -1,0 +1,130 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "exact",
+          "kind" : "subtype"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/copy-tool",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/copy-tool",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.cursor/skills/copy-tool",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "3d95fd76159be22d684441e5d047536a036a9453569cc1835f49b909db29d71c",
+          "kind" : "contentHash"
+        }
+      ],
+      "ruleID" : "cross-host-duplicate",
+      "severity" : "warning",
+      "skillName" : "copy-tool",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.claude/skills/copy-tool",
+          "kind" : "impostorPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/copy-tool",
+          "kind" : "canonicalPath"
+        }
+      ],
+      "ruleID" : "symlink-authenticity",
+      "severity" : "warning",
+      "skillName" : "copy-tool",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.cursor/skills/copy-tool",
+          "kind" : "impostorPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/copy-tool",
+          "kind" : "canonicalPath"
+        }
+      ],
+      "ruleID" : "symlink-authenticity",
+      "severity" : "warning",
+      "skillName" : "copy-tool",
+      "workspaceID" : "user"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "copy-tool",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/copy-tool",
+          "contentHash" : "3d95fd76159be22d684441e5d047536a036a9453569cc1835f49b909db29d71c",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/copy-tool"
+        },
+        {
+          "canonicalPath" : "<FIXTURE>/.claude/skills/copy-tool",
+          "contentHash" : "3d95fd76159be22d684441e5d047536a036a9453569cc1835f49b909db29d71c",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.claude/skills/copy-tool"
+        },
+        {
+          "canonicalPath" : "<FIXTURE>/.cursor/skills/copy-tool",
+          "contentHash" : "3d95fd76159be22d684441e5d047536a036a9453569cc1835f49b909db29d71c",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.cursor/skills/copy-tool"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "installedAt" : "2026-06-16T10:00:00.000Z",
+          "skillFolderHash" : "3434343434343434343434343434343434343434",
+          "skillPath" : ".agents/skills/copy-tool/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-16T10:00:00.000Z"
+        }
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.agents/skills"
+    },
+    {
+      "id" : "host:claude-code",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.claude/skills"
+    },
+    {
+      "id" : "host:cursor",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.cursor/skills"
+    }
+  ]
+}

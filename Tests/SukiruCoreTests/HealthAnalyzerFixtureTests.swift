@@ -101,6 +101,39 @@ struct HealthAnalyzerFixtureTests {
         #expect(details(finding, "canonicalPath") == [tree + "/.agents/skills/tool"])
     }
 
+    // MARK: - symlink-authenticity known false positive (accepted v1 limitation)
+
+    @Test("FIX-USER-SCOPE-COPY-MODE: the heuristic flags a LEGITIMATE user-scope copy-mode install")
+    func userScopeCopyModeFalsePositive() throws {
+        // PINNED CURRENT BEHAVIOR — see the fixture's EXPECTATION.md. The
+        // symlink-authenticity heuristic cannot distinguish a legitimate
+        // user-scope copy-mode install from a rotted link-mode one because
+        // the global lock records no install-mode bit. Both physical host
+        // copies are flagged as impostors even though nothing is wrong.
+        // A future fix must flip these expectations deliberately.
+        let tree = FixturePaths.tree("FIX-USER-SCOPE-COPY-MODE")
+        let report = try OwnershipBuilders.scan(fixture: "FIX-USER-SCOPE-COPY-MODE")
+        let findings = report.findings.filter {
+            $0.ruleID == "symlink-authenticity" && $0.skillName == "copy-tool"
+        }
+        #expect(findings.count == 2, "one false-positive finding per physical host copy")
+        #expect(findings.allSatisfy { $0.severity == .warning })
+        let impostors = findings.flatMap { details($0, "impostorPath") }.sorted()
+        #expect(
+            impostors
+                == [tree + "/.claude/skills/copy-tool", tree + "/.cursor/skills/copy-tool"])
+        #expect(
+            findings.allSatisfy {
+                details($0, "canonicalPath") == [tree + "/.agents/skills/copy-tool"]
+            })
+        // Everything else about the shape is healthy and unambiguous.
+        let skill = try #require(report.skills.first { $0.name == "copy-tool" })
+        #expect(skill.ownership == .vercel)
+        #expect(!skill.ambiguous)
+        #expect(!report.findings.contains { $0.ruleID == "vercel-lock-drift" })
+        #expect(!report.findings.contains { $0.ruleID == "lock-without-files" })
+    }
+
     // MARK: - VAL-SCAN-027: vercel-lock-drift
 
     @Test("lock-drift: project drift carries lock/entry/hash evidence; global scope stays silent")

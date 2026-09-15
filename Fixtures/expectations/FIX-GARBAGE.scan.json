@@ -43,10 +43,6 @@
           "kind" : "skillName"
         },
         {
-          "detail" : "<FIXTURE>/.claude/skills/rotted",
-          "kind" : "placementPath"
-        },
-        {
           "detail" : "ownerless",
           "kind" : "ownership"
         }
