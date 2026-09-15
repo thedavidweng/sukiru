@@ -20,8 +20,9 @@ public struct ScanRequest: Equatable, Sendable {
 /// precedence and the requested scope), runs inventory discovery (placements,
 /// issues, broken-symlink findings), reads the Vercel locks for the scanned
 /// scopes (global lock for user scope, one project lock per project root),
-/// and resolves ownership per skill name per scope (architecture §6, D1).
-/// The remaining health findings land in the health-analyzer feature.
+/// and resolves ownership per skill name per scope (architecture §6, D1),
+/// then runs the HealthAnalyzer's detection rules (architecture §5) over the
+/// groups and lock claims.
 public struct ScanEngine: Sendable {
     private let environment: SukiruEnvironment
     private let fileSystem: FileSystemProbe
@@ -52,7 +53,10 @@ public struct ScanEngine: Sendable {
         let claims = readLockClaims(request: request, roots: roots)
         let groups = SkillInventory.groups(from: inventory.placements)
         let resolution = OwnershipResolver().resolve(groups: groups, locks: claims.claims)
-        let findings = (inventory.findings + resolution.findings).sorted(by: Self.findingOrder)
+        let health = HealthAnalyzer(fileSystem: fileSystem).analyze(
+            groups: groups, locks: claims.claims)
+        let findings = (inventory.findings + resolution.findings + health)
+            .sorted(by: Self.findingOrder)
         let issues = (inventory.issues + claims.issues).sorted {
             ($0.path, $0.kind, $0.message) < ($1.path, $1.kind, $1.message)
         }
