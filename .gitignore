@@ -1,7 +1,10 @@
 .DS_Store
-# The leftover-dsstore fixture's .DS_Store is load-bearing test data
-# (VAL-SCAN-013: Finder noise must not flip a leftover host to installed).
-!Fixtures/leftover-dsstore/.qoder/.DS_Store
+# Finder noise inside Fixtures/ is load-bearing test data (VAL-SCAN-013:
+# .DS_Store/.localized must not flip a leftover host to installed). Negate the
+# global .DS_Store rule for the whole corpus so future residue fixtures cannot
+# silently drop these files.
+!Fixtures/**/.DS_Store
+!Fixtures/**/.localized
 
 # Xcode / SwiftPM
 *.xcodeproj
@@ -10,6 +13,10 @@ DerivedData/
 
 # Build output
 dist/
+# ... except inside Fixtures/, where a `dist/` directory is load-bearing
+# noise-dir fixture data (ignore-list, VAL-SCAN-011). Negations must follow
+# the rule they override (last match wins).
+!Fixtures/**/dist/
 
 # Retired Rust/Gino artifacts (implementation preserved on archive/rust-gui)
 /target/

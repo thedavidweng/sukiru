@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "skills": {
+    "drifted": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/drifted/SKILL.md",
+      "computedHash": "083682c0714e41e6b07f71e1d458c870f6ea53c04132d97e12da2736a6f06882"
+    }
+  }
+}

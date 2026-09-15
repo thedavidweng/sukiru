@@ -18,7 +18,32 @@ Scripts/fixtures/build-handbuilt.sh [FIXTURES_DIR]   # defaults to ./Fixtures
 Trees: `FIX-EMPTY`, `FIX-CLEAN`, `FIX-INTERNAL`, `FIX-MALFORMED`, `FIX-GARBAGE`,
 `FIX-DANGER`, `FIX-BIG`, `FIX-DUPLICATES`, `FIX-LOCK-NO-FILES`,
 `FIX-FILES-NO-LOCK`, `FIX-AMBIGUOUS`, `alias-link-mode`, `symlink-mode`,
-`skillmd-invalid-a`…`skillmd-invalid-f`, `skillmd-early-close`.
+`skillmd-invalid-a`…`skillmd-invalid-f`, `skillmd-early-close`,
+`leftover-spray`, `leftover-dsstore`, `empty-marker`, `scope-isolation`,
+`multi-host-inventory`, `ignore-list`, `own-vercel`, `own-github`, `own-double`,
+`prov-cross-ws`, `lock-unknown-fields`, `lock-drift`, `divergence-canonical`,
+`lock-version-old`, `lock-malformed`, `clean-copy-mode`, `impostor-copy`.
+
+Project-scope trees (`scope-isolation`, `multi-host-inventory`, `own-vercel`,
+`prov-cross-ws`, `lock-drift`, `divergence-canonical`, `lock-version-old`,
+`clean-copy-mode`) use the CM-style two-part layout: scan them with
+`SUKIRU_HOME=<tree>/.home SUKIRU_ROOTS=<tree>/proj`. Everything else IS the
+fake home.
+
+## Contract-name aliases
+
+Three names in the validation-contract scan-area legend are covered by
+existing trees rather than dedicated directories. Validators MUST use this
+canonical mapping:
+
+| Legend name     | Proving tree  | Where the defect lives |
+|-----------------|---------------|------------------------|
+| `broken-link`   | `FIX-GARBAGE` | `.claude/skills/rotted -> /nonexistent/rotted-target` (dangling symlink) |
+| `unreadable-dir`| `FIX-GARBAGE` | `.agents/skills/locked-dir` (chmod 000 via `prepare-runtime.sh`) |
+| `dup-alias`     | `FIX-DUPLICATES` | the `alias-demo` group (canonical dir + two host symlinks) |
+
+Every other legend name maps 1:1 to a same-named tree above (or to a `CM-*` /
+`hash-parity` generated fixture).
 
 Some states cannot be stored in git (a chmod-000 unreadable directory). Apply
 them at runtime with:

@@ -1,0 +1,15 @@
+{
+  "version": 3,
+  "skills": {
+    "shared-skill": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/shared-skill/SKILL.md",
+      "skillFolderHash": "8888888888888888888888888888888888888888",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}

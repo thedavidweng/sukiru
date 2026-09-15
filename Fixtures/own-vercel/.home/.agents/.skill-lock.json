@@ -1,0 +1,16 @@
+{
+  "version": 3,
+  "skills": {
+    "global-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "ref": "refs/heads/main",
+      "skillPath": ".agents/skills/global-tool/SKILL.md",
+      "skillFolderHash": "9999999999999999999999999999999999999999",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}
