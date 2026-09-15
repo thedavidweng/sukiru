@@ -3,8 +3,9 @@ import Testing
 
 @testable import SukiruCore
 
-/// OwnershipResolver ambiguity and scope-independence rules (architecture D1,
-/// VAL-SCAN-018/055/056) — unit-level over TempTree, through ScanEngine.
+/// OwnershipResolver ambiguity and scope-independence rules (architecture D1
+/// as refined by D23, VAL-SCAN-018/055/056) — unit-level over TempTree,
+/// through ScanEngine.
 @Suite("OwnershipResolver ambiguity and scope rules")
 struct OwnershipResolverAmbiguityTests {
     @Test("Ambiguous name voids attribution: ownerless + ambiguous, lock claim stays data")
@@ -12,10 +13,15 @@ struct OwnershipResolverAmbiguityTests {
         let home = try TempTree()
         try home.file(".claude/config.json", contents: "{}")
         try home.file(".codex/config.json", contents: "{}")
+        // D23: two DIVERGENT copies, neither hash-explained (the lock claims
+        // the name but there is no canonical-store placement to anchor to)
+        // nor gh-provenanced — both unexplained, two distinct hashes.
         let first = try home.file(
-            ".claude/skills/dup/SKILL.md", contents: OwnershipBuilders.skillMD("dup"))
+            ".claude/skills/dup/SKILL.md",
+            contents: OwnershipBuilders.skillMD("dup", variant: "Copy in claude."))
         let second = try home.file(
-            ".codex/skills/dup/SKILL.md", contents: OwnershipBuilders.skillMD("dup"))
+            ".codex/skills/dup/SKILL.md",
+            contents: OwnershipBuilders.skillMD("dup", variant: "Copy in codex, divergent."))
         try home.file(
             ".agents/.skill-lock.json", contents: OwnershipBuilders.globalLock(["dup"]))
 
@@ -61,6 +67,65 @@ struct OwnershipResolverAmbiguityTests {
         #expect(demo.ownership == .vercel, "ownership resolves normally on an alias group")
         #expect(!report.findings.contains { $0.ruleID == "ambiguous-name" })
         #expect(!report.findings.contains { $0.ruleID == "files-without-lock" })
+    }
+
+    @Test("D23 anchor: lock + canonical + hash-identical copy is vercel, never ambiguous")
+    func lockExplainedIdenticalCopyNotAmbiguous() throws {
+        let home = try TempTree()
+        try home.file(".claude/config.json", contents: "{}")
+        try home.file(
+            ".agents/skills/demo/SKILL.md", contents: OwnershipBuilders.skillMD("demo"))
+        // Byte-identical physical host copy (the stock copy-mode shape).
+        try home.file(
+            ".claude/skills/demo/SKILL.md", contents: OwnershipBuilders.skillMD("demo"))
+        try home.file(
+            ".agents/.skill-lock.json", contents: OwnershipBuilders.globalLock(["demo"]))
+
+        let report = try OwnershipBuilders.scan(home: home)
+        let demo = try #require(report.skills.first { $0.name == "demo" })
+        #expect(demo.placements.count == 2)
+        #expect(
+            demo.ambiguous == false,
+            "D23(a): the copy is hash-identical to the lock-anchored canonical placement")
+        #expect(demo.ownership == .vercel)
+        #expect(!report.findings.contains { $0.ruleID == "ambiguous-name" })
+    }
+
+    @Test("D23 anchor: lock + canonical + lone divergent copy is divergence, never ambiguity")
+    func lockAnchoredDivergentCopyIsDivergenceNotAmbiguity() throws {
+        let home = try TempTree()
+        let project = try TempTree()
+        let canonicalFile = try project.file(
+            ".agents/skills/web/SKILL.md", contents: OwnershipBuilders.skillMD("web"))
+        let canonicalDir = URL(fileURLWithPath: canonicalFile).deletingLastPathComponent().path
+        // Anchor the lock to the canonical copy's REAL hash so only the
+        // divergent host copy can drift.
+        let canonicalHash = try ContentHasher().computedHash(ofSkillAtPath: canonicalDir).get()
+        try project.file(
+            "skills-lock.json",
+            contents: OwnershipBuilders.projectLock("web", computedHash: canonicalHash))
+        let divergentFile = try project.file(
+            ".claude/skills/web/SKILL.md",
+            contents: OwnershipBuilders.skillMD("web", variant: "Overwritten out-of-band."))
+
+        let report = try OwnershipBuilders.scan(home: home, projectRoots: [project])
+        let web = try #require(report.skills.first { $0.name == "web" })
+        #expect(web.placements.count == 2)
+        #expect(
+            web.ambiguous == false,
+            "D23: ONE unexplained hash (the divergent copy) never triggers ambiguity")
+        #expect(web.ownership == .vercel)
+        #expect(!report.findings.contains { $0.ruleID == "ambiguous-name" })
+
+        let divergence = try #require(
+            report.findings.first { $0.ruleID == "canonical-host-divergence" })
+        #expect(divergence.skillName == "web")
+        // The lock matches the canonical copy, so only the divergent host
+        // copy drifts.
+        let drift = try #require(report.findings.first { $0.ruleID == "vercel-lock-drift" })
+        let divergentDir = URL(fileURLWithPath: divergentFile).deletingLastPathComponent().path
+        #expect(
+            drift.evidence.contains { $0.kind == "placementPath" && $0.detail == divergentDir })
     }
 
     @Test("A broken-symlink-only name is ownerless but raises no files-without-lock")

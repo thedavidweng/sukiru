@@ -51,7 +51,9 @@ public struct ScanEngine: Sendable {
         }
         let inventory = InventoryScanner(fileSystem: fileSystem).scan(workspaces: workspaces)
         let claims = readLockClaims(request: request, roots: roots)
-        let groups = SkillInventory.groups(from: inventory.placements)
+        // D23: the ambiguity trigger needs the lock claims (a lock-anchored
+        // canonical placement hash-explains its identical copies).
+        let groups = SkillInventory.groups(from: inventory.placements, locks: claims.claims)
         let resolution = OwnershipResolver().resolve(groups: groups, locks: claims.claims)
         let health = HealthAnalyzer(fileSystem: fileSystem).analyze(
             groups: groups, locks: claims.claims)

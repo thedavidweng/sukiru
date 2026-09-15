@@ -42,11 +42,11 @@ public struct OwnershipResolution: Equatable, Sendable {
 /// For skill name N in scope S: `v` = N has an entry in S's Vercel lock;
 /// `g` = any placement of N in S carries `metadata.github-repo`.
 /// v∧g → double-booked, v∧¬g → vercel, ¬v∧g → github, ¬v∧¬g → ownerless.
-/// When N is ambiguous (>1 distinct canonical paths in S, computed by
-/// `SkillInventory` after alias collapse), attribution is VOIDED: ownership
-/// reports ownerless with `ambiguous: true`, never a guess — while the ledger
-/// claims stay surfaced in `provenance` as non-authoritative data
-/// (VAL-SCAN-018).
+/// When N is ambiguous (the D23 refined trigger — the scope's UNEXPLAINED
+/// placements hold ≥2 distinct content hashes, computed by `SkillInventory`
+/// after alias collapse), attribution is VOIDED: ownership reports ownerless
+/// with `ambiguous: true`, never a guess — while the ledger claims stay
+/// surfaced in `provenance` as non-authoritative data (VAL-SCAN-018).
 ///
 /// The resolver also emits the findings only ownership data can produce:
 /// `ambiguous-name` (warning, one placementPath per colliding directory),

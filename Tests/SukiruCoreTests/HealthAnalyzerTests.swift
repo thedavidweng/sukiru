@@ -137,16 +137,20 @@ struct HealthAnalyzerTests {
         let home = try TempTree()
         try home.file(".claude/config.json", contents: "{}")
         try home.file(".codex/config.json", contents: "{}")
+        // D23 ambiguity: two DIVERGENT copies with no canonical-store
+        // placement for the lock to anchor them to.
         try home.file(
-            ".claude/skills/dup/SKILL.md", contents: OwnershipBuilders.skillMD("dup"))
+            ".claude/skills/dup/SKILL.md",
+            contents: OwnershipBuilders.skillMD("dup", variant: "Copy in claude."))
         try home.file(
-            ".codex/skills/dup/SKILL.md", contents: OwnershipBuilders.skillMD("dup"))
+            ".codex/skills/dup/SKILL.md",
+            contents: OwnershipBuilders.skillMD("dup", variant: "Divergent copy in codex."))
         try home.file(
             ".agents/.skill-lock.json", contents: OwnershipBuilders.globalLock(["dup"]))
 
         let report = try OwnershipBuilders.scan(home: home)
         let dup = try #require(report.skills.first { $0.name == "dup" })
-        #expect(dup.ambiguous, "two physical copies make the name ambiguous")
+        #expect(dup.ambiguous, "two divergent unexplained copies make the name ambiguous (D23)")
         #expect(
             !report.findings.contains {
                 $0.ruleID == "dangerous-removal-surface" && $0.skillName == "dup"
@@ -160,9 +164,11 @@ struct HealthAnalyzerTests {
         try home.file(".claude/config.json", contents: "{}")
         try home.file(".codex/config.json", contents: "{}")
         try home.file(
-            ".claude/skills/dup/SKILL.md", contents: OwnershipBuilders.skillMD("dup"))
+            ".claude/skills/dup/SKILL.md",
+            contents: OwnershipBuilders.skillMD("dup", variant: "Copy in claude."))
         try home.file(
-            ".codex/skills/dup/SKILL.md", contents: OwnershipBuilders.skillMD("dup"))
+            ".codex/skills/dup/SKILL.md",
+            contents: OwnershipBuilders.skillMD("dup", variant: "Divergent copy in codex."))
 
         let report = try OwnershipBuilders.scan(home: home)
         let finding = try #require(

@@ -215,6 +215,53 @@ struct OwnershipResolverFixtureTests {
         #expect(projectFinding.workspaceID == "project:\(tree)/proj")
     }
 
+    @Test("FIX-DUPLICATES under D23: div-demo stays ambiguous, exact-demo does not")
+    func fixDuplicatesRefinedAmbiguity() throws {
+        let report = try OwnershipBuilders.scan(fixture: "FIX-DUPLICATES")
+
+        // Two DIVERGENT copies, no ledger story for either: unexplained with
+        // ≥2 distinct hashes ⇒ ambiguous (D23).
+        let div = try #require(report.skills.first { $0.name == "div-demo" })
+        #expect(div.ambiguous == true)
+        #expect(div.ownership == .ownerless)
+        #expect(
+            report.findings.contains {
+                $0.ruleID == "ambiguous-name" && $0.skillName == "div-demo"
+            })
+
+        // Two BYTE-IDENTICAL copies with no ledger claim: unexplained but a
+        // single shared hash ⇒ NOT ambiguous (D23); plain ownerless with the
+        // inventory listing.
+        let exact = try #require(report.skills.first { $0.name == "exact-demo" })
+        #expect(exact.ambiguous == false)
+        #expect(exact.ownership == .ownerless)
+        #expect(
+            !report.findings.contains {
+                $0.ruleID == "ambiguous-name" && $0.skillName == "exact-demo"
+            })
+        #expect(
+            report.findings.contains {
+                $0.ruleID == "files-without-lock" && $0.skillName == "exact-demo"
+            })
+    }
+
+    @Test("clean-copy-mode: the stock copy-mode layout is vercel-owned and never ambiguous")
+    func cleanCopyModeOwnership() throws {
+        let report = try OwnershipBuilders.scanSplitFixture("clean-copy-mode")
+        let webTool = try #require(report.skills.first { $0.name == "web-tool" })
+        #expect(webTool.placements.count == 2)
+        #expect(
+            webTool.ambiguous == false,
+            "D23(a): the host copy is hash-identical to the lock-anchored canonical placement")
+        #expect(webTool.ownership == .vercel)
+        #expect(!report.findings.contains { $0.ruleID == "ambiguous-name" })
+        let duplicate = try #require(
+            report.findings.first {
+                $0.ruleID == "cross-host-duplicate" && $0.skillName == "web-tool"
+            })
+        #expect(duplicate.evidence.contains { $0.kind == "subtype" && $0.detail == "exact" })
+    }
+
     @Test("FIX-CLEAN: vercel ownership and zero findings")
     func fixClean() throws {
         let report = try OwnershipBuilders.scan(fixture: "FIX-CLEAN")

@@ -1,5 +1,6 @@
 /// One logical skill name within one ownership bucket, before ownership
-/// resolution (architecture D1; port-reference §4 alias collapse).
+/// resolution (architecture D1 as refined by D23; port-reference §4 alias
+/// collapse).
 ///
 /// Grouping key is `(scopeGroup, name)`: one logical skill per skill name per
 /// ownership bucket (`user` scope, or one bucket per project root — ownership
@@ -7,16 +8,19 @@
 /// to ONE canonical path, e.g. host symlinks into the canonical store) are
 /// one logical skill with N placements and are never ambiguous by themselves.
 ///
-/// A group is `ambiguous` iff its name maps to MORE THAN ONE distinct
-/// physical directory (distinct non-nil canonical paths) within the bucket
-/// (D1). Broken symlinks carry a nil canonical path and therefore never
-/// create ambiguity.
+/// A group is `ambiguous` per the D23 refined trigger (see
+/// `SkillInventory.isAmbiguous`): the naive ">1 distinct canonical paths"
+/// reading of D1 is wrong because every stock copy-mode install has two
+/// physical copies. Broken symlinks carry no canonical path and no content
+/// hash and therefore never create ambiguity.
 public struct SkillGroup: Equatable, Sendable {
     /// The skill name (from `SKILL.md`, or the link name for broken links).
     public let name: String
     /// The ownership bucket: `user` or `project:<root>`.
     public let scopeGroup: String
-    /// D1: >1 distinct physical directories for one name in one bucket.
+    /// D23: the bucket's unexplained placements hold ≥2 distinct content
+    /// hashes (computed by `SkillInventory.groups`, which needs the scope's
+    /// lock claim).
     public let ambiguous: Bool
     /// The group's placements, sorted by path.
     public let members: [DiscoveredPlacement]
@@ -40,8 +44,17 @@ public struct SkillGroup: Equatable, Sendable {
 /// then bucket name; members within a group sort by path. The
 /// OwnershipResolver turns groups plus ledger claims into D18 skills.
 public enum SkillInventory {
-    /// Builds the sorted skill groups from scanner output.
-    public static func groups(from discovered: [DiscoveredPlacement]) -> [SkillGroup] {
+    /// Builds the sorted skill groups from scanner output. `locks` feed the
+    /// D23 ambiguity trigger: whether the vercel ledger claims a name decides
+    /// which placements are hash-explained by the canonical store.
+    public static func groups(
+        from discovered: [DiscoveredPlacement],
+        locks: [ScopeLockClaim] = []
+    ) -> [SkillGroup] {
+        var claims: [String: ScopeLockClaim] = [:]
+        for claim in locks {
+            claims[claim.scopeGroup] = claim
+        }
         struct Bucket {
             let name: String
             let scopeGroup: String
@@ -72,13 +85,63 @@ public enum SkillInventory {
             }
             .map { bucket in
                 let members = bucket.members.sorted { $0.placement.path < $1.placement.path }
-                let canonicalPaths = Set(members.compactMap { $0.placement.canonicalPath })
                 return SkillGroup(
                     name: bucket.name,
                     scopeGroup: bucket.scopeGroup,
-                    ambiguous: canonicalPaths.count > 1,
+                    ambiguous: isAmbiguous(
+                        name: bucket.name, members: members, claim: claims[bucket.scopeGroup]),
                     members: members
                 )
             }
+    }
+
+    /// The D23 refined ambiguity trigger (architecture §11), per name per
+    /// scope after alias collapse.
+    ///
+    /// Placements partition into EXPLAINED and UNEXPLAINED. A placement is
+    /// explained when:
+    /// (a) the vercel lock claims the name AND the placement is hash-
+    ///     identical (transitively, via content-hash equality) to the
+    ///     placement in the scope's canonical store — the workspace whose id
+    ///     IS the bucket key (`user` / `project:<root>`), the same identity
+    ///     the impostor and divergence rules use; or
+    /// (b) the placement carries gh frontmatter provenance, or is hash-
+    ///     identical to one that does.
+    ///
+    /// The name is AMBIGUOUS iff the unexplained placements contain ≥2
+    /// distinct content hashes. Consequences (D23): stock copy-mode installs
+    /// are vercel-owned exact duplicates, never ambiguous; a gh-overwritten
+    /// copy is double-booked, not ambiguous; two divergent copies with no
+    /// ledger story for either ARE ambiguous; a lone divergent copy alongside
+    /// anchored ones is `canonical-host-divergence`, not ambiguity.
+    ///
+    /// Placements without a content hash (broken symlinks, hash failures)
+    /// cannot establish identity and participate in neither partition.
+    private static func isAmbiguous(
+        name: String,
+        members: [DiscoveredPlacement],
+        claim: ScopeLockClaim?
+    ) -> Bool {
+        let hashed = members.filter {
+            $0.placement.kind != .brokenSymlink && $0.placement.contentHash != nil
+        }
+        let lockClaims = claim?.lock.entries[name] != nil
+        let canonicalHash = hashed.first { member in
+            member.workspaceID == member.scopeGroup
+        }?.placement.contentHash
+        let ghHashes = Set(
+            hashed.filter { $0.githubProvenance != nil }.compactMap(\.placement.contentHash))
+        var unexplainedHashes: Set<String> = []
+        for member in hashed {
+            guard let hash = member.placement.contentHash else { continue }
+            if lockClaims, let canonicalHash, hash == canonicalHash {
+                continue
+            }
+            if member.githubProvenance != nil || ghHashes.contains(hash) {
+                continue
+            }
+            unexplainedHashes.insert(hash)
+        }
+        return unexplainedHashes.count >= 2
     }
 }
