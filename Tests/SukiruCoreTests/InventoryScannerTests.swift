@@ -216,18 +216,20 @@ struct InventoryScannerTests {
         #expect(shared.contains { $0.scope == .project })
     }
 
-    @Test("Two physical copies of one name in a scope are ONE ambiguous skill")
+    @Test("Two hash-divergent unexplained copies of one name in a scope are ONE ambiguous skill")
     func distinctCopiesAmbiguous() throws {
         let home = try TempTree()
         try home.file(".claude/config.json", contents: "{}")
         try home.file(".agents/skills/dup/SKILL.md", contents: skillMD("dup"))
         try home.file(".claude/skills/dup/SKILL.md", contents: skillMD("dup"))
+        // D23: divergence comes from content hashes, not paths.
+        try home.file(".claude/skills/dup/extra.txt", contents: "divergent")
 
         let report = try scan(home: home)
         let dup = try #require(report.skills.first { $0.name == "dup" })
         #expect(report.skills.count == 1)
         #expect(dup.placements.count == 2)
-        #expect(dup.ambiguous == true, ">1 distinct canonical paths in a scope is ambiguous (D1)")
+        #expect(dup.ambiguous == true, "D23: unexplained copies with ≥2 distinct hashes")
     }
 
     @Test("Placements carry the full candidate host set for shared dirs (trap 12)")
