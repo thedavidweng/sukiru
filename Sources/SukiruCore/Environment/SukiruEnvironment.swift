@@ -24,11 +24,26 @@ public struct SukiruEnvironment: Equatable, Sendable {
     /// XDG state base override, or nil when unset/empty.
     public let xdgStateHome: String?
 
+    /// Non-empty values of host-relevant external environment variables,
+    /// captured ONLY when `SUKIRU_HOME` is NOT overriding home. Under an
+    /// override (tests and validation), this is empty so that nothing outside
+    /// the fixture is read — the sole permitted external probe is `/etc/codex`
+    /// existence (architecture §4.2, VAL-SCAN-004 hermeticity).
+    private let externalEnv: [String: String]
+
     public static let sukiruHomeKey = "SUKIRU_HOME"
     public static let sukiruRootsKey = "SUKIRU_ROOTS"
     public static let xdgConfigHomeKey = "SUKIRU_XDG_CONFIG_HOME"
     public static let xdgStateHomeKey = "SUKIRU_XDG_STATE_HOME"
     public static let homeKey = "HOME"
+
+    /// External environment variables consulted by host detection when scanning
+    /// the real machine: the three Env-base host homes, the real XDG config
+    /// base, and Zed's custom probe variables. Space-listed to avoid a
+    /// multi-line collection literal (repo lint gates conflict on those).
+    public static let externalEnvKeys: [String] =
+        "CLAUDE_CONFIG_DIR CODEX_HOME VIBE_HOME XDG_CONFIG_HOME APPDATA FLATPAK_XDG_CONFIG_HOME"
+        .split(separator: " ").map(String.init)
 
     public init(reader: EnvironmentReader) {
         if let overridden = Self.nonEmpty(reader.value(for: Self.sukiruHomeKey)) {
@@ -48,6 +63,25 @@ public struct SukiruEnvironment: Equatable, Sendable {
 
         self.xdgConfigHome = Self.nonEmpty(reader.value(for: Self.xdgConfigHomeKey))
         self.xdgStateHome = Self.nonEmpty(reader.value(for: Self.xdgStateHomeKey))
+
+        if self.homeIsOverridden {
+            self.externalEnv = [:]
+        } else {
+            var captured: [String: String] = [:]
+            for key in Self.externalEnvKeys {
+                if let value = Self.nonEmpty(reader.value(for: key)) {
+                    captured[key] = value
+                }
+            }
+            self.externalEnv = captured
+        }
+    }
+
+    /// The non-empty value of an external (non-`SUKIRU_*`) environment variable
+    /// used in host detection, or nil. Always nil under a `SUKIRU_HOME`
+    /// override, preserving scan hermeticity.
+    public func externalValue(for key: String) -> String? {
+        externalEnv[key]
     }
 
     /// Returns the fatal environment problem (architecture D4), if any: an

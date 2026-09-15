@@ -1,4 +1,7 @@
 .DS_Store
+# The leftover-dsstore fixture's .DS_Store is load-bearing test data
+# (VAL-SCAN-013: Finder noise must not flip a leftover host to installed).
+!Fixtures/leftover-dsstore/.qoder/.DS_Store
 
 # Xcode / SwiftPM
 *.xcodeproj

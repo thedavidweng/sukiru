@@ -5,9 +5,24 @@ import Testing
 /// In-memory filesystem probe so exit-code logic is unit-testable without disk.
 struct StubFileSystem: FileSystemProbe {
     let existing: Set<String>
+    var files: Set<String> = []
+    var directories: Set<String> = []
+    var entries: [String: [String]] = [:]
 
     func exists(atPath path: String) -> Bool {
-        existing.contains(path)
+        existing.contains(path) || files.contains(path) || directories.contains(path)
+    }
+
+    func isFile(atPath path: String) -> Bool {
+        files.contains(path)
+    }
+
+    func isDirectory(atPath path: String) -> Bool {
+        directories.contains(path)
+    }
+
+    func directoryEntries(atPath path: String) -> [String]? {
+        entries[path]
     }
 }
 

@@ -15,9 +15,11 @@ public struct ScanRequest: Equatable, Sendable {
 
 /// The seam-A read engine.
 ///
-/// At the skeleton milestone `scan` validates the environment (architecture
-/// D4) and returns an empty-but-schema-valid `ScanReport`. The full inventory,
-/// ownership resolution, and detection rules land in M2.
+/// `scan` validates the environment (architecture D4), enumerates the
+/// workspace root set (host detection + project roots, honoring D5 root
+/// precedence and the requested scope), and returns a `ScanReport`. Skill
+/// inventory, ownership resolution, and findings land in later features; until
+/// then those collections are empty-but-schema-valid.
 public struct ScanEngine: Sendable {
     private let environment: SukiruEnvironment
     private let fileSystem: FileSystemProbe
@@ -38,6 +40,12 @@ public struct ScanEngine: Sendable {
         if let problem = environment.fatalProblem(fileSystem: fileSystem) {
             throw problem
         }
-        return ScanReport()
+        // D5: explicit --root flags REPLACE SUKIRU_ROOTS; there is no merge.
+        let roots = request.explicitRoots.isEmpty ? environment.projectRoots : request.explicitRoots
+        let enumerator = WorkspaceEnumerator(environment: environment, fileSystem: fileSystem)
+        let workspaces = enumerator.enumerate(projectRoots: roots).filter {
+            request.scope.includes($0.kind)
+        }
+        return ScanReport(workspaces: workspaces)
     }
 }
