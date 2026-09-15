@@ -1,0 +1,12 @@
+# CLI-generated collision-matrix corpus (network + pinned skills@1.5.26 + gh).
+# Regenerate on demand with Scripts/fixtures/generate.sh; not checked in
+# because it is reproducible and pulls real upstream skill content.
+CM-1/
+CM-2/
+CM-3/
+CM-5/
+CM-6/
+CM-8/
+
+# Generator scratch / runtime-only states.
+.check-sandbox/
