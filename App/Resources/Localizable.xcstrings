@@ -158,6 +158,23 @@
         }
       }
     },
+    "Findings for %@": {
+      "comment": "Health focus banner: findings filtered to one skill (D16 deep-link target).",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Findings for %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 的发现"
+          }
+        }
+      }
+    },
     "GitHub": {
       "comment": "Library ownership badge: gh ledger owns the skill.",
       "localizations": {
@@ -202,6 +219,28 @@
         }
       }
     },
+    "Hosts": {
+      "comment": "Library detail: title of the host-presence region.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "宿主"
+          }
+        }
+      }
+    },
+    "Installed": {
+      "comment": "Library detail host row: the host genuinely installed (sees) the skill.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已安装"
+          }
+        }
+      }
+    },
     "Installer": {
       "comment": "Detail provenance field label.",
       "localizations": {
@@ -220,6 +259,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "内部"
+          }
+        }
+      }
+    },
+    "Internal skill — hidden from host-facing listings.": {
+      "comment": "Library detail hosts region: note shown for metadata.internal skills (never host-visible).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内部技能 — 不会出现在宿主可见列表中。"
           }
         }
       }
@@ -257,6 +307,17 @@
         }
       }
     },
+    "Leftover (spray residue — not an install)": {
+      "comment": "Library detail host row: CLI spray residue root, explicitly NOT an installation.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "残留（喷洒残留，并非安装）"
+          }
+        }
+      }
+    },
     "Loading library…": {
       "comment": "Library loading state.",
       "localizations": {
@@ -268,6 +329,17 @@
         }
       }
     },
+    "No findings implicate this skill": {
+      "comment": "Health surface: empty state while focused on one skill via the D16 deep-link.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有涉及此技能的发现"
+          }
+        }
+      }
+    },
     "No findings — library looks healthy": {
       "comment": "Health surface: clean summary and empty-findings title.",
       "localizations": {
@@ -275,6 +347,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "无发现——资源库状况良好"
+          }
+        }
+      }
+    },
+    "No host sees this skill.": {
+      "comment": "Library detail hosts region: no host workspace contains a placement.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有任何宿主能看到此技能。"
           }
         }
       }
@@ -528,6 +611,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "设置"
+          }
+        }
+      }
+    },
+    "Show All": {
+      "comment": "Health focus banner: clears the per-skill focus and shows every finding.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示全部"
+          }
+        }
+      }
+    },
+    "Show findings in Health": {
+      "comment": "Library detail: D16 deep-link button navigating to this skill's findings in Health.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在“健康”中查看发现"
           }
         }
       }

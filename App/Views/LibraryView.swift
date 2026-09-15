@@ -175,13 +175,8 @@ struct LibraryView: View {
         report.skills.filter { $0.scope == .project && projectRoot(of: $0) == root }
     }
 
-    /// Attributes a project-scope skill to its project root by placement path
-    /// prefix (workspace roots live under the project root).
     private func projectRoot(of skill: Skill) -> String? {
-        state.projectRoots.first { root in
-            let prefix = root.hasSuffix("/") ? root : root + "/"
-            return skill.placements.contains { $0.path.hasPrefix(prefix) }
-        }
+        state.projectRoot(of: skill)
     }
 }
 
