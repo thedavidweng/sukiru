@@ -29,6 +29,11 @@ public struct ScanReport: Codable, Equatable, Sendable {
     public let skills: [Skill]
     public let findings: [Finding]
     public let issues: [Issue]
+    /// Unknown TOP-LEVEL lock keys, preserved verbatim (VAL-SCAN-022), keyed
+    /// by the scope's ownership-bucket/canonical workspace id (`user` /
+    /// `project:<root>`). Nil when no read lock carries unknown keys, so the
+    /// key is omitted from the wire JSON (D18 stays additive).
+    public let lockExtras: [String: [String: JSONValue]]?
 
     public static let currentSchemaVersion = 1
 
@@ -37,13 +42,15 @@ public struct ScanReport: Codable, Equatable, Sendable {
         workspaces: [Workspace] = [],
         skills: [Skill] = [],
         findings: [Finding] = [],
-        issues: [Issue] = []
+        issues: [Issue] = [],
+        lockExtras: [String: [String: JSONValue]]? = nil
     ) {
         self.schemaVersion = schemaVersion
         self.workspaces = workspaces
         self.skills = skills
         self.findings = findings
         self.issues = issues
+        self.lockExtras = lockExtras
     }
 
     /// Deterministic JSON encoding (sorted keys) so identical scans yield

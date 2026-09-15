@@ -32,6 +32,11 @@
       "path" : "<FIXTURE>/.agents/skills/nameless/SKILL.md"
     }
   ],
+  "lockExtras" : {
+    "user" : {
+      "futureTopLevelKey" : "preserved"
+    }
+  },
   "schemaVersion" : 1,
   "skills" : [
     {
@@ -49,6 +54,9 @@
       ],
       "provenance" : {
         "vercel" : {
+          "extras" : {
+            "channel" : "beta"
+          },
           "installedAt" : "2026-06-15T23:27:24.742Z",
           "skillFolderHash" : "3333333333333333333333333333333333333333",
           "skillPath" : ".agents/skills/healthy/SKILL.md",
