@@ -609,8 +609,12 @@ codex hosts detected via a config marker):
 - `div-demo` — two REAL dirs with DIFFERENT content -> cross-host-duplicate
   subtype=divergent, severity=warning, two distinct contentHashes.
 
-Scan MUST exit 0. exact-demo and div-demo are ambiguous names (2 distinct
-canonical paths per scope) and also raise `ambiguous-name`; alias-demo does not.
+Scan MUST exit 0. Under the D23 refined ambiguity trigger, no ledger claims
+any name here, so every copy is UNEXPLAINED: div-demo's unexplained copies
+hold 2 distinct content hashes and DO raise `ambiguous-name`
+(ownership=ownerless, attribution voided), while exact-demo's copies share ONE
+hash and are NOT ambiguous (plain ownerless, listed via `files-without-lock`).
+alias-demo is never ambiguous.
 EOF
 
 # =====================================================================
@@ -695,8 +699,11 @@ lock entry claiming `dup`.
 A correct scan MUST exit 0, emit an `ambiguous-name` finding naming both
 colliding placement paths, resolve `dup` as ownership=ownerless with
 ambiguous=true (attribution voided, never guessed), and still surface the lock
-claim as data (not authoritative ownership). Per D1 this is per-scope after
-alias collapse; these are two REAL dirs, not symlinks, so the rule fires.
+claim as data (not authoritative ownership). Per D1/D23 this is per-scope
+after alias collapse; these are two REAL dirs with DIVERGENT content, and
+neither is explained: the lock claims `dup` but there is NO canonical-store
+placement to hash-anchor them to (D23a), and neither carries gh frontmatter
+(D23b) — two unexplained copies, two distinct hashes, so the rule fires.
 EOF
 
 # =====================================================================
@@ -1369,6 +1376,192 @@ A correct scan MUST exit 0 and, in ONE report, resolve ownership=vercel for
 `shared` in p1 AND ownership=ownerless for `shared` in p2 with a
 files-without-lock finding anchored to p2's workspace only. Any cross-root
 ledger bleed (the p1 lock claiming p2's placement) is a fail.
+EOF
+
+# =====================================================================
+# cap-* — PATH-stub capability environments (VAL-SCAN-002/037/038/039/040/057).
+#
+# These are NOT scan fixtures: each tree holds ONLY a bin/ of stub executables
+# plus its EXPECTATION.md. Validators compose an environment by concatenating
+# bin dirs onto PATH, e.g.
+#   PATH="<FIX>/cap-gh-ok/bin:<FIX>/cap-npx-ok/bin:/usr/bin:/bin"
+# Every stub is a POSIX sh script: controlled output, no network, no side
+# effects. When SUKIRU_STUB_TRANSCRIPT is set, a stub appends one
+# "<name> <args>" line per invocation to that file — the validator's evidence
+# that the real binary really probed the stub.
+# =====================================================================
+
+# gh_stub DIR VERSION PROBE_EXIT -> bin/gh reporting VERSION on --version;
+# `gh skill --help` exits PROBE_EXIT (0 = the skill surface works).
+gh_stub() {
+    local dir="$1" version="$2" probe_exit="$3"
+    mkdir -p "$dir/bin"
+    cat >"$dir/bin/gh" <<'EOF'
+#!/bin/sh
+# gh PATH stub: `gh --version` reports @VERSION@; `gh skill --help` exits
+# @PROBE_EXIT@. Everything else exits 1. No network, no side effects.
+if [ -n "${SUKIRU_STUB_TRANSCRIPT:-}" ]; then
+    printf 'gh %s\n' "$*" >>"$SUKIRU_STUB_TRANSCRIPT"
+fi
+if [ "${1:-}" = "--version" ]; then
+    echo "gh version @VERSION@ (2026-01-15)"
+    exit 0
+fi
+if [ "${1:-}" = "skill" ] && [ "${2:-}" = "--help" ]; then
+    echo "Work with agent skills"
+    exit @PROBE_EXIT@
+fi
+exit 1
+EOF
+    sed -i '' -e "s/@VERSION@/$version/g" -e "s/@PROBE_EXIT@/$probe_exit/g" "$dir/bin/gh"
+    chmod 755 "$dir/bin/gh"
+}
+
+# npx_stub DIR VERSION -> bin/npx answering ONLY the capability probe
+# (`npx -y skills@latest --version`) with VERSION; no network.
+npx_stub() {
+    local dir="$1" version="$2"
+    mkdir -p "$dir/bin"
+    cat >"$dir/bin/npx" <<'EOF'
+#!/bin/sh
+# npx PATH stub: answers the skills capability probe with @VERSION@.
+# Everything else exits 1. No network, no side effects.
+if [ -n "${SUKIRU_STUB_TRANSCRIPT:-}" ]; then
+    printf 'npx %s\n' "$*" >>"$SUKIRU_STUB_TRANSCRIPT"
+fi
+case "$*" in
+    *skills@*--version*)
+        echo "@VERSION@"
+        exit 0
+        ;;
+esac
+exit 1
+EOF
+    sed -i '' -e "s/@VERSION@/$version/g" "$dir/bin/npx"
+    chmod 755 "$dir/bin/npx"
+}
+
+# empty_bin DIR -> a bin/ holding nothing but a .gitkeep (git drops empty
+# dirs): the "tool absent from PATH" environment.
+empty_bin() {
+    mkdir -p "$1/bin"
+    : >"$1/bin/.gitkeep"
+}
+
+d="$(reset_fixture cap-gh-ok)"
+gh_stub "$d" "2.100.0" 0
+note "$d" <<'EOF'
+# cap-gh-ok — expectation (VAL-SCAN-002 / VAL-SCAN-037)
+
+Contents: `bin/gh` — a stub reporting `gh version 2.100.0 (2026-01-15)` whose
+`gh skill --help` exits 0. No npx stub here (compose with `cap-npx-ok`).
+
+Use: `PATH="<this>/bin[:<cap-npx-ok>/bin]:/usr/bin:/bin" sukiru-cli capabilities --format json`.
+
+A correct capabilities report MUST exit 0 and report gh available=true,
+present=true, meetsMinimum=true, version="2.100.0", with NO `reason` key.
+With SUKIRU_STUB_TRANSCRIPT=<file> set, the transcript MUST record both
+`gh --version` and `gh skill --help` invocations.
+EOF
+
+d="$(reset_fixture cap-gh-old)"
+gh_stub "$d" "2.80.0" 1
+note "$d" <<'EOF'
+# cap-gh-old — expectation (VAL-SCAN-038)
+
+Contents: `bin/gh` — a stub reporting `gh version 2.80.0 (2025-01-15)`, BELOW
+the 2.90.0 `gh skill` floor (its `skill --help` exits 1, but a correct
+detector never probes a below-minimum gh).
+
+Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
+
+A correct capabilities report MUST exit 0 and report gh available=false,
+present=true, version="2.80.0", meetsMinimum=false, reason="too-old". Scans
+in this environment MUST be unaffected (D2): `sukiru-cli scan` over the
+`own-github` fixture still exits 0 and surfaces `metadata.github-*`
+provenance from disk.
+EOF
+
+d="$(reset_fixture cap-gh-probe-fail)"
+gh_stub "$d" "2.100.0" 1
+note "$d" <<'EOF'
+# cap-gh-probe-fail — expectation (VAL-SCAN-057)
+
+Contents: `bin/gh` — a stub reporting `gh version 2.100.0 (2026-01-15)`
+(meets the 2.90.0 floor) whose `gh skill --help` EXITS 1: the version is new
+enough but the skill surface does not work (D6 probe).
+
+Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
+
+A correct capabilities report MUST exit 0 and report gh available=false,
+present=true, version="2.100.0", meetsMinimum=true, reason="probe-failed".
+(This tree is not in the contract's six-name legend; it is the VAL-SCAN-057
+environment, named here for validators.)
+EOF
+
+d="$(reset_fixture cap-gh-absent)"
+empty_bin "$d"
+note "$d" <<'EOF'
+# cap-gh-absent — expectation (VAL-SCAN-038)
+
+Contents: an EMPTY `bin/` (only a .gitkeep) — no gh on PATH. Compose with
+other cap-* bins as needed (e.g. `<this>/bin:<cap-npx-ok>/bin` for
+"gh absent, npx fine").
+
+Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
+
+A correct capabilities report MUST exit 0 and report gh available=false,
+present=false, meetsMinimum=false, no version, reason="absent". Scans in
+this environment MUST be unaffected (D2): `sukiru-cli scan` over the
+`own-github` fixture still exits 0 and surfaces `metadata.github-*`
+provenance from disk.
+EOF
+
+d="$(reset_fixture cap-npx-ok)"
+npx_stub "$d" "1.5.26"
+note "$d" <<'EOF'
+# cap-npx-ok — expectation (VAL-SCAN-002 / VAL-SCAN-039)
+
+Contents: `bin/npx` — a stub answering the capability probe
+(`npx -y skills@latest --version`) with `1.5.26`. No gh stub here (compose
+with `cap-gh-ok`).
+
+Use: `PATH="<this>/bin[:<cap-gh-ok>/bin]:/usr/bin:/bin" sukiru-cli capabilities --format json`.
+
+A correct capabilities report MUST exit 0 and report npx resolvable=true,
+skillsVersion="1.5.26".
+EOF
+
+d="$(reset_fixture cap-npx-absent)"
+empty_bin "$d"
+note "$d" <<'EOF'
+# cap-npx-absent — expectation (VAL-SCAN-039)
+
+Contents: an EMPTY `bin/` (only a .gitkeep) — no npx on PATH.
+
+Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
+
+A correct capabilities report MUST exit 0 and report npx resolvable=false
+with no skillsVersion. Unresolvable npx NEVER blocks anything: exit stays 0
+and scans are unaffected (D2/§8).
+EOF
+
+d="$(reset_fixture cap-neither)"
+empty_bin "$d"
+note "$d" <<'EOF'
+# cap-neither — expectation (VAL-SCAN-040)
+
+Contents: an EMPTY `bin/` (only a .gitkeep) — neither gh nor npx on PATH.
+Sukiru degrades to the full read-only diagnostician (§8): capability absence
+degrades repair features, never seam-A reading.
+
+Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli {capabilities,scan} ...`.
+
+A correct capabilities report MUST exit 0 with gh reason="absent" and npx
+resolvable=false. A scan over a rich fixture (CM-3) in this environment MUST
+produce the COMPLETE report — full inventory, ownership from both on-disk
+ledgers, all findings — BYTE-IDENTICAL to the same fixture scanned under
+`cap-gh-ok` + `cap-npx-ok` (scan is subprocess-free, D2).
 EOF
 
 echo "Hand-built fixtures rebuilt under: $FIX"

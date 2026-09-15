@@ -3,6 +3,17 @@ import Foundation
 /// Launch-time capability detection output (architecture §4.2, D6), produced
 /// by `CapabilityDetector`. NEVER part of ScanReport (D2): capabilities are
 /// the sole command allowed to spawn probe subprocesses.
+/// Why gh is unavailable (D6: two states, but the reason is shown).
+/// Nil on the report iff `available` is true.
+public enum GitHubUnavailableReason: String, Codable, Equatable, Sendable {
+    /// No gh answered `gh --version` with a parseable version.
+    case absent
+    /// gh is present but below the 2.90.0 `gh skill` floor.
+    case tooOld = "too-old"
+    /// gh meets the version floor but `gh skill --help` failed.
+    case probeFailed = "probe-failed"
+}
+
 public struct CapabilityReport: Codable, Equatable, Sendable {
     public struct GitHubCapability: Codable, Equatable, Sendable {
         /// D6 two-state verdict: present AND ≥ 2.90.0 AND `gh skill` probe OK.
@@ -11,6 +22,8 @@ public struct CapabilityReport: Codable, Equatable, Sendable {
         public let present: Bool
         public let version: String?
         public let meetsMinimum: Bool
+        /// Why gh is unavailable; omitted from the JSON when available.
+        public let reason: GitHubUnavailableReason?
     }
 
     public struct NpxCapability: Codable, Equatable, Sendable {
@@ -29,7 +42,8 @@ public struct CapabilityReport: Codable, Equatable, Sendable {
         CapabilityReport(
             schemaVersion: currentSchemaVersion,
             github: GitHubCapability(
-                available: false, present: false, version: nil, meetsMinimum: false),
+                available: false, present: false, version: nil, meetsMinimum: false,
+                reason: .absent),
             npx: NpxCapability(resolvable: false, skillsVersion: nil)
         )
     }

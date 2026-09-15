@@ -37,15 +37,17 @@ struct CapabilityDetectorTests {
         #expect(report.github.present)
         #expect(report.github.meetsMinimum)
         #expect(report.github.version == "2.100.0")
+        #expect(report.github.reason == nil)
     }
 
-    @Test("gh absent → unavailable, not present, no version")
+    @Test("gh absent → unavailable, not present, no version, reason absent")
     func ghAbsent() {
         let report = detect([:])
         #expect(!report.github.available)
         #expect(!report.github.present)
         #expect(report.github.version == nil)
         #expect(!report.github.meetsMinimum)
+        #expect(report.github.reason == .absent)
     }
 
     @Test("gh too old → present but not available, not minimum, probe skipped")
@@ -60,9 +62,10 @@ struct CapabilityDetectorTests {
         #expect(report.github.present)
         #expect(report.github.version == "2.80.0")
         #expect(!report.github.meetsMinimum)
+        #expect(report.github.reason == .tooOld)
     }
 
-    @Test("gh new enough but skill probe fails → unavailable")
+    @Test("gh new enough but skill probe fails → unavailable with probe-failed reason")
     func ghProbeFails() {
         var outcomes = [String: ProcessOutcome]()
         outcomes["gh --version"] = outcome(0, "gh version 2.100.0\n")
@@ -71,6 +74,20 @@ struct CapabilityDetectorTests {
         #expect(!report.github.available)
         #expect(report.github.present)
         #expect(report.github.meetsMinimum)
+        #expect(report.github.reason == .probeFailed)
+    }
+
+    @Test("gh probe that cannot be spawned at all → probe-failed reason")
+    func ghProbeUnspawnable() {
+        // `gh --version` answers but `gh skill --help` cannot even be spawned
+        // (nil outcome): still present+minimum, but unavailable probe-failed.
+        let report = detect([
+            "gh --version": outcome(0, "gh version 2.100.0\n")
+        ])
+        #expect(!report.github.available)
+        #expect(report.github.present)
+        #expect(report.github.meetsMinimum)
+        #expect(report.github.reason == .probeFailed)
     }
 
     @Test("gh --version unparsable → treated as absent")
@@ -80,6 +97,7 @@ struct CapabilityDetectorTests {
         ])
         #expect(!report.github.available)
         #expect(!report.github.present)
+        #expect(report.github.reason == .absent)
     }
 
     @Test("gh --version non-zero exit → treated as absent")
@@ -89,6 +107,7 @@ struct CapabilityDetectorTests {
         ])
         #expect(!report.github.available)
         #expect(!report.github.present)
+        #expect(report.github.reason == .absent)
     }
 
     @Test("npx skills resolvable → resolvable with trimmed version")
