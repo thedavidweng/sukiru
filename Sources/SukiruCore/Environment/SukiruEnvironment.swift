@@ -37,12 +37,13 @@ public struct SukiruEnvironment: Equatable, Sendable {
     public static let xdgStateHomeKey = "SUKIRU_XDG_STATE_HOME"
     public static let homeKey = "HOME"
 
-    /// External environment variables consulted by host detection when scanning
-    /// the real machine: the three Env-base host homes, the real XDG config
-    /// base, and Zed's custom probe variables. Space-listed to avoid a
-    /// multi-line collection literal (repo lint gates conflict on those).
+    /// External environment variables consulted by host detection and lock
+    /// resolution when scanning the real machine: the three Env-base host
+    /// homes, the real XDG config/state bases, and Zed's custom probe
+    /// variables. Space-listed to avoid a multi-line collection literal (repo
+    /// lint gates conflict on those).
     public static let externalEnvKeys: [String] =
-        "CLAUDE_CONFIG_DIR CODEX_HOME VIBE_HOME XDG_CONFIG_HOME APPDATA FLATPAK_XDG_CONFIG_HOME"
+        "CLAUDE_CONFIG_DIR CODEX_HOME VIBE_HOME XDG_CONFIG_HOME XDG_STATE_HOME APPDATA FLATPAK_XDG_CONFIG_HOME"
         .split(separator: " ").map(String.init)
 
     public init(reader: EnvironmentReader) {
