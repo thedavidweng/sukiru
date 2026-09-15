@@ -38,6 +38,10 @@ struct StubFileSystem: FileSystemProbe {
         if directories.contains(path) { return .directory }
         return nil
     }
+
+    func resolvedPath(atPath path: String) -> String? {
+        exists(atPath: path) ? path : nil
+    }
 }
 
 @Suite("SukiruEnvironment override seam")

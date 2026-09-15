@@ -17,9 +17,11 @@ public struct ScanRequest: Equatable, Sendable {
 ///
 /// `scan` validates the environment (architecture D4), enumerates the
 /// workspace root set (host detection + project roots, honoring D5 root
-/// precedence and the requested scope), and returns a `ScanReport`. Skill
-/// inventory, ownership resolution, and findings land in later features; until
-/// then those collections are empty-but-schema-valid.
+/// precedence and the requested scope), runs inventory discovery (placements,
+/// issues, broken-symlink findings), and collapses placements into logical
+/// skills (D1 alias collapse). Ownership resolution and the remaining health
+/// findings land in their own features; until then skills report
+/// `ownership: .ownerless`.
 public struct ScanEngine: Sendable {
     private let environment: SukiruEnvironment
     private let fileSystem: FileSystemProbe
@@ -43,9 +45,15 @@ public struct ScanEngine: Sendable {
         // D5: explicit --root flags REPLACE SUKIRU_ROOTS; there is no merge.
         let roots = request.explicitRoots.isEmpty ? environment.projectRoots : request.explicitRoots
         let enumerator = WorkspaceEnumerator(environment: environment, fileSystem: fileSystem)
-        let workspaces = enumerator.enumerate(projectRoots: roots).filter {
-            request.scope.includes($0.kind)
+        let workspaces = enumerator.enumerateDetailed(projectRoots: roots).filter {
+            request.scope.includes($0.workspace.kind)
         }
-        return ScanReport(workspaces: workspaces)
+        let inventory = InventoryScanner(fileSystem: fileSystem).scan(workspaces: workspaces)
+        return ScanReport(
+            workspaces: workspaces.map(\.workspace),
+            skills: SkillInventory.skills(from: inventory.placements),
+            findings: inventory.findings,
+            issues: inventory.issues
+        )
     }
 }
