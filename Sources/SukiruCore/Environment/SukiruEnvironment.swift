@@ -1,0 +1,68 @@
+/// The sole fatal environment condition (architecture D4): the process exits
+/// with code 2 when this is present.
+public enum FatalEnvironmentProblem: Error, Equatable, Sendable {
+    /// `SUKIRU_HOME` was set to a path that does not exist.
+    case sukiruHomeMissing(path: String)
+}
+
+/// Resolved Sukiru environment overrides.
+///
+/// All path-affecting environment reads flow through this single seam:
+/// `SUKIRU_HOME` replaces `$HOME`, `SUKIRU_ROOTS` supplies a colon-separated
+/// project-root list, and `SUKIRU_XDG_CONFIG_HOME` / `SUKIRU_XDG_STATE_HOME`
+/// replace the XDG base lookups. Empty-string values are treated as unset,
+/// guarding the archive's `XDG_STATE_HOME=""` relative-path resolution bug.
+public struct SukiruEnvironment: Equatable, Sendable {
+    /// Home directory used for all path resolution.
+    public let home: String
+    /// True when a non-empty `SUKIRU_HOME` supplied the home.
+    public let homeIsOverridden: Bool
+    /// Extra project roots from `SUKIRU_ROOTS`, in the order given.
+    public let projectRoots: [String]
+    /// XDG config base override, or nil when unset/empty.
+    public let xdgConfigHome: String?
+    /// XDG state base override, or nil when unset/empty.
+    public let xdgStateHome: String?
+
+    public static let sukiruHomeKey = "SUKIRU_HOME"
+    public static let sukiruRootsKey = "SUKIRU_ROOTS"
+    public static let xdgConfigHomeKey = "SUKIRU_XDG_CONFIG_HOME"
+    public static let xdgStateHomeKey = "SUKIRU_XDG_STATE_HOME"
+    public static let homeKey = "HOME"
+
+    public init(reader: EnvironmentReader) {
+        if let overridden = Self.nonEmpty(reader.value(for: Self.sukiruHomeKey)) {
+            self.home = overridden
+            self.homeIsOverridden = true
+        } else {
+            self.home = reader.value(for: Self.homeKey) ?? ""
+            self.homeIsOverridden = false
+        }
+
+        if let roots = Self.nonEmpty(reader.value(for: Self.sukiruRootsKey)) {
+            let parts = roots.split(separator: ":", omittingEmptySubsequences: true)
+            self.projectRoots = parts.map(String.init)
+        } else {
+            self.projectRoots = []
+        }
+
+        self.xdgConfigHome = Self.nonEmpty(reader.value(for: Self.xdgConfigHomeKey))
+        self.xdgStateHome = Self.nonEmpty(reader.value(for: Self.xdgStateHomeKey))
+    }
+
+    /// Returns the fatal environment problem (architecture D4), if any: an
+    /// overridden `SUKIRU_HOME` pointing at a path that does not exist.
+    public func fatalProblem(fileSystem: FileSystemProbe) -> FatalEnvironmentProblem? {
+        guard homeIsOverridden, !fileSystem.exists(atPath: home) else {
+            return nil
+        }
+        return .sukiruHomeMissing(path: home)
+    }
+
+    private static func nonEmpty(_ value: String?) -> String? {
+        guard let value, !value.isEmpty else {
+            return nil
+        }
+        return value
+    }
+}
