@@ -1,4 +1,13 @@
-/target/
-/dist/
 .DS_Store
-.gino/
+
+# Xcode / SwiftPM
+*.xcodeproj
+.build/
+DerivedData/
+
+# Build output
+dist/
+
+# Retired Rust/Gino artifacts (implementation preserved on archive/rust-gui)
+/target/
+/.gino/
