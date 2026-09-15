@@ -1,3 +1,11 @@
+> **⚠️ 路线已切换（2026-09-14）**：本仓库的 Rust/GPUI 全实现已退役，完整封存于 **`archive/rust-gui`** 分支。`main` 暂保留旧代码，稍后重置为新架构骨架。
+>
+> 产品转向 **Sukiru**（仓库稍后改名）：纯 Swift/SwiftUI 的 macOS 原生应用，**零账本**——所有写操作委托官方 CLI（`npx skills` / `gh skill`），读侧自建，核心能力是技能库的检测与修复。
+>
+> **Sukiru is the fast and tiny macOS native skill manager that manages your skills by orchestrating npx skills and gh skill.**
+>
+> 全部决策记录：`docs/adr/0001`–`0005` · 词汇表：`CONTEXT.md` · 官方 CLI 碰撞矩阵实验：`docs/collision-matrix.md`
+
 # Gino
 
 Gino is a native desktop manager for Vercel-compatible agent Skills. It shows
