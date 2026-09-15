@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import SukiruCore
@@ -8,6 +9,7 @@ struct StubFileSystem: FileSystemProbe {
     var files: Set<String> = []
     var directories: Set<String> = []
     var entries: [String: [String]] = [:]
+    var contents: [String: Data] = [:]
 
     func exists(atPath path: String) -> Bool {
         existing.contains(path) || files.contains(path) || directories.contains(path)
@@ -23,6 +25,10 @@ struct StubFileSystem: FileSystemProbe {
 
     func directoryEntries(atPath path: String) -> [String]? {
         entries[path]
+    }
+
+    func fileContents(atPath path: String) -> Data? {
+        contents[path]
     }
 }
 

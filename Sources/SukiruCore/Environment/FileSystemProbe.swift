@@ -13,6 +13,9 @@ public protocol FileSystemProbe: Sendable {
     func isFile(atPath path: String) -> Bool
     func isDirectory(atPath path: String) -> Bool
     func directoryEntries(atPath path: String) -> [String]?
+    /// The bytes of a regular file, or nil when it cannot be read. Never
+    /// throws: unreadable files are data (Issue records), not failures.
+    func fileContents(atPath path: String) -> Data?
 }
 
 /// Probes the real filesystem via `FileManager`.
@@ -37,5 +40,9 @@ public struct DefaultFileSystemProbe: FileSystemProbe {
 
     public func directoryEntries(atPath path: String) -> [String]? {
         try? FileManager.default.contentsOfDirectory(atPath: path)
+    }
+
+    public func fileContents(atPath path: String) -> Data? {
+        FileManager.default.contents(atPath: path)
     }
 }
