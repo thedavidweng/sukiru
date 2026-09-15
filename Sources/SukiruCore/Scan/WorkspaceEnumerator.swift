@@ -74,13 +74,18 @@ public struct WorkspaceEnumerator: Sendable {
                 scopeGroup: "user"
             )
         ]
+        // Dedup by resolved root, mirroring the project-scope seen set: hosts
+        // sharing one global dir (amp/replit/universal →
+        // `~/.config/agents/skills`; cline/warp/dexto → the canonical store)
+        // emit ONE workspace. The first non-absent host in table order lends
+        // its id; every sharing host stays visible via candidateHosts.
+        var seen: Set<String> = [canonical]
         for host in HostTable.hosts {
             let state = detector.detectionState(for: host)
             guard state != .absent else { continue }
             let root = resolver.globalSkillsRoot(for: host)
-            // Hosts whose global dir IS the canonical store (cline, warp,
-            // dexto) are covered by the `user` workspace.
-            guard root != canonical else { continue }
+            guard !seen.contains(root) else { continue }
+            seen.insert(root)
             workspaces.append(
                 EnumeratedWorkspace(
                     workspace: Workspace(

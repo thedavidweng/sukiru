@@ -40,7 +40,9 @@ do {
         let report = try engine.scan(ScanRequest(explicitRoots: roots, scope: scope))
         emitJSON(try report.jsonData())
     case .capabilities:
-        emitJSON(try CapabilityReport.pending().jsonData())
+        // The capabilities command is the ONLY surface allowed to spawn
+        // probe subprocesses (architecture D2); scan never does.
+        emitJSON(try CapabilityDetector(environment: environment).detect().jsonData())
     }
     exit(0)
 } catch {

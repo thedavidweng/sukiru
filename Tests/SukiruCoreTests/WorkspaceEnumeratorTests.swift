@@ -77,6 +77,39 @@ struct WorkspaceEnumeratorTests {
         #expect(ids(enumerate(home: tree.path)) == "user")
     }
 
+    @Test("User-scope hosts sharing one global dir emit ONE workspace (amp/replit/universal)")
+    func userScopeSharedDirDeduped() throws {
+        let tree = try TempTree()
+        // `~/.config/agents/skills` exists as CLI spray residue — amp,
+        // kimi-cli, replit AND universal all resolve their global skills dir
+        // to this path (kimi-cli via a Home base with a `.config/...`
+        // relative dir, the other three via the Xdg default). Without dedup
+        // the enumerator emits four workspaces with identical roots (latent
+        // bug reported by the inventory-scanner worker).
+        try tree.dir(".config/agents/skills")
+
+        let environment = SukiruEnvironment(
+            reader: DictionaryEnvironmentReader(["SUKIRU_HOME": tree.path])
+        )
+        let detailed = WorkspaceEnumerator(
+            environment: environment,
+            fileSystem: DefaultFileSystemProbe()
+        ).enumerateDetailed(projectRoots: [])
+
+        let shared = detailed.filter { $0.workspace.root == "\(tree.path)/.config/agents/skills" }
+        #expect(shared.count == 1)
+        // The first non-absent host in table order (amp, index 2) lends its
+        // id; all sharing hosts stay visible via candidateHosts.
+        #expect(shared.first?.workspace.id == "host:amp")
+        #expect(shared.first?.candidateHosts == ["amp", "kimi-cli", "replit", "universal"])
+        // None of the three is *detected* (replit is cwd-only, universal is a
+        // pseudo-host, amp's marker is absent) — the root is leftover residue.
+        #expect(shared.first?.workspace.installed == false)
+        // No other workspace carries the same root; ids stay unique overall.
+        let allIDs = detailed.map(\.workspace.id)
+        #expect(Set(allIDs).count == allIDs.count)
+    }
+
     @Test("Project scope: canonical store plus per-host project dirs")
     func projectScope() throws {
         let home = try TempTree()
