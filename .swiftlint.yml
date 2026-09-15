@@ -1,0 +1,10 @@
+# Gate config for `swiftlint lint --strict Sources Tests`.
+# Lint only first-party sources; never the build tree or generated artifacts.
+included:
+  - Sources
+  - Tests
+
+excluded:
+  - .build
+  - DerivedData
+  - Sukiru.xcodeproj

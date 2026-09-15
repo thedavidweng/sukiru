@@ -5,57 +5,41 @@ on:
     branches: [main]
   pull_request:
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
-  test:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+  gates:
+    name: swift gates
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # v1
-        with:
-          toolchain: stable
-          components: rustfmt, clippy
-      - name: Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            gcc g++ clang libfontconfig-dev libwayland-dev \
-            libwebkit2gtk-4.1-dev libxkbcommon-x11-dev libx11-xcb-dev \
-            libssl-dev libzstd-dev vulkan-validationlayers libvulkan1
-      - name: Format
-        run: cargo fmt --check
-      - name: Clippy
-        run: cargo clippy --all-targets -- -D warnings
-      - name: Test
-        run: cargo test
 
-  e2e:
-    name: e2e (official skills CLI)
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # v1
-        with:
-          toolchain: stable
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: "24"
-      - name: Linux dependencies
+      - name: Toolchain versions
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            gcc g++ clang libfontconfig-dev libwayland-dev \
-            libwebkit2gtk-4.1-dev libxkbcommon-x11-dev libx11-xcb-dev \
-            libssl-dev libzstd-dev vulkan-validationlayers libvulkan1
-      - name: Official CLI vs Gino
-        env:
-          GINO_E2E: "1"
-        run: cargo test --test e2e_cli_diff -- --ignored --nocapture
+          swift --version
+          xcodebuild -version
+
+      - name: Install gate tools
+        run: brew install swiftlint xcodegen
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Test (swift test)
+        run: swift test
+
+      # Build the SwiftUI app only once its XcodeGen spec exists.
+      # Until the app target lands, project.yml is absent and this step is a no-op.
+      - name: Build app (xcodegen generate && xcodebuild)
+        run: |
+          if [ -f project.yml ]; then
+            xcodegen generate
+            xcodebuild -scheme Sukiru -configuration Debug \
+              -destination 'platform=macOS,arch=arm64' build
+          else
+            echo "project.yml not present yet — skipping app build gate."
+          fi
+
+      - name: Lint (swiftlint)
+        run: swiftlint lint --strict Sources Tests
+
+      - name: Format lint (swift format)
+        run: swift format lint --recursive --strict Sources Tests
