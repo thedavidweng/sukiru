@@ -1,0 +1,52 @@
+import SwiftUI
+
+/// D21 accessibility-label grammar support.
+///
+/// The computer-use tree (orca) exposes accessibility LABELS, not
+/// identifiers, and its text dump prints one string per element: a static
+/// text prints its label (when set) else its content; a button prints only
+/// its AX value; a list row prints its children's text aggregated. These
+/// helpers keep the `sukiru.<surface>.<element>` token visible in that dump
+/// WITHOUT hiding the human-readable string, verified empirically against
+/// the live tree:
+///
+/// - `AXToken` — a zero-width-space Text carrying the token as its label. It
+///   survives as its own AX element and prints `text <token>` right beside
+///   the visible content. (Zero-size `Color.clear` carriers are dropped from
+///   the tree; a zwsp Text is not.)
+/// - `axButtonToken` — buttons flatten their content away and print only
+///   `button, Value: <AXValue>`, so the token is set as BOTH label and value.
+enum AXTokens {
+    /// D21: skill names embedded in labels replace `.` with `-`.
+    static func skill(_ name: String) -> String {
+        name.replacingOccurrences(of: ".", with: "-")
+    }
+
+    /// Sanitizes a path or workspace id into one label segment (deterministic;
+    /// anything not alphanumerics or `-` becomes `-`).
+    static func path(_ raw: String) -> String {
+        String(raw.map { $0.isLetter || $0.isNumber || $0 == "-" ? $0 : "-" })
+    }
+}
+
+/// An invisible leaf element that exposes a D21 token in the AX tree while
+/// the visible sibling stays readable (see the note on `AXTokens`).
+struct AXToken: View {
+    let token: String
+
+    var body: some View {
+        Text(verbatim: "\u{200B}")
+            .accessibilityLabel(token)
+    }
+}
+
+extension View {
+    /// Applies a D21 token to a button-style control: label for VoiceOver,
+    /// value so the computer-use tree dump prints `button, Value: <token>`.
+    /// Disabled state appends `.disabled` (D21); pair with `.disabled(true)`
+    /// so AX enabled=false.
+    func axButtonToken(_ token: String, disabled: Bool = false) -> some View {
+        let full = disabled ? token + ".disabled" : token
+        return accessibilityLabel(full).accessibilityValue(full)
+    }
+}

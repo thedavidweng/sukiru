@@ -1,0 +1,246 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "gh-pinned",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/gh-pinned",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "github",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "gh-pinned",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "gh-unpinned",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/gh-unpinned",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "github",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "gh-unpinned",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "ownerless-skill",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/ownerless-skill",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "ownerless-skill",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.agents/.skill-lock.json",
+          "kind" : "lockPath"
+        },
+        {
+          "detail" : "double-booked-skill",
+          "kind" : "entryKey"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/double-booked-skill/SKILL.md",
+          "kind" : "skillMdPath"
+        },
+        {
+          "detail" : "https://github.com/thedavidweng/skills",
+          "kind" : "githubRepo"
+        }
+      ],
+      "ruleID" : "double-booked",
+      "severity" : "action",
+      "skillName" : "double-booked-skill",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.agents/skills/ownerless-skill",
+          "kind" : "placementPath"
+        }
+      ],
+      "ruleID" : "files-without-lock",
+      "severity" : "info",
+      "skillName" : "ownerless-skill",
+      "workspaceID" : "user"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "double-booked-skill",
+      "ownership" : "double-booked",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/double-booked-skill",
+          "contentHash" : "d793e2cfba00c86a0d689bdfb6d64f0a3b908faae3eb4a99b33b99e8f4087fce",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/double-booked-skill"
+        }
+      ],
+      "provenance" : {
+        "github" : {
+          "path" : "tools/double-booked-skill/SKILL.md",
+          "pinned" : false,
+          "ref" : "refs/heads/main",
+          "repo" : "https://github.com/thedavidweng/skills",
+          "treeSha" : "4444444455555555666666667777777788888888"
+        },
+        "vercel" : {
+          "installedAt" : "2026-06-15T23:27:24.742Z",
+          "skillFolderHash" : "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
+          "skillPath" : ".agents/skills/double-booked-skill/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-15T23:27:24.742Z"
+        }
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "gh-pinned",
+      "ownership" : "github",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.claude/skills/gh-pinned",
+          "contentHash" : "0ff7b58974ab6325443887915d6f5f0e74743908cead5a8f3c29c8e43c8308ee",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.claude/skills/gh-pinned"
+        }
+      ],
+      "provenance" : {
+        "github" : {
+          "path" : "tools/gh-pinned/SKILL.md",
+          "pinned" : true,
+          "ref" : "refs/tags/v1.2.3",
+          "repo" : "https://github.com/thedavidweng/skills",
+          "treeSha" : "aaaaaaaabbbbbbbbccccccccddddddddeeeeeeee"
+        }
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "gh-unpinned",
+      "ownership" : "github",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.claude/skills/gh-unpinned",
+          "contentHash" : "ffa90ea69f745edf55917a478637e3563ff25ab4ff05c8941809453ffa4b114d",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.claude/skills/gh-unpinned"
+        }
+      ],
+      "provenance" : {
+        "github" : {
+          "path" : "tools/gh-unpinned/SKILL.md",
+          "pinned" : false,
+          "ref" : "refs/heads/main",
+          "repo" : "https://github.com/thedavidweng/skills",
+          "treeSha" : "ffffffff00000000111111112222222233333333"
+        }
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "ownerless-skill",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/ownerless-skill",
+          "contentHash" : "09c1121a3d32e52fff5d14f0e274e83be77cee8e1c1cc589294be6c00c01e2d9",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/ownerless-skill"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "vercel-skill",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/vercel-skill",
+          "contentHash" : "8db2e4d6841b3842696ec76d50a7643c9713f22e4b14299286d7bed3ff9c2881",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/vercel-skill"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "installedAt" : "2026-06-15T23:27:24.742Z",
+          "ref" : "refs/heads/main",
+          "skillFolderHash" : "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+          "skillPath" : ".agents/skills/vercel-skill/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-15T23:27:24.742Z"
+        }
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.agents/skills"
+    },
+    {
+      "id" : "host:claude-code",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.claude/skills"
+    }
+  ]
+}

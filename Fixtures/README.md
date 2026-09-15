@@ -25,9 +25,15 @@ Trees: `FIX-EMPTY`, `FIX-CLEAN`, `FIX-INTERNAL`, `FIX-MALFORMED`, `FIX-GARBAGE`,
 `divergence-canonical`, `lock-version-old`, `lock-malformed`, `clean-copy-mode`,
 `impostor-copy`, `FIX-USER-SCOPE-COPY-MODE`.
 
+M3 health-area trees (app-level assertions): `FIX-OWNERSHIP-QUAD` (five skills,
+one per ownership state — two github: pinned + unpinned), `FIX-SCOPES`,
+`FIX-MULTI-HOST`, `FIX-DRIFT`, `FIX-DOUBLE-BOOKED`, `FIX-SYMLINK`,
+`FIX-HOST-DIVERGENCE`, `FIX-DIRTY-SUITE`, `FIX-MUTABLE`.
+
 Project-scope trees (`scope-isolation`, `multi-host-inventory`, `own-vercel`,
 `prov-cross-ws`, `lock-drift`, `divergence-canonical`, `lock-version-old`,
-`clean-copy-mode`) use the CM-style two-part layout: scan them with
+`clean-copy-mode`, `FIX-SCOPES`, `FIX-DRIFT`, `FIX-HOST-DIVERGENCE`,
+`FIX-DIRTY-SUITE`) use the CM-style two-part layout: scan them with
 `SUKIRU_HOME=<tree>/.home SUKIRU_ROOTS=<tree>/proj`. Everything else IS the
 fake home.
 

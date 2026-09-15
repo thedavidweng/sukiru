@@ -1,0 +1,75 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.agents/.skill-lock.json",
+          "kind" : "lockPath"
+        },
+        {
+          "detail" : "double-tool",
+          "kind" : "entryKey"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/double-tool/SKILL.md",
+          "kind" : "skillMdPath"
+        },
+        {
+          "detail" : "https://github.com/thedavidweng/skills",
+          "kind" : "githubRepo"
+        }
+      ],
+      "ruleID" : "double-booked",
+      "severity" : "action",
+      "skillName" : "double-tool",
+      "workspaceID" : "user"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "double-tool",
+      "ownership" : "double-booked",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/double-tool",
+          "contentHash" : "05272c35f4bdbbe92598fb4dae0ff3370eb765745cb9fe5847f89684c5dacb25",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/double-tool"
+        }
+      ],
+      "provenance" : {
+        "github" : {
+          "path" : "tools/double-tool/SKILL.md",
+          "pinned" : false,
+          "ref" : "refs/heads/main",
+          "repo" : "https://github.com/thedavidweng/skills",
+          "treeSha" : "9999999988888888777777776666666655555555"
+        },
+        "vercel" : {
+          "installedAt" : "2026-06-15T23:27:24.742Z",
+          "skillFolderHash" : "abababababababababababababababababababab",
+          "skillPath" : ".agents/skills/double-tool/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-15T23:27:24.742Z"
+        }
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.agents/skills"
+    }
+  ]
+}

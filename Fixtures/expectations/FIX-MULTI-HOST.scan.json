@@ -1,0 +1,124 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "alias",
+          "kind" : "subtype"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/web-api",
+          "kind" : "canonicalPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/web-api",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/web-api",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/web-api",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.cursor/skills/web-api",
+          "kind" : "memberPath"
+        }
+      ],
+      "ruleID" : "cross-host-duplicate",
+      "severity" : "info",
+      "skillName" : "web-api",
+      "workspaceID" : "user"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "web-api",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/web-api",
+          "contentHash" : "ff0e5a03a581ae25746c0bf0a9b248cd6e8a70e8e983785b6c0ef89c22f3780e",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/web-api"
+        },
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/web-api",
+          "contentHash" : "ff0e5a03a581ae25746c0bf0a9b248cd6e8a70e8e983785b6c0ef89c22f3780e",
+          "internal" : false,
+          "kind" : "symlink",
+          "linkTarget" : "../../.agents/skills/web-api",
+          "path" : "<FIXTURE>/.claude/skills/web-api"
+        },
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/web-api",
+          "contentHash" : "ff0e5a03a581ae25746c0bf0a9b248cd6e8a70e8e983785b6c0ef89c22f3780e",
+          "internal" : false,
+          "kind" : "symlink",
+          "linkTarget" : "../../.agents/skills/web-api",
+          "path" : "<FIXTURE>/.codex/skills/web-api"
+        },
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/web-api",
+          "contentHash" : "ff0e5a03a581ae25746c0bf0a9b248cd6e8a70e8e983785b6c0ef89c22f3780e",
+          "internal" : false,
+          "kind" : "symlink",
+          "linkTarget" : "../../.agents/skills/web-api",
+          "path" : "<FIXTURE>/.cursor/skills/web-api"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "installedAt" : "2026-06-15T23:27:24.742Z",
+          "skillFolderHash" : "e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5",
+          "skillPath" : ".agents/skills/web-api/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-15T23:27:24.742Z"
+        }
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.agents/skills"
+    },
+    {
+      "id" : "host:claude-code",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.claude/skills"
+    },
+    {
+      "id" : "host:codex",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.codex/skills"
+    },
+    {
+      "id" : "host:cursor",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.cursor/skills"
+    },
+    {
+      "id" : "host:qoder",
+      "installed" : false,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.qoder/skills"
+    }
+  ]
+}

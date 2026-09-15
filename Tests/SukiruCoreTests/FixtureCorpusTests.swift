@@ -46,6 +46,15 @@ struct FixtureCorpusTests {
         FIX-FILES-NO-LOCK
         FIX-AMBIGUOUS
         FIX-USER-SCOPE-COPY-MODE
+        FIX-OWNERSHIP-QUAD
+        FIX-SCOPES
+        FIX-MULTI-HOST
+        FIX-DRIFT
+        FIX-DOUBLE-BOOKED
+        FIX-SYMLINK
+        FIX-HOST-DIVERGENCE
+        FIX-DIRTY-SUITE
+        FIX-MUTABLE
         alias-link-mode
         clean-copy-mode
         divergence-canonical

@@ -1438,6 +1438,473 @@ ledger bleed (the p1 lock claiming p2's placement) is a fail.
 EOF
 
 # =====================================================================
+# Health-area fixtures (M3 health-ui contract legend). These are the trees the
+# app-level assertions drive: FIX-OWNERSHIP-QUAD, FIX-SCOPES, FIX-MULTI-HOST,
+# FIX-DRIFT, FIX-DOUBLE-BOOKED, FIX-SYMLINK, FIX-HOST-DIVERGENCE,
+# FIX-DIRTY-SUITE, FIX-MUTABLE.
+# =====================================================================
+
+# =====================================================================
+# FIX-OWNERSHIP-QUAD — FIVE skills covering every ownership state the UI
+# asserts on (amended legend): one vercel (lock-derived source/ref), TWO
+# github (one pinned, one unpinned), one double-booked, one ownerless.
+# =====================================================================
+d="$(reset_fixture FIX-OWNERSHIP-QUAD)"
+mkdir -p "$d/.claude"; : >"$d/.claude/config.json"
+skill "$d/.agents/skills/vercel-skill" "vercel-skill" "Owned by the vercel global lock."
+gh_skill "$d/.claude/skills/gh-pinned" "gh-pinned" "GitHub-owned, pinned." \
+    "https://github.com/thedavidweng/skills" "tools/gh-pinned/SKILL.md" \
+    "refs/tags/v1.2.3" "aaaaaaaabbbbbbbbccccccccddddddddeeeeeeee" "pinned"
+gh_skill "$d/.claude/skills/gh-unpinned" "gh-unpinned" "GitHub-owned, unpinned." \
+    "https://github.com/thedavidweng/skills" "tools/gh-unpinned/SKILL.md" \
+    "refs/heads/main" "ffffffff00000000111111112222222233333333"
+gh_skill "$d/.agents/skills/double-booked-skill" "double-booked-skill" "Claimed by both ledgers." \
+    "https://github.com/thedavidweng/skills" "tools/double-booked-skill/SKILL.md" \
+    "refs/heads/main" "4444444455555555666666667777777788888888"
+skill "$d/.agents/skills/ownerless-skill" "ownerless-skill" "No ledger of any kind."
+cat >"$d/.agents/.skill-lock.json" <<'EOF'
+{
+  "version": 3,
+  "skills": {
+    "vercel-skill": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "ref": "refs/heads/main",
+      "skillPath": ".agents/skills/vercel-skill/SKILL.md",
+      "skillFolderHash": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    },
+    "double-booked-skill": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/double-booked-skill/SKILL.md",
+      "skillFolderHash": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}
+EOF
+note "$d" <<'EOF'
+# FIX-OWNERSHIP-QUAD — expectation (M3 health-area)
+
+Contents: FIVE user-scope skills, one per ownership state the UI asserts on:
+- `vercel-skill` — canonical `.agents/skills/vercel-skill` + global v3 lock
+  entry (lock-derived source `thedavidweng/skills`, ref `refs/heads/main`).
+- `gh-pinned` — `.claude/skills/gh-pinned`, github provenance, `github-pinned:
+  true`, ref `refs/tags/v1.2.3`.
+- `gh-unpinned` — `.claude/skills/gh-unpinned`, github provenance, NO
+  `github-pinned` key (absent = unpinned), ref `refs/heads/main`.
+- `double-booked-skill` — canonical store, global lock entry AND
+  `metadata.github-repo` frontmatter.
+- `ownerless-skill` — canonical store, no ledger of any kind.
+
+A correct scan MUST exit 0 and resolve ownership: vercel-skill=vercel,
+gh-pinned=github (pinned), gh-unpinned=github (unpinned),
+double-booked-skill=double-booked, ownerless-skill=ownerless. Expected
+findings: `double-booked` (both-ledger evidence), `dangerous-removal-surface`
+for gh-pinned, gh-unpinned, and ownerless-skill, and `files-without-lock` for
+ownerless-skill. This is deliberately NOT a clean tree — github/ownerless
+skills always raise the advisory, which is why FIX-CLEAN stays vercel-only
+(VAL-SCAN-041b); do not merge the two.
+EOF
+
+# =====================================================================
+# FIX-SCOPES — user scope + one project root (via SUKIRU_ROOTS), including one
+# same-named skill in BOTH scopes (VAL-HEALTH-006 / VAL-CROSS-017 shape).
+# All skills vercel-owned with matching hashes: zero findings, so scope
+# separation is the only signal under test.
+# =====================================================================
+d="$(reset_pw_fixture FIX-SCOPES)"
+skill "$d/.home/.agents/skills/shared-name" "shared-name" "The user-scope copy of the shared name."
+skill "$d/.home/.agents/skills/user-only" "user-only" "Only in the user scope."
+skill "$d/proj/.agents/skills/shared-name" "shared-name" "The project-scope copy of the shared name."
+skill "$d/proj/.agents/skills/proj-only" "proj-only" "Only in the project scope."
+proj_shared_hash="$(skill_md_hash "$d/proj/.agents/skills/shared-name")"
+proj_only_hash="$(skill_md_hash "$d/proj/.agents/skills/proj-only")"
+cat >"$d/.home/.agents/.skill-lock.json" <<'EOF'
+{
+  "version": 3,
+  "skills": {
+    "shared-name": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/shared-name/SKILL.md",
+      "skillFolderHash": "c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    },
+    "user-only": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/user-only/SKILL.md",
+      "skillFolderHash": "d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}
+EOF
+cat >"$d/proj/skills-lock.json" <<EOF
+{
+  "version": 1,
+  "skills": {
+    "shared-name": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/shared-name/SKILL.md",
+      "computedHash": "$proj_shared_hash"
+    },
+    "proj-only": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/proj-only/SKILL.md",
+      "computedHash": "$proj_only_hash"
+    }
+  }
+}
+EOF
+note "$d" <<'EOF'
+# FIX-SCOPES — expectation (M3 health-area, VAL-HEALTH-006)
+
+Contents: user scope holds `shared-name` + `user-only` (global v3 lock);
+project root `proj/` holds `shared-name` + `proj-only` (project v1 lock whose
+computedHash values match disk). Everything is vercel-owned and consistent:
+ZERO findings — scope separation is the only signal.
+
+Scan with SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/proj.
+
+A correct scan MUST exit 0, report the user-scope skills under the `user`
+workspace and the project-scope skills under `project:<root>` workspaces, and
+show `shared-name` ONCE PER SCOPE (per-scope ownership resolution, never
+merged, never ambiguous — D1 per-scope rule). The app Library MUST render a
+`sukiru.library.section.user` section and a distinct
+`sukiru.library.section.project.*` section, each skill under its true scope.
+EOF
+
+# =====================================================================
+# FIX-MULTI-HOST — one canonical skill symlinked into THREE host global dirs,
+# plus one bare-`skills` residue host dir (VAL-HEALTH-005/009).
+# =====================================================================
+d="$(reset_fixture FIX-MULTI-HOST)"
+mkdir -p "$d/.claude" "$d/.codex" "$d/.cursor"
+: >"$d/.claude/config.json"; : >"$d/.codex/config.json"; : >"$d/.cursor/config.json"
+skill "$d/.agents/skills/web-api" "web-api" "One canonical skill aliased into three hosts."
+mkdir -p "$d/.claude/skills" "$d/.codex/skills" "$d/.cursor/skills"
+ln -s ../../.agents/skills/web-api "$d/.claude/skills/web-api"
+ln -s ../../.agents/skills/web-api "$d/.codex/skills/web-api"
+ln -s ../../.agents/skills/web-api "$d/.cursor/skills/web-api"
+# CLI spray residue: `.qoder` contains ONLY a bare (empty) `skills/` entry —
+# leftover, NOT installed (marks_installation tri-state).
+mkdir -p "$d/.qoder/skills"
+cat >"$d/.agents/.skill-lock.json" <<'EOF'
+{
+  "version": 3,
+  "skills": {
+    "web-api": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/web-api/SKILL.md",
+      "skillFolderHash": "e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}
+EOF
+note "$d" <<'EOF'
+# FIX-MULTI-HOST — expectation (M3 health-area, VAL-HEALTH-005/009)
+
+Contents: `web-api` lives in the canonical user store (`.agents/skills`,
+global v3 lock, ownership=vercel) and is SYMLINKED into three host global
+dirs — claude-code (`.claude/skills`), codex (`.codex/skills`), cursor
+(`.cursor/skills`) — each host detected via a config.json marker. `.qoder/`
+contains ONLY an empty `skills/` entry: CLI spray residue (leftover,
+installed=false), which sees NO skills.
+
+A correct scan MUST exit 0 and present `web-api` as ONE logical skill with 4
+placements (1 canonical directory + 3 symlinks sharing one canonical path) —
+never as four skills. The ONLY finding is the info-severity alias
+cross-host-duplicate. The qoder workspace MUST be reported installed=false
+(leftover) and must NOT count as a host that sees `web-api`; the app's
+host-presence region lists exactly claude-code, codex, and cursor.
+EOF
+
+# =====================================================================
+# FIX-DRIFT — project-scope vercel lock whose computedHash disagrees with disk
+# (VAL-HEALTH-014/038).
+# =====================================================================
+d="$(reset_pw_fixture FIX-DRIFT)"
+skill "$d/proj/.agents/skills/drifted" "drifted" "Original content, as installed."
+stale_hash="$(skill_md_hash "$d/proj/.agents/skills/drifted")"
+skill "$d/proj/.agents/skills/drifted" "drifted" "Edited out-of-band AFTER install; the lock hash is stale."
+: >"$d/.home/.gitkeep"
+cat >"$d/proj/skills-lock.json" <<EOF
+{
+  "version": 1,
+  "skills": {
+    "drifted": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/drifted/SKILL.md",
+      "computedHash": "$stale_hash"
+    }
+  }
+}
+EOF
+note "$d" <<'EOF'
+# FIX-DRIFT — expectation (M3 health-area, VAL-HEALTH-014/038)
+
+Contents: project root `proj/` holds `drifted`, whose SKILL.md was edited
+out-of-band after install — the v1 lock's computedHash (hash of the ORIGINAL
+content) no longer matches disk. The fake home is empty.
+
+Scan with SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/proj.
+
+A correct scan MUST exit 0, resolve `drifted` as ownership=vercel, and emit a
+`vercel-lock-drift` finding (severity action) whose evidence names the lock
+path, the entry key, the stored (expected) hash, and the recomputed (actual)
+hash. The app Health surface MUST render that finding with an expandable
+evidence block and a reveal-in-Library navigation action.
+EOF
+
+# =====================================================================
+# FIX-DOUBLE-BOOKED — one name claimed by both the vercel lock and gh
+# frontmatter provenance (VAL-HEALTH-037 spot-check tree).
+# =====================================================================
+d="$(reset_fixture FIX-DOUBLE-BOOKED)"
+gh_skill "$d/.agents/skills/double-tool" "double-tool" "Claimed by both ledgers." \
+    "https://github.com/thedavidweng/skills" "tools/double-tool/SKILL.md" \
+    "refs/heads/main" "9999999988888888777777776666666655555555"
+cat >"$d/.agents/.skill-lock.json" <<'EOF'
+{
+  "version": 3,
+  "skills": {
+    "double-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/double-tool/SKILL.md",
+      "skillFolderHash": "abababababababababababababababababababab",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}
+EOF
+note "$d" <<'EOF'
+# FIX-DOUBLE-BOOKED — expectation (M3 health-area, VAL-HEALTH-037)
+
+Contents: `double-tool` in the user-scope canonical store, present in the
+global v3 lock AND carrying `metadata.github-repo` frontmatter — both ledgers
+claim the same name.
+
+A correct scan MUST exit 0, resolve ownership=double-booked, and emit a
+`double-booked` finding (severity action) with two-sided evidence (lock path +
+entry key; SKILL.md path + github-repo value). Library and Health MUST show
+identical provenance for the skill (VAL-HEALTH-037).
+EOF
+
+# =====================================================================
+# FIX-SYMLINK — one dangling symlink + one double-copied impostor
+# (VAL-HEALTH-042 coverage tree for the symlink rules).
+# =====================================================================
+d="$(reset_fixture FIX-SYMLINK)"
+mkdir -p "$d/.claude/skills"; : >"$d/.claude/config.json"
+# dangling symlink
+ln -s /nonexistent/rotted-target "$d/.claude/skills/rotted"
+# impostor: canonical store + lock claim, but the host path is a physical copy
+skill "$d/.agents/skills/tool" "tool" "Canonical copy in the managed store."
+skill "$d/.claude/skills/tool" "tool" "Canonical copy in the managed store."
+cat >"$d/.agents/.skill-lock.json" <<'EOF'
+{
+  "version": 3,
+  "skills": {
+    "tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/tool/SKILL.md",
+      "skillFolderHash": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}
+EOF
+note "$d" <<'EOF'
+# FIX-SYMLINK — expectation (M3 health-area)
+
+Contents: in the claude-code host dir (detected via config.json), a DANGLING
+symlink `.claude/skills/rotted -> /nonexistent/rotted-target`; plus `tool` in
+the canonical store (global v3 lock) with a PHYSICAL copy at
+`.claude/skills/tool` where the managed layout implies a symlink — a
+double-copied impostor.
+
+A correct scan MUST exit 0 and report:
+- a brokenSymlink placement `rotted` (null canonical path/hash) AND a
+  `broken-symlink` finding (severity action) naming the link path and its
+  unreadable target — the link also surfaces as a `broken-symlink` ISSUE and,
+  being ownerless, a `dangerous-removal-surface` advisory;
+- a `symlink-authenticity` finding (severity warning) naming the impostor path
+  (`.claude/skills/tool`) and the canonical path it should link to;
+- an exact-subtype `cross-host-duplicate` (warning) for the two identical
+  physical copies of `tool`;
+- `tool` stays ownership=vercel (the lock claim is intact).
+EOF
+
+# =====================================================================
+# FIX-HOST-DIVERGENCE — one name, same lock source identity, distinct hashes
+# across canonical store and a host copy (VAL-HEALTH-042 coverage tree).
+# =====================================================================
+d="$(reset_pw_fixture FIX-HOST-DIVERGENCE)"
+skill "$d/proj/.agents/skills/web-tool" "web-tool" "Canonical copy, untouched since install."
+skill "$d/proj/.claude/skills/web-tool" "web-tool" "Canonical copy, untouched since install."
+skill "$d/proj/.claude/skills/web-tool" "web-tool" "Overwritten out-of-band; content now diverges."
+canon_hash="$(skill_md_hash "$d/proj/.agents/skills/web-tool")"
+: >"$d/.home/.gitkeep"
+cat >"$d/proj/skills-lock.json" <<EOF
+{
+  "version": 1,
+  "skills": {
+    "web-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/web-tool/SKILL.md",
+      "computedHash": "$canon_hash"
+    }
+  }
+}
+EOF
+note "$d" <<'EOF'
+# FIX-HOST-DIVERGENCE — expectation (M3 health-area)
+
+Contents: a copy-mode install in `proj/` — canonical `.agents/skills/web-tool`
+plus host copy `.claude/skills/web-tool` under ONE v1 lock source identity.
+The host copy was overwritten out-of-band, so the two placements hash
+differently; the lock computedHash still matches the CANONICAL copy.
+
+Scan with SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/proj.
+
+A correct scan MUST exit 0 and emit a `canonical-host-divergence` finding
+(severity action) naming both placement paths, the shared source identity,
+and BOTH content hashes. The drifted host copy also legitimately raises
+`vercel-lock-drift` (its hash no longer matches the lock) and the pair is a
+divergent cross-host duplicate; `web-tool` stays ownership=vercel,
+ambiguous=false (the canonical placement hash-explains per D23).
+EOF
+
+# =====================================================================
+# FIX-DIRTY-SUITE — combined dirty tree with findings in BOTH scopes and at
+# least two severity levels (VAL-HEALTH-011…015/029/034/045).
+# =====================================================================
+d="$(reset_pw_fixture FIX-DIRTY-SUITE)"
+mkdir -p "$d/.home/.claude/skills"; : >"$d/.home/.claude/config.json"
+# user scope: dangling symlink (action) + gh-owned skill (danger advisory,
+# action) + ownerless skill (files-without-lock, info)
+ln -s /nonexistent/rotted-target "$d/.home/.claude/skills/rotted-link"
+gh_skill "$d/.home/.claude/skills/gh-owned" "gh-owned" "GitHub-owned user-scope skill." \
+    "https://github.com/thedavidweng/skills" "tools/gh-owned/SKILL.md" \
+    "refs/heads/main" "1212121234343434565656567878787890909090"
+skill "$d/.home/.agents/skills/user-orphan" "user-orphan" "Ownerless user-scope skill."
+# project scope: drifted vercel skill (action) + ownerless skill (info)
+skill "$d/proj/.agents/skills/drifted" "drifted" "Original content, as installed."
+dirty_stale_hash="$(skill_md_hash "$d/proj/.agents/skills/drifted")"
+skill "$d/proj/.agents/skills/drifted" "drifted" "Edited out-of-band; project lock hash is stale."
+skill "$d/proj/.agents/skills/proj-orphan" "proj-orphan" "Ownerless project-scope skill."
+cat >"$d/proj/skills-lock.json" <<EOF
+{
+  "version": 1,
+  "skills": {
+    "drifted": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/drifted/SKILL.md",
+      "computedHash": "$dirty_stale_hash"
+    }
+  }
+}
+EOF
+note "$d" <<'EOF'
+# FIX-DIRTY-SUITE — expectation (M3 health-area workhorse)
+
+One tree triggering several rules at once, with findings in BOTH scopes:
+
+- user scope (`.home`, claude-code detected via config.json):
+  `rotted-link` dangling symlink -> `broken-symlink` (action);
+  `gh-owned` github-provenanced -> `dangerous-removal-surface` (action);
+  `user-orphan` no ledger -> `files-without-lock` (info).
+- project scope (`proj`):
+  `drifted` edited after install -> `vercel-lock-drift` (action);
+  `proj-orphan` no ledger -> `files-without-lock` (info).
+
+Scan with SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/proj.
+
+A correct scan MUST exit 0 with exactly these EIGHT findings: the five above
+PLUS a `dangerous-removal-surface` advisory for each ownerless name
+(`user-orphan`, `proj-orphan`, `rotted-link`) — VAL-SCAN-030 fires on
+gh-owned AND ownerless skills. Two severity levels render (action + info);
+the dangling link additionally surfaces as a `broken-symlink` ISSUE. Each
+finding carries its rule's concrete evidence. Ownership: gh-owned=github,
+drifted=vercel, the two orphans and rotted-link=ownerless. The app drives
+its grouped-findings, severity-display, per-workspace filter,
+keyboard-disclosure, and selection-persistence assertions off this tree.
+EOF
+
+# =====================================================================
+# FIX-MUTABLE — clean tree the validator mutates on disk mid-session
+# (VAL-HEALTH-035/036: no-watchers + explicit Refresh). Same zero-findings
+# shape as FIX-CLEAN; kept separate so mutation flows never touch FIX-CLEAN.
+# =====================================================================
+d="$(reset_fixture FIX-MUTABLE)"
+skill "$d/.agents/skills/greet" "greet" "Greet the user politely."
+cat >"$d/.agents/.skill-lock.json" <<'EOF'
+{
+  "version": 3,
+  "skills": {
+    "greet": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/greet/SKILL.md",
+      "skillFolderHash": "efefefefefefefefefefefefefefefefefefefef",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}
+EOF
+note "$d" <<'EOF'
+# FIX-MUTABLE — expectation (M3 health-area, VAL-HEALTH-035/036)
+
+Contents: one vercel-owned user-scope skill `greet` (global v3 lock) — a
+zero-findings clean tree. Validators COPY this tree, launch the app against
+the copy, mutate the copy on disk mid-session (add/remove a skill), and
+assert: nothing changes without explicit Refresh (no watchers); after
+Refresh (Settings control or keyboard shortcut) the new disk state renders.
+
+A correct scan of the UNMUTATED tree MUST exit 0 with exactly one skill,
+ownership=vercel, zero findings, zero issues.
+EOF
+
+# =====================================================================
 # cap-* — PATH-stub capability environments (VAL-SCAN-002/037/038/039/040/057).
 #
 # These are NOT scan fixtures: each tree holds ONLY a bin/ of stub executables
