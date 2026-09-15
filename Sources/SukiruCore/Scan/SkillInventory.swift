@@ -1,5 +1,5 @@
-/// Collapses discovered placements into logical skills (architecture D1, D18;
-/// port-reference §4 alias collapse).
+/// One logical skill name within one ownership bucket, before ownership
+/// resolution (architecture D1; port-reference §4 alias collapse).
 ///
 /// Grouping key is `(scopeGroup, name)`: one logical skill per skill name per
 /// ownership bucket (`user` scope, or one bucket per project root — ownership
@@ -7,38 +7,58 @@
 /// to ONE canonical path, e.g. host symlinks into the canonical store) are
 /// one logical skill with N placements and are never ambiguous by themselves.
 ///
-/// A skill is `ambiguous` iff its name maps to MORE THAN ONE distinct
+/// A group is `ambiguous` iff its name maps to MORE THAN ONE distinct
 /// physical directory (distinct non-nil canonical paths) within the bucket
 /// (D1). Broken symlinks carry a nil canonical path and therefore never
 /// create ambiguity.
+public struct SkillGroup: Equatable, Sendable {
+    /// The skill name (from `SKILL.md`, or the link name for broken links).
+    public let name: String
+    /// The ownership bucket: `user` or `project:<root>`.
+    public let scopeGroup: String
+    /// D1: >1 distinct physical directories for one name in one bucket.
+    public let ambiguous: Bool
+    /// The group's placements, sorted by path.
+    public let members: [DiscoveredPlacement]
+
+    public init(
+        name: String,
+        scopeGroup: String,
+        ambiguous: Bool,
+        members: [DiscoveredPlacement]
+    ) {
+        self.name = name
+        self.scopeGroup = scopeGroup
+        self.ambiguous = ambiguous
+        self.members = members
+    }
+}
+
+/// Collapses discovered placements into logical skill groups.
 ///
-/// Ownership is NOT resolved here — that is the OwnershipResolver feature's
-/// job (it needs the ledgers). Until it lands, every skill reports
-/// `ownership: .ownerless`; `ambiguous` is final, because D1 needs only
-/// canonical paths.
-///
-/// Output order is defined: by name, then user scope before project buckets,
-/// then bucket name; placements within a skill sort by path.
+/// Group order is defined: by name, then user scope before project buckets,
+/// then bucket name; members within a group sort by path. The
+/// OwnershipResolver turns groups plus ledger claims into D18 skills.
 public enum SkillInventory {
-    /// Builds the D18 `skills` list from scanner output.
-    public static func skills(from discovered: [DiscoveredPlacement]) -> [Skill] {
-        struct Group {
+    /// Builds the sorted skill groups from scanner output.
+    public static func groups(from discovered: [DiscoveredPlacement]) -> [SkillGroup] {
+        struct Bucket {
             let name: String
             let scopeGroup: String
             var members: [DiscoveredPlacement]
         }
-        var groups: [String: Group] = [:]
+        var buckets: [String: Bucket] = [:]
         for placement in discovered {
             let key = placement.scopeGroup + "\u{1F}" + placement.name
-            if var group = groups[key] {
-                group.members.append(placement)
-                groups[key] = group
+            if var bucket = buckets[key] {
+                bucket.members.append(placement)
+                buckets[key] = bucket
             } else {
-                groups[key] = Group(
+                buckets[key] = Bucket(
                     name: placement.name, scopeGroup: placement.scopeGroup, members: [placement])
             }
         }
-        return groups.values
+        return buckets.values
             .sorted { lhs, rhs in
                 if lhs.name != rhs.name {
                     return lhs.name < rhs.name
@@ -50,15 +70,14 @@ public enum SkillInventory {
                 }
                 return lhs.scopeGroup < rhs.scopeGroup
             }
-            .map { group in
-                let members = group.members.sorted { $0.placement.path < $1.placement.path }
+            .map { bucket in
+                let members = bucket.members.sorted { $0.placement.path < $1.placement.path }
                 let canonicalPaths = Set(members.compactMap { $0.placement.canonicalPath })
-                return Skill(
-                    name: group.name,
-                    scope: group.scopeGroup == "user" ? .user : .project,
-                    ownership: .ownerless,
+                return SkillGroup(
+                    name: bucket.name,
+                    scopeGroup: bucket.scopeGroup,
                     ambiguous: canonicalPaths.count > 1,
-                    placements: members.map(\.placement)
+                    members: members
                 )
             }
     }

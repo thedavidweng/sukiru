@@ -21,8 +21,9 @@ Trees: `FIX-EMPTY`, `FIX-CLEAN`, `FIX-INTERNAL`, `FIX-MALFORMED`, `FIX-GARBAGE`,
 `skillmd-invalid-a`…`skillmd-invalid-f`, `skillmd-early-close`,
 `leftover-spray`, `leftover-dsstore`, `empty-marker`, `scope-isolation`,
 `multi-host-inventory`, `ignore-list`, `own-vercel`, `own-github`, `own-double`,
-`prov-cross-ws`, `lock-unknown-fields`, `lock-drift`, `divergence-canonical`,
-`lock-version-old`, `lock-malformed`, `clean-copy-mode`, `impostor-copy`.
+`own-per-project`, `prov-cross-ws`, `lock-unknown-fields`, `lock-drift`,
+`divergence-canonical`, `lock-version-old`, `lock-malformed`, `clean-copy-mode`,
+`impostor-copy`.
 
 Project-scope trees (`scope-isolation`, `multi-host-inventory`, `own-vercel`,
 `prov-cross-ws`, `lock-drift`, `divergence-canonical`, `lock-version-old`,

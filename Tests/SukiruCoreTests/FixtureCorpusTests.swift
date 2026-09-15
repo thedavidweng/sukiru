@@ -54,6 +54,7 @@ struct FixtureCorpusTests {
         multi-host-inventory
         own-double
         own-github
+        own-per-project
         own-vercel
         prov-cross-ws
         scope-isolation

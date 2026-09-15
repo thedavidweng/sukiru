@@ -9,7 +9,10 @@ import Yams
 /// `github-path`, `github-ref` (a FULL ref such as `refs/heads/main` or
 /// `refs/tags/vX`, never truncated), `github-pinned` (bool; an ABSENT key
 /// means unpinned), and `github-tree-sha`.
-public struct GitHubProvenance: Equatable, Sendable {
+///
+/// Codable: this is also the D18 wire shape (`github: {repo, path, ref,
+/// pinned, treeSha}`); nil optionals are omitted from the JSON.
+public struct GitHubProvenance: Codable, Equatable, Sendable {
     /// Repository URL exactly as stored (no `.git` rewriting).
     public let repo: String
     /// Repo-relative skill path, when recorded.
