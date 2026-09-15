@@ -33,24 +33,28 @@ public struct CapabilityDetector: Sendable {
     }
 
     private func detectGitHub() -> CapabilityReport.GitHubCapability {
+        typealias Reason = GitHubUnavailableReason
         guard let outcome = runner.run("gh", ["--version"]), outcome.exitCode == 0,
             let version = Self.parseVersion(from: outcome.stdout)
         else {
             return CapabilityReport.GitHubCapability(
-                available: false, present: false, version: nil, meetsMinimum: false)
+                available: false, present: false, version: nil, meetsMinimum: false,
+                reason: .absent)
         }
         guard Self.version(version, isAtLeast: Self.minimumGHVersion) else {
             // Below the `gh skill` floor: no probe — the subcommand may not
             // exist and D6 treats both as unavailable either way.
             return CapabilityReport.GitHubCapability(
-                available: false, present: true, version: version, meetsMinimum: false)
+                available: false, present: true, version: version, meetsMinimum: false,
+                reason: .tooOld)
         }
-        let probe = runner.run("gh", ["skill", "--help"])
+        let probeSucceeded = runner.run("gh", ["skill", "--help"])?.exitCode == 0
         return CapabilityReport.GitHubCapability(
-            available: probe?.exitCode == 0,
+            available: probeSucceeded,
             present: true,
             version: version,
-            meetsMinimum: true
+            meetsMinimum: true,
+            reason: probeSucceeded ? nil : Reason.probeFailed
         )
     }
 

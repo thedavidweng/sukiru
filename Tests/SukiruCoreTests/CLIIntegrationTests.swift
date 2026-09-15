@@ -41,38 +41,18 @@ struct CLIIntegrationTests {
 
     // MARK: VAL-SCAN-002 — capabilities report populated from PATH stubs
 
-    @Test("VAL-SCAN-002: capabilities reports gh + npx from PATH stubs, exit 0")
+    @Test("VAL-SCAN-002: capabilities reports gh + npx from the cap-* fixtures, exit 0")
     func capabilitiesFromPathStubs() throws {
-        let stubs = try TempTree()
-        try stubs.executable(
-            "gh",
-            contents: """
-                #!/bin/sh
-                if [ "$1" = "--version" ]; then
-                    echo "gh version 2.100.0 (2026-01-15)"
-                    exit 0
-                fi
-                if [ "$1" = "skill" ] && [ "$2" = "--help" ]; then
-                    echo "Work with agent skills"
-                    exit 0
-                fi
-                exit 1
-                """
-        )
-        try stubs.executable(
-            "npx",
-            contents: """
-                #!/bin/sh
-                echo "1.5.26"
-                exit 0
-                """
-        )
-
+        // The checked-in PATH-stub fixtures (cap-gh-ok: gh 2.100.0 with a
+        // working skill surface; cap-npx-ok: skills 1.5.26). The deeper
+        // per-state assertions live in CapabilitiesFixtureTests.
+        let stubPath =
+            FixturePaths.tree("cap-gh-ok") + "/bin:"
+            + FixturePaths.tree("cap-npx-ok") + "/bin:/usr/bin:/bin"
         let inputs = FixturePaths.homeAndRoots("FIX-EMPTY")
         let result = try CLIRunner.run(
             ["capabilities", "--format", "json"],
-            environment: CLIRunner.fixtureEnvironment(
-                home: inputs.home, path: stubs.path + ":/usr/bin:/bin")
+            environment: CLIRunner.fixtureEnvironment(home: inputs.home, path: stubPath)
         )
         #expect(result.exitCode == 0, "stderr: \(stderrText(result))")
         let object = try #require(try result.jsonObject())
@@ -81,6 +61,7 @@ struct CLIIntegrationTests {
         #expect(github["present"] as? Bool == true)
         #expect(github["version"] as? String == "2.100.0")
         #expect(github["meetsMinimum"] as? Bool == true)
+        #expect(github["reason"] == nil)
         let npx = try #require(object["npx"] as? [String: Any])
         #expect(npx["resolvable"] as? Bool == true)
         #expect(npx["skillsVersion"] as? String == "1.5.26")
@@ -89,9 +70,10 @@ struct CLIIntegrationTests {
     @Test("VAL-SCAN-002: capabilities with neither CLI reports unavailability, exit 0")
     func capabilitiesNeither() throws {
         let inputs = FixturePaths.homeAndRoots("FIX-EMPTY")
+        let neitherPath = FixturePaths.tree("cap-neither") + "/bin:/usr/bin:/bin"
         let result = try CLIRunner.run(
             ["capabilities", "--format", "json"],
-            environment: CLIRunner.fixtureEnvironment(home: inputs.home)
+            environment: CLIRunner.fixtureEnvironment(home: inputs.home, path: neitherPath)
         )
         #expect(result.exitCode == 0)
         let object = try #require(try result.jsonObject())
@@ -99,6 +81,7 @@ struct CLIIntegrationTests {
         #expect(github["available"] as? Bool == false)
         #expect(github["present"] as? Bool == false)
         #expect(github["meetsMinimum"] as? Bool == false)
+        #expect(github["reason"] as? String == "absent")
         let npx = try #require(object["npx"] as? [String: Any])
         #expect(npx["resolvable"] as? Bool == false)
     }

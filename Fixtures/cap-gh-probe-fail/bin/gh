@@ -1,0 +1,15 @@
+#!/bin/sh
+# gh PATH stub: `gh --version` reports 2.100.0; `gh skill --help` exits
+# 1. Everything else exits 1. No network, no side effects.
+if [ -n "${SUKIRU_STUB_TRANSCRIPT:-}" ]; then
+    printf 'gh %s\n' "$*" >>"$SUKIRU_STUB_TRANSCRIPT"
+fi
+if [ "${1:-}" = "--version" ]; then
+    echo "gh version 2.100.0 (2026-01-15)"
+    exit 0
+fi
+if [ "${1:-}" = "skill" ] && [ "${2:-}" = "--help" ]; then
+    echo "Work with agent skills"
+    exit 1
+fi
+exit 1

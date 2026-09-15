@@ -1,0 +1,13 @@
+#!/bin/sh
+# npx PATH stub: answers the skills capability probe with 1.5.26.
+# Everything else exits 1. No network, no side effects.
+if [ -n "${SUKIRU_STUB_TRANSCRIPT:-}" ]; then
+    printf 'npx %s\n' "$*" >>"$SUKIRU_STUB_TRANSCRIPT"
+fi
+case "$*" in
+    *skills@*--version*)
+        echo "1.5.26"
+        exit 0
+        ;;
+esac
+exit 1

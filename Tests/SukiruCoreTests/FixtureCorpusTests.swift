@@ -27,6 +27,13 @@ struct FixtureCorpusTests {
     /// collection-literal trailing-comma churn.
     static let requiredHandBuilt: [String] =
         """
+        cap-gh-absent
+        cap-gh-ok
+        cap-gh-old
+        cap-gh-probe-fail
+        cap-neither
+        cap-npx-absent
+        cap-npx-ok
         FIX-EMPTY
         FIX-CLEAN
         FIX-INTERNAL

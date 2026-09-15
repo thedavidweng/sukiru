@@ -53,6 +53,27 @@ them at runtime with:
 Scripts/fixtures/prepare-runtime.sh [FIXTURES_DIR]
 ```
 
+## Capability PATH-stub environments (checked in)
+
+`cap-gh-ok`, `cap-gh-old`, `cap-gh-probe-fail`, `cap-gh-absent`, `cap-npx-ok`,
+`cap-npx-absent`, `cap-neither` are NOT scan fixtures: each holds only a `bin/`
+of POSIX-sh stub executables (controlled `gh`/`npx` output, no network) plus
+its `EXPECTATION.md`. Compose a capability environment by concatenating bin
+dirs onto PATH:
+
+```
+PATH="$PWD/Fixtures/cap-gh-ok/bin:$PWD/Fixtures/cap-npx-ok/bin:/usr/bin:/bin" \
+  sukiru-cli capabilities --format json
+```
+
+An "absent" fixture contributes an empty `bin/`; combine freely (e.g.
+`cap-gh-absent/bin:cap-npx-ok/bin` = gh absent, npx fine). Set
+`SUKIRU_STUB_TRANSCRIPT=<file>` to make every stub log its invocations —
+the validator's evidence (VAL-SCAN-037/057). `cap-gh-probe-fail` (gh 2.100.0,
+failing `gh skill --help`) is the VAL-SCAN-057 environment, an addition to
+the contract's six-name legend. These trees are also rebuilt by
+`build-handbuilt.sh`.
+
 ## CLI-generated collision-matrix corpus (regenerated on demand)
 
 `CM-1, CM-2, CM-3, CM-5, CM-6, CM-8` are produced by scripting the REAL pinned
