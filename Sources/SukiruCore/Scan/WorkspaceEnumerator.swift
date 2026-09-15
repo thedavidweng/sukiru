@@ -15,6 +15,27 @@
 ///
 /// The output order is defined and deterministic: user scope first (canonical
 /// then hosts in host-table order), then project scopes sorted by root.
+/// A workspace enriched with the engine-side context the D18 wire
+/// `Workspace` does not carry.
+public struct EnumeratedWorkspace: Equatable, Sendable {
+    /// The D18 wire workspace.
+    public let workspace: Workspace
+    /// ALL hosts whose resolved skills dir IS this workspace's root, in
+    /// host-table order — never a single host id (port-reference trap 12:
+    /// trae/trae-cn share project dir `.trae/skills`; cline/dexto/warp/zed
+    /// share the canonical store).
+    public let candidateHosts: [String]
+    /// The ownership/ambiguity bucket: `user` for user scope, `project:<root>`
+    /// per project root.
+    public let scopeGroup: String
+
+    public init(workspace: Workspace, candidateHosts: [String], scopeGroup: String) {
+        self.workspace = workspace
+        self.candidateHosts = candidateHosts
+        self.scopeGroup = scopeGroup
+    }
+}
+
 public struct WorkspaceEnumerator: Sendable {
     private let environment: SukiruEnvironment
     private let fileSystem: FileSystemProbe
@@ -31,6 +52,12 @@ public struct WorkspaceEnumerator: Sendable {
     /// All workspaces in both scopes, in defined order. `projectRoots` is the
     /// already-resolved root set (D5 precedence is the caller's job).
     public func enumerate(projectRoots: [String]) -> [Workspace] {
+        enumerateDetailed(projectRoots: projectRoots).map(\.workspace)
+    }
+
+    /// `enumerate` plus per-workspace candidate host sets and scope groups
+    /// for the inventory scanner.
+    public func enumerateDetailed(projectRoots: [String]) -> [EnumeratedWorkspace] {
         var workspaces = enumerateUserScope()
         for root in projectRoots.sorted() {
             workspaces.append(contentsOf: enumerateProjectScope(projectRoot: root))
@@ -38,10 +65,14 @@ public struct WorkspaceEnumerator: Sendable {
         return workspaces
     }
 
-    private func enumerateUserScope() -> [Workspace] {
+    private func enumerateUserScope() -> [EnumeratedWorkspace] {
         let canonical = resolver.canonicalUserRoot()
         var workspaces = [
-            Workspace(id: "user", kind: .user, root: canonical, installed: true)
+            EnumeratedWorkspace(
+                workspace: Workspace(id: "user", kind: .user, root: canonical, installed: true),
+                candidateHosts: userCandidates(root: canonical),
+                scopeGroup: "user"
+            )
         ]
         for host in HostTable.hosts {
             let state = detector.detectionState(for: host)
@@ -51,25 +82,33 @@ public struct WorkspaceEnumerator: Sendable {
             // dexto) are covered by the `user` workspace.
             guard root != canonical else { continue }
             workspaces.append(
-                Workspace(
-                    id: "host:\(host.id)",
-                    kind: .user,
-                    root: root,
-                    installed: state == .detected
+                EnumeratedWorkspace(
+                    workspace: Workspace(
+                        id: "host:\(host.id)",
+                        kind: .user,
+                        root: root,
+                        installed: state == .detected
+                    ),
+                    candidateHosts: userCandidates(root: root),
+                    scopeGroup: "user"
                 )
             )
         }
         return workspaces
     }
 
-    private func enumerateProjectScope(projectRoot: String) -> [Workspace] {
+    private func enumerateProjectScope(projectRoot: String) -> [EnumeratedWorkspace] {
         let canonical = resolver.canonicalProjectRoot(projectRoot: projectRoot)
         var workspaces = [
-            Workspace(
-                id: "project:\(projectRoot)",
-                kind: .project,
-                root: canonical,
-                installed: true
+            EnumeratedWorkspace(
+                workspace: Workspace(
+                    id: "project:\(projectRoot)",
+                    kind: .project,
+                    root: canonical,
+                    installed: true
+                ),
+                candidateHosts: projectCandidates(root: canonical, projectRoot: projectRoot),
+                scopeGroup: "project:\(projectRoot)"
             )
         ]
         var seen: Set<String> = [canonical]
@@ -85,14 +124,33 @@ public struct WorkspaceEnumerator: Sendable {
             guard dirExists || markerExists else { continue }
             seen.insert(root)
             workspaces.append(
-                Workspace(
-                    id: "project:\(projectRoot)#\(host.id)",
-                    kind: .project,
-                    root: root,
-                    installed: true
+                EnumeratedWorkspace(
+                    workspace: Workspace(
+                        id: "project:\(projectRoot)#\(host.id)",
+                        kind: .project,
+                        root: root,
+                        installed: true
+                    ),
+                    candidateHosts: projectCandidates(root: root, projectRoot: projectRoot),
+                    scopeGroup: "project:\(projectRoot)"
                 )
             )
         }
         return workspaces
+    }
+
+    /// Every host whose resolved GLOBAL skills dir equals `root`, in
+    /// host-table order (path sharing is a physical fact, independent of
+    /// detection state).
+    private func userCandidates(root: String) -> [String] {
+        HostTable.hosts.filter { resolver.globalSkillsRoot(for: $0) == root }.map(\.id)
+    }
+
+    /// Every host whose resolved PROJECT skills dir equals `root`, in
+    /// host-table order.
+    private func projectCandidates(root: String, projectRoot: String) -> [String] {
+        HostTable.hosts.filter {
+            resolver.projectSkillsRoot(for: $0, projectRoot: projectRoot) == root
+        }.map(\.id)
     }
 }

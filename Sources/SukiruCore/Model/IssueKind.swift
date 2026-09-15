@@ -15,4 +15,13 @@ public enum IssueKind {
     /// A skill directory (or an entry inside it) that cannot be read for
     /// content hashing.
     public static let contentHashUnreadable = "content-hash-unreadable"
+    /// A dangling symlink. The placement is still inventoried (first-class
+    /// `brokenSymlink`), and a `broken-symlink` finding rides alongside.
+    public static let brokenSymlink = "broken-symlink"
+    /// A directory (or directory entry) that cannot be read or inspected.
+    /// Never fatal: the scan continues past it.
+    public static let directoryUnreadable = "directory-unreadable"
+    /// realpath(3) failed on an existing placement path; the placement is
+    /// kept with a nil canonical path.
+    public static let canonicalPathUnreadable = "canonical-path-unreadable"
 }

@@ -31,6 +31,12 @@ public protocol FileSystemProbe: Sendable {
     /// lstat-style kind of the entry at `path`, or nil when the path does not
     /// exist or cannot be inspected. Does NOT follow symlinks.
     func entryKind(atPath path: String) -> EntryKind?
+    /// Full canonical resolution of `path` (realpath(3) semantics: every
+    /// component resolved, absolute result), or nil when the path does not
+    /// exist or cannot be resolved. `URL.resolvingSymlinksInPath` is NOT a
+    /// substitute — it never errors on missing paths and disagrees with
+    /// realpath on `/var` vs `/private/var` (port-reference §3).
+    func resolvedPath(atPath path: String) -> String?
 }
 
 /// Probes the real filesystem via `FileManager`.
@@ -83,5 +89,13 @@ public struct DefaultFileSystemProbe: FileSystemProbe {
         default:
             return .other
         }
+    }
+
+    public func resolvedPath(atPath path: String) -> String? {
+        guard let resolved = path.withCString({ realpath($0, nil) }) else {
+            return nil
+        }
+        defer { free(resolved) }
+        return String(cString: resolved)
     }
 }
