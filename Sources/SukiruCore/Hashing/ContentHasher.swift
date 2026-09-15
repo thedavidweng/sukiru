@@ -173,10 +173,15 @@ public struct ContentHasher: Sendable {
     }
 
     /// The bytes a symlink contributes: `symlink:"<target>"` where the target
-    /// is quoted exactly like Rust's `{:?}` on a string — wrapped in double
-    /// quotes, with `\t` `\r` `\n` `\` `"` `'` backslash-escaped and other
-    /// control characters rendered as `\u{<lowercase hex>}` (port-reference
-    /// trap #7). Printable non-ASCII passes through unescaped.
+    /// is quoted exactly like Rust's `{:?}` on the `PathBuf` target
+    /// (port-reference trap #7): wrapped in double quotes, with the named
+    /// escapes `\t` `\r` `\n` `\\` `\"` and NUL rendered `\0`. A single quote
+    /// is NEVER escaped. Every other scalar that Rust's `is_printable` table
+    /// or the Grapheme_Extend property marks non-printable (combining marks,
+    /// ZWJ, NEL, soft hyphen, NBSP, …) renders as `\u{<lowercase hex>}`; the
+    /// range table in `RustDebugEscapes` is generated from rustc's own Debug
+    /// output (Scripts/rust-debug/generate.sh). Printable non-ASCII passes
+    /// through unescaped.
     static func rustDebugQuotedSymlink(_ target: String) -> String {
         var quoted = "\""
         for scalar in target.unicodeScalars {
@@ -191,10 +196,10 @@ public struct ContentHasher: Sendable {
                 quoted += "\\\\"
             case "\"":
                 quoted += "\\\""
-            case "'":
-                quoted += "\\'"
+            case "\0":
+                quoted += "\\0"
             default:
-                if scalar.value < 0x20 || scalar.value == 0x7F {
+                if RustDebugEscapes.needsUnicodeEscape(scalar) {
                     quoted += "\\u{\(String(scalar.value, radix: 16))}"
                 } else {
                     quoted.unicodeScalars.append(scalar)
