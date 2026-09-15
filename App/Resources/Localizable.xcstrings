@@ -527,6 +527,28 @@
         }
       }
     },
+    "Show All Findings": {
+      "comment": "View menu: clears the Health skill focus (deep-link).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示全部发现"
+          }
+        }
+      }
+    },
+    "Show Findings for Selected Skill": {
+      "comment": "View menu: D16 deep-link to the selected skill's findings in Health.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看所选技能的发现"
+          }
+        }
+      }
+    },
     "Remove": {
       "comment": "Settings: removes one project root.",
       "localizations": {

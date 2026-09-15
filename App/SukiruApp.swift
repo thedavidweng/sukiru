@@ -25,6 +25,21 @@ struct SukiruApp: App {
                 sidebarCommand("Search", surface: .search, key: "5")
                 sidebarCommand("Settings", surface: .settings, key: "6")
                 Divider()
+                // D16 deep-link without a mouse (Full Keyboard Access off
+                // means Tab never reaches the detail button, but menu items
+                // stay reachable via ⌘⇧F and Help-menu search).
+                Button("Show Findings for Selected Skill") {
+                    if let skill = state.selectedSkill() {
+                        state.showFindings(for: skill)
+                    }
+                }
+                .keyboardShortcut("f", modifiers: [.command, .shift])
+                .disabled(state.selectedSkill() == nil)
+                Button("Show All Findings") {
+                    state.clearHealthFocus()
+                }
+                .disabled(state.healthFocus == nil)
+                Divider()
                 Button("Refresh") {
                     state.rescan()
                 }
