@@ -1,0 +1,84 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "exact",
+          "kind" : "subtype"
+        },
+        {
+          "detail" : "<FIXTURE>/proj/.agents/skills/stale-docs-cleanup",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/proj/.claude/skills/stale-docs-cleanup",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "8844f550c3fb4fb51f62c6eefe8f6ea29eb4197a720eeefc82644e0472b965db",
+          "kind" : "contentHash"
+        }
+      ],
+      "ruleID" : "cross-host-duplicate",
+      "severity" : "warning",
+      "skillName" : "stale-docs-cleanup",
+      "workspaceID" : "project:<FIXTURE>/proj"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "stale-docs-cleanup",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/proj/.agents/skills/stale-docs-cleanup",
+          "contentHash" : "8844f550c3fb4fb51f62c6eefe8f6ea29eb4197a720eeefc82644e0472b965db",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/proj/.agents/skills/stale-docs-cleanup"
+        },
+        {
+          "canonicalPath" : "<FIXTURE>/proj/.claude/skills/stale-docs-cleanup",
+          "contentHash" : "8844f550c3fb4fb51f62c6eefe8f6ea29eb4197a720eeefc82644e0472b965db",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/proj/.claude/skills/stale-docs-cleanup"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "computedHash" : "8844f550c3fb4fb51f62c6eefe8f6ea29eb4197a720eeefc82644e0472b965db",
+          "skillPath" : "maintenance/stale-docs-cleanup/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github"
+        }
+      },
+      "scope" : "project"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.home/.agents/skills"
+    },
+    {
+      "id" : "project:<FIXTURE>/proj",
+      "installed" : true,
+      "kind" : "project",
+      "root" : "<FIXTURE>/proj/.agents/skills"
+    },
+    {
+      "id" : "project:<FIXTURE>/proj#claude-code",
+      "installed" : true,
+      "kind" : "project",
+      "root" : "<FIXTURE>/proj/.claude/skills"
+    }
+  ]
+}

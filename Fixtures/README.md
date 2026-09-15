@@ -74,12 +74,13 @@ failing `gh skill --help`) is the VAL-SCAN-057 environment, an addition to
 the contract's six-name legend. These trees are also rebuilt by
 `build-handbuilt.sh`.
 
-## CLI-generated collision-matrix corpus (regenerated on demand)
+## CLI-generated collision-matrix corpus (checked in)
 
 `CM-1, CM-2, CM-3, CM-5, CM-6, CM-8` are produced by scripting the REAL pinned
 `skills@1.5.26` CLI and `gh` in isolated sandbox HOMEs, reproducing the dirty
-states in `docs/collision-matrix.md`. They are network-derived and reproducible,
-so they are gitignored rather than committed.
+states in `docs/collision-matrix.md`. The corpus IS committed (since
+`seam-a-corpus-validation`) so the snapshot suite and validators can run
+offline; regenerate it — never hand-edit it — with:
 
 ```
 Scripts/fixtures/generate.sh --check          # verify tooling + isolation, no network
@@ -90,7 +91,23 @@ SUKIRU_E2E=1 GH_TOKEN="$(gh auth token)" \
 Each `CM-*` dir holds `proj/` (the generated project tree; scan with
 `SUKIRU_HOME=<CM>/.home SUKIRU_ROOTS=<CM>/proj`), a `PIN.txt` recording the CLI
 versions used, and an `EXPECTATION.md`. Generation is gated on `SUKIRU_E2E=1`
-and a canary asserts the user's real `$HOME` is never mutated.
+and a canary asserts the user's real `$HOME` is never mutated. Generator
+hygiene: the sandbox `.home` is reset to a pristine `.gitkeep`'d dir and CLI
+transcripts are dropped after each scenario — the pinned CLI otherwise leaves
+a global lock (a spurious user-scope `lock-without-files` finding on scans)
+plus npm/mise/gh caches in it.
+
+## Expectation snapshots (checked in)
+
+`expectations/<fixture>.scan.json` holds the path-normalized
+(`<FIXTURE>/...`) `sukiru-cli scan --format json` stdout for every FIX-* and
+CM-* tree plus `scope-isolation`. `CorpusExpectationTests` compares fresh
+scans byte-for-byte against them; refresh after intentional engine or corpus
+changes with:
+
+```
+SUKIRU_UPDATE_SNAPSHOTS=1 swift test --filter CorpusExpectationTests
+```
 
 ## Smoke test
 

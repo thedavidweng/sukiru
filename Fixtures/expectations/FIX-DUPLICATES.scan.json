@@ -1,0 +1,322 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.claude/skills/div-demo",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/div-demo",
+          "kind" : "placementPath"
+        }
+      ],
+      "ruleID" : "ambiguous-name",
+      "severity" : "warning",
+      "skillName" : "div-demo",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "alias",
+          "kind" : "subtype"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/alias-demo",
+          "kind" : "canonicalPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/alias-demo",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/alias-demo",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/alias-demo",
+          "kind" : "memberPath"
+        }
+      ],
+      "ruleID" : "cross-host-duplicate",
+      "severity" : "info",
+      "skillName" : "alias-demo",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "divergent",
+          "kind" : "subtype"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/div-demo",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/div-demo",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "1c5460c9350bf315ffca1fe9bfb5225a1a3d6ac8c75d12b98bd25f598432fb59",
+          "kind" : "contentHash"
+        },
+        {
+          "detail" : "4aa09b6055b1184ee9d1ade397f818b3190db3452bde68bde216296cbbce7a79",
+          "kind" : "contentHash"
+        }
+      ],
+      "ruleID" : "cross-host-duplicate",
+      "severity" : "warning",
+      "skillName" : "div-demo",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "exact",
+          "kind" : "subtype"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/exact-demo",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/exact-demo",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "c614e97644c6369ff22b1ccea36fce9196a3726bbaa31d5b7811b2f765b71e5e",
+          "kind" : "contentHash"
+        }
+      ],
+      "ruleID" : "cross-host-duplicate",
+      "severity" : "warning",
+      "skillName" : "exact-demo",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "alias-demo",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/alias-demo",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/alias-demo",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/alias-demo",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "alias-demo",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "div-demo",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/div-demo",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/div-demo",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "div-demo",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "exact-demo",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/exact-demo",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/exact-demo",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "exact-demo",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.agents/skills/alias-demo",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/alias-demo",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/alias-demo",
+          "kind" : "placementPath"
+        }
+      ],
+      "ruleID" : "files-without-lock",
+      "severity" : "info",
+      "skillName" : "alias-demo",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.claude/skills/exact-demo",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/exact-demo",
+          "kind" : "placementPath"
+        }
+      ],
+      "ruleID" : "files-without-lock",
+      "severity" : "info",
+      "skillName" : "exact-demo",
+      "workspaceID" : "user"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "alias-demo",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/alias-demo",
+          "contentHash" : "6019e4f8406d394100558482e110dd861467f73041ecfc6267ee63c4eec53737",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/alias-demo"
+        },
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/alias-demo",
+          "contentHash" : "6019e4f8406d394100558482e110dd861467f73041ecfc6267ee63c4eec53737",
+          "internal" : false,
+          "kind" : "symlink",
+          "linkTarget" : "../../.agents/skills/alias-demo",
+          "path" : "<FIXTURE>/.claude/skills/alias-demo"
+        },
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/alias-demo",
+          "contentHash" : "6019e4f8406d394100558482e110dd861467f73041ecfc6267ee63c4eec53737",
+          "internal" : false,
+          "kind" : "symlink",
+          "linkTarget" : "../../.agents/skills/alias-demo",
+          "path" : "<FIXTURE>/.codex/skills/alias-demo"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : true,
+      "name" : "div-demo",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.claude/skills/div-demo",
+          "contentHash" : "4aa09b6055b1184ee9d1ade397f818b3190db3452bde68bde216296cbbce7a79",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.claude/skills/div-demo"
+        },
+        {
+          "canonicalPath" : "<FIXTURE>/.codex/skills/div-demo",
+          "contentHash" : "1c5460c9350bf315ffca1fe9bfb5225a1a3d6ac8c75d12b98bd25f598432fb59",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.codex/skills/div-demo"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "exact-demo",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.claude/skills/exact-demo",
+          "contentHash" : "c614e97644c6369ff22b1ccea36fce9196a3726bbaa31d5b7811b2f765b71e5e",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.claude/skills/exact-demo"
+        },
+        {
+          "canonicalPath" : "<FIXTURE>/.codex/skills/exact-demo",
+          "contentHash" : "c614e97644c6369ff22b1ccea36fce9196a3726bbaa31d5b7811b2f765b71e5e",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.codex/skills/exact-demo"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.agents/skills"
+    },
+    {
+      "id" : "host:claude-code",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.claude/skills"
+    },
+    {
+      "id" : "host:codex",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.codex/skills"
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.claude/skills/dup",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/dup",
+          "kind" : "placementPath"
+        }
+      ],
+      "ruleID" : "ambiguous-name",
+      "severity" : "warning",
+      "skillName" : "dup",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.claude/skills/dup",
+          "kind" : "hostPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/dup",
+          "kind" : "hostPath"
+        },
+        {
+          "detail" : "thedavidweng/skills|github|.agents/skills/dup/SKILL.md|",
+          "kind" : "sourceIdentity"
+        },
+        {
+          "detail" : "145b9bca1910f105d4ef56a365c35a8c6b24d7a71962a9873cf61048b7416b86",
+          "kind" : "contentHash"
+        },
+        {
+          "detail" : "891568161cb61966924a5b074a2a7c14f8c1573780d6c1a9876c6629dabfe153",
+          "kind" : "contentHash"
+        }
+      ],
+      "ruleID" : "canonical-host-divergence",
+      "severity" : "action",
+      "skillName" : "dup",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "divergent",
+          "kind" : "subtype"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/dup",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/dup",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "145b9bca1910f105d4ef56a365c35a8c6b24d7a71962a9873cf61048b7416b86",
+          "kind" : "contentHash"
+        },
+        {
+          "detail" : "891568161cb61966924a5b074a2a7c14f8c1573780d6c1a9876c6629dabfe153",
+          "kind" : "contentHash"
+        }
+      ],
+      "ruleID" : "cross-host-duplicate",
+      "severity" : "warning",
+      "skillName" : "dup",
+      "workspaceID" : "user"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : true,
+      "name" : "dup",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.claude/skills/dup",
+          "contentHash" : "891568161cb61966924a5b074a2a7c14f8c1573780d6c1a9876c6629dabfe153",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.claude/skills/dup"
+        },
+        {
+          "canonicalPath" : "<FIXTURE>/.codex/skills/dup",
+          "contentHash" : "145b9bca1910f105d4ef56a365c35a8c6b24d7a71962a9873cf61048b7416b86",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.codex/skills/dup"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "installedAt" : "2026-06-15T23:27:24.742Z",
+          "skillFolderHash" : "6666666666666666666666666666666666666666",
+          "skillPath" : ".agents/skills/dup/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-15T23:27:24.742Z"
+        }
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.agents/skills"
+    },
+    {
+      "id" : "host:claude-code",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.claude/skills"
+    },
+    {
+      "id" : "host:codex",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.codex/skills"
+    }
+  ]
+}

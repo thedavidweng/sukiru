@@ -14,7 +14,15 @@
 #   - re-runnable (each CM dir is wiped and rebuilt);
 #   - every CM dir records the CLI pin (PIN.txt) and ships an EXPECTATION.md;
 #   - network use is gated behind SUKIRU_E2E=1;
-#   - a real-$HOME canary asserts the user's home is never mutated.
+#   - a real-$HOME canary asserts the user's home is never mutated;
+#   - GENERATOR HYGIENE: the sandbox .home is generator scratch. The pinned
+#     skills CLI writes a global v3 lock into it even for purely
+#     project-scope installs, which would scan back as a SPURIOUS user-scope
+#     lock-without-files finding; npm/mise also stash caches there. Every
+#     scenario ends with finalize_fixture, which resets .home to a pristine
+#     empty dir (.gitkeep) and removes the CLI transcripts — the committed
+#     corpus carries provenance in PIN.txt + EXPECTATION.md only (same idiom
+#     as generate-hash-parity.sh).
 #
 # Usage:
 #   Scripts/fixtures/generate.sh --check              # verify tooling+plumbing, no network
@@ -69,6 +77,20 @@ require_e2e
 preflight
 canary_capture
 
+# finalize_fixture DIR HOME — reset the sandbox home to a pristine empty dir
+# (.gitkeep so git tracks it; the scan suite keys on .home existing) and drop
+# the CLI transcripts. Without this, the CLI-written sandbox global lock and
+# the npm/mise caches would be committed and CM scans would report a spurious
+# user-scope lock-without-files finding.
+finalize_fixture() {
+    local dir="$1" home="$2"
+    force_rm_rf "$home"
+    mkdir -p "$home"
+    : >"$home/.gitkeep"
+    rm -f "$dir/proj/.skills.out" "$dir/proj/.skills.err" \
+          "$dir/proj/.gh.out" "$dir/proj/.gh.err"
+}
+
 # =====================================================================
 # CM-1 — npx copy-mode baseline (project scope).
 # =====================================================================
@@ -79,6 +101,7 @@ cm1() {
     # Two targets (codex -> canonical .agents/skills, claude-code -> .claude/skills)
     # with --copy forces two PHYSICAL copies: the exact cross-host duplicate shape.
     run_skills "$home" "$proj" add "$SRC_REPO" -s "$SKILL_NAME" -a claude-code -a codex --copy -y
+    finalize_fixture "$dir" "$home"
     record_pin "$dir"
     cat >"$dir/EXPECTATION.md" <<EOF
 # CM-1 — npx copy-mode baseline
@@ -106,6 +129,7 @@ cm2() {
     home="$(make_sandbox "$TARGET" "CM-2")"
     proj="$dir/proj"; mkdir -p "$proj/.claude/skills"
     run_gh "$home" "$proj" skill install "$SRC_REPO" "$SKILL_PATH" --force --dir "$proj/.claude/skills"
+    finalize_fixture "$dir" "$home"
     record_pin "$dir"
     cat >"$dir/EXPECTATION.md" <<EOF
 # CM-2 — gh exact-path baseline
@@ -133,6 +157,7 @@ cm3() {
     run_skills "$home" "$proj" add "$SRC_REPO" -s "$SKILL_NAME" -a claude-code -a codex --copy -y
     # ...then gh --force overwrites ONLY the .claude copy (canonical + lock stay stale).
     run_gh "$home" "$proj" skill install "$SRC_REPO" "$SKILL_PATH" --force --dir "$proj/.claude/skills"
+    finalize_fixture "$dir" "$home"
     record_pin "$dir"
     cat >"$dir/EXPECTATION.md" <<EOF
 # CM-3 — double-booked + drift + divergence
@@ -160,6 +185,7 @@ cm5() {
     proj="$dir/proj"; mkdir -p "$proj/.claude/skills"
     run_gh "$home" "$proj" skill install "$SRC_REPO" "$SKILL_PATH" --force --dir "$proj/.claude/skills"
     run_skills "$home" "$proj" add "$SRC_REPO" -s "$SKILL_NAME" -a claude-code --copy -y
+    finalize_fixture "$dir" "$home"
     record_pin "$dir"
     cat >"$dir/EXPECTATION.md" <<EOF
 # CM-5 — reverse double-booked (provenance erased)
@@ -193,6 +219,7 @@ cm6() {
         sed -i '' '/github-/d' "$proj/.claude/skills/orphaned-copy/SKILL.md" 2>/dev/null || \
             sed -i '/github-/d' "$proj/.claude/skills/orphaned-copy/SKILL.md"
     fi
+    finalize_fixture "$dir" "$home"
     record_pin "$dir"
     cat >"$dir/EXPECTATION.md" <<EOF
 # CM-6 — dangerous-removal pre-state
@@ -228,6 +255,7 @@ cm8() {
         sed -i '' '/github-/d' "$proj/.qoder/skills/$SKILL_NAME/SKILL.md" 2>/dev/null || \
             sed -i '/github-/d' "$proj/.qoder/skills/$SKILL_NAME/SKILL.md" || true
     fi
+    finalize_fixture "$dir" "$home"
     record_pin "$dir"
     cat >"$dir/EXPECTATION.md" <<EOF
 # CM-8 — mixed install (three-source resolution)
@@ -257,6 +285,13 @@ cm3
 cm5
 cm6
 cm8
+
+# Final hygiene sweep: belt-and-braces reset of every sandbox home once all
+# CLI processes are long dead, in case a detached writer (update notifier,
+# cache flusher) outlived its parent past the per-scenario finalize.
+for cm in CM-1 CM-2 CM-3 CM-5 CM-6 CM-8; do
+    finalize_fixture "$TARGET/$cm" "$TARGET/$cm/.home"
+done
 
 canary_assert_unchanged
 echo "CM-* corpus regenerated under: $TARGET"

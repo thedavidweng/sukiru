@@ -1,0 +1,35 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.agents/.skill-lock.json",
+          "kind" : "lockPath"
+        },
+        {
+          "detail" : "ghost",
+          "kind" : "entryKey"
+        }
+      ],
+      "ruleID" : "lock-without-files",
+      "severity" : "action",
+      "skillName" : "ghost",
+      "workspaceID" : "user"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.agents/skills"
+    }
+  ]
+}

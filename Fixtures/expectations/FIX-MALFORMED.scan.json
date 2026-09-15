@@ -1,0 +1,72 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.agents/.skill-lock.json",
+          "kind" : "lockPath"
+        },
+        {
+          "detail" : "4",
+          "kind" : "foundVersion"
+        },
+        {
+          "detail" : "3",
+          "kind" : "supportedVersion"
+        }
+      ],
+      "ruleID" : "lock-version-unsupported",
+      "severity" : "warning",
+      "workspaceID" : "user"
+    }
+  ],
+  "issues" : [
+    {
+      "kind" : "lock-version-unsupported",
+      "message" : "lock version 4 is newer than supported version 3; parsed best-effort",
+      "path" : "<FIXTURE>/.agents/.skill-lock.json"
+    },
+    {
+      "kind" : "skill-md-invalid",
+      "message" : "required frontmatter field `name` is missing",
+      "path" : "<FIXTURE>/.agents/skills/nameless/SKILL.md"
+    }
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "healthy",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/healthy",
+          "contentHash" : "d9cc254804f0a12a84894c483b0ca756715a29942818443e6d3bbc056b3d5c4d",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/healthy"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "installedAt" : "2026-06-15T23:27:24.742Z",
+          "skillFolderHash" : "3333333333333333333333333333333333333333",
+          "skillPath" : ".agents/skills/healthy/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-15T23:27:24.742Z"
+        }
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.agents/skills"
+    }
+  ]
+}
