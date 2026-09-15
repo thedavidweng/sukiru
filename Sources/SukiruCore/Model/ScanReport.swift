@@ -5,6 +5,18 @@ public enum Scope: String, Codable, Equatable, Sendable, CaseIterable {
     case user
     case project
     case all
+
+    /// Whether a workspace of the given kind belongs to this scope.
+    public func includes(_ kind: Workspace.Kind) -> Bool {
+        switch self {
+        case .user:
+            return kind == .user
+        case .project:
+            return kind == .project
+        case .all:
+            return true
+        }
+    }
 }
 
 /// The seam-A read report, serialized with the D18 wire schema.
@@ -52,6 +64,13 @@ public struct Workspace: Codable, Equatable, Sendable {
     public let kind: Kind
     public let root: String
     public let installed: Bool
+
+    public init(id: String, kind: Kind, root: String, installed: Bool) {
+        self.id = id
+        self.kind = kind
+        self.root = root
+        self.installed = installed
+    }
 }
 
 /// Ownership classes (architecture §6, D18).
