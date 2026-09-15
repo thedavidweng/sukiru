@@ -66,8 +66,22 @@ public struct ScanEngine: Sendable {
             workspaces: workspaces.map(\.workspace),
             skills: resolution.skills,
             findings: findings,
-            issues: issues
+            issues: issues,
+            lockExtras: Self.lockExtras(from: claims.claims)
         )
+    }
+
+    /// Top-level lock extras keyed by scope group (VAL-SCAN-022): only locks
+    /// that actually carry unknown top-level keys contribute; nil when none
+    /// do, keeping the wire schema additive (omit-when-empty).
+    private static func lockExtras(
+        from claims: [ScopeLockClaim]
+    ) -> [String: [String: JSONValue]]? {
+        var extras: [String: [String: JSONValue]] = [:]
+        for claim in claims where !claim.lock.extras.isEmpty {
+            extras[claim.scopeGroup] = claim.lock.extras
+        }
+        return extras.isEmpty ? nil : extras
     }
 
     /// Reads the Vercel locks for the scopes being scanned: the global (v3)

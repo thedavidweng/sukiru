@@ -32,6 +32,9 @@ public struct VercelProvenance: Codable, Equatable, Sendable {
     public let skillFolderHash: String?
     public let installedAt: String?
     public let updatedAt: String?
+    /// Unknown entry-level keys, preserved verbatim (VAL-SCAN-022). Nil when
+    /// the entry carries none, so the key is omitted from the wire JSON.
+    public let extras: [String: JSONValue]?
 
     /// Projects the lock entry onto the wire shape for its lock's scope.
     public init(entry: VercelLockEntry, scope: VercelLock.Scope) {
@@ -50,5 +53,6 @@ public struct VercelProvenance: Codable, Equatable, Sendable {
         }
         installedAt = entry.installedAt
         updatedAt = entry.updatedAt
+        extras = entry.extras.isEmpty ? nil : entry.extras
     }
 }
