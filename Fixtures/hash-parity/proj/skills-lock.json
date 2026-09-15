@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "hashprobe": {
+      "source": "../gen-source",
+      "sourceType": "local",
+      "computedHash": "c25270a735115a815934f0c6f5d0f4539411871e22b3fa935d95ff182abbf4c3"
+    }
+  }
+}

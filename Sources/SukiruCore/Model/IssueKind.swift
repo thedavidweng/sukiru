@@ -12,4 +12,7 @@ public enum IssueKind {
     /// A lock file whose schema version is older (incompatible) or newer than
     /// supported (best-effort parsed).
     public static let lockVersionUnsupported = "lock-version-unsupported"
+    /// A skill directory (or an entry inside it) that cannot be read for
+    /// content hashing.
+    public static let contentHashUnreadable = "content-hash-unreadable"
 }

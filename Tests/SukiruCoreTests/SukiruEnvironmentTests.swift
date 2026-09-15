@@ -10,6 +10,7 @@ struct StubFileSystem: FileSystemProbe {
     var directories: Set<String> = []
     var entries: [String: [String]] = [:]
     var contents: [String: Data] = [:]
+    var symlinks: [String: String] = [:]
 
     func exists(atPath path: String) -> Bool {
         existing.contains(path) || files.contains(path) || directories.contains(path)
@@ -29,6 +30,13 @@ struct StubFileSystem: FileSystemProbe {
 
     func fileContents(atPath path: String) -> Data? {
         contents[path]
+    }
+
+    func entryKind(atPath path: String) -> EntryKind? {
+        if let target = symlinks[path] { return .symlink(target: target) }
+        if files.contains(path) { return .file }
+        if directories.contains(path) { return .directory }
+        return nil
     }
 }
 

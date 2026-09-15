@@ -31,6 +31,17 @@ final class TempTree {
         return url.path
     }
 
+    /// Creates a symlink at `relative` pointing at the raw target string
+    /// (stored verbatim, exactly as `readlink` would report it).
+    @discardableResult
+    func symlink(_ relative: String, to target: String) throws -> String {
+        let url = root.appendingPathComponent(relative)
+        let parent = url.deletingLastPathComponent()
+        try FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(atPath: url.path, withDestinationPath: target)
+        return url.path
+    }
+
     deinit {
         try? FileManager.default.removeItem(at: root)
     }
