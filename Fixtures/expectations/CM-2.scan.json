@@ -1,0 +1,74 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "stale-docs-cleanup",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/proj/.claude/skills/stale-docs-cleanup",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "github",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "stale-docs-cleanup",
+      "workspaceID" : "project:<FIXTURE>/proj"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "stale-docs-cleanup",
+      "ownership" : "github",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/proj/.claude/skills/stale-docs-cleanup",
+          "contentHash" : "513c91a4a9570ebfeceb01be2dd8c29d9003506405377b69eac57bf05dfbdce7",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/proj/.claude/skills/stale-docs-cleanup"
+        }
+      ],
+      "provenance" : {
+        "github" : {
+          "path" : "maintenance/stale-docs-cleanup",
+          "pinned" : false,
+          "ref" : "refs/heads/main",
+          "repo" : "https://github.com/thedavidweng/skills",
+          "treeSha" : "214349b9b6ede59ff72ba15797186668fcfec535"
+        }
+      },
+      "scope" : "project"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.home/.agents/skills"
+    },
+    {
+      "id" : "project:<FIXTURE>/proj",
+      "installed" : true,
+      "kind" : "project",
+      "root" : "<FIXTURE>/proj/.agents/skills"
+    },
+    {
+      "id" : "project:<FIXTURE>/proj#claude-code",
+      "installed" : true,
+      "kind" : "project",
+      "root" : "<FIXTURE>/proj/.claude/skills"
+    }
+  ]
+}

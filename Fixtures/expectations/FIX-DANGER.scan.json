@@ -1,0 +1,144 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "gh-tool",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/gh-tool",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "github",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "gh-tool",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "orphan",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/orphan",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "orphan",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.claude/skills/orphan",
+          "kind" : "placementPath"
+        }
+      ],
+      "ruleID" : "files-without-lock",
+      "severity" : "info",
+      "skillName" : "orphan",
+      "workspaceID" : "user"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "gh-tool",
+      "ownership" : "github",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.claude/skills/gh-tool",
+          "contentHash" : "665af1b557831013390af485c40949fd83d6e09cac27e895d94888e30703635b",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.claude/skills/gh-tool"
+        }
+      ],
+      "provenance" : {
+        "github" : {
+          "path" : "tools/gh-tool/SKILL.md",
+          "pinned" : false,
+          "ref" : "refs/heads/main",
+          "repo" : "https://github.com/thedavidweng/skills",
+          "treeSha" : "214349b9b6ede59ff72ba15797186668fcfec535"
+        }
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "orphan",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.claude/skills/orphan",
+          "contentHash" : "c6913cb3f267aea8a6dc4c59abd31572208a5fe5b0d757ad46f6e3ebe26c3f10",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.claude/skills/orphan"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "vercel-ctl",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/vercel-ctl",
+          "contentHash" : "6eb80e8f6a4d0badbe0992a10999c0f179ea79dd659d9a9c5b6b280b0f33e2a4",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/vercel-ctl"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "installedAt" : "2026-06-15T23:27:24.742Z",
+          "skillFolderHash" : "4444444444444444444444444444444444444444",
+          "skillPath" : ".agents/skills/vercel-ctl/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-15T23:27:24.742Z"
+        }
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.agents/skills"
+    },
+    {
+      "id" : "host:claude-code",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.claude/skills"
+    }
+  ]
+}

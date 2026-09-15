@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "stale-docs-cleanup": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "skillPath": "maintenance/stale-docs-cleanup/SKILL.md",
+      "computedHash": "8844f550c3fb4fb51f62c6eefe8f6ea29eb4197a720eeefc82644e0472b965db"
+    }
+  }
+}

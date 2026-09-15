@@ -1,0 +1,45 @@
+{
+  "findings" : [
+
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "greet",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/greet",
+          "contentHash" : "5c3e7f03b2af29691cbcca2ca3b63d85eeb6cfd5d405c6ef07997de52a1d4cc9",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/greet"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "installedAt" : "2026-06-15T23:27:24.742Z",
+          "skillFolderHash" : "3066c474cfe70dc936b3c8c86664f0913e1b228b",
+          "skillPath" : ".agents/skills/greet/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-15T23:27:24.742Z"
+        }
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.agents/skills"
+    }
+  ]
+}

@@ -1,0 +1,191 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.claude/skills/rotted",
+          "kind" : "linkPath"
+        },
+        {
+          "detail" : "/nonexistent/rotted-target",
+          "kind" : "linkTarget"
+        }
+      ],
+      "ruleID" : "broken-symlink",
+      "severity" : "action",
+      "skillName" : "rotted",
+      "workspaceID" : "host:claude-code"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "inner",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/locked-dir/inner",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "inner",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "rotted",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/rotted",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "rotted",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "survivor",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/survivor",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "survivor",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.agents/skills/locked-dir/inner",
+          "kind" : "placementPath"
+        }
+      ],
+      "ruleID" : "files-without-lock",
+      "severity" : "info",
+      "skillName" : "inner",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.agents/skills/survivor",
+          "kind" : "placementPath"
+        }
+      ],
+      "ruleID" : "files-without-lock",
+      "severity" : "info",
+      "skillName" : "survivor",
+      "workspaceID" : "user"
+    }
+  ],
+  "issues" : [
+    {
+      "kind" : "ledger-unreadable",
+      "message" : "lock file could not be parsed as a valid v-lock JSON document",
+      "path" : "<FIXTURE>/.agents/.skill-lock.json"
+    },
+    {
+      "kind" : "skill-md-invalid",
+      "message" : "required frontmatter field `name` is missing",
+      "path" : "<FIXTURE>/.agents/skills/nameless/SKILL.md"
+    },
+    {
+      "kind" : "broken-symlink",
+      "message" : "broken symlink → /nonexistent/rotted-target",
+      "path" : "<FIXTURE>/.claude/skills/rotted"
+    }
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "inner",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/locked-dir/inner",
+          "contentHash" : "263446e8348b82b02a1433c97ca3c710af17447b81c9f7edddfd99e5347b4d7d",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/locked-dir/inner"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "rotted",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "internal" : false,
+          "kind" : "brokenSymlink",
+          "linkTarget" : "/nonexistent/rotted-target",
+          "path" : "<FIXTURE>/.claude/skills/rotted"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "survivor",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/survivor",
+          "contentHash" : "0c4c4564ffee66d690d9677b327afeb1b871b0ad417bd76e6f996ca8e8b47a04",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/survivor"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.agents/skills"
+    },
+    {
+      "id" : "host:claude-code",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.claude/skills"
+    }
+  ]
+}

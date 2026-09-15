@@ -1,0 +1,4 @@
+skills-cli: skills@1.5.26
+gh: gh version 2.100.0 (2026-09-03)
+node: v24.20.0
+generated-at: 2026-09-15T17:02:31Z

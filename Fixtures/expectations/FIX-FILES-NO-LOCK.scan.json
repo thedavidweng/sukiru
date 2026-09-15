@@ -1,0 +1,68 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "orphan",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/orphan",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "orphan",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.agents/skills/orphan",
+          "kind" : "placementPath"
+        }
+      ],
+      "ruleID" : "files-without-lock",
+      "severity" : "info",
+      "skillName" : "orphan",
+      "workspaceID" : "user"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "orphan",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/orphan",
+          "contentHash" : "642fbd47a4a153646b3c901dd43b03cd22eb8ce4fcbd2e4abfc5c2bdea229cb5",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/orphan"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.agents/skills"
+    }
+  ]
+}

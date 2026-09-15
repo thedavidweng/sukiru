@@ -61,6 +61,21 @@ make_sandbox() {
     printf '%s' "$sb"
 }
 
+# force_rm_rf PATH — rm -rf that tolerates transient "Directory not empty"
+# failures: freshly-exited CLI processes (npx/npm cache writers) can still be
+# recreating sandbox files while the removal walks the tree. Retries a few
+# times with a short backoff, then lets the final rm's exit status speak.
+force_rm_rf() {
+    local path="$1" attempt
+    for attempt in 1 2 3 4 5; do
+        if rm -rf "$path" 2>/dev/null && [ ! -e "$path" ]; then
+            return 0
+        fi
+        sleep 1
+    done
+    rm -rf "$path"
+}
+
 # require_e2e — the network gate. Generation that shells real CLIs only runs
 # under SUKIRU_E2E=1 (architecture §9, testing strategy).
 require_e2e() {
@@ -117,20 +132,29 @@ run_skills() {
 }
 
 # run_gh SANDBOX_HOME PROJECT_CWD ARGS... -> gh in a sandbox with GH_TOKEN.
+# gh's config/state (incl. the async-written device-id and update-notifier
+# state) is redirected to a per-invocation throwaway dir so it never lands in
+# the committed fixture's sandbox home; GH_NO_UPDATE_NOTIFIER mutes the
+# background update check that otherwise recreates state AFTER gh exits.
 run_gh() {
     local home="$1" cwd="$2"; shift 2
     if [ -z "${GH_TOKEN:-}" ]; then
         echo "FATAL: GH_TOKEN not set (needed for gh network install)." >&2
         exit 2
     fi
+    local gh_state rc=0
+    gh_state="$(mktemp -d /tmp/sukiru-gh-state.XXXXXX)"
     ( cd "$cwd" && \
-      HOME="$home" GH_TOKEN="$GH_TOKEN" CI=1 \
+      HOME="$home" GH_TOKEN="$GH_TOKEN" CI=1 GH_NO_UPDATE_NOTIFIER=1 \
+      GH_CONFIG_DIR="$gh_state/config" XDG_STATE_HOME="$gh_state/state" \
       "$GH_BIN" "$@" ) \
-      >"$cwd/.gh.out" 2>"$cwd/.gh.err" || {
+      >"$cwd/.gh.out" 2>"$cwd/.gh.err" || rc=$?
+    force_rm_rf "$gh_state"
+    if [ "$rc" -ne 0 ]; then
         echo "gh failed (see $cwd/.gh.err):" >&2
         cat "$cwd/.gh.err" >&2
         return 1
-    }
+    fi
 }
 
 # record_pin DIR -> writes the CLI pin used to generate the fixture.

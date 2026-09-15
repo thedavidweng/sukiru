@@ -1,0 +1,71 @@
+{
+  "findings" : [
+
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "hidden-helper",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/hidden-helper",
+          "contentHash" : "ac387c65409d53776adfeea49ec10a4e37d76694cac14f99d660ade9582b523e",
+          "internal" : true,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/hidden-helper"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "installedAt" : "2026-06-15T23:27:24.742Z",
+          "skillFolderHash" : "2222222222222222222222222222222222222222",
+          "skillPath" : ".agents/skills/hidden-helper/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-15T23:27:24.742Z"
+        }
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "normal",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/normal",
+          "contentHash" : "d95ad340cf5ba15b4cec7938709dfdcf21b36a6ad9ffa098d9373433c3b57f09",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/normal"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "installedAt" : "2026-06-15T23:27:24.742Z",
+          "skillFolderHash" : "1111111111111111111111111111111111111111",
+          "skillPath" : ".agents/skills/normal/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-15T23:27:24.742Z"
+        }
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.agents/skills"
+    }
+  ]
+}
