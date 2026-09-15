@@ -89,9 +89,37 @@ struct HealthView: View {
     private var loadedState: some View {
         VStack(spacing: 0) {
             header
+            if let focus = state.healthFocus {
+                Divider()
+                focusBanner(focus)
+            }
             Divider()
             findingsList
         }
+    }
+
+    // MARK: - skill focus (D16 deep-link target)
+
+    /// Banner shown while the Health surface is focused on one skill by the
+    /// Library "show findings" deep-link (D16).
+    private func focusBanner(_ focus: AppState.HealthFocus) -> some View {
+        HStack(spacing: 8) {
+            AXToken(token: "sukiru.health.focus")
+            Text("Findings for \(focus.skillName)")
+                .font(.callout.weight(.medium))
+            Text(focus.scopeGroup)
+                .font(.caption.monospaced())
+                .foregroundStyle(.tertiary)
+            Spacer()
+            Button {
+                state.clearHealthFocus()
+            } label: {
+                Text("Show All")
+            }
+            .axButtonToken("sukiru.health.showAll")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 
     // MARK: - header
@@ -133,15 +161,21 @@ struct HealthView: View {
 
     @ViewBuilder
     private var findingsList: some View {
-        let findings = state.report?.findings ?? []
+        let findings = state.focusedFindings(state.report?.findings ?? [])
         if findings.isEmpty {
             VStack(spacing: 12) {
                 Image(systemName: "checkmark.seal")
                     .font(.system(size: 36))
                     .foregroundStyle(.green)
-                Text("No findings — library looks healthy")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
+                if state.healthFocus != nil {
+                    Text("No findings implicate this skill")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("No findings — library looks healthy")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {

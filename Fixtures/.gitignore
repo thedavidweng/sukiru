@@ -7,3 +7,10 @@
 
 # Generator scratch / runtime-only states.
 .check-sandbox/
+
+# Capability-probe pollution (library/app-shell.md): running the app or
+# `sukiru-cli capabilities` with SUKIRU_HOME=<fixture> makes the mise-shimmed
+# npx bootstrap node/caches into the fixture HOME. Never commit these.
+**/.local/
+**/.npm/
+**/Library/

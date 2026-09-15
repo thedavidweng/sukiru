@@ -35,6 +35,16 @@ final class AppState: ObservableObject {
         case failed(String)
     }
 
+    /// A Health-surface focus set by the Library deep-link (D16): show only
+    /// the findings that implicate this skill in this scope.
+    struct HealthFocus: Equatable {
+        let skillName: String
+        /// The ownership-bucket workspace id (`user` / `project:<root>`) —
+        /// findings carry either this id or a host workspace id nested under
+        /// it (`host:*` for user scope, `project:<root>#<host>` for project).
+        let scopeGroup: String
+    }
+
     @Published var surface: Surface = .library
     @Published private(set) var scanPhase: ScanPhase = .loading
     @Published private(set) var report: ScanReport?
@@ -49,6 +59,8 @@ final class AppState: ObservableObject {
     @Published var selectedSkillID: String?
     /// Expanded finding rows in Health, surviving surface switches.
     @Published var expandedFindings: Set<String> = []
+    /// Active Health skill focus (D16 deep-link), nil = unfiltered.
+    @Published var healthFocus: HealthFocus?
     /// True while a Health "check now" run is in flight (non-reentrant).
     @Published private(set) var healthCheckRunning = false
 
@@ -172,8 +184,60 @@ final class AppState: ObservableObject {
         return report.skills.first { Self.skillID($0) == selectedSkillID }
     }
 
-    /// Drops selection/disclosure state that no longer resolves after a
-    /// rescan (e.g. the skill's directory was deleted — VAL-CROSS-021).
+    // MARK: - D16 deep-link: Library skill → Health findings
+
+    /// The ownership-bucket workspace id for a skill (`user` /
+    /// `project:<root>`). Matches the invariant that a scope's canonical
+    /// workspace id equals the ownership bucket key.
+    func scopeGroup(for skill: Skill) -> String {
+        switch skill.scope {
+        case .user, .all:
+            return "user"
+        case .project:
+            if let root = projectRoot(of: skill) {
+                return "project:\(root)"
+            }
+            return "project:?"
+        }
+    }
+
+    /// Attributes a project-scope skill to its project root by placement path
+    /// prefix (workspace roots live under the project root).
+    func projectRoot(of skill: Skill) -> String? {
+        projectRoots.first { root in
+            let prefix = root.hasSuffix("/") ? root : root + "/"
+            return skill.placements.contains { $0.path.hasPrefix(prefix) }
+        }
+    }
+
+    /// Navigates to Health showing only the findings that implicate `skill`
+    /// (D16 "show findings" action).
+    func showFindings(for skill: Skill) {
+        healthFocus = HealthFocus(skillName: skill.name, scopeGroup: scopeGroup(for: skill))
+        surface = .health
+    }
+
+    /// Clears the Health skill focus (shows every finding again).
+    func clearHealthFocus() {
+        healthFocus = nil
+    }
+
+    /// Applies the active health focus: findings implicating the focused
+    /// skill in its scope. A finding's workspace id is either the scope group
+    /// itself or a host workspace nested under it.
+    func focusedFindings(_ findings: [Finding]) -> [Finding] {
+        guard let focus = healthFocus else { return findings }
+        return findings.filter { finding in
+            guard finding.skillName == focus.skillName else { return false }
+            let workspaceID = finding.workspaceID
+            if workspaceID == focus.scopeGroup { return true }
+            if focus.scopeGroup == "user" && workspaceID.hasPrefix("host:") { return true }
+            return workspaceID.hasPrefix(focus.scopeGroup + "#")
+        }
+    }
+
+    /// Drops selection/disclosure/focus state that no longer resolves after
+    /// a rescan (e.g. the skill's directory was deleted — VAL-CROSS-021).
     private func pruneSelection(using report: ScanReport) {
         let selectionAlive =
             selectedSkillID.map { id in
@@ -181,6 +245,14 @@ final class AppState: ObservableObject {
             } ?? true
         if !selectionAlive {
             self.selectedSkillID = nil
+        }
+        if let focus = healthFocus {
+            let focusAlive = report.skills.contains { skill in
+                skill.name == focus.skillName && scopeGroup(for: skill) == focus.scopeGroup
+            }
+            if !focusAlive {
+                healthFocus = nil
+            }
         }
         let live = Set(
             report.findings.indices.map { Self.findingID(report.findings[$0], index: $0) })

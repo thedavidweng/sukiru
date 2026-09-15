@@ -99,8 +99,9 @@ struct SettingsView: View {
         }
     }
 
-    private func capabilityRow(token: String, name: LocalizedStringKey, value: String) -> some View
-    {
+    private func capabilityRow(
+        token: String, name: LocalizedStringKey, value: String
+    ) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             AXToken(token: token)
             Text(name)
@@ -114,14 +115,14 @@ struct SettingsView: View {
         .accessibilityElement(children: .contain)
     }
 
-    private func ghSummary(_ gh: CapabilityReport.GitHubCapability) -> String {
-        if gh.available {
+    private func ghSummary(_ ghCapability: CapabilityReport.GitHubCapability) -> String {
+        if ghCapability.available {
             return String(
                 format: String(localized: "capability.available %@"),
-                gh.version ?? "?")
+                ghCapability.version ?? "?")
         }
         let reason: String
-        switch gh.reason {
+        switch ghCapability.reason {
         case .absent: reason = String(localized: "capability.reason.absent")
         case .tooOld: reason = String(localized: "capability.reason.tooOld")
         case .probeFailed: reason = String(localized: "capability.reason.probeFailed")
