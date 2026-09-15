@@ -20,12 +20,13 @@ canary_capture() {
 
 _canary_fingerprint() {
     # Only the paths a mutating skills/gh run could plausibly touch.
+    # BSD find has no -printf; stat -f is the macOS spelling (same approach as
+    # generate-hash-parity.sh's canary_fp). Tolerate perms errors quietly.
     local p
     for p in "$REAL_HOME/.agents" "$REAL_HOME/.claude" "$REAL_HOME/.codex" \
              "$REAL_HOME/.config/agents"; do
         if [ -e "$p" ]; then
-            # -print with %m mtime; tolerate perms errors quietly.
-            find "$p" -maxdepth 3 -printf '%p|%s|%T@\n' 2>/dev/null
+            find "$p" -maxdepth 3 -exec stat -f '%N|%z|%m' {} \; 2>/dev/null
         fi
     done | LC_ALL=C sort | shasum | awk '{print $1}'
 }
@@ -77,13 +78,37 @@ EOF
 NPX_BIN="$(command -v npx || true)"
 GH_BIN="$(command -v gh || true)"
 
+# Real node + npx-cli.js, resolved lazily (same trick as
+# generate-hash-parity.sh): under a sandbox HOME the mise shims would
+# bootstrap a whole Node toolchain into the sandbox (hundreds of MB), so
+# run_skills bypasses the shim and invokes npx-cli.js with the real node.
+REAL_NODE=""
+NPX_CLI=""
+resolve_real_node() {
+    [ -n "$NPX_CLI" ] && return 0
+    REAL_NODE="$(HOME="$REAL_HOME" mise which node 2>/dev/null || true)"
+    if [ -n "$REAL_NODE" ]; then
+        local candidate
+        candidate="$(cd "$(dirname "$REAL_NODE")/../lib/node_modules/npm/bin" 2>/dev/null && pwd)/npx-cli.js"
+        [ -f "$candidate" ] && NPX_CLI="$candidate"
+    fi
+}
+
 # run_skills SANDBOX_HOME PROJECT_CWD ARGS... -> pinned skills CLI in a sandbox.
 # stdout/stderr go to files (npx --json truncates at 64 KiB on a pipe).
 run_skills() {
     local home="$1" cwd="$2"; shift 2
+    resolve_real_node
+    local -a cmd
+    if [ -n "$NPX_CLI" ]; then
+        cmd=("$REAL_NODE" "$NPX_CLI" -y "$SKILLS_PIN")
+    else
+        # Fall back to the PATH npx when no mise-managed node exists.
+        cmd=("$NPX_BIN" -y "$SKILLS_PIN")
+    fi
     ( cd "$cwd" && \
       HOME="$home" CI=1 SKILLS_TELEMETRY=0 \
-      "$NPX_BIN" -y "$SKILLS_PIN" "$@" ) \
+      "${cmd[@]}" "$@" ) \
       >"$cwd/.skills.out" 2>"$cwd/.skills.err" || {
         echo "skills CLI failed (see $cwd/.skills.err):" >&2
         cat "$cwd/.skills.err" >&2

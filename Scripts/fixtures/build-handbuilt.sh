@@ -76,6 +76,25 @@ note() {
     cat >"$1/EXPECTATION.md"
 }
 
+# reset_pw_fixture NAME -> wipes/recreates Fixtures/NAME with the two-part
+# project-scope layout (.home = fake HOME, proj = a project root scanned via
+# SUKIRU_ROOTS), echoes the fixture dir. Mirrors the CM-*/hash-parity layout
+# so the smoke test picks up both scopes automatically.
+reset_pw_fixture() {
+    local dir; dir="$(reset_fixture "$1")"
+    mkdir -p "$dir/.home" "$dir/proj"
+    printf '%s' "$dir"
+}
+
+# skill_md_hash DIR -> the upstream computedHash of a SINGLE-FILE skill dir
+# (SKILL.md only, no subdirs): SHA-256 over utf8("SKILL.md") concatenated with
+# the file bytes, no separators. With one file the ICU ordering is trivial, so
+# this matches ContentHasher and the pinned CLI exactly for this file set.
+# Use it to write project v1 lock entries whose computedHash matches disk.
+skill_md_hash() {
+    ( printf '%s' 'SKILL.md'; cat "$1/SKILL.md" ) | shasum -a 256 | awk '{print $1}'
+}
+
 # =====================================================================
 # FIX-EMPTY — nothing at all.
 # =====================================================================
@@ -742,6 +761,573 @@ ownership=vercel, ambiguous=false, with 2 placements (canonical directory + one
 symlink sharing the canonical path). The only finding permitted is the
 info-severity alias duplicate; NO actionable findings (no divergence, no drift,
 no double-booking).
+EOF
+
+# =====================================================================
+# scope-isolation — the same skill name in user scope and one project root,
+# plus one finding-generating defect per scope (VAL-SCAN-005/007).
+# =====================================================================
+d="$(reset_pw_fixture scope-isolation)"
+skill "$d/.home/.agents/skills/shared-skill" "shared-skill" "User-scope copy of the shared name."
+skill "$d/.home/.agents/skills/user-orphan" "user-orphan" "Ownerless user-scope defect (files-without-lock)."
+skill "$d/proj/.agents/skills/shared-skill" "shared-skill" "Project-scope copy of the shared name."
+skill "$d/proj/.agents/skills/proj-orphan" "proj-orphan" "Ownerless project-scope defect (files-without-lock)."
+shared_hash="$(skill_md_hash "$d/proj/.agents/skills/shared-skill")"
+cat >"$d/.home/.agents/.skill-lock.json" <<'EOF'
+{
+  "version": 3,
+  "skills": {
+    "shared-skill": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/shared-skill/SKILL.md",
+      "skillFolderHash": "8888888888888888888888888888888888888888",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}
+EOF
+cat >"$d/proj/skills-lock.json" <<EOF
+{
+  "version": 1,
+  "skills": {
+    "shared-skill": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/shared-skill/SKILL.md",
+      "computedHash": "$shared_hash"
+    }
+  }
+}
+EOF
+note "$d" <<'EOF'
+# scope-isolation — expectation (VAL-SCAN-005 / VAL-SCAN-007)
+
+Contents: the name `shared-skill` installed TWICE — user scope
+(`.home/.agents/skills/shared-skill`, claimed by the global v3 lock) and project
+scope (`proj/.agents/skills/shared-skill`, claimed by the project v1 lock whose
+computedHash matches disk). Plus ONE finding-generating defect per scope:
+`user-orphan` (ownerless, user scope) and `proj-orphan` (ownerless, project
+scope), each raising `files-without-lock` in ITS OWN scope only.
+
+Scan with SUKIRU_HOME=<this>/.home, SUKIRU_ROOTS=<this>/proj.
+
+A correct scan MUST:
+- exit 0;
+- tag every workspace/placement/finding with an unambiguous scope;
+- resolve `shared-skill` ownership per scope: vercel in BOTH, but the user-scope
+  resolution MUST come from the global lock only and the project-scope one from
+  the project lock only (no cross-scope ledger bleed);
+- keep the `user-orphan` finding out of every project-scope workspace section
+  and the `proj-orphan` finding out of every user-scope section;
+- with `--scope user` report ONLY user-scope items, with `--scope project` ONLY
+  project-scope items, and with `--scope all` exactly the union;
+- NOT flag `shared-skill` as ambiguous (one placement per scope; the ambiguity
+  rule is per-scope, D1).
+EOF
+
+# =====================================================================
+# multi-host-inventory — several host global dirs + one project root, a
+# distinct skill in each (VAL-SCAN-006).
+# =====================================================================
+d="$(reset_pw_fixture multi-host-inventory)"
+mkdir -p "$d/.home/.claude" "$d/.home/.codex"
+: >"$d/.home/.claude/config.json"; : >"$d/.home/.codex/config.json"
+skill "$d/.home/.agents/skills/canon-tool" "canon-tool" "Lives in the user canonical store."
+skill "$d/.home/.claude/skills/claude-tool" "claude-tool" "Visible to claude-code only."
+skill "$d/.home/.codex/skills/codex-tool" "codex-tool" "Visible to codex only."
+skill "$d/proj/.agents/skills/proj-canon" "proj-canon" "Project canonical store skill."
+skill "$d/proj/.claude/skills/proj-claude" "proj-claude" "Project claude-code host skill."
+note "$d" <<'EOF'
+# multi-host-inventory — expectation (VAL-SCAN-006)
+
+Contents (placement manifest — five distinct skills, one placement each):
+- user scope: `.home/.agents/skills/canon-tool` (canonical store),
+  `.home/.claude/skills/claude-tool` (claude-code host, detected via
+  config.json), `.home/.codex/skills/codex-tool` (codex host, detected via
+  config.json);
+- project scope (`proj/`): `.agents/skills/proj-canon` (canonical),
+  `.claude/skills/proj-claude` (claude-code project dir).
+
+Scan with SUKIRU_HOME=<this>/.home, SUKIRU_ROOTS=<this>/proj.
+
+A correct scan MUST exit 0 and report EXACTLY these five placements — no
+missing, no extra — each with correct workspace attribution, placement kind
+(directory), and the skill name parsed from SKILL.md. All five are ownerless,
+so `files-without-lock` findings are expected; they do not affect the
+placement-set assertion.
+EOF
+
+# =====================================================================
+# ignore-list — noise containers with valid-looking SKILL.md files inside must
+# never become placements (VAL-SCAN-011).
+# =====================================================================
+d="$(reset_fixture ignore-list)"
+skill "$d/.agents/skills/real-skill" "real-skill" "The one true skill amid the noise dirs."
+for noise in node_modules __pycache__ .archive .hidden-junk; do
+    skill "$d/.agents/skills/$noise" "noise" "A valid-looking SKILL.md inside an ignored container."
+done
+mkdir -p "$d/.agents/skills/dist" "$d/.agents/skills/build"
+echo "bundled output" >"$d/.agents/skills/dist/bundle.js"
+echo "object file" >"$d/.agents/skills/build/app.o"
+# git itself refuses to track any path containing a `.git` component, so this
+# noise dir exists only in generator output (same caveat as hash-parity's
+# inner .git); the checked-in tree simply lacks it.
+skill "$d/.agents/skills/.git" "noise" "A valid-looking SKILL.md inside a .git dir."
+note "$d" <<'EOF'
+# ignore-list — expectation (VAL-SCAN-011)
+
+Contents: `.agents/skills/` holds ONE real skill (`real-skill`) plus noise
+containers that must never become placements: `node_modules/`, `__pycache__/`,
+`.archive/`, and an unknown dot-dir `.hidden-junk/` (each carrying a
+valid-looking SKILL.md), `dist/` and `build/` (non-skill files), and — in
+generator output only — `.git/` (git refuses to track a `.git` path component,
+so the checked-in tree lacks it; the assertion is unchanged either way).
+
+A correct scan MUST exit 0 and inventory EXACTLY ONE placement: `real-skill`.
+No ignored container may surface as a placement or skill.
+EOF
+
+# =====================================================================
+# own-vercel — lock entry, no gh frontmatter (VAL-SCAN-015/019). One skill per
+# scope so both scope-correct hash keys are exercised.
+# =====================================================================
+d="$(reset_pw_fixture own-vercel)"
+skill "$d/.home/.agents/skills/global-tool" "global-tool" "Vercel-owned via the global v3 lock."
+skill "$d/proj/.agents/skills/proj-tool" "proj-tool" "Vercel-owned via the project v1 lock."
+proj_hash="$(skill_md_hash "$d/proj/.agents/skills/proj-tool")"
+cat >"$d/.home/.agents/.skill-lock.json" <<'EOF'
+{
+  "version": 3,
+  "skills": {
+    "global-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "ref": "refs/heads/main",
+      "skillPath": ".agents/skills/global-tool/SKILL.md",
+      "skillFolderHash": "9999999999999999999999999999999999999999",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}
+EOF
+cat >"$d/proj/skills-lock.json" <<EOF
+{
+  "version": 1,
+  "skills": {
+    "proj-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "ref": "refs/heads/main",
+      "skillPath": ".agents/skills/proj-tool/SKILL.md",
+      "computedHash": "$proj_hash"
+    }
+  }
+}
+EOF
+note "$d" <<'EOF'
+# own-vercel — expectation (VAL-SCAN-015 / VAL-SCAN-019)
+
+Contents: two skills with lock entries and NO github frontmatter.
+`global-tool` (user scope, global v3 lock) and `proj-tool` (project scope,
+project v1 lock whose computedHash matches disk).
+
+Scan with SUKIRU_HOME=<this>/.home, SUKIRU_ROOTS=<this>/proj.
+
+A correct scan MUST:
+- exit 0 and resolve ownership=vercel for BOTH skills;
+- surface per entry: source, sourceType, sourceUrl, ref, skillPath, and the
+  stored hash — mechanically, the PROJECT entry exposes `computedHash` and MUST
+  NOT expose `skillFolderHash`, the GLOBAL entry exposes `skillFolderHash` and
+  MUST NOT expose `computedHash`; all values byte-equal to the fixture locks;
+- emit NO vercel-lock-drift (the project entry matches disk) and NO
+  double-booked / files-without-lock findings.
+EOF
+
+# =====================================================================
+# own-github — metadata.github-repo, no lock entry; one pinned + one unpinned
+# placement (VAL-SCAN-015/020).
+# =====================================================================
+d="$(reset_fixture own-github)"
+mkdir -p "$d/.claude"; : >"$d/.claude/config.json"
+gh_skill "$d/.claude/skills/pinned-tool" "pinned-tool" "A pinned gh-owned skill." \
+    "https://github.com/thedavidweng/skills.git" "tools/pinned-tool/SKILL.md" \
+    "refs/heads/main" "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" "pinned"
+gh_skill "$d/.claude/skills/unpinned-tool" "unpinned-tool" "An unpinned gh-owned skill." \
+    "https://github.com/thedavidweng/skills" "tools/unpinned-tool/SKILL.md" \
+    "refs/heads/main" "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+note "$d" <<'EOF'
+# own-github — expectation (VAL-SCAN-015 / VAL-SCAN-020)
+
+Contents: two gh-owned skills in the claude-code host dir (detected via
+config.json), NO lock file anywhere. `pinned-tool` carries
+`metadata.github-pinned: true` and a repo URL stored WITH its `.git` suffix;
+`unpinned-tool` OMITS the `github-pinned` key entirely.
+
+A correct scan MUST:
+- exit 0 and resolve ownership=github for both;
+- surface per placement: github-repo (the stored value preserved as-is,
+  including the `.git` suffix on pinned-tool), github-path, github-ref (the
+  FULL ref `refs/heads/main`, never truncated to a bare branch name), and
+  github-tree-sha;
+- report pinned-tool as pinned and unpinned-tool as unpinned (an ABSENT
+  github-pinned key means unpinned, never pinned);
+- emit NO files-without-lock (gh provenance satisfies the ledger requirement)
+  and NO vercel findings; a `dangerous-removal-surface` advisory per gh-owned
+  skill is expected (VAL-SCAN-030).
+EOF
+
+# =====================================================================
+# own-double — lock entry AND metadata.github-repo on the same name
+# (VAL-SCAN-016).
+# =====================================================================
+d="$(reset_fixture own-double)"
+gh_skill "$d/.agents/skills/double-tool" "double-tool" "Claimed by both ledgers." \
+    "https://github.com/thedavidweng/skills" "tools/double-tool/SKILL.md" \
+    "refs/heads/main" "cccccccccccccccccccccccccccccccccccccccc"
+cat >"$d/.agents/.skill-lock.json" <<'EOF'
+{
+  "version": 3,
+  "skills": {
+    "double-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/double-tool/SKILL.md",
+      "skillFolderHash": "dddddddddddddddddddddddddddddddddddddddd",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}
+EOF
+note "$d" <<'EOF'
+# own-double — expectation (VAL-SCAN-016)
+
+Contents: `double-tool` is present in the global v3 lock AND carries
+`metadata.github-repo` frontmatter — both ledgers claim the same name.
+
+A correct scan MUST exit 0, resolve ownership=double-booked, and emit a
+`double-booked` finding whose evidence references BOTH sides: the lock (lock
+path + entry key) and the frontmatter provenance (SKILL.md path + github-repo
+value). One-sided evidence or single-ledger ownership is a fail.
+EOF
+
+# =====================================================================
+# prov-cross-ws — the same logical skill in two workspaces with byte-identical
+# provenance (VAL-SCAN-021).
+# =====================================================================
+d="$(reset_pw_fixture prov-cross-ws)"
+mkdir -p "$d/.home/.claude"; : >"$d/.home/.claude/config.json"
+gh_skill "$d/.home/.claude/skills/shared" "shared" "Same logical skill in two workspaces." \
+    "https://github.com/thedavidweng/skills" "tools/shared/SKILL.md" \
+    "refs/heads/main" "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" "pinned"
+gh_skill "$d/proj/.claude/skills/shared" "shared" "Same logical skill in two workspaces." \
+    "https://github.com/thedavidweng/skills" "tools/shared/SKILL.md" \
+    "refs/heads/main" "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" "pinned"
+note "$d" <<'EOF'
+# prov-cross-ws — expectation (VAL-SCAN-021)
+
+Contents: the same logical skill `shared` installed by gh into TWO workspaces —
+the user-scope claude-code host dir (`.home/.claude/skills/shared`) and a
+project-scope claude-code dir (`proj/.claude/skills/shared`). Both copies carry
+BYTE-IDENTICAL frontmatter, hence identical github provenance (repo, path,
+ref=refs/heads/main, tree-sha, pinned=true). No lock files anywhere.
+
+Scan with SUKIRU_HOME=<this>/.home, SUKIRU_ROOTS=<this>/proj.
+
+A correct scan MUST exit 0 and report the github provenance of `shared`
+BYTE-EQUAL in every workspace context in which the skill appears. (One
+placement per scope, so no ambiguity; gh-owned, so a
+dangerous-removal-surface advisory per workspace is expected.)
+EOF
+
+# =====================================================================
+# lock-unknown-fields — extra unknown keys on entries and at top level must be
+# preserved and surfaced, never dropped (VAL-SCAN-022).
+# =====================================================================
+d="$(reset_fixture lock-unknown-fields)"
+skill "$d/.agents/skills/known-tool" "known-tool" "Locked, with unknown keys around the entry."
+cat >"$d/.agents/.skill-lock.json" <<'EOF'
+{
+  "version": 3,
+  "skills": {
+    "known-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/known-tool/SKILL.md",
+      "skillFolderHash": "ffffffffffffffffffffffffffffffffffffffff",
+      "channel": "beta",
+      "priority": 7,
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {},
+  "futureTopLevelKey": "preserved",
+  "experimental": {"flag": true}
+}
+EOF
+note "$d" <<'EOF'
+# lock-unknown-fields — expectation (VAL-SCAN-022)
+
+Contents: a SUPPORTED (v3) global lock whose `known-tool` entry carries extra
+unknown keys (`channel: "beta"`, `priority: 7`) and whose top level carries
+unknown keys (`futureTopLevelKey`, an `experimental` object).
+
+A correct scan MUST exit 0, use the entry normally (ownership=vercel), and
+surface the unknown keys with their ORIGINAL values in the report's
+entry/top-level extras — never drop them, never error on them.
+EOF
+
+# =====================================================================
+# lock-drift — project lock computedHash stale after an out-of-band edit, plus
+# a global-scope control proving drift detection is project-only
+# (VAL-SCAN-027).
+# =====================================================================
+d="$(reset_pw_fixture lock-drift)"
+skill "$d/proj/.agents/skills/drifted" "drifted" "Original content, as installed."
+stale_hash="$(skill_md_hash "$d/proj/.agents/skills/drifted")"
+skill "$d/proj/.agents/skills/drifted" "drifted" "Edited out-of-band AFTER install; the lock computedHash is now stale."
+skill "$d/.home/.agents/skills/global-ctl" "global-ctl" "Global control; its tree SHA is never recomputed."
+cat >"$d/.home/.agents/.skill-lock.json" <<'EOF'
+{
+  "version": 3,
+  "skills": {
+    "global-ctl": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/global-ctl/SKILL.md",
+      "skillFolderHash": "0000000000000000000000000000000000000000",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}
+EOF
+cat >"$d/proj/skills-lock.json" <<EOF
+{
+  "version": 1,
+  "skills": {
+    "drifted": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/drifted/SKILL.md",
+      "computedHash": "$stale_hash"
+    }
+  }
+}
+EOF
+note "$d" <<'EOF'
+# lock-drift — expectation (VAL-SCAN-027)
+
+Contents: project scope (`proj/`) holds `drifted`, whose SKILL.md was edited
+out-of-band AFTER the v1 lock entry was written — the lock's computedHash is
+the hash of the ORIGINAL content, so it no longer matches disk. User scope
+holds `global-ctl` under a global v3 lock whose skillFolderHash (a git tree
+SHA) also disagrees with disk — but global hashes are never recomputed, so
+that disagreement is by-design silent.
+
+Scan with SUKIRU_HOME=<this>/.home, SUKIRU_ROOTS=<this>/proj.
+
+A correct scan MUST exit 0 and emit a `vercel-lock-drift` finding for
+`drifted` whose evidence names the lock path, the entry key, the stored
+(expected) hash, and the recomputed (actual) hash. It MUST emit ZERO drift
+findings for the global-scope entry.
+EOF
+
+# =====================================================================
+# divergence-canonical — canonical vs host copy hash mismatch under one source
+# identity (collision-matrix scenario-3 shape, VAL-SCAN-029).
+# =====================================================================
+d="$(reset_pw_fixture divergence-canonical)"
+skill "$d/proj/.agents/skills/web-tool" "web-tool" "Canonical copy, untouched since install."
+skill "$d/proj/.claude/skills/web-tool" "web-tool" "Canonical copy, untouched since install."
+skill "$d/proj/.claude/skills/web-tool" "web-tool" "Overwritten out-of-band; content now diverges from the canonical copy."
+canon_hash="$(skill_md_hash "$d/proj/.agents/skills/web-tool")"
+: >"$d/.home/.gitkeep"
+cat >"$d/proj/skills-lock.json" <<EOF
+{
+  "version": 1,
+  "skills": {
+    "web-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/web-tool/SKILL.md",
+      "computedHash": "$canon_hash"
+    }
+  }
+}
+EOF
+note "$d" <<'EOF'
+# divergence-canonical — expectation (VAL-SCAN-029)
+
+Contents: a copy-mode install in `proj/` — canonical `.agents/skills/web-tool`
+plus host copy `.claude/skills/web-tool`, both under ONE v1 lock source
+identity. After install, the HOST COPY was overwritten out-of-band, so the two
+placements hash differently; the lock's computedHash still matches the
+canonical copy.
+
+Scan with SUKIRU_HOME=<this>/.home, SUKIRU_ROOTS=<this>/proj.
+
+A correct scan MUST exit 0 and emit a `canonical-host-divergence` finding
+naming both placement paths, the shared source identity, and BOTH content
+hashes. (A divergent-subtype cross-host-duplicate finding for the same pair is
+also legitimate; the assertion targets canonical-host-divergence.)
+EOF
+
+# =====================================================================
+# lock-version-old — project lock version 0, below the supported v1
+# (VAL-SCAN-031).
+# =====================================================================
+d="$(reset_pw_fixture lock-version-old)"
+skill "$d/proj/.agents/skills/old-tool" "old-tool" "Claimed by a version-0 lock that must not be used."
+: >"$d/.home/.gitkeep"
+cat >"$d/proj/skills-lock.json" <<'EOF'
+{
+  "version": 0,
+  "skills": {
+    "old-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/old-tool/SKILL.md",
+      "computedHash": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  }
+}
+EOF
+note "$d" <<'EOF'
+# lock-version-old — expectation (VAL-SCAN-031)
+
+Contents: `proj/skills-lock.json` has `version: 0`, BELOW the supported
+project-lock v1, with an entry claiming the on-disk `old-tool`.
+
+Scan with SUKIRU_HOME=<this>/.home, SUKIRU_ROOTS=<this>/proj.
+
+A correct scan MUST exit 0, report an incompatible-lock issue (found version 0,
+supported 1), and NOT use the stale entries: `old-tool` resolves ownership from
+disk/frontmatter alone (ownerless here, so a `files-without-lock` finding is
+expected). Silent acceptance of the old lock is a fail.
+EOF
+
+# =====================================================================
+# lock-malformed — truncated/invalid lock JSON is an issue, never fatal
+# (VAL-SCAN-032).
+# =====================================================================
+d="$(reset_fixture lock-malformed)"
+skill "$d/.agents/skills/survivor" "survivor" "Healthy skill; its scope's lock is truncated JSON."
+printf '{ "version": 3, "skills": { "survivor": { "source":' >"$d/.agents/.skill-lock.json"
+note "$d" <<'EOF'
+# lock-malformed — expectation (VAL-SCAN-032)
+
+Contents: `.agents/.skill-lock.json` is TRUNCATED, invalid JSON; one healthy
+skill `survivor` sits alongside.
+
+A correct scan MUST exit 0, report a `ledger-unreadable` issue naming the lock
+path, treat the scope as having NO lock entries, and still inventory `survivor`
+(ownership resolved from disk/frontmatter alone → ownerless, so a
+`files-without-lock` finding is expected). A crash, non-zero exit, or dropped
+placement is a fail.
+
+(FIX-GARBAGE plants the same defect amid other garbage; this tree isolates it.)
+EOF
+
+# =====================================================================
+# clean-copy-mode — stock npx copy-mode layout: canonical + physical host copy,
+# v1 project lock matching disk. Yields ONLY the warning-level exact-duplicate
+# finding (per D3 a stock copy-mode layout is NOT the zero-findings baseline).
+# =====================================================================
+d="$(reset_pw_fixture clean-copy-mode)"
+skill "$d/proj/.agents/skills/web-tool" "web-tool" "Installed by npx copy mode."
+skill "$d/proj/.claude/skills/web-tool" "web-tool" "Installed by npx copy mode."
+copy_hash="$(skill_md_hash "$d/proj/.agents/skills/web-tool")"
+: >"$d/.home/.gitkeep"
+cat >"$d/proj/skills-lock.json" <<EOF
+{
+  "version": 1,
+  "skills": {
+    "web-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/web-tool/SKILL.md",
+      "computedHash": "$copy_hash"
+    }
+  }
+}
+EOF
+note "$d" <<'EOF'
+# clean-copy-mode — expectation (VAL-SCAN-001 tree; D3 caveat)
+
+Contents: the stock `npx skills add --copy` layout in `proj/` — canonical
+`.agents/skills/web-tool` plus a byte-identical physical copy at
+`.claude/skills/web-tool`, with a v1 project lock whose computedHash matches
+disk.
+
+Scan with SUKIRU_HOME=<this>/.home, SUKIRU_ROOTS=<this>/proj.
+
+A correct scan MUST exit 0 with valid JSON (this is the VAL-SCAN-001
+well-formed tree), show ownership=vercel, surface the lock provenance fields,
+and emit the warning-level exact-subtype cross-host-duplicate finding that a
+stock copy-mode layout legitimately produces (per D3 it is therefore NOT the
+zero-findings baseline — that is FIX-CLEAN). NO drift, NO double-booked, NO
+files-without-lock findings.
+EOF
+
+# =====================================================================
+# impostor-copy — the managed layout implies a symlink into the canonical
+# store, but the host path is a physical copy (VAL-SCAN-026).
+# =====================================================================
+d="$(reset_fixture impostor-copy)"
+mkdir -p "$d/.claude"; : >"$d/.claude/config.json"
+skill "$d/.agents/skills/tool" "tool" "Canonical copy in the managed store."
+skill "$d/.claude/skills/tool" "tool" "Canonical copy in the managed store."
+cat >"$d/.agents/.skill-lock.json" <<'EOF'
+{
+  "version": 3,
+  "skills": {
+    "tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/tool/SKILL.md",
+      "skillFolderHash": "1212121212121212121212121212121212121212",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}
+EOF
+note "$d" <<'EOF'
+# impostor-copy — expectation (VAL-SCAN-026)
+
+Contents: `tool` exists in the canonical store (`.agents/skills/tool`, claimed
+by the global v3 lock) AND in the claude-code host dir — but
+`.claude/skills/tool` is a REAL DIRECTORY (a physical copy, byte-identical
+content) where the managed canonical-store layout implies a symlink into the
+store. A double-copied impostor.
+
+A correct scan MUST exit 0 and emit a `symlink-authenticity` finding
+identifying the impostor path (`.claude/skills/tool`) and the canonical path it
+should link to (`.agents/skills/tool`). Accepting the copy silently as a
+normal placement is a fail. (An exact-subtype cross-host-duplicate finding for
+the pair is also legitimate; the assertion targets symlink-authenticity.)
 EOF
 
 echo "Hand-built fixtures rebuilt under: $FIX"

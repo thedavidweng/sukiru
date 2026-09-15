@@ -39,6 +39,24 @@ struct FixtureCorpusTests {
         FIX-FILES-NO-LOCK
         FIX-AMBIGUOUS
         alias-link-mode
+        clean-copy-mode
+        divergence-canonical
+        empty-marker
+        hash-parity
+        ignore-list
+        impostor-copy
+        leftover-dsstore
+        leftover-spray
+        lock-drift
+        lock-malformed
+        lock-unknown-fields
+        lock-version-old
+        multi-host-inventory
+        own-double
+        own-github
+        own-vercel
+        prov-cross-ws
+        scope-isolation
         symlink-mode
         skillmd-invalid-a
         skillmd-invalid-b

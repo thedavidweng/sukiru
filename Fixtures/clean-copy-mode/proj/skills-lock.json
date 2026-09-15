@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "skills": {
+    "web-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/web-tool/SKILL.md",
+      "computedHash": "b829df7f2b0820c26c54880a130538eb9fa06cc61c9f2549fc3f28350c7b6a68"
+    }
+  }
+}

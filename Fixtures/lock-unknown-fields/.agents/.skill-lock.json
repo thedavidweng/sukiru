@@ -1,0 +1,19 @@
+{
+  "version": 3,
+  "skills": {
+    "known-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/known-tool/SKILL.md",
+      "skillFolderHash": "ffffffffffffffffffffffffffffffffffffffff",
+      "channel": "beta",
+      "priority": 7,
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {},
+  "futureTopLevelKey": "preserved",
+  "experimental": {"flag": true}
+}
