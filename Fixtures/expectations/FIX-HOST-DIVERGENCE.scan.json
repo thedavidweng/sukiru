@@ -1,0 +1,145 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/proj/.agents/skills/web-tool",
+          "kind" : "canonicalPath"
+        },
+        {
+          "detail" : "<FIXTURE>/proj/.claude/skills/web-tool",
+          "kind" : "hostPath"
+        },
+        {
+          "detail" : "thedavidweng/skills|github|.agents/skills/web-tool/SKILL.md|",
+          "kind" : "sourceIdentity"
+        },
+        {
+          "detail" : "569960910ec07b07c8b55c0ec48683f2aec995752ff577e036d4078f54eb6737",
+          "kind" : "contentHash"
+        },
+        {
+          "detail" : "863535a31b1f4431e775e8f3925c750ea59ced3faba92b3ad125e14a55879374",
+          "kind" : "contentHash"
+        }
+      ],
+      "ruleID" : "canonical-host-divergence",
+      "severity" : "action",
+      "skillName" : "web-tool",
+      "workspaceID" : "project:<FIXTURE>/proj"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "divergent",
+          "kind" : "subtype"
+        },
+        {
+          "detail" : "<FIXTURE>/proj/.agents/skills/web-tool",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/proj/.claude/skills/web-tool",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "569960910ec07b07c8b55c0ec48683f2aec995752ff577e036d4078f54eb6737",
+          "kind" : "contentHash"
+        },
+        {
+          "detail" : "863535a31b1f4431e775e8f3925c750ea59ced3faba92b3ad125e14a55879374",
+          "kind" : "contentHash"
+        }
+      ],
+      "ruleID" : "cross-host-duplicate",
+      "severity" : "warning",
+      "skillName" : "web-tool",
+      "workspaceID" : "project:<FIXTURE>/proj"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/proj/skills-lock.json",
+          "kind" : "lockPath"
+        },
+        {
+          "detail" : "web-tool",
+          "kind" : "entryKey"
+        },
+        {
+          "detail" : "<FIXTURE>/proj/.claude/skills/web-tool",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "569960910ec07b07c8b55c0ec48683f2aec995752ff577e036d4078f54eb6737",
+          "kind" : "expectedHash"
+        },
+        {
+          "detail" : "863535a31b1f4431e775e8f3925c750ea59ced3faba92b3ad125e14a55879374",
+          "kind" : "actualHash"
+        }
+      ],
+      "ruleID" : "vercel-lock-drift",
+      "severity" : "action",
+      "skillName" : "web-tool",
+      "workspaceID" : "project:<FIXTURE>/proj"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "web-tool",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/proj/.agents/skills/web-tool",
+          "contentHash" : "569960910ec07b07c8b55c0ec48683f2aec995752ff577e036d4078f54eb6737",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/proj/.agents/skills/web-tool"
+        },
+        {
+          "canonicalPath" : "<FIXTURE>/proj/.claude/skills/web-tool",
+          "contentHash" : "863535a31b1f4431e775e8f3925c750ea59ced3faba92b3ad125e14a55879374",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/proj/.claude/skills/web-tool"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "computedHash" : "569960910ec07b07c8b55c0ec48683f2aec995752ff577e036d4078f54eb6737",
+          "skillPath" : ".agents/skills/web-tool/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git"
+        }
+      },
+      "scope" : "project"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.home/.agents/skills"
+    },
+    {
+      "id" : "project:<FIXTURE>/proj",
+      "installed" : true,
+      "kind" : "project",
+      "root" : "<FIXTURE>/proj/.agents/skills"
+    },
+    {
+      "id" : "project:<FIXTURE>/proj#claude-code",
+      "installed" : true,
+      "kind" : "project",
+      "root" : "<FIXTURE>/proj/.claude/skills"
+    }
+  ]
+}

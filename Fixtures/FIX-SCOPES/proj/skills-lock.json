@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "skills": {
+    "shared-name": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/shared-name/SKILL.md",
+      "computedHash": "1b9175cbc38c77fcd7bc2f362d0497896f88c7b8295570d4587b114af6f79ff0"
+    },
+    "proj-only": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/proj-only/SKILL.md",
+      "computedHash": "1f49cce395e2b773c4e2b96ead9d61183f16ad0f0e6d6861c7adfa3f9be566cf"
+    }
+  }
+}

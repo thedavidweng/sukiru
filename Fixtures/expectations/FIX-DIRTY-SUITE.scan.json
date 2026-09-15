@@ -1,0 +1,279 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.home/.claude/skills/rotted-link",
+          "kind" : "linkPath"
+        },
+        {
+          "detail" : "/nonexistent/rotted-target",
+          "kind" : "linkTarget"
+        }
+      ],
+      "ruleID" : "broken-symlink",
+      "severity" : "action",
+      "skillName" : "rotted-link",
+      "workspaceID" : "host:claude-code"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "proj-orphan",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/proj/.agents/skills/proj-orphan",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "proj-orphan",
+      "workspaceID" : "project:<FIXTURE>/proj"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "gh-owned",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.home/.claude/skills/gh-owned",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "github",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "gh-owned",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "rotted-link",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "rotted-link",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "user-orphan",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.home/.agents/skills/user-orphan",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "user-orphan",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/proj/.agents/skills/proj-orphan",
+          "kind" : "placementPath"
+        }
+      ],
+      "ruleID" : "files-without-lock",
+      "severity" : "info",
+      "skillName" : "proj-orphan",
+      "workspaceID" : "project:<FIXTURE>/proj"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.home/.agents/skills/user-orphan",
+          "kind" : "placementPath"
+        }
+      ],
+      "ruleID" : "files-without-lock",
+      "severity" : "info",
+      "skillName" : "user-orphan",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/proj/skills-lock.json",
+          "kind" : "lockPath"
+        },
+        {
+          "detail" : "drifted",
+          "kind" : "entryKey"
+        },
+        {
+          "detail" : "<FIXTURE>/proj/.agents/skills/drifted",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "083682c0714e41e6b07f71e1d458c870f6ea53c04132d97e12da2736a6f06882",
+          "kind" : "expectedHash"
+        },
+        {
+          "detail" : "a40df215460f7a1b607a3b90bf92aa64e37b7d784a8719051c4c458ec08205ba",
+          "kind" : "actualHash"
+        }
+      ],
+      "ruleID" : "vercel-lock-drift",
+      "severity" : "action",
+      "skillName" : "drifted",
+      "workspaceID" : "project:<FIXTURE>/proj"
+    }
+  ],
+  "issues" : [
+    {
+      "kind" : "broken-symlink",
+      "message" : "broken symlink → /nonexistent/rotted-target",
+      "path" : "<FIXTURE>/.home/.claude/skills/rotted-link"
+    }
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "drifted",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/proj/.agents/skills/drifted",
+          "contentHash" : "a40df215460f7a1b607a3b90bf92aa64e37b7d784a8719051c4c458ec08205ba",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/proj/.agents/skills/drifted"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "computedHash" : "083682c0714e41e6b07f71e1d458c870f6ea53c04132d97e12da2736a6f06882",
+          "skillPath" : ".agents/skills/drifted/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git"
+        }
+      },
+      "scope" : "project"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "gh-owned",
+      "ownership" : "github",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.home/.claude/skills/gh-owned",
+          "contentHash" : "c141e15c48adc097acaa451ed1a97495117d49fb3e7f07413ac4dad58a19d44d",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.home/.claude/skills/gh-owned"
+        }
+      ],
+      "provenance" : {
+        "github" : {
+          "path" : "tools/gh-owned/SKILL.md",
+          "pinned" : false,
+          "ref" : "refs/heads/main",
+          "repo" : "https://github.com/thedavidweng/skills",
+          "treeSha" : "1212121234343434565656567878787890909090"
+        }
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "proj-orphan",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/proj/.agents/skills/proj-orphan",
+          "contentHash" : "6d77fc44d58bad994ae6b6dd2c52867817465829d909136bd4411529d1f02cdf",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/proj/.agents/skills/proj-orphan"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "project"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "rotted-link",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "internal" : false,
+          "kind" : "brokenSymlink",
+          "linkTarget" : "/nonexistent/rotted-target",
+          "path" : "<FIXTURE>/.home/.claude/skills/rotted-link"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "user-orphan",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.home/.agents/skills/user-orphan",
+          "contentHash" : "105c403419bd86f46a04ddf9e62d87cf9d8b4ac4dcde7193585cd00d4841d664",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.home/.agents/skills/user-orphan"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.home/.agents/skills"
+    },
+    {
+      "id" : "host:claude-code",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.home/.claude/skills"
+    },
+    {
+      "id" : "project:<FIXTURE>/proj",
+      "installed" : true,
+      "kind" : "project",
+      "root" : "<FIXTURE>/proj/.agents/skills"
+    }
+  ]
+}

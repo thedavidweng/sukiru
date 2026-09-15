@@ -1,28 +1,818 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "Skill library health check" : {
-      "comment" : "Placeholder subtitle shown on the first-frame window.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "技能库体检"
+  "sourceLanguage": "en",
+  "strings": {
+    "%lld findings": {
+      "comment": "Health summary line: number of findings.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld findings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 项发现"
           }
         }
       }
     },
-    "Sukiru" : {
-      "comment" : "App name shown in the window title and placeholder.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sukiru"
+    "0 findings": {
+      "comment": "Health summary line when the environment is broken (zero findings, explicitly zero).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "0 项发现"
+          }
+        }
+      }
+    },
+    "Add": {
+      "comment": "Folder-picker confirm button for adding a project root.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加"
+          }
+        }
+      }
+    },
+    "Add Folder…": {
+      "comment": "Settings: button that adds a project root via a folder picker.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加文件夹…"
+          }
+        }
+      }
+    },
+    "Ambiguous": {
+      "comment": "Library row badge for an ambiguously claimed skill.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有歧义"
+          }
+        }
+      }
+    },
+    "Capabilities": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "能力"
+          }
+        }
+      }
+    },
+    "Capability probes match `sukiru-cli capabilities` for this environment.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "能力探测结果与该环境下的 `sukiru-cli capabilities` 一致。"
+          }
+        }
+      }
+    },
+    "Check Now": {
+      "comment": "Health surface: runs the health check.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "立即检查"
+          }
+        }
+      }
+    },
+    "Checking library health…": {
+      "comment": "Health surface loading state.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在检查资源库健康…"
+          }
+        }
+      }
+    },
+    "Detecting…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "检测中…"
+          }
+        }
+      }
+    },
+    "Double-booked": {
+      "comment": "Library ownership badge: both installers claim the skill.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重复登记"
+          }
+        }
+      }
+    },
+    "Environment": {
+      "comment": "Settings section title: environment paths.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "环境"
+          }
+        }
+      }
+    },
+    "Environment problem: library root not found": {
+      "comment": "Health surface environment notice (D4).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "环境问题：找不到资源库根目录"
+          }
+        }
+      }
+    },
+    "Every command batch captures a snapshot before it runs; history appears here.": {
+      "comment": "Snapshots placeholder explanation.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每个命令批次运行前都会捕获快照；历史记录将显示于此。"
+          }
+        }
+      }
+    },
+    "GitHub": {
+      "comment": "Library ownership badge: gh ledger owns the skill.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub"
+          }
+        }
+      }
+    },
+    "GitHub gh skill (frontmatter)": {
+      "comment": "Detail provenance: installer line for a gh-claimed skill.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub gh skill（前置元数据）"
+          }
+        }
+      }
+    },
+    "Health": {
+      "comment": "Sidebar surface and menu title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "健康"
+          }
+        }
+      }
+    },
+    "Health check failed": {
+      "comment": "Health surface error state title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "健康检查失败"
+          }
+        }
+      }
+    },
+    "Installer": {
+      "comment": "Detail provenance field label.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装器"
+          }
+        }
+      }
+    },
+    "Internal": {
+      "comment": "Library row badge for a host-internal placement.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内部"
+          }
+        }
+      }
+    },
+    "Library": {
+      "comment": "Sidebar surface and menu title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "资源库"
+          }
+        }
+      }
+    },
+    "Library root": {
+      "comment": "Settings environment field label.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "资源库根目录"
+          }
+        }
+      }
+    },
+    "Library root not found": {
+      "comment": "Library error state title when SUKIRU_HOME does not exist.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找不到资源库根目录"
+          }
+        }
+      }
+    },
+    "Loading library…": {
+      "comment": "Library loading state.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在加载资源库…"
+          }
+        }
+      }
+    },
+    "No findings — library looks healthy": {
+      "comment": "Health surface: clean summary and empty-findings title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无发现——资源库状况良好"
+          }
+        }
+      }
+    },
+    "No ledger claims this skill (ownerless).": {
+      "comment": "Detail provenance for an ownerless skill.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有账本登记此技能（无属主）。"
+          }
+        }
+      }
+    },
+    "No pending changes": {
+      "comment": "Pending Changes placeholder title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有待处理的更改"
+          }
+        }
+      }
+    },
+    "No project roots. Add a folder to scan project-scope skills.": {
+      "comment": "Settings: empty project-roots list explanation.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有项目根目录。添加文件夹以扫描项目范围的技能。"
+          }
+        }
+      }
+    },
+    "No skills found": {
+      "comment": "Library empty state title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未找到技能"
+          }
+        }
+      }
+    },
+    "No snapshots yet": {
+      "comment": "Snapshots placeholder title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没有快照"
+          }
+        }
+      }
+    },
+    "Nothing selected": {
+      "comment": "Empty detail column text.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未选择任何内容"
+          }
+        }
+      }
+    },
+    "Ownerless": {
+      "comment": "Library ownership badge: no ledger claims the skill.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无属主"
+          }
+        }
+      }
+    },
+    "Pending Changes": {
+      "comment": "Sidebar surface and menu title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "待处理更改"
+          }
+        }
+      }
+    },
+    "Pin state": {
+      "comment": "Detail provenance field label for the gh pin state.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "固定状态"
+          }
+        }
+      }
+    },
+    "Pinned": {
+      "comment": "Detail provenance: gh placement is pinned.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已固定"
+          }
+        }
+      }
+    },
+    "Placements": {
+      "comment": "Detail section title: where the skill is placed.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放置位置"
+          }
+        }
+      }
+    },
+    "Project roots": {
+      "comment": "Settings section title for the project-roots list (D20).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "项目根目录"
+          }
+        }
+      }
+    },
+    "Provenance": {
+      "comment": "Detail section title: which installer claims the skill.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "来源"
+          }
+        }
+      }
+    },
+    "Ref": {
+      "comment": "Detail provenance field label: git ref.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "引用"
+          }
+        }
+      }
+    },
+    "Refresh": {
+      "comment": "Re-scan command (View menu and Settings).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷新"
+          }
+        }
+      }
+    },
+    "Remove": {
+      "comment": "Settings: removes one project root.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移除"
+          }
+        }
+      }
+    },
+    "Repairs arrive as reviewable command batches here in a later milestone.": {
+      "comment": "Pending Changes placeholder explanation.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修复将以可审查的命令批次形式在后续里程碑中显示于此。"
+          }
+        }
+      }
+    },
+    "Repository": {
+      "comment": "Detail provenance field label: owner/repo.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仓库"
+          }
+        }
+      }
+    },
+    "Scan failed": {
+      "comment": "Library error state title for a non-fatal-problem failure.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "扫描失败"
+          }
+        }
+      }
+    },
+    "Search": {
+      "comment": "Sidebar surface and menu title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索"
+          }
+        }
+      }
+    },
+    "Search is idle": {
+      "comment": "Search placeholder title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索空闲"
+          }
+        }
+      }
+    },
+    "Select a skill to inspect it": {
+      "comment": "Library detail empty-selection text.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择一个技能以查看详情"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "comment": "Sidebar surface and menu title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置"
+          }
+        }
+      }
+    },
+    "Skill search arrives in a later milestone. Enter a query then to find new skills.": {
+      "comment": "Search placeholder explanation.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "技能搜索将在后续里程碑提供。届时输入关键词即可查找新技能。"
+          }
+        }
+      }
+    },
+    "Snapshots": {
+      "comment": "Sidebar surface and menu title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快照"
+          }
+        }
+      }
+    },
+    "Source": {
+      "comment": "Detail provenance field label: Vercel lock source.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "来源"
+          }
+        }
+      }
+    },
+    "Sukiru": {
+      "comment": "App name shown in the window title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sukiru"
+          }
+        }
+      }
+    },
+    "The library root (SUKIRU_HOME) does not exist. Fix the path and press Refresh, or relaunch with a valid root.": {
+      "comment": "Library error state guidance when SUKIRU_HOME does not exist.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "资源库根目录（SUKIRU_HOME）不存在。请修正路径后按“刷新”，或使用有效的根目录重新启动。"
+          }
+        }
+      }
+    },
+    "These paths come from SUKIRU_HOME/SUKIRU_ROOTS, identical to the CLI. Relaunch to change them.": {
+      "comment": "Settings environment footnote.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这些路径来自 SUKIRU_HOME/SUKIRU_ROOTS，与 CLI 完全一致。重新启动以更改。"
+          }
+        }
+      }
+    },
+    "This library has no skill installations. Install skills with the official CLIs, or add a project root in Settings.": {
+      "comment": "Library empty state explanation.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此资源库中没有已安装的技能。请使用官方 CLI 安装技能，或在“设置”中添加项目根目录。"
+          }
+        }
+      }
+    },
+    "Unpinned": {
+      "comment": "Detail provenance: gh placement is unpinned.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未固定"
+          }
+        }
+      }
+    },
+    "User scope": {
+      "comment": "Library section header for user-scope skills.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用户范围"
+          }
+        }
+      }
+    },
+    "Vercel": {
+      "comment": "Library ownership badge: Vercel lock owns the skill.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vercel"
+          }
+        }
+      }
+    },
+    "Vercel skills CLI (lock entry)": {
+      "comment": "Detail provenance: installer line for a lock-claimed skill.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vercel skills CLI（锁定条目）"
+          }
+        }
+      }
+    },
+    "Version": {
+      "comment": "Detail provenance field label.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "版本"
+          }
+        }
+      }
+    },
+    "action": {
+      "comment": "Finding severity tag (D3 vocabulary).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需处理"
+          }
+        }
+      }
+    },
+    "capability.available %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "available (%@)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可用（%@）"
+          }
+        }
+      }
+    },
+    "capability.reason.absent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "not installed"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未安装"
+          }
+        }
+      }
+    },
+    "capability.reason.probeFailed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "gh skill probe failed"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "gh skill 探测失败"
+          }
+        }
+      }
+    },
+    "capability.reason.tooOld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "below 2.90.0"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "低于 2.90.0"
+          }
+        }
+      }
+    },
+    "capability.reason.unresolvable": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "not resolvable"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法解析"
+          }
+        }
+      }
+    },
+    "capability.unavailable %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "unavailable (%@)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不可用（%@）"
+          }
+        }
+      }
+    },
+    "gh CLI": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "gh CLI"
+          }
+        }
+      }
+    },
+    "info": {
+      "comment": "Finding severity tag (D3 vocabulary).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "信息"
+          }
+        }
+      }
+    },
+    "npx skills": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "npx skills"
+          }
+        }
+      }
+    },
+    "warning": {
+      "comment": "Finding severity tag (D3 vocabulary).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "警告"
           }
         }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

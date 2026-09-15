@@ -21,3 +21,5 @@ dist/
 # Retired Rust/Gino artifacts (implementation preserved on archive/rust-gui)
 /target/
 /.gino/
+target/
+.build-clt/

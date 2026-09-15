@@ -1,0 +1,150 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.claude/skills/rotted",
+          "kind" : "linkPath"
+        },
+        {
+          "detail" : "/nonexistent/rotted-target",
+          "kind" : "linkTarget"
+        }
+      ],
+      "ruleID" : "broken-symlink",
+      "severity" : "action",
+      "skillName" : "rotted",
+      "workspaceID" : "host:claude-code"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "exact",
+          "kind" : "subtype"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/tool",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.claude/skills/tool",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "4cf8bdf3ffac340e454b10995851325268c65ff1eacfc76c326faa9abc2e1702",
+          "kind" : "contentHash"
+        }
+      ],
+      "ruleID" : "cross-host-duplicate",
+      "severity" : "warning",
+      "skillName" : "tool",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "rotted",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "rotted",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.claude/skills/tool",
+          "kind" : "impostorPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/tool",
+          "kind" : "canonicalPath"
+        }
+      ],
+      "ruleID" : "symlink-authenticity",
+      "severity" : "warning",
+      "skillName" : "tool",
+      "workspaceID" : "user"
+    }
+  ],
+  "issues" : [
+    {
+      "kind" : "broken-symlink",
+      "message" : "broken symlink → /nonexistent/rotted-target",
+      "path" : "<FIXTURE>/.claude/skills/rotted"
+    }
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "rotted",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "internal" : false,
+          "kind" : "brokenSymlink",
+          "linkTarget" : "/nonexistent/rotted-target",
+          "path" : "<FIXTURE>/.claude/skills/rotted"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "tool",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.agents/skills/tool",
+          "contentHash" : "4cf8bdf3ffac340e454b10995851325268c65ff1eacfc76c326faa9abc2e1702",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.agents/skills/tool"
+        },
+        {
+          "canonicalPath" : "<FIXTURE>/.claude/skills/tool",
+          "contentHash" : "4cf8bdf3ffac340e454b10995851325268c65ff1eacfc76c326faa9abc2e1702",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.claude/skills/tool"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "installedAt" : "2026-06-15T23:27:24.742Z",
+          "skillFolderHash" : "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+          "skillPath" : ".agents/skills/tool/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-15T23:27:24.742Z"
+        }
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.agents/skills"
+    },
+    {
+      "id" : "host:claude-code",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.claude/skills"
+    }
+  ]
+}

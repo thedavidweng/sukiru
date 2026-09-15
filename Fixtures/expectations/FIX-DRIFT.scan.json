@@ -1,0 +1,76 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/proj/skills-lock.json",
+          "kind" : "lockPath"
+        },
+        {
+          "detail" : "drifted",
+          "kind" : "entryKey"
+        },
+        {
+          "detail" : "<FIXTURE>/proj/.agents/skills/drifted",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "083682c0714e41e6b07f71e1d458c870f6ea53c04132d97e12da2736a6f06882",
+          "kind" : "expectedHash"
+        },
+        {
+          "detail" : "780819ec86ce77e775d641fbac3146f6e01e320977c58724b9a5b1772be22970",
+          "kind" : "actualHash"
+        }
+      ],
+      "ruleID" : "vercel-lock-drift",
+      "severity" : "action",
+      "skillName" : "drifted",
+      "workspaceID" : "project:<FIXTURE>/proj"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "drifted",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/proj/.agents/skills/drifted",
+          "contentHash" : "780819ec86ce77e775d641fbac3146f6e01e320977c58724b9a5b1772be22970",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/proj/.agents/skills/drifted"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "computedHash" : "083682c0714e41e6b07f71e1d458c870f6ea53c04132d97e12da2736a6f06882",
+          "skillPath" : ".agents/skills/drifted/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git"
+        }
+      },
+      "scope" : "project"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.home/.agents/skills"
+    },
+    {
+      "id" : "project:<FIXTURE>/proj",
+      "installed" : true,
+      "kind" : "project",
+      "root" : "<FIXTURE>/proj/.agents/skills"
+    }
+  ]
+}

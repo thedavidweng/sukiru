@@ -1,0 +1,125 @@
+{
+  "findings" : [
+
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "proj-only",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/proj/.agents/skills/proj-only",
+          "contentHash" : "1f49cce395e2b773c4e2b96ead9d61183f16ad0f0e6d6861c7adfa3f9be566cf",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/proj/.agents/skills/proj-only"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "computedHash" : "1f49cce395e2b773c4e2b96ead9d61183f16ad0f0e6d6861c7adfa3f9be566cf",
+          "skillPath" : ".agents/skills/proj-only/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git"
+        }
+      },
+      "scope" : "project"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "shared-name",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.home/.agents/skills/shared-name",
+          "contentHash" : "fabdd84325a16fc11e5b6b44548bb333ddd979de81eb5d16d80698217516dfbb",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.home/.agents/skills/shared-name"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "installedAt" : "2026-06-15T23:27:24.742Z",
+          "skillFolderHash" : "c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3",
+          "skillPath" : ".agents/skills/shared-name/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-15T23:27:24.742Z"
+        }
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "shared-name",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/proj/.agents/skills/shared-name",
+          "contentHash" : "1b9175cbc38c77fcd7bc2f362d0497896f88c7b8295570d4587b114af6f79ff0",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/proj/.agents/skills/shared-name"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "computedHash" : "1b9175cbc38c77fcd7bc2f362d0497896f88c7b8295570d4587b114af6f79ff0",
+          "skillPath" : ".agents/skills/shared-name/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git"
+        }
+      },
+      "scope" : "project"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "user-only",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.home/.agents/skills/user-only",
+          "contentHash" : "8282ef816ef6b5582d9e374c56163f1d9d5aa844e1094e07c55b2d5f7b80451a",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.home/.agents/skills/user-only"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "installedAt" : "2026-06-15T23:27:24.742Z",
+          "skillFolderHash" : "d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4",
+          "skillPath" : ".agents/skills/user-only/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-15T23:27:24.742Z"
+        }
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.home/.agents/skills"
+    },
+    {
+      "id" : "project:<FIXTURE>/proj",
+      "installed" : true,
+      "kind" : "project",
+      "root" : "<FIXTURE>/proj/.agents/skills"
+    }
+  ]
+}
