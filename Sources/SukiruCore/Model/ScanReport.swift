@@ -83,13 +83,15 @@ public enum Ownership: String, Codable, Equatable, Sendable {
 
 /// One logical skill, collapsing alias placements (D18).
 ///
-/// Provenance is added by the M2 read engine; the skeleton only anchors the
-/// identity fields needed for the wire schema.
+/// `ownership` is the resolved verdict (architecture §6); `provenance` carries
+/// the raw per-ledger claims as data — for an ambiguous name the claims stay
+/// visible while ownership is voided to `ownerless` (VAL-SCAN-018).
 public struct Skill: Codable, Equatable, Sendable {
     public let name: String
     public let scope: Scope
     public let ownership: Ownership
     public let ambiguous: Bool
+    public let provenance: SkillProvenance
     public let placements: [Placement]
 }
 

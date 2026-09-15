@@ -18,19 +18,29 @@ public struct DiscoveredPlacement: Equatable, Sendable {
     /// `.trae/skills`; cline/dexto/warp/zed share the canonical store
     /// (port-reference trap 12).
     public let candidateHosts: [String]
+    /// Absolute path of the parsed `SKILL.md` (for broken symlinks: the path
+    /// it WOULD have, `<link>/SKILL.md` — the file is unreadable by
+    /// definition). Ownership evidence references this path.
+    public let skillFilePath: String
+    /// The gh-ledger claim from frontmatter, when present (architecture §6).
+    public let githubProvenance: GitHubProvenance?
 
     public init(
         name: String,
         placement: Placement,
         workspaceID: String,
         scopeGroup: String,
-        candidateHosts: [String]
+        candidateHosts: [String],
+        skillFilePath: String,
+        githubProvenance: GitHubProvenance?
     ) {
         self.name = name
         self.placement = placement
         self.workspaceID = workspaceID
         self.scopeGroup = scopeGroup
         self.candidateHosts = candidateHosts
+        self.skillFilePath = skillFilePath
+        self.githubProvenance = githubProvenance
     }
 }
 
@@ -189,9 +199,9 @@ public struct InventoryScanner: Sendable {
                     inspectPlacement(
                         at: child, linkTarget: target, workspace: workspace, into: &outcome)
                 }
-                // Otherwise (resolves to a non-skill dir or a file): silently
-                // skipped. Symlinks are never recursed into, so cycles
-                // cannot hang the scan.
+            // Otherwise (resolves to a non-skill dir or a file): silently
+            // skipped. Symlinks are never recursed into, so cycles
+            // cannot hang the scan.
             case .directory:
                 guard !ContainerIgnoreList.isIgnored(name: name) else { continue }
                 scanContainer(child, workspace: workspace, into: &outcome)
@@ -248,7 +258,9 @@ public struct InventoryScanner: Sendable {
                 ),
                 workspaceID: workspace.workspace.id,
                 scopeGroup: workspace.scopeGroup,
-                candidateHosts: workspace.candidateHosts
+                candidateHosts: workspace.candidateHosts,
+                skillFilePath: metadata.skillFilePath,
+                githubProvenance: metadata.githubProvenance
             ))
     }
 
@@ -276,7 +288,9 @@ public struct InventoryScanner: Sendable {
                 ),
                 workspaceID: workspace.workspace.id,
                 scopeGroup: workspace.scopeGroup,
-                candidateHosts: workspace.candidateHosts
+                candidateHosts: workspace.candidateHosts,
+                skillFilePath: HostPathResolver.join(path, "SKILL.md"),
+                githubProvenance: nil
             ))
         outcome.issues.append(
             Issue(
@@ -294,6 +308,10 @@ public struct InventoryScanner: Sendable {
     }
 
     private func linkEvidence(linkPath: String, linkTarget: String) -> [Evidence] {
-        [Evidence(kind: "linkPath", detail: linkPath), Evidence(kind: "linkTarget", detail: linkTarget)]
+        // Single-line literal: the two lint gates disagree on trailing commas
+        // in multi-line collection literals (library/environment.md).
+        let link = Evidence(kind: "linkPath", detail: linkPath)
+        let target = Evidence(kind: "linkTarget", detail: linkTarget)
+        return [link, target]
     }
 }

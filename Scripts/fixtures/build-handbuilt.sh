@@ -1330,4 +1330,45 @@ normal placement is a fail. (An exact-subtype cross-host-duplicate finding for
 the pair is also legitimate; the assertion targets symlink-authenticity.)
 EOF
 
+# =====================================================================
+# own-per-project — the SAME name locked in one project root and
+# unprovenanced in another (VAL-SCAN-055). Two project roots, one scan.
+# Layout: .home (fake HOME, empty) + p1 + p2 (no `proj`, so the corpus smoke
+# test scans the tree as a plain home and finds nothing — by design).
+# =====================================================================
+d="$(reset_fixture own-per-project)"
+mkdir -p "$d/.home"
+skill "$d/p1/.agents/skills/shared" "shared" "Locked in p1 only."
+skill "$d/p2/.agents/skills/shared" "shared" "Unprovenanced in p2."
+p1_hash="$(skill_md_hash "$d/p1/.agents/skills/shared")"
+cat >"$d/p1/skills-lock.json" <<EOF
+{
+  "version": 1,
+  "skills": {
+    "shared": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "ref": "refs/heads/main",
+      "skillPath": ".agents/skills/shared/SKILL.md",
+      "computedHash": "$p1_hash"
+    }
+  }
+}
+EOF
+note "$d" <<'EOF'
+# own-per-project — expectation (VAL-SCAN-055)
+
+Contents: the name `shared` in TWO project roots — locked by the project v1
+lock in `p1` (whose computedHash matches disk), present as a bare placement
+with NO lock and NO gh provenance in `p2`. The fake home is empty.
+
+Scan with SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/p1:<this>/p2.
+
+A correct scan MUST exit 0 and, in ONE report, resolve ownership=vercel for
+`shared` in p1 AND ownership=ownerless for `shared` in p2 with a
+files-without-lock finding anchored to p2's workspace only. Any cross-root
+ledger bleed (the p1 lock claiming p2's placement) is a fail.
+EOF
+
 echo "Hand-built fixtures rebuilt under: $FIX"
