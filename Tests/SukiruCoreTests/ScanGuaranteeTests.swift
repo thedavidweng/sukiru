@@ -49,10 +49,13 @@ struct ScanGuaranteeTests {
 
     @Test("VAL-SCAN-003: SUKIRU_ROOTS order does not change a single byte")
     func rootOrderIndependence() throws {
+        // The contract names THREE roots (a:b:c vs c:a:b): own-per-project's
+        // p1/p2 plus clean-copy-mode's proj as the third.
         let inputs = FixturePaths.homeAndRoots("own-per-project")
-        #expect(inputs.roots.count == 2)
-        let forward = try scan(home: inputs.home, roots: inputs.roots)
-        let reversed = try scan(home: inputs.home, roots: inputs.roots.reversed())
+        let roots = inputs.roots + [FixturePaths.tree("clean-copy-mode") + "/proj"]
+        #expect(roots.count == 3)
+        let forward = try scan(home: inputs.home, roots: roots)
+        let reversed = try scan(home: inputs.home, roots: roots.reversed())
         #expect(try forward.jsonData() == reversed.jsonData())
     }
 

@@ -50,7 +50,7 @@ public struct ScanEngine: Sendable {
             request.scope.includes($0.workspace.kind)
         }
         let inventory = InventoryScanner(fileSystem: fileSystem).scan(workspaces: workspaces)
-        let claims = readLockClaims(request: request, roots: roots)
+        let claims = readLockClaims(request: request, roots: roots, workspaces: workspaces)
         // D23: the ambiguity trigger needs the lock claims (a lock-anchored
         // canonical placement hash-explains its identical copies).
         let groups = SkillInventory.groups(from: inventory.placements, locks: claims.claims)
@@ -85,12 +85,19 @@ public struct ScanEngine: Sendable {
     }
 
     /// Reads the Vercel locks for the scopes being scanned: the global (v3)
-    /// lock for user scope, one project (v1) lock per project root. A scope
-    /// excluded by `--scope` never has its lock read, so its lock issues
-    /// cannot leak into a partitioned report (VAL-SCAN-007).
+    /// lock for user scope, one project (v1) lock per project root THAT
+    /// ENUMERATED A WORKSPACE, in sorted root order. A scope excluded by
+    /// `--scope` never has its lock read, so its lock issues cannot leak into
+    /// a partitioned report (VAL-SCAN-007). Keying project reads off the
+    /// enumerated scope groups (instead of the raw request roots) keeps lock
+    /// issues aligned with the report's workspace set if probing ever gains
+    /// side effects; the sorted order keeps internal read order defined
+    /// (output is permutation-independent either way — everything is sorted
+    /// downstream, VAL-SCAN-003).
     private func readLockClaims(
         request: ScanRequest,
-        roots: [String]
+        roots: [String],
+        workspaces: [EnumeratedWorkspace]
     ) -> (claims: [ScopeLockClaim], issues: [Issue]) {
         let reader = VercelLockReader(environment: environment, fileSystem: fileSystem)
         var claims: [ScopeLockClaim] = []
@@ -106,7 +113,8 @@ public struct ScanEngine: Sendable {
             }
         }
         if request.scope.includes(.project) {
-            for root in roots {
+            let enumeratedGroups = Set(workspaces.map(\.scopeGroup))
+            for root in roots.sorted() where enumeratedGroups.contains("project:\(root)") {
                 let result = reader.readProjectLock(projectRoot: root)
                 if let issue = result.issue {
                     issues.append(issue)

@@ -131,6 +131,25 @@ struct ContentHasherVectorTests {
         }
     }
 
+    @Test("The generated escape table records the rustc toolchain that produced it")
+    func generatedTableRecordsToolchain() throws {
+        // The table encodes one rustc's Unicode printability data; a newer
+        // toolchain could silently shift it (the 24-row battery would not
+        // catch a printability flip on an untested codepoint). The generated
+        // header must name the toolchain so drift is visible on regeneration.
+        let source = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()  // SukiruCoreTests
+            .deletingLastPathComponent()  // Tests
+            .deletingLastPathComponent()  // repo root
+            .appendingPathComponent("Sources/SukiruCore/Hashing/RustDebugEscapes.swift")
+        let text = try String(contentsOf: source, encoding: .utf8)
+        let header = String(text.prefix(800))
+        #expect(
+            header.contains("// Toolchain: rustc "),
+            "header lacks the toolchain pin — rerun Scripts/rust-debug/generate.sh")
+        #expect(header.range(of: #"rustc \d+\.\d+\.\d+"#, options: .regularExpression) != nil)
+    }
+
     @Test("Empty skill directory hashes as SHA-256 of the empty input")
     func emptyDirectory() throws {
         let tree = try TempTree()

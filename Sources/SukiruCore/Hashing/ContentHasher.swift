@@ -62,13 +62,20 @@ public struct ContentHasher: Sendable {
     /// `skillFolderHash`, `metadata.github-tree-sha`) — provenance data only,
     /// never locally recomputable.
     public static func isGitTreeSHA(_ value: String) -> Bool {
-        value.count == 40 && value.allSatisfy(\.isHexDigit)
+        value.count == 40 && value.allSatisfy(Self.isASCIIHexDigit)
     }
 
     /// A 64-hex value is a sha256 folder hash (project `computedHash`) — the
     /// only locally recomputable ledger hash.
     public static func isSHA256FolderHash(_ value: String) -> Bool {
-        value.count == 64 && value.allSatisfy(\.isHexDigit)
+        value.count == 64 && value.allSatisfy(Self.isASCIIHexDigit)
+    }
+
+    /// Upstream's `/^[0-9a-f]+$/i` is ASCII-only; `Character.isHexDigit` is
+    /// Unicode-aware (U+FF11 FULLWIDTH DIGIT ONE satisfies it), so the ASCII
+    /// check is load-bearing, not redundant.
+    private static func isASCIIHexDigit(_ character: Character) -> Bool {
+        character.isASCII && character.isHexDigit
     }
 
     // MARK: - Collection

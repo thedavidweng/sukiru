@@ -1,0 +1,15 @@
+{
+  "version": 3,
+  "skills": {
+    "copy-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/copy-tool/SKILL.md",
+      "skillFolderHash": "3434343434343434343434343434343434343434",
+      "installedAt": "2026-06-16T10:00:00.000Z",
+      "updatedAt": "2026-06-16T10:00:00.000Z"
+    }
+  },
+  "dismissed": {}
+}

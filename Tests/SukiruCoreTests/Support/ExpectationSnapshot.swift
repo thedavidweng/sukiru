@@ -16,7 +16,17 @@ enum ExpectationSnapshot {
 
     /// Whether the suite records snapshots instead of asserting them.
     static var recordMode: Bool {
-        ProcessInfo.processInfo.environment["SUKIRU_UPDATE_SNAPSHOTS"] == "1"
+        recordMode(environment: ProcessInfo.processInfo.environment)
+    }
+
+    /// Record mode arms only on an explicit opt-in OUTSIDE CI. Record mode
+    /// writes the snapshot and then compares against the file it just wrote,
+    /// so it always passes: if SUKIRU_UPDATE_SNAPSHOTS ever leaked into a
+    /// CI/validation environment, every snapshot regression would be silently
+    /// blessed. Under CI (`CI` set to any value) the suite refuses to record
+    /// and falls back to asserting the committed snapshots.
+    static func recordMode(environment: [String: String]) -> Bool {
+        environment["SUKIRU_UPDATE_SNAPSHOTS"] == "1" && environment["CI"] == nil
     }
 
     /// The snapshot URL for a fixture name.

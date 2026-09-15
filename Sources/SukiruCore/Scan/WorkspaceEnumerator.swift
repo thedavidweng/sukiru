@@ -75,7 +75,7 @@ public struct WorkspaceEnumerator: Sendable {
             )
         ]
         // Dedup by resolved root, mirroring the project-scope seen set: hosts
-        // sharing one global dir (amp/replit/universal →
+        // sharing one global dir (amp/kimi-cli/replit/universal →
         // `~/.config/agents/skills`; cline/warp/dexto → the canonical store)
         // emit ONE workspace. The first non-absent host in table order lends
         // its id; every sharing host stays visible via candidateHosts.
@@ -86,15 +86,21 @@ public struct WorkspaceEnumerator: Sendable {
             let root = resolver.globalSkillsRoot(for: host)
             guard !seen.contains(root) else { continue }
             seen.insert(root)
+            // `installed` reflects EVERY host sharing the root, not just the
+            // id-lending first sharer: the first sharer may be spray residue
+            // while a later one is really installed (amp leftover while
+            // kimi-cli is detected at `~/.config/agents/skills`).
+            let sharers = HostTable.hosts.filter { resolver.globalSkillsRoot(for: $0) == root }
+            let installed = sharers.contains { detector.detectionState(for: $0) == .detected }
             workspaces.append(
                 EnumeratedWorkspace(
                     workspace: Workspace(
                         id: "host:\(host.id)",
                         kind: .user,
                         root: root,
-                        installed: state == .detected
+                        installed: installed
                     ),
-                    candidateHosts: userCandidates(root: root),
+                    candidateHosts: sharers.map(\.id),
                     scopeGroup: "user"
                 )
             )
@@ -121,6 +127,13 @@ public struct WorkspaceEnumerator: Sendable {
             let root = resolver.projectSkillsRoot(for: host, projectRoot: projectRoot)
             guard !seen.contains(root) else { continue }
             let dirExists = fileSystem.exists(atPath: root)
+            // ARCHIVE DIVERGENCE (deliberate; library/read-side-porting.md):
+            // the archive probes `project_root.join(detection_marker).exists()`
+            // UNGUARDED, and `Path::join("")` is the root itself — so the
+            // archive registered a phantom project workspace for every
+            // empty-marker host (claude-code/codex/mistral-vibe) in EVERY
+            // extant project root. The `!isEmpty` guard keeps the workspace
+            // set honest.
             let markerExists =
                 !host.detectionMarker.isEmpty
                 && fileSystem.exists(

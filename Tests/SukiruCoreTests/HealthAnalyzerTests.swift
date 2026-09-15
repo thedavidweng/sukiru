@@ -180,6 +180,33 @@ struct HealthAnalyzerTests {
         #expect(finding.evidence.filter { $0.kind == "placementPath" }.count == 2)
     }
 
+    @Test("Removal advisory evidence lists real placements only, never broken symlinks")
+    func removalAdvisoryExcludesBrokenSymlinkEvidence() throws {
+        let home = try TempTree()
+        try home.file(".claude/config.json", contents: "{}")
+        try home.file(
+            ".claude/skills/dup/SKILL.md",
+            contents: OwnershipBuilders.skillMD("dup", variant: "Real copy in claude."))
+        // A dangling link under the SAME name: one group, one real member,
+        // one broken member. The advisory's placementPath evidence is framed
+        // as the files `npx skills remove` would delete — every other rule
+        // filters broken symlinks out of such lists.
+        try home.symlink(".codex/skills/dup", to: "../nowhere/dup")
+
+        let report = try OwnershipBuilders.scan(home: home)
+        let finding = try #require(
+            report.findings.first {
+                $0.ruleID == "dangerous-removal-surface" && $0.skillName == "dup"
+            })
+        let paths = finding.evidence.filter { $0.kind == "placementPath" }.map(\.detail)
+        #expect(paths == [home.path + "/.claude/skills/dup"])
+        // The dangling link is still reported by its own rule.
+        #expect(
+            report.findings.contains {
+                $0.ruleID == "broken-symlink" && $0.skillName == "dup"
+            })
+    }
+
     // MARK: - cross-host-duplicate unit edges
 
     @Test("A single placement is never a duplicate")

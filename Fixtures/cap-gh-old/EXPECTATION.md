@@ -1,8 +1,10 @@
 # cap-gh-old — expectation (VAL-SCAN-038)
 
-Contents: `bin/gh` — a stub reporting `gh version 2.80.0 (2025-01-15)`, BELOW
+Contents: `bin/gh` — a stub reporting `gh version 2.80.0 (2026-01-15)`, BELOW
 the 2.90.0 `gh skill` floor (its `skill --help` exits 1, but a correct
-detector never probes a below-minimum gh).
+detector never probes a below-minimum gh). The date string comes from the
+shared `gh_stub` heredoc in Scripts/fixtures/build-handbuilt.sh (the
+generator is the source of truth); version parsing reads only the number.
 
 Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
 

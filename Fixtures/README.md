@@ -23,7 +23,7 @@ Trees: `FIX-EMPTY`, `FIX-CLEAN`, `FIX-INTERNAL`, `FIX-MALFORMED`, `FIX-GARBAGE`,
 `multi-host-inventory`, `ignore-list`, `own-vercel`, `own-github`, `own-double`,
 `own-per-project`, `prov-cross-ws`, `lock-unknown-fields`, `lock-drift`,
 `divergence-canonical`, `lock-version-old`, `lock-malformed`, `clean-copy-mode`,
-`impostor-copy`.
+`impostor-copy`, `FIX-USER-SCOPE-COPY-MODE`.
 
 Project-scope trees (`scope-isolation`, `multi-host-inventory`, `own-vercel`,
 `prov-cross-ws`, `lock-drift`, `divergence-canonical`, `lock-version-old`,
@@ -108,6 +108,10 @@ changes with:
 ```
 SUKIRU_UPDATE_SNAPSHOTS=1 swift test --filter CorpusExpectationTests
 ```
+
+Record mode refuses to arm when `CI` is set (record-then-compare always
+passes, so a leaked flag in validation would bless regressions); under CI the
+suite asserts the committed snapshots instead.
 
 ## Smoke test
 

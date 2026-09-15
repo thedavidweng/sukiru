@@ -29,7 +29,9 @@ public protocol FileSystemProbe: Sendable {
     /// throws: unreadable files are data (Issue records), not failures.
     func fileContents(atPath path: String) -> Data?
     /// lstat-style kind of the entry at `path`, or nil when the path does not
-    /// exist or cannot be inspected. Does NOT follow symlinks.
+    /// exist or cannot be inspected — including a symlink whose target string
+    /// cannot be read (readlink failure), which is uninspectable, never
+    /// `.other`. Does NOT follow symlinks.
     func entryKind(atPath path: String) -> EntryKind?
     /// Full canonical resolution of `path` (realpath(3) semantics: every
     /// component resolved, absolute result), or nil when the path does not
@@ -77,9 +79,13 @@ public struct DefaultFileSystemProbe: FileSystemProbe {
         }
         switch type {
         case .typeSymbolicLink:
+            // A symlink whose target string cannot be read (readlink failure
+            // — e.g. a mid-scan replacement race) is UNINSPECTABLE, not
+            // `.other`: returning nil lets callers surface an issue instead
+            // of silently dropping the entry (failure-as-data convention).
             guard let target = try? FileManager.default.destinationOfSymbolicLink(atPath: path)
             else {
-                return .other
+                return nil
             }
             return .symlink(target: target)
         case .typeDirectory:

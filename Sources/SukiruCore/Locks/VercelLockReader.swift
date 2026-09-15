@@ -254,6 +254,11 @@ public struct VercelLockReader: Sendable {
     /// Best-effort decode of a lock file body. Returns nil when the JSON is
     /// malformed or the known schema shape (`version` int, `skills` object) is
     /// violated; individual non-object entries are skipped, not fatal.
+    ///
+    /// Edge-case decision: a lock WITHOUT the `skills` key (`{"version": 1}`)
+    /// is UNREADABLE, not an empty lock — upstream's lock struct requires the
+    /// field, so a serde decode fails there too. Missing FILE = empty lock;
+    /// missing KEY = `ledger-unreadable`.
     static func decode(_ data: Data, scope: VercelLock.Scope) -> VercelLock? {
         guard let root = try? JSONDecoder().decode(JSONValue.self, from: data),
             case .object(let object) = root,

@@ -137,4 +137,34 @@ struct CLIGuaranteeTests {
         let after = try TreeChecksum.manifest(root: fixture)
         #expect(before == after)
     }
+
+    @Test("VAL-SCAN-051: read-only holds while capabilities really spawns probe subprocesses")
+    func readOnlyWithLiveProbeStubs() throws {
+        // The base test's PATH holds no gh/npx stubs, so its capabilities run
+        // spawns nothing. This variant composes the cap-* stub bins so the
+        // probes DO spawn real subprocesses against the fixture tree; the
+        // stubs are side-effect-free unless SUKIRU_STUB_TRANSCRIPT is set
+        // (unset here).
+        let fixture = FixturePaths.tree("scope-isolation")
+        let inputs = FixturePaths.homeAndRoots("scope-isolation")
+        let before = try TreeChecksum.manifest(root: fixture)
+
+        let stubPath =
+            FixturePaths.tree("cap-gh-ok") + "/bin:"
+            + FixturePaths.tree("cap-npx-ok") + "/bin:/usr/bin:/bin"
+        let env = CLIRunner.fixtureEnvironment(
+            home: inputs.home, roots: inputs.roots, path: stubPath)
+        let scan = try CLIRunner.run(["scan", "--format", "json"], environment: env)
+        #expect(scan.exitCode == 0)
+        let capabilities = try CLIRunner.run(
+            ["capabilities", "--format", "json"], environment: env)
+        #expect(capabilities.exitCode == 0)
+        // Proof the probes really ran: the stubs report gh available.
+        let object = try #require(try capabilities.jsonObject())
+        let github = try #require(object["github"] as? [String: Any])
+        #expect(github["available"] as? Bool == true)
+
+        let after = try TreeChecksum.manifest(root: fixture)
+        #expect(before == after)
+    }
 }

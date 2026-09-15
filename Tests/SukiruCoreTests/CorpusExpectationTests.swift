@@ -70,6 +70,25 @@ struct CorpusExpectationTests {
         )
     }
 
+    // MARK: record-mode hardening
+
+    @Test("Record mode refuses to arm under CI (a leaked record flag must not bless regressions)")
+    func recordModeRefusedUnderCI() {
+        // Record mode writes the snapshot and then compares against the file
+        // it just wrote, so it ALWAYS passes. If SUKIRU_UPDATE_SNAPSHOTS ever
+        // leaked into a CI/validation environment every regression would be
+        // silently blessed — under CI the suite falls back to asserting the
+        // committed snapshots.
+        #expect(ExpectationSnapshot.recordMode(environment: ["SUKIRU_UPDATE_SNAPSHOTS": "1"]))
+        #expect(
+            !ExpectationSnapshot.recordMode(
+                environment: ["SUKIRU_UPDATE_SNAPSHOTS": "1", "CI": "1"]))
+        #expect(
+            !ExpectationSnapshot.recordMode(
+                environment: ["SUKIRU_UPDATE_SNAPSHOTS": "1", "CI": "true"]))
+        #expect(!ExpectationSnapshot.recordMode(environment: [:]))
+    }
+
     // MARK: VAL-SCAN-041 — benign trees produce zero actionable findings
 
     @Test("VAL-SCAN-041a: FIX-EMPTY scans clean — no content, no findings, no issues")
@@ -128,6 +147,10 @@ struct CorpusExpectationTests {
 
     @Test("VAL-SCAN-042: an unreadable directory is an issue and suppresses nothing")
     func garbageUnreadableDirectory() throws {
+        // Caveat: chmod-000 is ineffective when tests run as ROOT (some CI
+        // containers) — the directory stays readable and the locked-dir
+        // assertions below would fail. The mission gate is a macOS developer
+        // machine, where this is a non-issue.
         let fileManager = FileManager.default
         let sandbox = try TempTree()
         let copy = sandbox.path + "/FIX-GARBAGE"

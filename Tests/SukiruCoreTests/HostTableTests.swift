@@ -76,8 +76,11 @@ struct HostTableTests {
         #expect(HostTable.host(id: "replit")?.showInUniversalList == false)
         // openclaw carries its two legacy home names as extra markers.
         #expect(HostTable.host(id: "openclaw")?.extraMarkers == [".clawdbot", ".moltbot"])
-        // codebuddy and continue are the only project-detected hosts.
-        #expect(HostTable.host(id: "codebuddy")?.detectInProject == true)
-        #expect(HostTable.host(id: "continue")?.detectInProject == true)
+        // codebuddy, continue and replit are the only project-detected
+        // hosts — the FULL set is pinned so a host-table edit cannot
+        // silently grow it.
+        #expect(
+            HostTable.hosts.filter { $0.detectInProject }.map { $0.id }
+                == ["codebuddy", "continue", "replit"])
     }
 }

@@ -45,6 +45,7 @@ struct FixtureCorpusTests {
         FIX-LOCK-NO-FILES
         FIX-FILES-NO-LOCK
         FIX-AMBIGUOUS
+        FIX-USER-SCOPE-COPY-MODE
         alias-link-mode
         clean-copy-mode
         divergence-canonical

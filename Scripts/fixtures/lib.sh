@@ -107,6 +107,10 @@ resolve_real_node() {
         candidate="$(cd "$(dirname "$REAL_NODE")/../lib/node_modules/npm/bin" 2>/dev/null && pwd)/npx-cli.js"
         [ -f "$candidate" ] && NPX_CLI="$candidate"
     fi
+    # Always succeed: a mise node without npm at the expected layout falls
+    # back to the PATH npx in run_skills — a non-zero last test would abort
+    # the caller outright under `set -euo pipefail`.
+    return 0
 }
 
 # run_skills SANDBOX_HOME PROJECT_CWD ARGS... -> pinned skills CLI in a sandbox.

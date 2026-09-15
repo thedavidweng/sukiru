@@ -110,6 +110,23 @@ struct WorkspaceEnumeratorTests {
         #expect(Set(allIDs).count == allIDs.count)
     }
 
+    @Test("A shared user root is installed when ANY sharing host is detected")
+    func sharedRootInstalledWhenLaterSharerDetected() throws {
+        let tree = try TempTree()
+        // `~/.config/agents/skills` exists (spray residue shape); amp — the
+        // FIRST sharer in table order, which lends the workspace id — has no
+        // marker, but kimi-cli's `~/.kimi` does. The merged workspace must
+        // report installed=true: a real installation exists at that root,
+        // regardless of which sharer lent its id.
+        try tree.dir(".config/agents/skills")
+        try tree.file(".kimi/config.json", contents: "{}")
+
+        let workspaces = enumerate(home: tree.path)
+        let shared = try #require(workspaces.first { $0.id == "host:amp" })
+        #expect(shared.root == "\(tree.path)/.config/agents/skills")
+        #expect(shared.installed, "kimi-cli is detected at the shared root")
+    }
+
     @Test("Project scope: canonical store plus per-host project dirs")
     func projectScope() throws {
         let home = try TempTree()

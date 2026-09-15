@@ -289,7 +289,9 @@ public struct HealthAnalyzer: Sendable {
     /// remove <name>` deletes by name across ownership (collision-matrix
     /// scenario 6), so github-owned and ownerless skills are in its blast
     /// radius. Ownership detail mirrors the resolver's verdict (ambiguity
-    /// voids to ownerless).
+    /// voids to ownerless). placementPath evidence lists real placements
+    /// only — a broken-symlink member is covered by its own finding and is
+    /// filtered here like every other rule does.
     private func removalSurfaceFinding(for group: SkillGroup, claim: ScopeLockClaim?) -> Finding? {
         guard claim?.lock.entries[group.name] == nil else { return nil }
         let ownership = OwnershipResolver.ownership(
@@ -297,7 +299,9 @@ public struct HealthAnalyzer: Sendable {
             vercelClaim: false,
             githubClaim: group.members.contains { $0.githubProvenance != nil })
         var evidence = [Evidence(kind: "skillName", detail: group.name)]
-        evidence += group.members.map { Evidence(kind: "placementPath", detail: $0.placement.path) }
+        evidence += group.members
+            .filter { $0.placement.kind != .brokenSymlink }
+            .map { Evidence(kind: "placementPath", detail: $0.placement.path) }
         evidence.append(Evidence(kind: "ownership", detail: ownership.rawValue))
         return Finding(
             ruleID: "dangerous-removal-surface", severity: .action, skillName: group.name,
