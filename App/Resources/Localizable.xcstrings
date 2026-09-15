@@ -1,0 +1,28 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Skill library health check" : {
+      "comment" : "Placeholder subtitle shown on the first-frame window.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "技能库体检"
+          }
+        }
+      }
+    },
+    "Sukiru" : {
+      "comment" : "App name shown in the window title and placeholder.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sukiru"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

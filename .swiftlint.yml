@@ -1,8 +1,9 @@
-# Gate config for `swiftlint lint --strict Sources Tests`.
+# Gate config for `swiftlint lint --strict Sources Tests App`.
 # Lint only first-party sources; never the build tree or generated artifacts.
 included:
   - Sources
   - Tests
+  - App
 
 excluded:
   - .build
