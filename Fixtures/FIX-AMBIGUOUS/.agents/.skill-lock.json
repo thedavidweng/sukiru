@@ -1,0 +1,15 @@
+{
+  "version": 3,
+  "skills": {
+    "dup": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/dup/SKILL.md",
+      "skillFolderHash": "6666666666666666666666666666666666666666",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}

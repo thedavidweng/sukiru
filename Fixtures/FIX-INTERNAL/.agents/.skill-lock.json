@@ -1,0 +1,24 @@
+{
+  "version": 3,
+  "skills": {
+    "normal": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/normal/SKILL.md",
+      "skillFolderHash": "1111111111111111111111111111111111111111",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    },
+    "hidden-helper": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/hidden-helper/SKILL.md",
+      "skillFolderHash": "2222222222222222222222222222222222222222",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}
