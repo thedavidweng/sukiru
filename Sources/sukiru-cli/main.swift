@@ -137,6 +137,36 @@ func executeBatch(
     exit(1)
 }
 
+/// The `rollback` command (D9): restores the batch's pre-execution state
+/// and prints the itemized rollback record JSON. Exit 0 even when some
+/// items are unrestorable — the record reports them honestly and stderr
+/// surfaces each one; exit 1 is reserved for refusals (unknown batch,
+/// already rolled back, execution in progress, unreadable snapshot).
+func runRollback(batchID: String, environment: SukiruEnvironment) {
+    let record: RollbackRecord
+    do {
+        record = try Rollback(environment: environment).rollback(batchID: batchID)
+    } catch let error as RollbackError {
+        emitError(error.message)
+        exit(1)
+    } catch let error as ExecutionError {
+        emitError(error.message)
+        exit(1)
+    } catch {
+        emitError("rollback of batch '\(batchID)' failed: \(error)")
+        exit(1)
+    }
+    do {
+        emitJSON(try record.jsonData())
+    } catch {
+        emitError("cannot render the rollback record: \(error)")
+        exit(1)
+    }
+    for item in record.items where item.category == .unrestorableWithReason {
+        emitError("unrestorable: \(item.path): \(item.reason ?? "unknown reason")")
+    }
+}
+
 let arguments = Array(CommandLine.arguments.dropFirst())
 
 let command: CLICommand
@@ -176,6 +206,8 @@ do {
                 decisionsFile: decisionsFile, dryRun: dryRun, execute: execute,
                 reviewed: reviewed, commandTimeout: commandTimeout, roots: roots,
                 scope: scope, environment: environment))
+    case .rollback(let batchID, _):
+        runRollback(batchID: batchID, environment: environment)
     }
     exit(0)
 } catch {

@@ -126,9 +126,22 @@ public struct CLIExecutor: Sendable {
             batch.commands,
             bounds: workspaceBounds(batch: batch, report: report),
             recordDirectory: recordDirectory)
+
+        // Post-run diff (architecture §4.1 Differ): rescan the batch's
+        // affected roots and measure against the pre-run scan + snapshot.
+        // Computed for succeeded AND failed batches alike — a failed batch's
+        // diff documents the partial state (VAL-REPAIR-042).
+        let affected = AffectedScope(
+            workspaceIDs: batch.findingRefs.map(\.workspaceID))
+        let postReport = try ScanEngine(environment: environment).scan(affected.scanRequest)
+        let diff = Differ(environment: environment).diff(
+            touchedWorkspaceIDs: Set(affected.workspaceIDs),
+            pre: report, post: postReport, manifest: manifest)
+
         let record = try persistRecord(
             batch: batch, snapshotID: manifest.id, started: batchStart,
-            records: records, recordDirectory: recordDirectory)
+            outcome: ExecutionOutcome(commands: records, diff: diff, affected: affected),
+            recordDirectory: recordDirectory)
         let finalBatch = CommandBatch(
             id: batch.id,
             createdAt: batch.createdAt,
@@ -169,12 +182,20 @@ public struct CLIExecutor: Sendable {
         return records
     }
 
+    /// Everything the post-run phase produces, bundled for the record.
+    struct ExecutionOutcome {
+        let commands: [CommandExecution]
+        let diff: BatchDiff
+        let affected: AffectedScope
+    }
+
     /// Assembles the batch record and writes `record.json` atomically.
     private func persistRecord(
         batch: CommandBatch, snapshotID: String, started: Date,
-        records: [CommandExecution], recordDirectory: String
+        outcome: ExecutionOutcome, recordDirectory: String
     ) throws -> ExecutionRecord {
         let ended = Date()
+        let records = outcome.commands
         let status: BatchStatus =
             records.allSatisfy { $0.status == .succeeded } ? .succeeded : .failed
         let record = ExecutionRecord(
@@ -186,7 +207,11 @@ public struct CLIExecutor: Sendable {
             endedAt: Self.timestamp(ended),
             durationSeconds: Self.milliseconds(ended.timeIntervalSince(started)),
             recordDirectory: recordDirectory,
-            commands: records)
+            commands: records,
+            diff: outcome.diff,
+            affectedRoots: outcome.affected.roots,
+            affectedScope: outcome.affected.scope,
+            affectedWorkspaceIDs: outcome.affected.workspaceIDs)
         let recordPath = HostPathResolver.join(recordDirectory, "record.json")
         try record.jsonData().write(to: URL(fileURLWithPath: recordPath), options: .atomic)
         return record

@@ -13,6 +13,7 @@ public enum CLICommand: Equatable, Sendable {
         decisionsFile: String, dryRun: Bool, execute: Bool, reviewed: Bool,
         commandTimeout: TimeInterval?, roots: [String], scope: Scope,
         format: OutputFormat)
+    case rollback(batchID: String, format: OutputFormat)
 }
 
 /// A usage error (maps to exit code 1).
@@ -31,9 +32,9 @@ public enum CLIParseError: Error, Equatable, Sendable {
         case .invalidCombination(let command, let detail):
             return "invalid flag combination for '\(command)': \(detail)"
         case .noCommand:
-            return "usage: sukiru-cli <scan|capabilities|batch> [options]"
+            return "usage: sukiru-cli <scan|capabilities|batch|rollback> [options]"
         case .unknownCommand(let name):
-            let usage = "usage: sukiru-cli <scan|capabilities|batch> [options]"
+            let usage = "usage: sukiru-cli <scan|capabilities|batch|rollback> [options]"
             return "unknown command '\(name)'. " + usage
         case .unknownFlag(let command, let flag):
             return "unknown flag '\(flag)' for command '\(command)'."
@@ -41,9 +42,19 @@ public enum CLIParseError: Error, Equatable, Sendable {
             return "missing value for '\(flag)'."
         case .missingFlag(let command, let flag):
             return "missing required flag '\(flag)' for command '\(command)'. "
-                + "usage: sukiru-cli batch --decisions <file.json> [--dry-run] [--root <path>]…"
+                + "usage: sukiru-cli \(command) \(Self.usageTail(for: command))"
         case .invalidValue(let flag, let value):
             return "invalid value '\(value)' for '\(flag)'."
+        }
+    }
+
+    /// The command-specific usage fragment shown after a missing flag.
+    private static func usageTail(for command: String) -> String {
+        switch command {
+        case "rollback":
+            return "--batch <batch-id>"
+        default:
+            return "--decisions <file.json> [--dry-run] [--root <path>]…"
         }
     }
 }
@@ -71,9 +82,46 @@ public enum CLIParser {
             return parseCapabilities(rest)
         case "batch":
             return parseBatch(rest)
+        case "rollback":
+            return parseRollback(rest)
         default:
             return .failure(.unknownCommand(command))
         }
+    }
+
+    /// `rollback --batch <batch-id> [--format json]` (D9 one-click
+    /// rollback). `--batch` is required and names the executed batch whose
+    /// execution record + snapshot drive the restore.
+    private static func parseRollback(_ args: [String]) -> Result<CLICommand, CLIParseError> {
+        var batchID: String?
+        var options = SharedOptions()
+        var index = 0
+        while index < args.count {
+            let arg = args[index]
+            switch arg {
+            case "--batch":
+                switch requireValue(args, at: index) {
+                case .success(let value):
+                    batchID = value
+                    index += 2
+                case .failure(let error):
+                    return .failure(error)
+                }
+            case "--format":
+                switch applyShared(arg, args: args, at: index, into: &options) {
+                case .success(let next):
+                    index = next
+                case .failure(let error):
+                    return .failure(error)
+                }
+            default:
+                return .failure(.unknownFlag(command: "rollback", flag: arg))
+            }
+        }
+        guard let batchID else {
+            return .failure(.missingFlag(command: "rollback", flag: "--batch"))
+        }
+        return .success(.rollback(batchID: batchID, format: options.format))
     }
 
     private static func parseScan(_ args: [String]) -> Result<CLICommand, CLIParseError> {
