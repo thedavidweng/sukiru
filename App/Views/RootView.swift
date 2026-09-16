@@ -43,7 +43,13 @@ struct RootView: View {
         switch state.surface {
         case .library:
             LibraryDetailView()
-        case .health, .pending, .snapshots, .search, .settings:
+        case .pending:
+            // Per-command inspection view (VAL-REPAIR-006/047).
+            PendingCommandDetailView()
+        case .snapshots:
+            // Post-run diff / itemized rollback record (VAL-REPAIR-046).
+            SnapshotsDetailView()
+        case .health, .search, .settings:
             DetailPlaceholderView()
         }
     }

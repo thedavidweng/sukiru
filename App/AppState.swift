@@ -76,6 +76,55 @@ final class AppState: ObservableObject {
     /// state is actually observable on sub-100ms fixture scans.
     @Published private(set) var healthCheckRunning = false
 
+    // MARK: - Repair / Command Batch state (M4, seam B)
+
+    /// The finding a repair is being chosen for (Health "Fix…" deep-link,
+    /// D16/VAL-CROSS-006). Non-nil while the decision panel is up.
+    @Published var repairDraft: RepairDraft?
+    /// The proposed batch under review in Pending Changes. Nil whenever no
+    /// batch is on the table (before a decision, after execute/discard).
+    @Published var pendingBatch: CommandBatch?
+    /// Indices of `pendingBatch.commands` the user has acknowledged
+    /// (VAL-REPAIR-007: Execute stays gated until every command is reviewed).
+    @Published var reviewedCommands: Set<Int> = []
+    /// Selected command row in Pending Changes (drives the detail pane and
+    /// the keyboard review menu command).
+    @Published var selectedCommandIndex: Int?
+    /// Batch-construction refusal text (stale finding, ownership rule) —
+    /// rendered inline, never swallowed. (Core diagnostic text, English by
+    /// design, like CLI stderr.)
+    @Published var repairError: String?
+    /// A capability-blocked repair attempt (§8, VAL-REPAIR-049): rendered
+    /// as a localized inline hint, separate from `repairError` so the copy
+    /// flows through the string catalog.
+    @Published var repairBlockNotice: RepairBlock?
+    /// True while a batch execution OR a rollback is in flight. Gates
+    /// Execute and every rollback affordance (VAL-REPAIR-055: no rollback
+    /// mid-execution; executions are globally serialized).
+    @Published var batchMutationInFlight = false
+    /// The terminal record of the most recent in-app execution (succeeded or
+    /// failed) — the result banner on Pending Changes.
+    @Published var lastExecutionRecord: ExecutionRecord?
+    /// A pre-command execution refusal (lock busy, snapshot failure).
+    @Published var lastExecutionFailure: String?
+    /// The Snapshots history rows (batch executions + rollback events),
+    /// loaded from the on-disk execution records — persisted state survives
+    /// relaunches (VAL-CROSS-012).
+    @Published var historyRows: [HistoryRow] = []
+    /// Selected history row in Snapshots (drives the diff detail pane and
+    /// the keyboard rollback menu command).
+    @Published var selectedHistoryID: String?
+    /// Rollback refusal/error text, surfaced on the Snapshots surface.
+    @Published var rollbackError: String?
+    /// Whether the double-booked arbitration sheet (D10) is presented.
+    @Published var showingArbitrationSheet = false
+    /// Whether the ownerless adopt sheet (D11) is presented.
+    @Published var showingAdoptSheet = false
+    /// Adopt-sheet inputs: both user-supplied, never prefilled
+    /// (VAL-REPAIR-051).
+    @Published var adoptRepo = ""
+    @Published var adoptPath = ""
+
     /// The launch environment (SUKIRU_HOME / SUKIRU_ROOTS / XDG overrides),
     /// identical wiring to the CLI (architecture §4.2). Read-only display
     /// only; runtime root edits go through `projectRoots`.
@@ -113,6 +162,9 @@ final class AppState: ObservableObject {
         started = true
         rescan()
         detectCapabilities()
+        // Batch history is on-disk state, not a cache: it must be present at
+        // launch and survive relaunches (VAL-CROSS-012).
+        loadHistory()
     }
 
     /// Re-runs the scan against the current environment and project roots.
@@ -292,14 +344,28 @@ final class AppState: ObservableObject {
                 healthWorkspaceFilter = nil
             }
         }
+        // A repair draft mints its finding ID from the report it was opened
+        // against; after a rescan (external Refresh or post-mutation) the ID
+        // space changes, so a stale draft is dropped instead of risking a
+        // stale-reference batch (VAL-REPAIR-056).
+        let draftIsStale = repairDraft.map { draft in
+            !FindingID.assignments(for: report.findings).contains { $0.id == draft.findingID }
+        }
+        if draftIsStale == true {
+            repairDraft = nil
+            showingArbitrationSheet = false
+            showingAdoptSheet = false
+        }
     }
 
     /// Builds a scan environment identical to the CLI wiring (§4.2) except
     /// that the runtime project-roots list replaces `SUKIRU_ROOTS` (D20).
     /// Explicit roots are encoded back into `SUKIRU_ROOTS` so the engine's
     /// D5 precedence (explicit `--root` never merges) is untouched — the app
-    /// always scans with default precedence over ITS root list.
-    private static func makeEnvironment(roots: [String]) -> SukiruEnvironment {
+    /// always scans with default precedence over ITS root list. Also used by
+    /// the seam-B executors (CLIExecutor, Rollback) so app-initiated
+    /// mutations run against exactly the scanned environment.
+    static func makeEnvironment(roots: [String]) -> SukiruEnvironment {
         var vars = ProcessInfo.processInfo.environment
         if roots.isEmpty {
             vars.removeValue(forKey: SukiruEnvironment.sukiruRootsKey)

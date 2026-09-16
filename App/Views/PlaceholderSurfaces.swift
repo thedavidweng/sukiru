@@ -1,31 +1,10 @@
 import SwiftUI
 
-/// M3-empty surfaces (§4.3): Pending Changes, Snapshots, and Search exist in
-/// the sidebar but render explicit labeled placeholders until their
-/// milestones land — never a blank pane or an error (VAL-HEALTH-028).
-struct PendingChangesView: View {
-    var body: some View {
-        SurfacePlaceholder(
-            token: "sukiru.pending.empty",
-            icon: "list.bullet.rectangle",
-            title: "No pending changes",
-            explanation: "Repairs arrive as reviewable command batches here in a later milestone."
-        )
-    }
-}
-
-struct SnapshotsView: View {
-    var body: some View {
-        SurfacePlaceholder(
-            token: "sukiru.snapshots.empty",
-            icon: "camera.on.rectangle",
-            title: "No snapshots yet",
-            explanation:
-                "Every command batch captures a snapshot before it runs; history appears here."
-        )
-    }
-}
-
+/// M3-empty surfaces (§4.3): Search exists in the sidebar but renders an
+/// explicit labeled placeholder until its milestone lands — never a blank
+/// pane or an error (VAL-HEALTH-028). Pending Changes and Snapshots got
+/// their real M4 surfaces (PendingChangesView.swift / SnapshotsView.swift);
+/// their empty states render through the same placeholder.
 struct SearchView: View {
     var body: some View {
         SurfacePlaceholder(

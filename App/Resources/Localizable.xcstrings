@@ -1271,6 +1271,858 @@
           }
         }
       }
+    },
+    "Repairs arrive here as reviewable command batches — use a finding's Fix button in Health.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修复会以可审查的命令批次形式出现在这里——请在“体检”中使用发现项的“修复”按钮。"
+          }
+        }
+      }
+    },
+    "Working…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在执行…"
+          }
+        }
+      }
+    },
+    "Batch executed — the post-run diff is listed in Snapshots.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "批次已执行——运行后的差异已列在“快照”中。"
+          }
+        }
+      }
+    },
+    "pending.result.failed %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batch finished with status %@."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "批次以状态 %@ 结束。"
+          }
+        }
+      }
+    },
+    "pending.result.failedCommand %lld %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batch failed — command %lld: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "批次执行失败——命令 %lld：%@"
+          }
+        }
+      }
+    },
+    "Choose a repair for this finding": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "为此发现项选择修复方式"
+          }
+        }
+      }
+    },
+    "Update via Owning CLI": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通过所属 CLI 更新"
+          }
+        }
+      }
+    },
+    "Clean Up": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清理"
+          }
+        }
+      }
+    },
+    "Adopt into GitHub Ledger…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收编进 GitHub 账本…"
+          }
+        }
+      }
+    },
+    "Choose Surviving Ledger…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择保留的账本…"
+          }
+        }
+      }
+    },
+    "Leave As-Is": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保持现状"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
+        }
+      }
+    },
+    "pending.hint.needsNode %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ needs Node.js — npx skills is not resolvable in this environment."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 需要 Node.js——此环境中无法解析 npx skills。"
+          }
+        }
+      }
+    },
+    "pending.hint.needsGH %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ needs the GitHub CLI — gh is unavailable in this environment."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 需要 GitHub CLI——此环境中 gh 不可用。"
+          }
+        }
+      }
+    },
+    "pending.hint.needsNodeGeneric": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repairing this needs Node.js — npx skills is not resolvable in this environment."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修复此项需要 Node.js——此环境中无法解析 npx skills。"
+          }
+        }
+      }
+    },
+    "pending.hint.needsGHGeneric": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repairing this needs the GitHub CLI — gh is unavailable in this environment."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修复此项需要 GitHub CLI——此环境中 gh 不可用。"
+          }
+        }
+      }
+    },
+    "Review every command, then execute": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "逐条审查命令，然后执行"
+          }
+        }
+      }
+    },
+    "pending.dangerWarning.generic": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This batch contains a dangerous deletion: npx skills remove deletes by name across ownership — it can delete skills belonging to the other ledger or to no ledger."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此批次包含危险删除：npx skills remove 按名称跨所有权删除——可能删除属于另一账本或无账本的技能。"
+          }
+        }
+      }
+    },
+    "pending.dangerWarning.atRisk %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This batch contains a dangerous deletion: removal is by name across ownership. At risk: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此批次包含危险删除：按名称跨所有权删除。存在风险：%@"
+          }
+        }
+      }
+    },
+    "Command %lld": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "命令 %lld"
+          }
+        }
+      }
+    },
+    "Vercel CLI (npx skills)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vercel CLI（npx skills）"
+          }
+        }
+      }
+    },
+    "GitHub CLI (gh)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub CLI（gh）"
+          }
+        }
+      }
+    },
+    "Direct file operation": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "直接文件操作"
+          }
+        }
+      }
+    },
+    "Danger": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "危险"
+          }
+        }
+      }
+    },
+    "Reviewed": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已审查"
+          }
+        }
+      }
+    },
+    "Mark as Reviewed": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标记为已审查"
+          }
+        }
+      }
+    },
+    "Execute Batch": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "执行批次"
+          }
+        }
+      }
+    },
+    "Discard Batch": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放弃批次"
+          }
+        }
+      }
+    },
+    "Review every command to enable Execute.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "审查每一条命令后才能执行。"
+          }
+        }
+      }
+    },
+    "Resolve Double-Booking": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解决重复登记"
+          }
+        }
+      }
+    },
+    "arbitration.explainer %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "'%@' is claimed by both the Vercel and the GitHub ledger. Choose which ledger survives — exactly two options, no default."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@”同时被 Vercel 与 GitHub 账本登记。请选择保留哪个账本——只有两个选项，没有默认项。"
+          }
+        }
+      }
+    },
+    "arbitration.keepVercel.consequence": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Re-installs from the Vercel lock's recorded source (npx skills add). Consequences: content resets to upstream; local edits are lost; the re-install erases the GitHub frontmatter provenance."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从 Vercel 账本记录的来源重新安装（npx skills add）。后果：内容重置为上游版本；本地修改将丢失；重新安装会抹除 GitHub frontmatter 溯源信息。"
+          }
+        }
+      }
+    },
+    "arbitration.keepGitHub.consequence": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First runs npx skills remove (dangerous deletion — it deletes by name across ownership, which here is the point), then gh skill install --force re-anchors the recorded GitHub provenance. Consequences: content resets to the gh-recorded ref; local edits are lost."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先运行 npx skills remove（危险删除——按名称跨所有权删除，此处正是所需行为），再用 gh skill install --force 按记录的 GitHub 溯源重新锚定。后果：内容重置为 gh 记录的 ref；本地修改将丢失。"
+          }
+        }
+      }
+    },
+    "arbitration.keepGitHub.needsGH": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unavailable: this choice re-anchors through gh, which is unavailable in this environment."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不可用：此选项需要通过 gh 重新锚定，而此环境中 gh 不可用。"
+          }
+        }
+      }
+    },
+    "Keep Vercel Ledger": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保留 Vercel 账本"
+          }
+        }
+      }
+    },
+    "Keep GitHub Ledger": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保留 GitHub 账本"
+          }
+        }
+      }
+    },
+    "Adopt into GitHub Ledger": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收编进 GitHub 账本"
+          }
+        }
+      }
+    },
+    "adopt.explainer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No ledger owns this skill. Supply the GitHub source to adopt it: gh skill install <owner/repo> <path> --force re-anchors provenance onto the existing directory."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有任何账本管理此技能。提供 GitHub 来源以收编：gh skill install <owner/repo> <path> --force 会把溯源信息锚定到现有目录。"
+          }
+        }
+      }
+    },
+    "Repository (owner/repo)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仓库（owner/repo）"
+          }
+        }
+      }
+    },
+    "Path in Repository": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仓库内路径"
+          }
+        }
+      }
+    },
+    "adopt.mergeWarning": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If upstream content differs from the on-disk payload, merge-overwrite keeps extra local files but overwrites colliding ones."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "若上游内容与磁盘上的文件不同，合并覆盖会保留多余的本地文件，但覆盖同名的冲突文件。"
+          }
+        }
+      }
+    },
+    "Adopt": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收编"
+          }
+        }
+      }
+    },
+    "Full command": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完整命令"
+          }
+        }
+      }
+    },
+    "Intent": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "意图"
+          }
+        }
+      }
+    },
+    "Consequences": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "后果"
+          }
+        }
+      }
+    },
+    "Working directory": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "工作目录"
+          }
+        }
+      }
+    },
+    "command.atRisk %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At risk in this scope: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此范围内存在风险：%@"
+          }
+        }
+      }
+    },
+    "Reload": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新载入"
+          }
+        }
+      }
+    },
+    "snapshots.rollbackCounts %lld %lld %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "restored %lld · deleted %lld · unrestorable %lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已恢复 %lld · 已删除 %lld · 无法恢复 %lld"
+          }
+        }
+      }
+    },
+    "Rolled back": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已回滚"
+          }
+        }
+      }
+    },
+    "Proposed": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "待审查"
+          }
+        }
+      }
+    },
+    "Executing": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "执行中"
+          }
+        }
+      }
+    },
+    "Succeeded": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已成功"
+          }
+        }
+      }
+    },
+    "Failed": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已失败"
+          }
+        }
+      }
+    },
+    "Rolled Back": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已回滚"
+          }
+        }
+      }
+    },
+    "snapshots.commandCount %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld commands"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 条命令"
+          }
+        }
+      }
+    },
+    "snapshots.diffSummary.empty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no changes"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无变更"
+          }
+        }
+      }
+    },
+    "snapshots.diffSummary %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld changes"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 处变更"
+          }
+        }
+      }
+    },
+    "Roll Back": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回滚"
+          }
+        }
+      }
+    },
+    "Batch": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "批次"
+          }
+        }
+      }
+    },
+    "snapshots.batchMeta %@ %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %@"
+          }
+        }
+      }
+    },
+    "Commands": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "命令"
+          }
+        }
+      }
+    },
+    "Post-run diff": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运行后差异"
+          }
+        }
+      }
+    },
+    "No changes — the executed batch left the library unchanged.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无变更——已执行的批次未改动技能库。"
+          }
+        }
+      }
+    },
+    "Rollback": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回滚"
+          }
+        }
+      }
+    },
+    "exit %lld": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退出码 %lld"
+          }
+        }
+      }
+    },
+    "health.repairBlocked.needsNode": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repairing this needs Node.js — npx skills is unavailable."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修复此项需要 Node.js——npx skills 不可用。"
+          }
+        }
+      }
+    },
+    "health.repairBlocked.needsGH": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repairing this needs the GitHub CLI — gh is unavailable."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修复此项需要 GitHub CLI——gh 不可用。"
+          }
+        }
+      }
+    },
+    "Repair": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修复"
+          }
+        }
+      }
+    },
+    "Fix Selected Finding…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修复选中的发现项…"
+          }
+        }
+      }
+    },
+    "Toggle Review of Selected Command": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换选中命令的审查状态"
+          }
+        }
+      }
+    },
+    "Roll Back Selected Batch": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回滚选中的批次"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -21,27 +21,52 @@ final class QuickLookPreviewer: NSObject, QLPreviewPanelDataSource, QLPreviewPan
     /// The `SKILL.md` currently on offer, or nil when nothing is previewed.
     nonisolated(unsafe) private var currentItem: URL?
 
-    /// Opens (or retargets) the Quick Look panel on the given file.
+    /// Opens (or retargets) the Quick Look panel on the given file. ⌘Y is a
+    /// TOGGLE: calling this while the panel is visible closes it instead of
+    /// retargeting (VAL-CROSS-019 keyboard journey).
     @MainActor func preview(fileAt url: URL) {
+        if let panel = QLPreviewPanel.shared(), panel.isVisible {
+            panel.close()
+            return
+        }
         currentItem = url
+        installEscapeMonitor()
         guard let panel = QLPreviewPanel.shared() else { return }
         panel.dataSource = self
         panel.delegate = self
-        if panel.isVisible {
-            panel.reloadData()
-        } else {
-            panel.makeKeyAndOrderFront(nil)
-            // A freshly-ordered panel has no item cache; without an explicit
-            // reload it asks the data source for nothing and can order
-            // itself straight back out.
-            panel.reloadData()
-            // QLPreviewPanel opens at a floating window level, which drops
-            // it out of layer-0 window listings (computer-use evidence for
-            // VAL-HEALTH-023 reads the window list). Demote to normal level
-            // once open so the panel is enumerable like any other window.
-            panel.level = .normal
-            panel.title = String(
-                format: String(localized: "quicklook.title %@"), url.lastPathComponent)
+        panel.makeKeyAndOrderFront(nil)
+        // A freshly-ordered panel has no item cache; without an explicit
+        // reload it asks the data source for nothing and can order itself
+        // straight back out.
+        panel.reloadData()
+        // QLPreviewPanel opens at a floating window level, which drops it
+        // out of layer-0 window listings (computer-use evidence for
+        // VAL-HEALTH-023 reads the window list). Demote to normal level once
+        // open so the panel is enumerable like any other window.
+        panel.level = .normal
+        panel.title = String(
+            format: String(localized: "quicklook.title %@"), url.lastPathComponent)
+    }
+
+    /// The installed Escape key monitor (kept for the app's lifetime; inert
+    /// whenever the panel is closed).
+    private var escapeMonitor: Any?
+
+    /// VAL-CROSS-019: keyboard-only Quick Look dismiss. QLPreviewPanel does
+    /// not close on Escape by itself (only its close button works), so a
+    /// local key-down monitor closes it before the event is dispatched. The
+    /// panel belongs to this app, so its key events pass through the local
+    /// monitor even while the panel is key.
+    @MainActor private func installEscapeMonitor() {
+        guard escapeMonitor == nil else { return }
+        escapeMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            // 53 = kVK_Escape.
+            guard event.keyCode == 53,
+                let panel = QLPreviewPanel.shared(),
+                panel.isVisible
+            else { return event }
+            panel.close()
+            return nil
         }
     }
 
