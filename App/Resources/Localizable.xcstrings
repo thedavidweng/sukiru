@@ -1166,6 +1166,94 @@
           }
         }
       }
+    },
+    "unknown": {
+      "comment": "Detail provenance value when no version/date is recorded.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未知"
+          }
+        }
+      }
+    },
+    "directory": {
+      "comment": "Placement kind badge: a plain directory copy.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目录"
+          }
+        }
+      }
+    },
+    "symlink": {
+      "comment": "Placement kind badge: a symbolic link.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "符号链接"
+          }
+        }
+      }
+    },
+    "broken symlink": {
+      "comment": "Placement kind badge: a dangling symbolic link.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "失效的符号链接"
+          }
+        }
+      }
+    },
+    "Add Project Root…": {
+      "comment": "View menu: keyboard path to the Settings add-folder button (Full Keyboard Access off).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加项目根目录…"
+          }
+        }
+      }
+    },
+    "Remove Selected Project Root": {
+      "comment": "View menu: keyboard path to the per-root remove button in Settings.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移除所选项目根目录"
+          }
+        }
+      }
+    },
+    "Show Next Workspace": {
+      "comment": "View menu: cycles the Health workspace filter forward (keyboard path to the filter-bar buttons).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示下一个工作区"
+          }
+        }
+      }
+    },
+    "Show Previous Workspace": {
+      "comment": "View menu: cycles the Health workspace filter backward (keyboard path to the filter-bar buttons).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示上一个工作区"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

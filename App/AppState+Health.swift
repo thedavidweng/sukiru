@@ -115,6 +115,25 @@ extension AppState {
         }
     }
 
+    /// Cycles the workspace filter across "All" (nil) plus every workspace
+    /// in report order — the keyboard path to the filter-bar option buttons,
+    /// which are not Tab stops with Full Keyboard Access off.
+    func cycleWorkspaceFilter(step: Int) {
+        guard canCycleWorkspaceFilter, let report else { return }
+        var ids: [String?] = [nil]
+        for workspace in report.workspaces {
+            ids.append(workspace.id)
+        }
+        let current = ids.firstIndex(of: healthWorkspaceFilter) ?? 0
+        let next = (current + step + ids.count) % ids.count
+        healthWorkspaceFilter = ids[next]
+    }
+
+    /// Whether the workspace-filter cycling menu commands can do anything.
+    var canCycleWorkspaceFilter: Bool {
+        !(report?.workspaces.isEmpty ?? true)
+    }
+
     // MARK: - Issues (VAL-HEALTH-022: malformed data renders sanely)
 
     /// Issues are environment-level (they carry a path, not a workspace id),

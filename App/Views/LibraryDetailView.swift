@@ -115,22 +115,27 @@ struct LibraryDetailView: View {
                     .font(.headline)
             }
             if let vercel = skill.provenance.vercel {
-                field("Installer", "Vercel skills CLI (lock entry)")
+                // The value parameter is a plain String (Text does not
+                // localize it), so fixed phrases go through
+                // String(localized:) explicitly.
+                field("Installer", String(localized: "Vercel skills CLI (lock entry)"))
                 if let source = vercel.source {
                     field("Source", source)
                 }
                 if let ref = vercel.ref {
                     field("Ref", ref)
                 }
-                field("Version", vercel.updatedAt ?? vercel.installedAt ?? "unknown")
+                field(
+                    "Version",
+                    vercel.updatedAt ?? vercel.installedAt ?? String(localized: "unknown"))
             }
             if let github = skill.provenance.github {
-                field("Installer", "GitHub gh skill (frontmatter)")
+                field("Installer", String(localized: "GitHub gh skill (frontmatter)"))
                 field("Repository", github.repo)
                 if let ref = github.ref {
                     field("Ref", ref)
                 }
-                field("Version", github.treeSha ?? "unknown")
+                field("Version", github.treeSha ?? String(localized: "unknown"))
                 field(
                     "Pin state",
                     github.pinned
@@ -243,7 +248,7 @@ struct LibraryDetailView: View {
                 .font(.headline)
             ForEach(skill.placements, id: \.path) { placement in
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(placement.kind.rawValue)
+                    Text(placementKindText(placement.kind))
                         .font(.caption.weight(.medium))
                         .padding(.horizontal, 6)
                         .padding(.vertical, 1)
@@ -254,6 +259,16 @@ struct LibraryDetailView: View {
                         .textSelection(.enabled)
                 }
             }
+        }
+    }
+
+    /// Localized badge text for a placement kind (the raw enum values are
+    /// English wire tokens, never shown directly).
+    private func placementKindText(_ kind: Placement.Kind) -> LocalizedStringKey {
+        switch kind {
+        case .directory: "directory"
+        case .symlink: "symlink"
+        case .brokenSymlink: "broken symlink"
         }
     }
 

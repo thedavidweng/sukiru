@@ -63,22 +63,30 @@ struct SettingsView: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(state.projectRoots, id: \.self) { root in
-                    HStack(spacing: 8) {
-                        Image(systemName: "folder")
-                            .foregroundStyle(.secondary)
-                        Text(root)
-                            .font(.callout.monospaced())
-                            .textSelection(.enabled)
-                        Spacer()
-                        Button("Remove") {
-                            state.removeProjectRoot(root)
+                // A selectable List (not bare rows) so removal is reachable
+                // without a mouse: select a root, then ⌘⌫ or the View menu's
+                // "Remove Selected Project Root" — the per-row Remove buttons
+                // are not Tab stops with Full Keyboard Access off.
+                List(selection: $state.selectedProjectRoot) {
+                    ForEach(state.projectRoots, id: \.self) { root in
+                        HStack(spacing: 8) {
+                            Image(systemName: "folder")
+                                .foregroundStyle(.secondary)
+                            Text(root)
+                                .font(.callout.monospaced())
+                                .textSelection(.enabled)
+                            Spacer()
+                            Button("Remove") {
+                                state.removeProjectRoot(root)
+                            }
+                            .axButtonToken(
+                                "sukiru.settings.projects.remove.\(AXTokens.path(root))")
                         }
-                        .axButtonToken(
-                            "sukiru.settings.projects.remove.\(AXTokens.path(root))")
+                        .padding(.vertical, 2)
+                        .tag(root)
                     }
-                    .padding(.vertical, 2)
                 }
+                .frame(minHeight: 44, maxHeight: 160)
             }
             HStack(spacing: 12) {
                 Button("Add Folder…") {
