@@ -61,7 +61,15 @@ final class AppState: ObservableObject {
     @Published var expandedFindings: Set<String> = []
     /// Active Health skill focus (D16 deep-link), nil = unfiltered.
     @Published var healthFocus: HealthFocus?
-    /// True while a Health "check now" run is in flight (non-reentrant).
+    /// Active Health workspace filter (VAL-HEALTH-015): a workspace id from
+    /// the report (`user`, `host:<id>`, `project:<root>`, …), nil = all.
+    @Published var healthWorkspaceFilter: String?
+    /// Selected finding row in Health (stable id via `Self.findingID`),
+    /// driving the keyboard reveal/evidence menu commands (VAL-CROSS-004).
+    @Published var selectedFindingID: String?
+    /// True while a Health "check now" run is in flight (non-reentrant,
+    /// VAL-HEALTH-046). Held for a minimum visible duration so the running
+    /// state is actually observable on sub-100ms fixture scans.
     @Published private(set) var healthCheckRunning = false
 
     /// The launch environment (SUKIRU_HOME / SUKIRU_ROOTS / XDG overrides),
@@ -108,39 +116,68 @@ final class AppState: ObservableObject {
     /// surfaces swap when the new report lands. Used by the initial load,
     /// explicit Refresh (Settings control and ⌘R), root add/remove, and the
     /// Health check-now control — a health check IS a scan in M3.
+    ///
+    /// A generation counter keeps overlapping runs coherent (only the latest
+    /// run's completion applies), and the running flag is held for a minimum
+    /// visible duration (0.6 s) so VAL-HEALTH-046's non-reentrant run state
+    /// is observable even on millisecond-fast fixture scans.
     func rescan() {
         let environment = Self.makeEnvironment(roots: projectRoots)
         let engine = ScanEngine(environment: environment)
         let request = ScanRequest()
+        scanGeneration += 1
+        let generation = scanGeneration
+        let startedAt = ContinuousClock.now
         healthCheckRunning = true
         Task.detached(priority: .userInitiated) { [weak self] in
             do {
                 let report = try engine.scan(request)
-                await MainActor.run {
-                    guard let self else { return }
-                    self.report = report
-                    self.scanPhase = .loaded
-                    self.healthCheckRunning = false
-                    self.pruneSelection(using: report)
-                }
-            } catch let problem as FatalEnvironmentProblem {
-                await MainActor.run {
-                    guard let self else { return }
-                    switch problem {
-                    case .sukiruHomeMissing(let path):
-                        self.report = nil
-                        self.scanPhase = .homeMissing(path)
-                    }
-                    self.healthCheckRunning = false
-                }
+                await self?.applyScanResult(
+                    .success(report), generation: generation, startedAt: startedAt)
             } catch {
-                await MainActor.run {
-                    guard let self else { return }
-                    self.scanPhase = .failed(String(describing: error))
-                    self.healthCheckRunning = false
-                }
+                await self?.applyScanResult(
+                    .failure(error), generation: generation, startedAt: startedAt)
             }
         }
+    }
+
+    /// Monotonic counter identifying the latest requested scan; stale
+    /// completions are dropped instead of clobbering newer state.
+    private var scanGeneration = 0
+
+    /// Minimum time the running state stays visible once a scan starts.
+    private static let minimumRunVisibility: Duration = .milliseconds(600)
+
+    /// Applies a finished scan on the main actor. Stale generations (a newer
+    /// rescan was requested while this one ran) are ignored entirely.
+    private func applyScanResult(
+        _ result: Result<ScanReport, any Error>,
+        generation: Int,
+        startedAt: ContinuousClock.Instant
+    ) async {
+        guard generation == scanGeneration else { return }
+        switch result {
+        case .success(let report):
+            self.report = report
+            self.scanPhase = .loaded
+            self.pruneSelection(using: report)
+        case .failure(let error):
+            if let problem = error as? FatalEnvironmentProblem {
+                switch problem {
+                case .sukiruHomeMissing(let path):
+                    self.report = nil
+                    self.scanPhase = .homeMissing(path)
+                }
+            } else {
+                self.scanPhase = .failed(String(describing: error))
+            }
+        }
+        let elapsed = startedAt.duration(to: .now)
+        if elapsed < Self.minimumRunVisibility {
+            try? await Task.sleep(for: Self.minimumRunVisibility - elapsed)
+        }
+        guard generation == scanGeneration else { return }
+        healthCheckRunning = false
     }
 
     /// Runs the capability probes off the main actor via the shared cache
@@ -184,57 +221,8 @@ final class AppState: ObservableObject {
         return report.skills.first { Self.skillID($0) == selectedSkillID }
     }
 
-    // MARK: - D16 deep-link: Library skill → Health findings
-
-    /// The ownership-bucket workspace id for a skill (`user` /
-    /// `project:<root>`). Matches the invariant that a scope's canonical
-    /// workspace id equals the ownership bucket key.
-    func scopeGroup(for skill: Skill) -> String {
-        switch skill.scope {
-        case .user, .all:
-            return "user"
-        case .project:
-            if let root = projectRoot(of: skill) {
-                return "project:\(root)"
-            }
-            return "project:?"
-        }
-    }
-
-    /// Attributes a project-scope skill to its project root by placement path
-    /// prefix (workspace roots live under the project root).
-    func projectRoot(of skill: Skill) -> String? {
-        projectRoots.first { root in
-            let prefix = root.hasSuffix("/") ? root : root + "/"
-            return skill.placements.contains { $0.path.hasPrefix(prefix) }
-        }
-    }
-
-    /// Navigates to Health showing only the findings that implicate `skill`
-    /// (D16 "show findings" action).
-    func showFindings(for skill: Skill) {
-        healthFocus = HealthFocus(skillName: skill.name, scopeGroup: scopeGroup(for: skill))
-        surface = .health
-    }
-
-    /// Clears the Health skill focus (shows every finding again).
-    func clearHealthFocus() {
-        healthFocus = nil
-    }
-
-    /// Applies the active health focus: findings implicating the focused
-    /// skill in its scope. A finding's workspace id is either the scope group
-    /// itself or a host workspace nested under it.
-    func focusedFindings(_ findings: [Finding]) -> [Finding] {
-        guard let focus = healthFocus else { return findings }
-        return findings.filter { finding in
-            guard finding.skillName == focus.skillName else { return false }
-            let workspaceID = finding.workspaceID
-            if workspaceID == focus.scopeGroup { return true }
-            if focus.scopeGroup == "user" && workspaceID.hasPrefix("host:") { return true }
-            return workspaceID.hasPrefix(focus.scopeGroup + "#")
-        }
-    }
+    // The Health-surface derivations (skill focus, workspace filter, issue
+    // attribution, finding → Library reveal) live in `AppState+Health.swift`.
 
     /// Drops selection/disclosure/focus state that no longer resolves after
     /// a rescan (e.g. the skill's directory was deleted — VAL-CROSS-021).
@@ -257,6 +245,15 @@ final class AppState: ObservableObject {
         let live = Set(
             report.findings.indices.map { Self.findingID(report.findings[$0], index: $0) })
         expandedFindings = expandedFindings.intersection(live)
+        if let selectedFindingID, !live.contains(selectedFindingID) {
+            self.selectedFindingID = nil
+        }
+        if let filter = healthWorkspaceFilter {
+            let workspaceAlive = report.workspaces.contains { $0.id == filter }
+            if !workspaceAlive {
+                healthWorkspaceFilter = nil
+            }
+        }
     }
 
     /// Builds a scan environment identical to the CLI wiring (§4.2) except

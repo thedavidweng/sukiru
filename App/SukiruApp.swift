@@ -40,6 +40,23 @@ struct SukiruApp: App {
                 }
                 .disabled(state.healthFocus == nil)
                 Divider()
+                // D16 reveal without a mouse (VAL-CROSS-004 keyboard path;
+                // Full Keyboard Access off means Tab never reaches the
+                // finding-row buttons, but menu items stay reachable).
+                Button("Reveal Selected Finding in Library") {
+                    if let finding = state.selectedFinding() {
+                        state.revealInLibrary(for: finding)
+                    }
+                }
+                .keyboardShortcut("l", modifiers: [.command, .shift])
+                .disabled(
+                    state.selectedFinding().flatMap { state.skill(matching: $0) } == nil)
+                Button("Toggle Selected Finding Evidence") {
+                    state.toggleSelectedFindingEvidence()
+                }
+                .keyboardShortcut("e", modifiers: [.command, .shift])
+                .disabled(state.selectedFinding() == nil)
+                Divider()
                 Button("Refresh") {
                     state.rescan()
                 }

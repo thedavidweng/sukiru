@@ -9,6 +9,10 @@ One tree triggering several rules at once, with findings in BOTH scopes:
 - project scope (`proj`):
   `drifted` edited after install -> `vercel-lock-drift` (action);
   `proj-orphan` no ledger -> `files-without-lock` (info).
+- `.qoder/` contains ONLY an empty `skills/` entry: CLI spray residue, a
+  leftover workspace (installed=false) with ZERO placements and ZERO
+  findings — the Health workspace filter's reachable empty state
+  (VAL-HEALTH-047).
 
 Scan with SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/proj.
 

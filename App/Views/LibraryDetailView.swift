@@ -41,6 +41,23 @@ struct LibraryDetailView: View {
                     }
                     .axButtonToken("sukiru.library.detail.showFindings")
                 }
+                if skill.ambiguous {
+                    // VAL-HEALTH-021 / D23: ambiguity voids attribution; the
+                    // ledger claims below stay visible as data, never as
+                    // authoritative ownership.
+                    HStack(spacing: 0) {
+                        AXToken(
+                            token: "sukiru.library.detail.ambiguous.\(AXTokens.skill(skill.name))")
+                        // swiftlint:disable line_length
+                        let explanation: LocalizedStringKey =
+                            "Ownership ambiguous: distinct copies of this name disagree, so attribution is voided and the skill is treated as ownerless. Ledger claims below are data, not verdicts."
+                        // swiftlint:enable line_length
+                        Text(explanation)
+                            .font(.callout)
+                            .foregroundStyle(.orange)
+                    }
+                    .accessibilityElement(children: .contain)
+                }
                 provenanceBlock(skill)
                 hostsBlock(skill)
                 placementsBlock(skill)

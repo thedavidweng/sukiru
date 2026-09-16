@@ -1815,6 +1815,12 @@ EOF
 # =====================================================================
 d="$(reset_pw_fixture FIX-DIRTY-SUITE)"
 mkdir -p "$d/.home/.claude/skills"; : >"$d/.home/.claude/config.json"
+# CLI spray residue: `.qoder` contains ONLY a bare (empty) `skills/` entry —
+# a leftover (installed=false) workspace with ZERO findings, so the Health
+# workspace filter has a reachable empty-filter state (VAL-HEALTH-047).
+# (git cannot track the empty dir; `reset_pw_fixture` rebuilds it, and the
+# committed tree keeps it via the same convention as FIX-MULTI-HOST.)
+mkdir -p "$d/.home/.qoder/skills"
 # user scope: dangling symlink (action) + gh-owned skill (danger advisory,
 # action) + ownerless skill (files-without-lock, info)
 ln -s /nonexistent/rotted-target "$d/.home/.claude/skills/rotted-link"
@@ -1853,6 +1859,10 @@ One tree triggering several rules at once, with findings in BOTH scopes:
 - project scope (`proj`):
   `drifted` edited after install -> `vercel-lock-drift` (action);
   `proj-orphan` no ledger -> `files-without-lock` (info).
+- `.qoder/` contains ONLY an empty `skills/` entry: CLI spray residue, a
+  leftover workspace (installed=false) with ZERO placements and ZERO
+  findings — the Health workspace filter's reachable empty state
+  (VAL-HEALTH-047).
 
 Scan with SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/proj.
 

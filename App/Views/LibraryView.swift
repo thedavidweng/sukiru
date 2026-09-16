@@ -119,6 +119,27 @@ struct LibraryView: View {
     // MARK: - skill list
 
     private func skillList(_ report: ScanReport) -> some View {
+        ScrollViewReader { proxy in
+            skillListContent(report)
+                // The Health → Library deep-link (D16, VAL-HEALTH-038,
+                // VAL-CROSS-004) must land with the implicated row visible,
+                // not merely selected somewhere offscreen.
+                .onChange(of: state.selectedSkillID) { _, newSelection in
+                    if let newSelection {
+                        withAnimation {
+                            proxy.scrollTo(newSelection, anchor: .center)
+                        }
+                    }
+                }
+                .onAppear {
+                    if let selection = state.selectedSkillID {
+                        proxy.scrollTo(selection, anchor: .center)
+                    }
+                }
+        }
+    }
+
+    private func skillListContent(_ report: ScanReport) -> some View {
         List(selection: $state.selectedSkillID) {
             let userSkills = skills(in: .user, report: report)
             if !userSkills.isEmpty {
