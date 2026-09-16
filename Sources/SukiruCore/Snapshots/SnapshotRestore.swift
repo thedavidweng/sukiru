@@ -39,15 +39,79 @@ extension SnapshotStore {
     ) -> [RestoreItem] {
         var items: [RestoreItem] = []
         for path in batchAddedPaths(manifest: manifest, extra: extraAddedPaths) {
-            items.append(removeItem(atPath: path))
+            let item = removeItem(atPath: path)
+            items.append(item)
+            if item.category == .deletedBatchAdded {
+                items += pruneEmptyAncestors(of: path, manifest: manifest)
+            }
         }
         // A ledger path recorded as absent but now present is batch-added.
         for ledger in manifest.ledgers where !ledger.existed {
             if FileManager.default.fileExists(atPath: ledger.path) {
-                items.append(removeItem(atPath: ledger.path))
+                let item = removeItem(atPath: ledger.path)
+                items.append(item)
+                if item.category == .deletedBatchAdded {
+                    items += pruneEmptyAncestors(of: ledger.path, manifest: manifest)
+                }
             }
         }
         return items
+    }
+
+    /// Removes the now-empty ancestor directories of a deleted batch-added
+    /// path — the containers the batch itself must have created (e.g. a
+    /// symlink spray's fresh `.qoder/skills` layout) — stopping at anything
+    /// that existed pre-batch: the home, the snapshot store, watched
+    /// directories, and every ancestor of a recorded placement or ledger.
+    private func pruneEmptyAncestors(
+        of path: String, manifest: SnapshotManifest
+    ) -> [RestoreItem] {
+        var stop = Set(manifest.watchedDirectories)
+        stop.insert(environment.home)
+        stop.insert("/")
+        stop.insert(snapshotsRoot())
+        // Anchors that provably existed pre-batch: every ancestor of a
+        // recorded placement or of an EXISTING ledger, plus the project
+        // root implied by an absent-ledger probe path (the root existed
+        // even though the lock candidate inside it did not).
+        let ledgers = manifest.ledgers.filter(\.existed).map(\.path)
+        let anchors = manifest.placements.map(\.path) + ledgers
+        for anchor in anchors {
+            var ancestor = anchor
+            while true {
+                let parent = URL(fileURLWithPath: ancestor).deletingLastPathComponent().path
+                if parent == ancestor || stop.contains(parent) {
+                    break
+                }
+                stop.insert(parent)
+                ancestor = parent
+            }
+        }
+        for ledger in manifest.ledgers where !ledger.existed {
+            for candidate in VercelLockReader.projectProbeOrder
+            where ledger.path.hasSuffix("/" + candidate) {
+                stop.insert(String(ledger.path.dropLast(candidate.count + 1)))
+                break
+            }
+        }
+        var items: [RestoreItem] = []
+        var directory = URL(fileURLWithPath: path).deletingLastPathComponent().path
+        while !stop.contains(directory), Self.isEmptyDirectory(directory) {
+            items.append(removeItem(atPath: directory))
+            let parent = URL(fileURLWithPath: directory).deletingLastPathComponent().path
+            if parent == directory {
+                break
+            }
+            directory = parent
+        }
+        return items
+    }
+
+    private static func isEmptyDirectory(_ path: String) -> Bool {
+        guard let contents = try? FileManager.default.contentsOfDirectory(atPath: path) else {
+            return false
+        }
+        return contents.isEmpty
     }
 
     /// Immediate children of watched directories that the manifest does not

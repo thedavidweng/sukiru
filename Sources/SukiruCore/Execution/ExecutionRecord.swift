@@ -99,13 +99,14 @@ public struct CommandExecution: Codable, Equatable, Sendable {
 /// to the per-command captured output files `cmd-NN.stdout` /
 /// `cmd-NN.stderr`.
 public struct ExecutionRecord: Codable, Equatable, Sendable {
-    public static let currentSchemaVersion = 1
+    public static let currentSchemaVersion = 2
 
     public let schemaVersion: Int
     public let batchID: String
     /// The snapshot committed BEFORE the first command ran (VAL-REPAIR-023).
     public let snapshotID: String
-    /// `succeeded` or `failed` — terminal batch states (architecture §7).
+    /// `succeeded` or `failed` at execution time; a later rollback flips the
+    /// persisted record to `rolledBack` (architecture §7).
     public let batchStatus: BatchStatus
     public let commandTimeoutSeconds: Double
     public let startedAt: String
@@ -113,6 +114,14 @@ public struct ExecutionRecord: Codable, Equatable, Sendable {
     public let durationSeconds: Double
     public let recordDirectory: String
     public let commands: [CommandExecution]
+    /// The post-run diff (architecture §4.1 Differ): always present, even
+    /// when the batch changed nothing (VAL-REPAIR-032/033).
+    public let diff: BatchDiff
+    /// The batch's affected scope, persisted so a later rollback process
+    /// rescans exactly the same surface (the sprayed-symlink gap).
+    public let affectedRoots: [String]
+    public let affectedScope: Scope
+    public let affectedWorkspaceIDs: [String]
 
     public init(
         schemaVersion: Int = ExecutionRecord.currentSchemaVersion,
@@ -124,7 +133,11 @@ public struct ExecutionRecord: Codable, Equatable, Sendable {
         endedAt: String,
         durationSeconds: Double,
         recordDirectory: String,
-        commands: [CommandExecution]
+        commands: [CommandExecution],
+        diff: BatchDiff,
+        affectedRoots: [String],
+        affectedScope: Scope,
+        affectedWorkspaceIDs: [String]
     ) {
         self.schemaVersion = schemaVersion
         self.batchID = batchID
@@ -136,6 +149,10 @@ public struct ExecutionRecord: Codable, Equatable, Sendable {
         self.durationSeconds = durationSeconds
         self.recordDirectory = recordDirectory
         self.commands = commands
+        self.diff = diff
+        self.affectedRoots = affectedRoots
+        self.affectedScope = affectedScope
+        self.affectedWorkspaceIDs = affectedWorkspaceIDs
     }
 
     /// Deterministic JSON encoding (sorted keys), like the batch itself.

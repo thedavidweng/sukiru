@@ -122,6 +122,36 @@ struct CLIParserTests {
         #expect(badTimeout == .failure(.invalidValue(flag: "--command-timeout", value: "abc")))
     }
 
+    // MARK: - rollback (D9 one-click rollback surface)
+
+    @Test("rollback --batch parses")
+    func rollbackParses() {
+        #expect(
+            CLIParser.parse(["rollback", "--batch", "b-1"])
+                == .success(.rollback(batchID: "b-1", format: .json))
+        )
+        #expect(
+            CLIParser.parse(["rollback", "--batch", "b-1", "--format", "json"])
+                == .success(.rollback(batchID: "b-1", format: .json))
+        )
+    }
+
+    @Test("rollback without --batch is a usage error")
+    func rollbackRequiresBatch() {
+        #expect(
+            CLIParser.parse(["rollback"])
+                == .failure(.missingFlag(command: "rollback", flag: "--batch"))
+        )
+    }
+
+    @Test("Unknown rollback flag is a usage error")
+    func rollbackUnknownFlag() {
+        #expect(
+            CLIParser.parse(["rollback", "--batch", "b-1", "--verbose"])
+                == .failure(.unknownFlag(command: "rollback", flag: "--verbose"))
+        )
+    }
+
     @Test("No command is a usage error")
     func noCommand() {
         #expect(CLIParser.parse([]) == .failure(.noCommand))
