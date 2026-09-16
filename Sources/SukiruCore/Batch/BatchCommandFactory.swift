@@ -10,8 +10,12 @@ enum BatchCommandFactory {
     // MARK: - npx skills (vercel ledger)
 
     /// `npx skills update <name> (-p|-g) -y` — the plain vercel update
-    /// (VAL-REPAIR-009). NEVER used for drift repair (D22).
-    static func vercelUpdate(name: String, scope: Scope, finding: Finding) -> BatchCommand {
+    /// (VAL-REPAIR-009). NEVER used for drift repair (D22). Project-scope
+    /// commands carry the project root as `workingDirectory` (npx resolves
+    /// `-p` literally from cwd).
+    static func vercelUpdate(
+        name: String, scope: Scope, finding: Finding, workingDirectory: String? = nil
+    ) -> BatchCommand {
         let argv = ["npx", "skills", "update", name, scope == .user ? "-g" : "-p", "-y"]
         return BatchCommand(
             argv: argv,
@@ -20,7 +24,8 @@ enum BatchCommandFactory {
             intent: "Update '\(name)' through the Vercel CLI (finding \(finding.ruleID)): "
                 + "refresh the ledger-owned copies of the skill.",
             dangerFlags: [],
-            warning: nil
+            warning: nil,
+            workingDirectory: workingDirectory
         )
     }
 
@@ -34,7 +39,8 @@ enum BatchCommandFactory {
         source: String,
         scope: Scope,
         intent: String,
-        consequence: String
+        consequence: String,
+        workingDirectory: String? = nil
     ) -> BatchCommand {
         var argv = ["npx", "skills", "add", source, "--skill", name]
         if scope == .user {
@@ -48,7 +54,8 @@ enum BatchCommandFactory {
             intent: intent,
             dangerFlags: [],
             warning: nil,
-            consequence: consequence
+            consequence: consequence,
+            workingDirectory: workingDirectory
         )
     }
 
@@ -62,7 +69,8 @@ enum BatchCommandFactory {
         finding: Finding,
         atRisk: [AtRiskSkill],
         intent: String,
-        consequence: String? = nil
+        consequence: String? = nil,
+        workingDirectory: String? = nil
     ) -> BatchCommand {
         var argv = ["npx", "skills", "remove", name]
         if scope == .user {
@@ -77,7 +85,8 @@ enum BatchCommandFactory {
             dangerFlags: [.dangerousDeletion],
             warning: dangerousDeletionWarning(name: name, atRisk: atRisk),
             atRiskSkills: atRisk,
-            consequence: consequence
+            consequence: consequence,
+            workingDirectory: workingDirectory
         )
     }
 

@@ -120,6 +120,10 @@ public struct BatchCommand: Codable, Equatable, Sendable {
     public let atRiskSkills: [AtRiskSkill]
     /// Consequence text for destructive-by-design commands (D10/D11/D22).
     public let consequence: String?
+    /// The working directory the command must run in: the project root for
+    /// project-scope `npx` commands (the CLI resolves `-p` literally from
+    /// cwd — research/cli-surface-npx.md); nil elsewhere.
+    public let workingDirectory: String?
 
     public init(
         argv: [String],
@@ -129,7 +133,8 @@ public struct BatchCommand: Codable, Equatable, Sendable {
         dangerFlags: [DangerFlag],
         warning: String?,
         atRiskSkills: [AtRiskSkill] = [],
-        consequence: String? = nil
+        consequence: String? = nil,
+        workingDirectory: String? = nil
     ) {
         self.argv = argv
         self.displayString = displayString
@@ -139,6 +144,7 @@ public struct BatchCommand: Codable, Equatable, Sendable {
         self.warning = warning
         self.atRiskSkills = atRiskSkills
         self.consequence = consequence
+        self.workingDirectory = workingDirectory
     }
 
     /// Shell-style rendering of an argv: arguments containing anything
