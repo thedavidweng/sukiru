@@ -65,6 +65,37 @@ struct SukiruApp: App {
                 .keyboardShortcut("e", modifiers: [.command, .shift])
                 .disabled(state.selectedFinding() == nil)
                 Divider()
+                // Workspace filter without a mouse (keyboard-access audit):
+                // the filter-bar option buttons are not Tab stops with Full
+                // Keyboard Access off, so ⌥⌘←/→ cycle the filter across
+                // "All" and every workspace in report order.
+                Button("Show Next Workspace") {
+                    state.cycleWorkspaceFilter(step: 1)
+                }
+                .keyboardShortcut(.rightArrow, modifiers: [.command, .option])
+                .disabled(!state.canCycleWorkspaceFilter)
+                Button("Show Previous Workspace") {
+                    state.cycleWorkspaceFilter(step: -1)
+                }
+                .keyboardShortcut(.leftArrow, modifiers: [.command, .option])
+                .disabled(!state.canCycleWorkspaceFilter)
+                Divider()
+                // Project-root management without a mouse: the Settings
+                // Add/Remove buttons are not Tab stops either. Add opens the
+                // folder picker (⌘⇧A); Remove acts on the Settings list
+                // selection (⌘⌫).
+                Button("Add Project Root…") {
+                    state.addProjectRootViaPanel()
+                }
+                .keyboardShortcut("a", modifiers: [.command, .shift])
+                Button("Remove Selected Project Root") {
+                    if let root = state.selectedProjectRoot {
+                        state.removeProjectRoot(root)
+                    }
+                }
+                .keyboardShortcut(.delete, modifiers: .command)
+                .disabled(state.selectedProjectRoot == nil)
+                Divider()
                 Button("Refresh") {
                     state.rescan()
                 }

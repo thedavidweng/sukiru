@@ -54,6 +54,10 @@ final class AppState: ObservableObject {
     /// remove in Settings, then Refresh (or the automatic rescan below)
     /// updates every surface.
     @Published private(set) var projectRoots: [String]
+    /// Selected row in the Settings project-roots list, driving the
+    /// keyboard remove command (⌘⌫) — the per-row Remove buttons are not
+    /// Tab stops with Full Keyboard Access off.
+    @Published var selectedProjectRoot: String?
     /// Selected skill in Library (identity via `Self.skillID`), surviving
     /// surface switches.
     @Published var selectedSkillID: String?
@@ -212,6 +216,9 @@ final class AppState: ObservableObject {
     /// Removes a project root (D20) and rescans.
     func removeProjectRoot(_ path: String) {
         projectRoots.removeAll { $0 == path }
+        if selectedProjectRoot == path {
+            selectedProjectRoot = nil
+        }
         rescan()
     }
 
