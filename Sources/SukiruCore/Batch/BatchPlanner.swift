@@ -51,6 +51,16 @@ extension CommandBatchBuilder {
         URL(fileURLWithPath: path).deletingLastPathComponent().path
     }
 
+    /// The project root a finding belongs to (nil for user scope). npx `-p`
+    /// commands resolve the project literally from the process cwd, so
+    /// project-scope vercel commands carry it as their workingDirectory.
+    func projectRoot(of finding: Finding) -> String? {
+        guard finding.workspaceID.hasPrefix("project:") else {
+            return nil
+        }
+        return String(finding.workspaceID.dropFirst("project:".count))
+    }
+
     // MARK: - update
 
     func updateCommands(
@@ -73,12 +83,14 @@ extension CommandBatchBuilder {
                         intent: "Repair vercel-lock-drift on '\(skill.name)': re-install from "
                             + "the Vercel lock's recorded source (npx skills update reports "
                             + "'already up to date' and never rewrites drifted copies).",
-                        consequence: "Content resets to upstream; local edits are lost.")
+                        consequence: "Content resets to upstream; local edits are lost.",
+                        workingDirectory: projectRoot(of: finding))
                 ]
             }
             return [
                 BatchCommandFactory.vercelUpdate(
-                    name: skill.name, scope: skill.scope, finding: finding)
+                    name: skill.name, scope: skill.scope, finding: finding,
+                    workingDirectory: projectRoot(of: finding))
             ]
         case .github:
             let dirs = placementDirs(skill)
@@ -121,7 +133,8 @@ extension CommandBatchBuilder {
                     intent: "Arbitrate '\(skill.name)' keeping the Vercel ledger (finding "
                         + "\(finding.ruleID)): re-install from the lock's recorded source.",
                     consequence: "Content resets to upstream; local edits are lost. The "
-                        + "re-install erases the GitHub frontmatter provenance.")
+                        + "re-install erases the GitHub frontmatter provenance.",
+                    workingDirectory: projectRoot(of: finding))
             ]
         case .keepGitHub:
             return try keepGitHubCommands(
@@ -153,7 +166,8 @@ extension CommandBatchBuilder {
         let remove = BatchCommandFactory.vercelRemove(
             name: skill.name, scope: skill.scope, finding: finding, atRisk: atRisk,
             intent: "Arbitrate '\(skill.name)' keeping the GitHub ledger (finding "
-                + "\(finding.ruleID)): remove every copy by name before re-anchoring.")
+                + "\(finding.ruleID)): remove every copy by name before re-anchoring.",
+            workingDirectory: projectRoot(of: finding))
         let install = BatchCommandFactory.githubInstall(
             repo: BatchCommandFactory.ownerRepo(from: provenance.repo),
             path: path,
@@ -246,7 +260,8 @@ extension CommandBatchBuilder {
             BatchCommandFactory.vercelRemove(
                 name: skill.name, scope: skill.scope, finding: finding, atRisk: atRisk,
                 intent: "Remove '\(skill.name)' (finding \(finding.ruleID)): npx skills "
-                    + "remove is the only scriptable removal; gh has no remove command.")
+                    + "remove is the only scriptable removal; gh has no remove command.",
+                workingDirectory: projectRoot(of: finding))
         ]
     }
 

@@ -1,3 +1,5 @@
+import Foundation
+
 /// Output format for CLI commands. Only JSON is supported in v1.
 public enum OutputFormat: String, Equatable, Sendable {
     case json
@@ -8,7 +10,8 @@ public enum CLICommand: Equatable, Sendable {
     case scan(roots: [String], scope: Scope, format: OutputFormat)
     case capabilities(format: OutputFormat)
     case batch(
-        decisionsFile: String, dryRun: Bool, roots: [String], scope: Scope,
+        decisionsFile: String, dryRun: Bool, execute: Bool, reviewed: Bool,
+        commandTimeout: TimeInterval?, roots: [String], scope: Scope,
         format: OutputFormat)
 }
 
@@ -20,10 +23,13 @@ public enum CLIParseError: Error, Equatable, Sendable {
     case missingValue(flag: String)
     case missingFlag(command: String, flag: String)
     case invalidValue(flag: String, value: String)
+    case invalidCombination(command: String, detail: String)
 
     /// Human-readable message written to stderr.
     public var message: String {
         switch self {
+        case .invalidCombination(let command, let detail):
+            return "invalid flag combination for '\(command)': \(detail)"
         case .noCommand:
             return "usage: sukiru-cli <scan|capabilities|batch> [options]"
         case .unknownCommand(let name):
@@ -91,47 +97,107 @@ public enum CLIParser {
             .scan(roots: options.roots, scope: options.scope, format: options.format))
     }
 
-    /// `batch --decisions <file.json> [--dry-run] [--root <path>]…
-    /// [--scope user|project|all] [--format json]` (D12). `--decisions` is
-    /// required; without `--dry-run` the command refuses to execute (the
-    /// review/execute pipeline gates execution).
-    private static func parseBatch(_ args: [String]) -> Result<CLICommand, CLIParseError> {
+    /// Accumulated `batch` flags.
+    private struct BatchOptions {
         var decisionsFile: String?
         var dryRun = false
-        var options = SharedOptions()
+        var execute = false
+        var reviewed = false
+        var commandTimeout: TimeInterval?
+        var shared = SharedOptions()
+    }
+
+    /// `batch --decisions <file.json> [--dry-run | --execute [--reviewed]
+    /// [--command-timeout <seconds>]] [--root <path>]… [--scope …]
+    /// [--format json]` (D12). `--decisions` is required. `--dry-run`
+    /// renders the reviewable batch and writes nothing; `--execute` runs the
+    /// snapshot/execute pipeline and REFUSES unless `--reviewed`
+    /// acknowledges the review (VAL-REPAIR-007).
+    private static func parseBatch(_ args: [String]) -> Result<CLICommand, CLIParseError> {
+        var options = BatchOptions()
         var index = 0
         while index < args.count {
-            let arg = args[index]
-            switch arg {
-            case "--decisions":
-                switch requireValue(args, at: index) {
-                case .success(let value):
-                    decisionsFile = value
-                    index += 2
-                case .failure(let error):
-                    return .failure(error)
-                }
-            case "--dry-run":
-                dryRun = true
-                index += 1
-            case "--root", "--scope", "--format":
-                switch applyShared(arg, args: args, at: index, into: &options) {
-                case .success(let next):
-                    index = next
-                case .failure(let error):
-                    return .failure(error)
-                }
-            default:
-                return .failure(.unknownFlag(command: "batch", flag: arg))
+            switch consumeBatchFlag(args, at: index, into: &options) {
+            case .success(let next):
+                index = next
+            case .failure(let error):
+                return .failure(error)
             }
         }
-        guard let decisionsFile else {
+        return finalizeBatch(options)
+    }
+
+    /// Consumes one `batch` flag (and its value, when any), returning the
+    /// next argument index.
+    private static func consumeBatchFlag(
+        _ args: [String], at index: Int, into options: inout BatchOptions
+    ) -> Result<Int, CLIParseError> {
+        let arg = args[index]
+        switch arg {
+        case "--dry-run":
+            options.dryRun = true
+            return .success(index + 1)
+        case "--execute":
+            options.execute = true
+            return .success(index + 1)
+        case "--reviewed":
+            options.reviewed = true
+            return .success(index + 1)
+        case "--decisions":
+            return requireValue(args, at: index).map { value in
+                options.decisionsFile = value
+                return index + 2
+            }
+        case "--command-timeout":
+            return parseTimeout(args, at: index, into: &options)
+        case "--root", "--scope", "--format":
+            return applyShared(arg, args: args, at: index, into: &options.shared)
+        default:
+            return .failure(.unknownFlag(command: "batch", flag: arg))
+        }
+    }
+
+    /// Parses `--command-timeout <seconds>` (positive seconds only).
+    private static func parseTimeout(
+        _ args: [String], at index: Int, into options: inout BatchOptions
+    ) -> Result<Int, CLIParseError> {
+        requireValue(args, at: index).flatMap { value in
+            guard let seconds = Double(value), seconds > 0 else {
+                return .failure(.invalidValue(flag: args[index], value: value))
+            }
+            options.commandTimeout = seconds
+            return .success(index + 2)
+        }
+    }
+
+    /// Validates required flags and legal combinations, then builds the
+    /// command.
+    private static func finalizeBatch(
+        _ options: BatchOptions
+    ) -> Result<CLICommand, CLIParseError> {
+        guard let decisionsFile = options.decisionsFile else {
             return .failure(.missingFlag(command: "batch", flag: "--decisions"))
+        }
+        if options.dryRun && options.execute {
+            return .failure(
+                .invalidCombination(
+                    command: "batch", detail: "--dry-run and --execute are mutually exclusive"))
+        }
+        if options.reviewed && !options.execute {
+            return .failure(
+                .invalidCombination(command: "batch", detail: "--reviewed requires --execute"))
+        }
+        if options.commandTimeout != nil && !options.execute {
+            return .failure(
+                .invalidCombination(
+                    command: "batch", detail: "--command-timeout requires --execute"))
         }
         return .success(
             .batch(
-                decisionsFile: decisionsFile, dryRun: dryRun, roots: options.roots,
-                scope: options.scope, format: options.format))
+                decisionsFile: decisionsFile, dryRun: options.dryRun,
+                execute: options.execute, reviewed: options.reviewed,
+                commandTimeout: options.commandTimeout, roots: options.shared.roots,
+                scope: options.shared.scope, format: options.shared.format))
     }
 
     private static func parseCapabilities(_ args: [String]) -> Result<CLICommand, CLIParseError> {

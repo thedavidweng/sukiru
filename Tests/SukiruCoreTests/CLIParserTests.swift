@@ -73,6 +73,55 @@ struct CLIParserTests {
         )
     }
 
+    // MARK: - batch execution flags (VAL-REPAIR-007 surface)
+
+    @Test("batch --execute --reviewed parses; timeout only with --execute")
+    func batchExecuteFlags() {
+        let plain = CLICommand.batch(
+            decisionsFile: "d.json", dryRun: false, execute: true, reviewed: true,
+            commandTimeout: nil, roots: [], scope: .all, format: .json)
+        #expect(
+            CLIParser.parse(["batch", "--decisions", "d.json", "--execute", "--reviewed"])
+                == .success(plain)
+        )
+        let timed = CLICommand.batch(
+            decisionsFile: "d.json", dryRun: false, execute: true, reviewed: true,
+            commandTimeout: 2.5, roots: [], scope: .all, format: .json)
+        let base = ["batch", "--decisions", "d.json", "--execute", "--reviewed"]
+        #expect(CLIParser.parse(base + ["--command-timeout", "2.5"]) == .success(timed))
+    }
+
+    @Test("batch --execute alone parses (review refusal happens at run time)")
+    func batchExecuteWithoutReviewParses() {
+        let expected = CLICommand.batch(
+            decisionsFile: "d.json", dryRun: false, execute: true, reviewed: false,
+            commandTimeout: nil, roots: [], scope: .all, format: .json)
+        #expect(
+            CLIParser.parse(["batch", "--decisions", "d.json", "--execute"])
+                == .success(expected)
+        )
+    }
+
+    @Test("conflicting batch flags are usage errors")
+    func batchInvalidCombinations() {
+        let both = CLIParser.parse(["batch", "--decisions", "d.json", "--dry-run", "--execute"])
+        let conflict = CLIParseError.invalidCombination(
+            command: "batch", detail: "--dry-run and --execute are mutually exclusive")
+        #expect(both == .failure(conflict))
+        let reviewOnly = CLIParser.parse(["batch", "--decisions", "d.json", "--reviewed"])
+        let needsExecute = CLIParseError.invalidCombination(
+            command: "batch", detail: "--reviewed requires --execute")
+        #expect(reviewOnly == .failure(needsExecute))
+        let timeoutOnly = CLIParser.parse(
+            ["batch", "--decisions", "d.json", "--command-timeout", "5"])
+        let misplaced = CLIParseError.invalidCombination(
+            command: "batch", detail: "--command-timeout requires --execute")
+        #expect(timeoutOnly == .failure(misplaced))
+        let badTimeout = CLIParser.parse(
+            ["batch", "--decisions", "d.json", "--execute", "--command-timeout", "abc"])
+        #expect(badTimeout == .failure(.invalidValue(flag: "--command-timeout", value: "abc")))
+    }
+
     @Test("No command is a usage error")
     func noCommand() {
         #expect(CLIParser.parse([]) == .failure(.noCommand))
