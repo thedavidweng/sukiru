@@ -35,11 +35,24 @@ struct LibraryDetailView: View {
                         .font(.title2.weight(.semibold))
                     Spacer()
                     Button {
+                        state.quickLookSelectedSkill()
+                    } label: {
+                        Text("Quick Look SKILL.md")
+                    }
+                    .axButtonToken(
+                        "sukiru.library.quicklook",
+                        disabled: state.skillMarkdownURL(for: skill) == nil
+                    )
+                    .disabled(state.skillMarkdownURL(for: skill) == nil)
+                    Button {
                         state.showFindings(for: skill)
                     } label: {
                         Text("Show findings in Health")
                     }
                     .axButtonToken("sukiru.library.detail.showFindings")
+                }
+                if isVercelReadOnly(skill) {
+                    readOnlyHintBlock(skill)
                 }
                 if skill.ambiguous {
                     // VAL-HEALTH-021 / D23: ambiguity voids attribution; the
@@ -65,6 +78,33 @@ struct LibraryDetailView: View {
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    /// §8 degradation: a skill claimed by the Vercel ledger (solely, or
+    /// double-booked) is read-only while `npx skills` is unresolvable.
+    /// GitHub-owned and ownerless skills carry no such degradation
+    /// (VAL-HEALTH-024).
+    private func isVercelReadOnly(_ skill: Skill) -> Bool {
+        guard let caps = state.capabilities, !caps.npx.resolvable else { return false }
+        return skill.ownership == .vercel || skill.ownership == .doubleBooked
+    }
+
+    /// §8 / VAL-HEALTH-024: with Node.js unavailable, skills claimed by the
+    /// Vercel ledger cannot be repaired or updated — say so on the skill
+    /// itself, never silently.
+    private func readOnlyHintBlock(_ skill: Skill) -> some View {
+        HStack(spacing: 0) {
+            AXToken(
+                token: "sukiru.library.detail.readonly.\(AXTokens.skill(skill.name))")
+            // swiftlint:disable line_length
+            let hint: LocalizedStringKey =
+                "Read-only — repairing or updating this skill needs Node.js (npx skills), which is not available. Everything else still works."
+            // swiftlint:enable line_length
+            Text(hint)
+                .font(.callout)
+                .foregroundStyle(.orange)
+        }
+        .accessibilityElement(children: .contain)
     }
 
     private func provenanceBlock(_ skill: Skill) -> some View {

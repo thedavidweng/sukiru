@@ -1049,6 +1049,123 @@
           }
         }
       }
+    },
+    "Library data": {
+      "comment": "Settings section: refresh control.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "库数据"
+          }
+        }
+      }
+    },
+    "Re-reads the library from disk (⌘R). External changes appear only after Refresh.": {
+      "comment": "Settings refresh explanation (no filesystem watchers).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从磁盘重新读取技能库（⌘R）。外部更改仅在刷新后显示。"
+          }
+        }
+      }
+    },
+    "capability.checking": {
+      "comment": "Capability row while probes run.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "checking…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在检测…"
+          }
+        }
+      }
+    },
+    "capability.unavailableAt %@ %@": {
+      "comment": "Capability unavailable with detected version: version, reason.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ — unavailable (%2$@)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ — 不可用（%2$@）"
+          }
+        }
+      }
+    },
+    "Quick Look SKILL.md": {
+      "comment": "Library detail: preview the skill file in place.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快速查看 SKILL.md"
+          }
+        }
+      }
+    },
+    "Quick Look Selected Skill": {
+      "comment": "View menu: Quick Look shortcut (⌘Y).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快速查看所选技能"
+          }
+        }
+      }
+    },
+    "Read-only — repairing or updating this skill needs Node.js (npx skills), which is not available. Everything else still works.": {
+      "comment": "Library detail hint: vercel-ledger skill read-only without Node.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只读 — 修复或更新此技能需要 Node.js（npx skills），但当前不可用。其他功能不受影响。"
+          }
+        }
+      }
+    },
+    "Read-only diagnostic mode: neither gh nor Node.js (npx) is available. Sukiru inspects and reports your library, but repairs and installs are unavailable.": {
+      "comment": "Settings notice when neither CLI is available.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只读诊断模式：gh 和 Node.js（npx）均不可用。Sukiru 可检查并报告技能库，但无法执行修复和安装。"
+          }
+        }
+      }
+    },
+    "quicklook.title %@": {
+      "comment": "Quick Look panel title: file name.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick Look — %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快速查看 — %@"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
