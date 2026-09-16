@@ -1106,6 +1106,23 @@
         }
       }
     },
+    "danger.removal.advisory %@ %@": {
+      "comment": "Health finding advisory for dangerous-removal-surface: at-risk skill name, repeated inside the removal command.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Danger: `npx skills remove %1$@` would delete %2$@ by name across ownership — the Vercel skills CLI removes every skill with this name, even ones it does not manage."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "危险：`npx skills remove %1$@` 会按名称跨归属删除 %2$@ —— Vercel skills CLI 会移除所有同名技能，即使它并不管理该技能。"
+          }
+        }
+      }
+    },
     "Quick Look SKILL.md": {
       "comment": "Library detail: preview the skill file in place.",
       "localizations": {
