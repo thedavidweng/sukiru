@@ -270,6 +270,12 @@
       "root" : "<FIXTURE>/.home/.claude/skills"
     },
     {
+      "id" : "host:qoder",
+      "installed" : false,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.home/.qoder/skills"
+    },
+    {
       "id" : "project:<FIXTURE>/proj",
       "installed" : true,
       "kind" : "project",

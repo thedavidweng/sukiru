@@ -939,6 +939,116 @@
           }
         }
       }
+    },
+    "Workspace": {
+      "comment": "Health workspace filter label.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "工作区"
+          }
+        }
+      }
+    },
+    "All": {
+      "comment": "Workspace filter option: every workspace.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部"
+          }
+        }
+      }
+    },
+    "leftover": {
+      "comment": "Marks a leftover (CLI spray residue) workspace in the Health filter.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "残留"
+          }
+        }
+      }
+    },
+    "No findings in this workspace": {
+      "comment": "Health empty state when the workspace filter selects a zero-finding workspace.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此工作区中没有发现"
+          }
+        }
+      }
+    },
+    "Reveal in Library": {
+      "comment": "Health finding action: reveal the implicated skill in Library.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在资源库中显示"
+          }
+        }
+      }
+    },
+    "Fix…": {
+      "comment": "Health finding action: repair entry point (deep-links to Library until the batch flow ships).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修复…"
+          }
+        }
+      }
+    },
+    "Reveal Selected Finding in Library": {
+      "comment": "View menu command: reveal the selected finding's skill in Library.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在资源库中显示所选发现对应的技能"
+          }
+        }
+      }
+    },
+    "Toggle Selected Finding Evidence": {
+      "comment": "View menu command: expand/collapse the selected finding's evidence.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "展开或收起所选发现的证据"
+          }
+        }
+      }
+    },
+    "Issues (%lld)": {
+      "comment": "Health issues section header with count.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "问题（%lld）"
+          }
+        }
+      }
+    },
+    "Ownership ambiguous: distinct copies of this name disagree, so attribution is voided and the skill is treated as ownerless. Ledger claims below are data, not verdicts.": {
+      "comment": "Library detail notice for ambiguous-name skills (attribution voided per D23).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所有权存在歧义：同名技能的多个副本内容不一致，归属判定已作废，该技能按无归属处理。下方的账本声明仅供参考，不代表判定结果。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
