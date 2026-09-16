@@ -1,17 +1,20 @@
 import SukiruCore
 import SwiftUI
 
-/// The Settings surface. M3 scope (D20): the project-roots list — add and
-/// remove folders, with a Refresh that re-scans and updates Library/Health
-/// (`sukiru.settings.projects.add`, `sukiru.settings.projects.remove`,
-/// `sukiru.settings.projects.refresh`). Plus a read-only environment section
-/// echoing the CLI's environment overrides.
+/// The Settings surface. M3 scope: the explicit Refresh control
+/// (`sukiru.settings.refresh` — the app keeps no filesystem watchers, D7);
+/// the project-roots list (D20 — add/remove folders,
+/// `sukiru.settings.projects.add` / `.remove`); the launch-time capability
+/// panel (`sukiru.settings.capability.gh` / `.npx`, pending → settled,
+/// plus `sukiru.settings.readonlyNotice` when neither CLI is available);
+/// and a read-only environment section echoing the CLI's overrides.
 struct SettingsView: View {
     @EnvironmentObject private var state: AppState
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                refreshSection
                 projectRootsSection
                 capabilitiesSection
                 environmentSection
@@ -20,6 +23,33 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: - refresh (VAL-HEALTH-036, D7 no-watchers)
+
+    /// The explicit-Refresh control. The app keeps NO filesystem watchers
+    /// (red line): external on-disk changes appear only after Refresh, here
+    /// or via ⌘R in the View menu.
+    private var refreshSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Library data")
+                .font(.headline)
+            HStack(spacing: 12) {
+                Button("Refresh") {
+                    state.rescan()
+                }
+                .axButtonToken(
+                    "sukiru.settings.refresh",
+                    disabled: state.healthCheckRunning
+                )
+                .disabled(state.healthCheckRunning)
+                let hint: LocalizedStringKey =
+                    "Re-reads the library from disk (⌘R). External changes appear only after Refresh."
+                Text(hint)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 
     // MARK: - project roots (D20)
@@ -55,14 +85,6 @@ struct SettingsView: View {
                     state.addProjectRootViaPanel()
                 }
                 .axButtonToken("sukiru.settings.projects.add")
-                Button("Refresh") {
-                    state.rescan()
-                }
-                .axButtonToken(
-                    "sukiru.settings.projects.refresh",
-                    disabled: state.healthCheckRunning
-                )
-                .disabled(state.healthCheckRunning)
             }
         }
     }
@@ -77,21 +99,49 @@ struct SettingsView: View {
                     .font(.headline)
             }
             .accessibilityElement(children: .contain)
+            // The rows render at their D21 labels from the first frame, in a
+            // pending state while the (background, never launch-blocking)
+            // probes run, then settle without user action (VAL-HEALTH-004).
             if let caps = state.capabilities {
                 capabilityRow(
-                    token: "sukiru.settings.capabilities.github",
+                    token: "sukiru.settings.capability.gh",
                     name: "gh CLI",
                     value: ghSummary(caps.github)
                 )
                 capabilityRow(
-                    token: "sukiru.settings.capabilities.npx",
+                    token: "sukiru.settings.capability.npx",
                     name: "npx skills",
                     value: npxSummary(caps.npx)
                 )
             } else {
-                Text("Detecting…")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                capabilityRow(
+                    token: "sukiru.settings.capability.gh",
+                    name: "gh CLI",
+                    value: String(localized: "capability.checking")
+                )
+                capabilityRow(
+                    token: "sukiru.settings.capability.npx",
+                    name: "npx skills",
+                    value: String(localized: "capability.checking")
+                )
+            }
+            let neitherCLI =
+                state.capabilities.map { !$0.github.available && !$0.npx.resolvable } ?? false
+            if neitherCLI {
+                // §8: with neither CLI, Sukiru is the full read-only
+                // diagnostician — the notice is explicit and labeled
+                // (VAL-HEALTH-026).
+                HStack(spacing: 0) {
+                    AXToken(token: "sukiru.settings.readonlyNotice")
+                    // swiftlint:disable line_length
+                    let notice: LocalizedStringKey =
+                        "Read-only diagnostic mode: neither gh nor Node.js (npx) is available. Sukiru inspects and reports your library, but repairs and installs are unavailable."
+                    // swiftlint:enable line_length
+                    Text(notice)
+                        .font(.callout)
+                        .foregroundStyle(.orange)
+                }
+                .accessibilityElement(children: .contain)
             }
             Text("Capability probes match `sukiru-cli capabilities` for this environment.")
                 .font(.caption)
@@ -127,6 +177,13 @@ struct SettingsView: View {
         case .tooOld: reason = String(localized: "capability.reason.tooOld")
         case .probeFailed: reason = String(localized: "capability.reason.probeFailed")
         case nil: reason = ""
+        }
+        // A present-but-too-old gh shows BOTH the detected version and the
+        // unsupported state (VAL-HEALTH-027); absence shows the bare reason.
+        if let version = ghCapability.version {
+            return String(
+                format: String(localized: "capability.unavailableAt %@ %@"),
+                version, reason)
         }
         return String(format: String(localized: "capability.unavailable %@"), reason)
     }

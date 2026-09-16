@@ -25,6 +25,14 @@ struct SukiruApp: App {
                 sidebarCommand("Search", surface: .search, key: "5")
                 sidebarCommand("Settings", surface: .settings, key: "6")
                 Divider()
+                // Quick Look in place (VAL-HEALTH-023/030). ⌘Y mirrors the
+                // Finder convention; the shortcut label in this menu is the
+                // in-app discoverability surface.
+                Button("Quick Look Selected Skill") {
+                    state.quickLookSelectedSkill()
+                }
+                .keyboardShortcut("y", modifiers: .command)
+                .disabled(!state.canQuickLookSelectedSkill())
                 // D16 deep-link without a mouse (Full Keyboard Access off
                 // means Tab never reaches the detail button, but menu items
                 // stay reachable via ⌘⇧F and Help-menu search).
