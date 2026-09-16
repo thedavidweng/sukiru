@@ -63,6 +63,12 @@ struct FindingRow: View {
             }
             if expanded {
                 VStack(alignment: .leading, spacing: 3) {
+                    if finding.ruleID == "dangerous-removal-surface" {
+                        Text(dangerAdvisory)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    }
                     ForEach(Array(finding.evidence.enumerated()), id: \.offset) { pair in
                         Text("\(pair.element.kind): \(pair.element.detail)")
                             .font(.caption.monospaced())
@@ -81,6 +87,18 @@ struct FindingRow: View {
             return "\(finding.ruleID) — \(name)"
         }
         return finding.ruleID
+    }
+
+    /// VAL-HEALTH-041: the Finding model (D18) has no message field, so the
+    /// dangerous-removal-surface blast radius is spelled out at the view
+    /// layer — naming the at-risk skill and stating that
+    /// `npx skills remove <name>` would delete it by name across ownership.
+    /// The scan's own evidence lines (skillName/placementPath/ownership)
+    /// render unchanged below it.
+    private var dangerAdvisory: String {
+        let name = finding.skillName ?? finding.ruleID
+        return String(
+            format: String(localized: "danger.removal.advisory %@ %@"), name, name)
     }
 
     private var severityTag: some View {
