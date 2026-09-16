@@ -1,4 +1,5 @@
 import AppKit
+import SukiruCore
 import SwiftUI
 
 @main
@@ -101,7 +102,63 @@ struct SukiruApp: App {
                 }
                 .keyboardShortcut("r", modifiers: .command)
             }
+            // The M4 repair flow, fully keyboard-operable (VAL-CROSS-019).
+            // Full Keyboard Access off means the Pending/Snapshots buttons
+            // are not Tab stops, so every step — fix deep-link, decision,
+            // per-command review, execute, discard, rollback — has a menu
+            // command here.
+            CommandMenu("Repair") {
+                Button("Fix Selected Finding…") {
+                    if let finding = state.selectedFinding() {
+                        state.beginRepair(for: finding)
+                    }
+                }
+                .keyboardShortcut("f", modifiers: [.command, .option])
+                .disabled(
+                    state.selectedFinding().flatMap { state.skill(matching: $0) } == nil)
+                Divider()
+                decisionCommand("Update via Owning CLI", action: .update, key: "u")
+                decisionCommand("Clean Up", action: .cleanup, key: "d")
+                decisionCommand("Adopt into GitHub Ledger…", action: .adopt, key: "a")
+                decisionCommand("Choose Surviving Ledger…", action: .arbitrate, key: "t")
+                decisionCommand("Leave As-Is", action: .leave, key: "l")
+                Divider()
+                Button("Toggle Review of Selected Command") {
+                    state.toggleSelectedCommandReview()
+                }
+                .keyboardShortcut("r", modifiers: [.command, .option])
+                .disabled(state.pendingBatch == nil || state.selectedCommandIndex == nil)
+                Button("Execute Batch") {
+                    state.executePendingBatch()
+                }
+                .keyboardShortcut("e", modifiers: [.command, .option])
+                .disabled(!state.canExecutePendingBatch)
+                Button("Discard Batch") {
+                    state.discardPendingBatch()
+                }
+                .keyboardShortcut("x", modifiers: [.command, .option])
+                .disabled(state.pendingBatch == nil || state.batchMutationInFlight)
+                Divider()
+                Button("Roll Back Selected Batch") {
+                    state.rollbackSelectedBatch()
+                }
+                .keyboardShortcut("b", modifiers: [.command, .option])
+                .disabled(!state.canRollbackSelectedBatch)
+            }
         }
+    }
+
+    /// A repair-decision menu command: enabled only while a draft is open
+    /// AND the decision is available (never capability-blocked — a blocked
+    /// decision shows its hint in Pending Changes instead, VAL-REPAIR-049).
+    private func decisionCommand(
+        _ title: LocalizedStringKey, action: DecisionAction, key: KeyEquivalent
+    ) -> some View {
+        Button(title) {
+            state.chooseRepair(action)
+        }
+        .keyboardShortcut(key, modifiers: [.command, .option])
+        .disabled(!state.repairActionAvailable(action))
     }
 
     private func sidebarCommand(

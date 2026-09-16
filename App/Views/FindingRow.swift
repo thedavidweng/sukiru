@@ -50,16 +50,32 @@ struct FindingRow: View {
                     .controlSize(.small)
                     .axButtonToken("\(row.token).reveal")
                     Button {
-                        // D16 repair entry point. The Command Batch flow
-                        // arrives in M4; in M3 the affordance deep-links to
-                        // the implicated skill in Library.
-                        state.revealInLibrary(for: finding)
+                        // D16 repair entry point (M4): deep-links into
+                        // Pending Changes with this finding's decision panel
+                        // open (VAL-CROSS-006).
+                        state.beginRepair(for: finding)
                     } label: {
                         Text("Fix…")
                     }
                     .controlSize(.small)
                     .axButtonToken("\(row.token).fix")
                 }
+            }
+            // §8 / VAL-CROSS-014: when EVERY actionable repair of this
+            // finding needs a CLI that is missing in this environment, the
+            // row says so inline — the Fix flow then shows the same hint in
+            // Pending Changes instead of building a doomed batch.
+            if let block = state.repairBlockHint(for: finding) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    AXToken(token: "\(row.token).repairBlocked")
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                    Text(repairBlockLabel(block))
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+                .accessibilityElement(children: .contain)
             }
             if expanded {
                 VStack(alignment: .leading, spacing: 3) {
@@ -80,6 +96,14 @@ struct FindingRow: View {
             }
         }
         .padding(.vertical, 2)
+    }
+
+    /// The localized label for a fully-blocked repair (§8 degradation).
+    private func repairBlockLabel(_ block: AppState.RepairBlock) -> LocalizedStringKey {
+        switch block {
+        case .needsNode: return "health.repairBlocked.needsNode"
+        case .needsGitHub: return "health.repairBlocked.needsGH"
+        }
     }
 
     private var titleText: String {
