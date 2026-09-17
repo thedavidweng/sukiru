@@ -1,0 +1,74 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "stale-docs-cleanup",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/proj/.agents/skills/stale-docs-cleanup",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "stale-docs-cleanup",
+      "workspaceID" : "project:<FIXTURE>/proj"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/proj/.agents/skills/stale-docs-cleanup",
+          "kind" : "placementPath"
+        }
+      ],
+      "ruleID" : "files-without-lock",
+      "severity" : "info",
+      "skillName" : "stale-docs-cleanup",
+      "workspaceID" : "project:<FIXTURE>/proj"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "stale-docs-cleanup",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/proj/.agents/skills/stale-docs-cleanup",
+          "contentHash" : "786ba018aec638704a1aa3a4314d195a9a1975fd06b60e708313a4e59af36143",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/proj/.agents/skills/stale-docs-cleanup"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "project"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.home/.agents/skills"
+    },
+    {
+      "id" : "project:<FIXTURE>/proj",
+      "installed" : true,
+      "kind" : "project",
+      "root" : "<FIXTURE>/proj/.agents/skills"
+    }
+  ]
+}

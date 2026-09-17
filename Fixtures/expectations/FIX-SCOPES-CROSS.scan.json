@@ -1,0 +1,174 @@
+{
+  "findings" : [
+    {
+      "evidence" : [
+        {
+          "detail" : "shared-tool",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/proj/.agents/skills/shared-tool",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "shared-tool",
+      "workspaceID" : "project:<FIXTURE>/proj"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "user-orphan",
+          "kind" : "skillName"
+        },
+        {
+          "detail" : "<FIXTURE>/.home/.agents/skills/user-orphan",
+          "kind" : "placementPath"
+        },
+        {
+          "detail" : "ownerless",
+          "kind" : "ownership"
+        }
+      ],
+      "ruleID" : "dangerous-removal-surface",
+      "severity" : "action",
+      "skillName" : "user-orphan",
+      "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/proj/.agents/skills/shared-tool",
+          "kind" : "placementPath"
+        }
+      ],
+      "ruleID" : "files-without-lock",
+      "severity" : "info",
+      "skillName" : "shared-tool",
+      "workspaceID" : "project:<FIXTURE>/proj"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "<FIXTURE>/.home/.agents/skills/user-orphan",
+          "kind" : "placementPath"
+        }
+      ],
+      "ruleID" : "files-without-lock",
+      "severity" : "info",
+      "skillName" : "user-orphan",
+      "workspaceID" : "user"
+    }
+  ],
+  "issues" : [
+
+  ],
+  "schemaVersion" : 1,
+  "skills" : [
+    {
+      "ambiguous" : false,
+      "name" : "proj-locked",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/proj/.agents/skills/proj-locked",
+          "contentHash" : "ab6644dbbd834372b112d49e5a414bd6d42fd3dc5d78e21f5d7a8d7c41abe57a",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/proj/.agents/skills/proj-locked"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "computedHash" : "ab6644dbbd834372b112d49e5a414bd6d42fd3dc5d78e21f5d7a8d7c41abe57a",
+          "skillPath" : ".agents/skills/proj-locked/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git"
+        }
+      },
+      "scope" : "project"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "shared-tool",
+      "ownership" : "vercel",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.home/.agents/skills/shared-tool",
+          "contentHash" : "3268aee8ad434c03ffb7c891b86d210e875d959d5f152549cbc29989edf4f5cb",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.home/.agents/skills/shared-tool"
+        }
+      ],
+      "provenance" : {
+        "vercel" : {
+          "installedAt" : "2026-06-15T23:27:24.742Z",
+          "skillFolderHash" : "a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7",
+          "skillPath" : ".agents/skills/shared-tool/SKILL.md",
+          "source" : "thedavidweng/skills",
+          "sourceType" : "github",
+          "sourceUrl" : "https://github.com/thedavidweng/skills.git",
+          "updatedAt" : "2026-06-15T23:27:24.742Z"
+        }
+      },
+      "scope" : "user"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "shared-tool",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/proj/.agents/skills/shared-tool",
+          "contentHash" : "ca73cc34e6b4f0741bb991c055c9585b0fb93b7324003fb6cb74fd642c86a054",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/proj/.agents/skills/shared-tool"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "project"
+    },
+    {
+      "ambiguous" : false,
+      "name" : "user-orphan",
+      "ownership" : "ownerless",
+      "placements" : [
+        {
+          "canonicalPath" : "<FIXTURE>/.home/.agents/skills/user-orphan",
+          "contentHash" : "e9ed63625ce3b5ca588b32ecb431b609007649b198112dab8b57a0854d29444c",
+          "internal" : false,
+          "kind" : "directory",
+          "path" : "<FIXTURE>/.home/.agents/skills/user-orphan"
+        }
+      ],
+      "provenance" : {
+
+      },
+      "scope" : "user"
+    }
+  ],
+  "workspaces" : [
+    {
+      "id" : "user",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.home/.agents/skills"
+    },
+    {
+      "id" : "project:<FIXTURE>/proj",
+      "installed" : true,
+      "kind" : "project",
+      "root" : "<FIXTURE>/proj/.agents/skills"
+    }
+  ]
+}

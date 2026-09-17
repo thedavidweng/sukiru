@@ -1592,6 +1592,118 @@ merged, never ambiguous — D1 per-scope rule). The app Library MUST render a
 EOF
 
 # =====================================================================
+# FIX-SCOPES-CROSS — multi-workspace ownership/findings split
+# (VAL-CROSS-017/018): the SAME skill name in both scopes with DIFFERENT
+# ownership (vercel in user scope, ownerless in project scope) and findings
+# in BOTH scopes. This is the committed counterpart of the scenario health-ui
+# user-testing round 1 had to hand-edit onto a FIX-SCOPES copy; committed
+# FIX-SCOPES stays the all-vercel/zero-findings tree.
+# =====================================================================
+d="$(reset_pw_fixture FIX-SCOPES-CROSS)"
+skill "$d/.home/.agents/skills/shared-tool" "shared-tool" "The user-scope copy of the shared name."
+skill "$d/.home/.agents/skills/user-orphan" "user-orphan" "Ownerless user-scope skill (files-without-lock)."
+skill "$d/proj/.agents/skills/shared-tool" "shared-tool" "The project-scope copy of the shared name."
+skill "$d/proj/.agents/skills/proj-locked" "proj-locked" "Vercel-owned project-scope skill."
+proj_locked_hash="$(skill_md_hash "$d/proj/.agents/skills/proj-locked")"
+cat >"$d/.home/.agents/.skill-lock.json" <<'EOF'
+{
+  "version": 3,
+  "skills": {
+    "shared-tool": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/shared-tool/SKILL.md",
+      "skillFolderHash": "a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7",
+      "installedAt": "2026-06-15T23:27:24.742Z",
+      "updatedAt": "2026-06-15T23:27:24.742Z"
+    }
+  },
+  "dismissed": {}
+}
+EOF
+cat >"$d/proj/skills-lock.json" <<EOF
+{
+  "version": 1,
+  "skills": {
+    "proj-locked": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/proj-locked/SKILL.md",
+      "computedHash": "$proj_locked_hash"
+    }
+  }
+}
+EOF
+note "$d" <<'EOF'
+# FIX-SCOPES-CROSS — expectation (VAL-CROSS-017 / VAL-CROSS-018)
+
+Contents: the name `shared-tool` exists in BOTH scopes with DIFFERENT
+ownership — user scope (`.home/.agents/skills/shared-tool`) is vercel-owned
+via the global v3 lock; project scope (`proj/.agents/skills/shared-tool`) is
+OWNERLESS (no project lock entry, no gh provenance). Each scope also carries
+its own second skill: `user-orphan` (ownerless, user scope) and `proj-locked`
+(vercel-owned, project v1 lock whose computedHash matches disk).
+
+Scan with SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/proj.
+
+A correct scan MUST exit 0 and:
+- resolve `shared-tool` ownership INDEPENDENTLY per scope: vercel in user
+  scope (global lock), ownerless in project scope (no ledger bleed);
+- report findings in BOTH scopes: `files-without-lock` for `user-orphan`
+  (user) and for `shared-tool` (project), plus the ownerless
+  `dangerous-removal-surface` advisories for those two names;
+- emit NO findings for `shared-tool` in user scope or `proj-locked`.
+
+VAL-CROSS-018 drives a repair batch against the PROJECT-scope ownerless
+`shared-tool` (direct file-op cleanup): the user scope's lock file,
+placements, and findings MUST stay byte-identical, and the snapshot manifest
+records only project-scope paths (plus the project lock probes).
+EOF
+
+# =====================================================================
+# FIX-ADOPT — one ownerless skill whose name MATCHES the real upstream
+# test repo's skill (thedavidweng/skills: maintenance/stale-docs-cleanup),
+# so the VAL-REPAIR-017 adopt shape (`gh skill install <repo> <path>
+# --force --dir <parent>`) re-anchors provenance onto THIS directory
+# instead of creating a differently-named sibling (probe-verified gh
+# semantics: --dir is the skills ROOT; the installed dir name comes from
+# the repo skill). This is the VAL-REPAIR-045 pre-state. It lives in the
+# PROJECT scope: probe-verified, gh install writes a vercel global lock
+# entry for USER-scope installs (→ double-booked), while project-scope
+# installs leave every vercel ledger untouched → clean github ownership.
+# =====================================================================
+d="$(reset_pw_fixture FIX-ADOPT)"
+skill "$d/proj/.agents/skills/stale-docs-cleanup" "stale-docs-cleanup" "Local un-owned copy of the upstream stale-docs-cleanup skill."
+note "$d" <<'EOF'
+# FIX-ADOPT — expectation (VAL-REPAIR-045)
+
+Contents: a two-part tree (`.home` + `proj`, scan with
+SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/proj) whose project scope
+holds exactly one skill, `.agents/skills/stale-docs-cleanup`, with NO
+project lock entry and NO gh frontmatter provenance → ownerless.
+
+A correct scan MUST exit 0 and report:
+- skill `stale-docs-cleanup` in the PROJECT workspace with ownership
+  `ownerless`;
+- findings `files-without-lock` and `dangerous-removal-surface` for it;
+- nothing else.
+
+The name deliberately MATCHES the real upstream test skill
+(thedavidweng/skills, path `maintenance/stale-docs-cleanup/SKILL.md`):
+probe-verified `gh skill install <repo> <path> --force --dir <parent>`
+treats `--dir` as the skills ROOT and installs into `<parent>/<repo skill
+name>`, so adopt only re-anchors provenance onto an existing directory
+when the names agree. The skill lives in PROJECT scope because gh install
+pollutes the vercel GLOBAL lock on user-scope installs (→ instant
+double-booked); project-scope installs stay github-only. After the adopt
+batch executes (GH_TOKEN injected), a rescan MUST show ownership `github`
+with frontmatter `github-repo`/`github-path`/`github-ref`/`github-tree-sha`
+on disk and NO `files-without-lock` finding.
+EOF
+
+# =====================================================================
 # FIX-MULTI-HOST — one canonical skill symlinked into THREE host global dirs,
 # plus one bare-`skills` residue host dir (VAL-HEALTH-005/009).
 # =====================================================================

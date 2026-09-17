@@ -51,6 +51,55 @@ extension CommandBatchBuilder {
         URL(fileURLWithPath: path).deletingLastPathComponent().path
     }
 
+    /// The targeted re-install shape for a project-scope skill
+    /// (probe-verified against skills@1.5.26, seam-b-e2e): an untargeted
+    /// `npx skills add … --skill <name>` refreshes ONLY the canonical
+    /// `.agents/skills` copy — drifted or gh-overwritten copies in other
+    /// host dirs are left untouched, findings included. So when the skill
+    /// has placements outside the canonical store, the reinstall names
+    /// every placement's host (`-a <host>…`, the canonical store via its
+    /// pinned `codex` host entry) and adds `--copy` when a physical copy
+    /// lives outside the canonical store. Symlink-only extra placements
+    /// install in link mode (no `--copy`). Canonical-only placements and
+    /// user scope keep the plain shape.
+    func reinstallTargets(skill: Skill, finding: Finding) throws -> (
+        agents: [String], copy: Bool
+    ) {
+        guard let root = projectRoot(of: finding) else { return ([], false) }
+        let canonicalDir = root + "/" + HostTable.canonicalProjectSkillDir
+        var agents = Set<String>()
+        var hasCanonical = false
+        var hasExternalCopy = false
+        for placement in skill.placements where placement.kind != .brokenSymlink {
+            let skillsDir = Self.parentDir(placement.path)
+            if skillsDir == canonicalDir {
+                hasCanonical = true
+                continue
+            }
+            guard skillsDir.hasPrefix(root + "/") else {
+                throw DecisionProblem(
+                    message: "cannot repair '\(skill.name)': placement '\(placement.path)' "
+                        + "lies outside the project root; a targeted reinstall cannot "
+                        + "be derived")
+            }
+            let relative = String(skillsDir.dropFirst(root.count + 1))
+            guard let host = HostTable.host(forProjectSkillDir: relative) else {
+                throw DecisionProblem(
+                    message: "cannot repair '\(skill.name)': no known host installs into "
+                        + "'\(relative)'; a targeted reinstall cannot be derived")
+            }
+            agents.insert(host)
+            if placement.kind == .directory {
+                hasExternalCopy = true
+            }
+        }
+        guard !agents.isEmpty else { return ([], false) }
+        if hasCanonical {
+            agents.insert(HostTable.canonicalStoreHost)
+        }
+        return (agents.sorted(), hasExternalCopy)
+    }
+
     /// The project root a finding belongs to (nil for user scope). npx `-p`
     /// commands resolve the project literally from the process cwd, so
     /// project-scope vercel commands carry it as their workingDirectory.
@@ -77,9 +126,11 @@ extension CommandBatchBuilder {
         case .vercel:
             if finding.ruleID == "vercel-lock-drift" {
                 let source = try recordedVercelSource(skill: skill, entry: entry)
+                let targets = try reinstallTargets(skill: skill, finding: finding)
                 return [
                     BatchCommandFactory.vercelReinstall(
                         name: skill.name, source: source, scope: skill.scope,
+                        agents: targets.agents, copy: targets.copy,
                         intent: "Repair vercel-lock-drift on '\(skill.name)': re-install from "
                             + "the Vercel lock's recorded source (npx skills update reports "
                             + "'already up to date' and never rewrites drifted copies).",
@@ -127,9 +178,11 @@ extension CommandBatchBuilder {
         switch choice {
         case .keepVercel:
             let source = try recordedVercelSource(skill: skill, entry: entry)
+            let targets = try reinstallTargets(skill: skill, finding: finding)
             return [
                 BatchCommandFactory.vercelReinstall(
                     name: skill.name, source: source, scope: skill.scope,
+                    agents: targets.agents, copy: targets.copy,
                     intent: "Arbitrate '\(skill.name)' keeping the Vercel ledger (finding "
                         + "\(finding.ruleID)): re-install from the lock's recorded source.",
                     consequence: "Content resets to upstream; local edits are lost. The "
@@ -168,9 +221,14 @@ extension CommandBatchBuilder {
             intent: "Arbitrate '\(skill.name)' keeping the GitHub ledger (finding "
                 + "\(finding.ruleID)): remove every copy by name before re-anchoring.",
             workingDirectory: projectRoot(of: finding))
+        // Probe-verified (seam-b-e2e): the recorded `github-path` is the
+        // skill's repo-relative DIRECTORY, but `gh skill install` requires
+        // the exact SKILL.md path — a bare directory fails with
+        // "no skills found".
+        let installPath = path.hasSuffix(".md") ? path : path + "/SKILL.md"
         let install = BatchCommandFactory.githubInstall(
             repo: BatchCommandFactory.ownerRepo(from: provenance.repo),
-            path: path,
+            path: installPath,
             dir: dir,
             intent: "Re-install '\(skill.name)' from its recorded GitHub provenance "
                 + "(\(provenance.repo)), re-anchoring the GitHub ledger.",

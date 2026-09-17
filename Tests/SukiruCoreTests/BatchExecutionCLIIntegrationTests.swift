@@ -48,12 +48,14 @@ enum BatchExecutionSupport {
         decisionsPath: String,
         arguments: [String],
         path: String = "/usr/bin:/bin",
-        extraEnv: [String: String] = [:]
+        extraEnv: [String: String] = [:],
+        timeout: TimeInterval = 60
     ) throws -> CLIRunner.Result {
         let environment = CLIRunner.fixtureEnvironment(
             home: home, roots: roots, path: path, extra: extraEnv)
         return try CLIRunner.run(
-            ["batch", "--decisions", decisionsPath] + arguments, environment: environment)
+            ["batch", "--decisions", decisionsPath] + arguments,
+            environment: environment, timeout: timeout)
     }
 
     static func stderrText(_ result: CLIRunner.Result) -> String {
