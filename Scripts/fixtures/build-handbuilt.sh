@@ -1676,6 +1676,7 @@ EOF
 # =====================================================================
 d="$(reset_pw_fixture FIX-ADOPT)"
 skill "$d/proj/.agents/skills/stale-docs-cleanup" "stale-docs-cleanup" "Local un-owned copy of the upstream stale-docs-cleanup skill."
+: >"$d/.home/.gitkeep"
 note "$d" <<'EOF'
 # FIX-ADOPT — expectation (VAL-REPAIR-045)
 
