@@ -108,6 +108,29 @@ struct SnapshotStoreCaptureTests {
         #expect(manifest.ledgers.contains { $0.path == globalLock })
     }
 
+    @Test("Manifest records pre-existing (possibly empty) container dirs of the affected scope")
+    func manifestRecordsPreExistingContainers() throws {
+        let tree = try Support.makeTree()
+        // An EMPTY host skills dir that exists pre-batch: the scan
+        // enumerates it as a leftover workspace with zero placements, and
+        // the snapshot must record it so rollback's empty-ancestor pruning
+        // never eats the host's own containers.
+        let emptyHost = try tree.home.dir(".qoder/skills")
+        let report = try OwnershipBuilders.scan(home: tree.home, projectRoots: [tree.project])
+        let store = Support.makeStore(home: tree.home.path)
+        let refs = [Support.ref("f-orphan", skill: "orphan", workspace: "user")]
+        let manifest = try store.capture(batch: Support.batch(refs: refs), report: report)
+        let recorded = manifest.preExistingDirectories
+        #expect(recorded.contains(emptyHost))
+        #expect(recorded.contains(tree.home.path + "/.agents/skills"))
+        #expect(recorded.contains(tree.home.path + "/.claude/skills"))
+        // Sorted and deduped; nothing outside the touched (user) scope.
+        #expect(recorded == Array(Set(recorded)).sorted())
+        #expect(!recorded.contains { $0.hasPrefix(tree.project.path) })
+        // Host dirs absent from disk are not recorded.
+        #expect(!recorded.contains(tree.home.path + "/.config/agents/skills"))
+    }
+
     @Test("Identical inputs produce byte-identical manifest.json")
     func deterministicManifestBytes() throws {
         let tree = try Support.makeTree()
@@ -240,7 +263,8 @@ struct SnapshotStoreLoadSafetyTests {
             ledgers: ledgers,
             placements: [],
             payloads: payloads,
-            watchedDirectories: [])
+            watchedDirectories: [],
+            preExistingDirectories: [])
         let dir = store.snapshotsRoot() + "/" + id
         try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         let data = try JSONEncoder().encode(manifest)
