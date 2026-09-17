@@ -62,11 +62,15 @@ extension SnapshotStore {
     /// path — the containers the batch itself must have created (e.g. a
     /// symlink spray's fresh `.qoder/skills` layout) — stopping at anything
     /// that existed pre-batch: the home, the snapshot store, watched
-    /// directories, and every ancestor of a recorded placement or ledger.
+    /// directories, every ancestor of a recorded placement or ledger, and
+    /// every container dir the capture recorded as pre-existing (including
+    /// EMPTY host skills dirs with zero placements, which none of the
+    /// other stop sets can distinguish from batch-created containers).
     private func pruneEmptyAncestors(
         of path: String, manifest: SnapshotManifest
     ) -> [RestoreItem] {
         var stop = Set(manifest.watchedDirectories)
+        stop.formUnion(manifest.preExistingDirectories)
         stop.insert(environment.home)
         stop.insert("/")
         stop.insert(snapshotsRoot())

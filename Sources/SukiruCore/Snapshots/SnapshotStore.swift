@@ -72,7 +72,8 @@ public struct SnapshotStore: Sendable {
                 ledgers: ledgers,
                 placements: plan.placements,
                 payloads: payloads,
-                watchedDirectories: plan.watchedDirectories)
+                watchedDirectories: plan.watchedDirectories,
+                preExistingDirectories: plan.preExistingDirectories)
             try writeManifest(manifest, to: staging)
             try FileManager.default.moveItem(atPath: staging, toPath: finalDir)
         } catch {

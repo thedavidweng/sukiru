@@ -8,7 +8,10 @@ import Foundation
 /// Serialized as deterministic JSON (sorted keys) at
 /// `<snapshotsRoot>/<id>/manifest.json`.
 public struct SnapshotManifest: Codable, Equatable, Sendable {
-    public static let currentSchemaVersion = 1
+    /// Schema 2 adds `preExistingDirectories`; schema-1 manifests do not
+    /// decode (no cross-schema restore, same pre-release posture as
+    /// ExecutionRecord schema 2).
+    public static let currentSchemaVersion = 2
 
     public let schemaVersion: Int
     /// The snapshot id; equals its directory name under the snapshots root.
@@ -26,6 +29,12 @@ public struct SnapshotManifest: Codable, Equatable, Sendable {
     /// Directories swept for batch-added children at restore time: the
     /// parent directory of every recorded placement, sorted.
     public let watchedDirectories: [String]
+    /// Container dirs of the affected scope that existed at capture time —
+    /// including EMPTY ones with zero placements (e.g. an empty
+    /// `~/.qoder/skills`). Restore adds them to the empty-ancestor pruning
+    /// stop set so a spray rollback never deletes pre-existing containers
+    /// (VAL-REPAIR-034 byte-equality). Sorted.
+    public let preExistingDirectories: [String]
 
     public init(
         schemaVersion: Int,
@@ -35,7 +44,8 @@ public struct SnapshotManifest: Codable, Equatable, Sendable {
         ledgers: [LedgerSnapshot],
         placements: [PlacementSnapshot],
         payloads: [PayloadSnapshot],
-        watchedDirectories: [String]
+        watchedDirectories: [String],
+        preExistingDirectories: [String]
     ) {
         self.schemaVersion = schemaVersion
         self.id = id
@@ -45,6 +55,7 @@ public struct SnapshotManifest: Codable, Equatable, Sendable {
         self.placements = placements
         self.payloads = payloads
         self.watchedDirectories = watchedDirectories
+        self.preExistingDirectories = preExistingDirectories
     }
 }
 

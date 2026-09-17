@@ -20,6 +20,11 @@ struct SnapshotPlan: Equatable, Sendable {
     /// Parent directory of every recorded placement, sorted; restore sweeps
     /// their immediate children for batch-added paths.
     let watchedDirectories: [String]
+    /// Container dirs of the affected scope that exist on disk at capture
+    /// time — including EMPTY host skills dirs with zero placements (a
+    /// spray into one must roll back without deleting the host's own
+    /// containers). Sourced from the report's workspace roots, sorted.
+    let preExistingDirectories: [String]
 
     init(batch: CommandBatch, report: ScanReport, environment: SukiruEnvironment) {
         let touchedIDs = Set(batch.findingRefs.map(\.workspaceID))
@@ -36,6 +41,8 @@ struct SnapshotPlan: Equatable, Sendable {
             environment: environment,
             projectRoots: projectRoots)
         ledgerPaths = Self.ledgerPaths(environment: environment, projectRoots: projectRoots)
+        preExistingDirectories = Self.preExistingDirectories(
+            in: report, touchedIDs: touchedIDs, projectRoots: projectRoots)
     }
 
     /// Whether the skill belongs to the given ownership-bucket workspace id
@@ -75,6 +82,34 @@ struct SnapshotPlan: Equatable, Sendable {
     static func parents(of placements: [PlacementSnapshot]) -> [String] {
         let dirs = placements.map {
             URL(fileURLWithPath: $0.path).deletingLastPathComponent().path
+        }
+        return Array(Set(dirs)).sorted()
+    }
+
+    /// The roots of the report's workspaces that belong to a touched
+    /// ownership bucket AND exist on disk at capture time, deduped and
+    /// sorted. An empty pre-existing host skills dir appears here (the scan
+    /// enumerates it as a leftover workspace) even though no placement
+    /// names it — exactly the case the restore-time pruning stop set
+    /// cannot otherwise distinguish from a batch-created container.
+    static func preExistingDirectories(
+        in report: ScanReport, touchedIDs: Set<String>, projectRoots: [String]
+    ) -> [String] {
+        let probe = DefaultFileSystemProbe()
+        var dirs: [String] = []
+        for workspace in report.workspaces {
+            let touched: Bool
+            switch workspace.kind {
+            case .user:
+                touched = touchedIDs.contains("user")
+            case .project:
+                touched = projectRoots.contains {
+                    workspace.root == $0 || workspace.root.hasPrefix($0 + "/")
+                }
+            }
+            if touched && probe.isDirectory(atPath: workspace.root) {
+                dirs.append(workspace.root)
+            }
         }
         return Array(Set(dirs)).sorted()
     }

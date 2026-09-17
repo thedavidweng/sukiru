@@ -196,6 +196,45 @@ struct RollbackEngineTests {
         #expect(try post.jsonData() == tree.report.jsonData())
     }
 
+    @Test("Rollback preserves a pre-existing EMPTY host skills dir after a spray")
+    func rollbackPreservesPreExistingEmptyHostDir() throws {
+        let tree = try Support.makeTree()
+        // A host skills dir that EXISTS pre-batch but holds zero placements
+        // (empty ~/.qoder/skills): the pre-batch scan enumerates it as a
+        // leftover workspace, so the snapshot records it as pre-existing
+        // and the empty-ancestor pruning must not eat it.
+        let emptyHost = try tree.home.dir(".qoder/skills")
+        let environment = Roll.environment(home: tree.home.path, project: tree.project.path)
+        let preBatch = try OwnershipBuilders.scan(home: tree.home, projectRoots: [tree.project])
+        let orphan = tree.home.path + "/.agents/skills/orphan"
+        let refs = [Support.ref("f-orphan", skill: "orphan", workspace: "user")]
+        _ = try Roll.execute(
+            Roll.cleanupBatch(refs: refs, path: orphan),
+            report: preBatch, environment: environment)
+        // The spray lands in the pre-existing empty host dir.
+        try tree.home.file(
+            ".qoder/skills/sprayed/SKILL.md", contents: OwnershipBuilders.skillMD("sprayed"))
+        let sprayed = tree.home.path + "/.qoder/skills/sprayed"
+
+        let record = try Rollback(environment: environment).rollback(batchID: "batch-1")
+
+        let fileManager = FileManager.default
+        let sprayedItem = try #require(record.items.first { $0.path == sprayed })
+        #expect(sprayedItem.category == .deletedBatchAdded)
+        #expect(!fileManager.fileExists(atPath: sprayed))
+        // The pre-existing containers survive and are NOT itemized as
+        // deleted-batch-added (VAL-REPAIR-034 byte-equality).
+        let qoder = tree.home.path + "/.qoder"
+        #expect(fileManager.fileExists(atPath: emptyHost))
+        #expect(fileManager.fileExists(atPath: qoder))
+        #expect(!record.items.contains { $0.path == emptyHost || $0.path == qoder })
+        #expect(!record.items.contains { $0.category == .unrestorableWithReason })
+        // A post-rollback rescan byte-matches the pre-batch scan, empty
+        // host dir included.
+        let post = try OwnershipBuilders.scan(home: tree.home, projectRoots: [tree.project])
+        #expect(try post.jsonData() == preBatch.jsonData())
+    }
+
     @Test("An unrestorable payload is itemized honestly, never silently dropped")
     func unrestorableItemReported() throws {
         let tree = try Support.makeTree()
