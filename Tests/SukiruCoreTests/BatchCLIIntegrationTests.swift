@@ -84,7 +84,13 @@ struct BatchCLIDryRunTests {
         let commands = try #require(batch["commands"] as? [[String: Any]])
         #expect(commands.count == 1)
         let argv = try #require(commands[0]["argv"] as? [String])
-        let expected = "npx skills add thedavidweng/skills --skill stale-docs-cleanup -y"
+        // D22 targeted re-install (probe-verified, seam-b-e2e): a plain
+        // untargeted `add` refreshes ONLY the canonical store and leaves the
+        // gh-overwritten host copy (and its provenance) untouched, so the
+        // arbitration names every placement host explicitly.
+        let expected =
+            "npx skills add thedavidweng/skills --skill stale-docs-cleanup"
+            + " -a claude-code -a codex --copy -y"
         #expect(argv.joined(separator: " ") == expected)
         let refs = try #require(batch["findingRefs"] as? [[String: Any]])
         #expect(refs.first?["findingID"] as? String == findingID)

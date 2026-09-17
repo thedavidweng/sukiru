@@ -30,10 +30,18 @@ one per ownership state — two github: pinned + unpinned), `FIX-SCOPES`,
 `FIX-MULTI-HOST`, `FIX-DRIFT`, `FIX-DOUBLE-BOOKED`, `FIX-SYMLINK`,
 `FIX-HOST-DIVERGENCE`, `FIX-DIRTY-SUITE`, `FIX-MUTABLE`.
 
+M4 repair-area trees: `FIX-SCOPES-CROSS` (VAL-CROSS-017/018 — the same skill
+name with DIFFERENT ownership per scope, findings in both scopes; committed
+because FIX-SCOPES is all-vercel/zero-findings and cannot stand in for it),
+`FIX-ADOPT` (VAL-REPAIR-045 — an ownerless skill whose name matches the real
+upstream test repo's `stale-docs-cleanup`, so the adopt shape re-anchors
+provenance onto the existing directory).
+
 Project-scope trees (`scope-isolation`, `multi-host-inventory`, `own-vercel`,
 `prov-cross-ws`, `lock-drift`, `divergence-canonical`, `lock-version-old`,
-`clean-copy-mode`, `FIX-SCOPES`, `FIX-DRIFT`, `FIX-HOST-DIVERGENCE`,
-`FIX-DIRTY-SUITE`) use the CM-style two-part layout: scan them with
+`clean-copy-mode`, `FIX-SCOPES`, `FIX-SCOPES-CROSS`, `FIX-DRIFT`,
+`FIX-HOST-DIVERGENCE`, `FIX-DIRTY-SUITE`) use the CM-style two-part layout:
+scan them with
 `SUKIRU_HOME=<tree>/.home SUKIRU_ROOTS=<tree>/proj`. Everything else IS the
 fake home.
 

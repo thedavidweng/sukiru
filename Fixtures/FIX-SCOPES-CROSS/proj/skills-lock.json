@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "skills": {
+    "proj-locked": {
+      "source": "thedavidweng/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/thedavidweng/skills.git",
+      "skillPath": ".agents/skills/proj-locked/SKILL.md",
+      "computedHash": "ab6644dbbd834372b112d49e5a414bd6d42fd3dc5d78e21f5d7a8d7c41abe57a"
+    }
+  }
+}

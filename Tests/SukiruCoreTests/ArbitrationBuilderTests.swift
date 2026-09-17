@@ -53,7 +53,13 @@ struct ArbitrationBuilderTests {
         let batch = try Support.build(
             report, [Support.decide(findingID, .arbitrate, .keepVercel)])
         let command = try #require(batch.commands.only)
-        let expected = "npx skills add thedavidweng/skills --skill stale-docs-cleanup -y"
+        // D22 targeted re-install (probe-verified, seam-b-e2e): an untargeted
+        // `add` refreshes only the canonical store; the gh-overwritten host
+        // copy (and its provenance) would survive. Every placement host is
+        // named explicitly.
+        let expected =
+            "npx skills add thedavidweng/skills --skill stale-docs-cleanup"
+            + " -a claude-code -a codex --copy -y"
         #expect(command.argv.joined(separator: " ") == expected)
         #expect(command.owningCLI == .vercel)
         #expect(!batch.commands.contains { $0.owningCLI == .github })
@@ -85,7 +91,11 @@ struct ArbitrationBuilderTests {
         #expect(remove.atRiskSkills == atRisk)
         let ghHead = ["gh", "skill", "install", "thedavidweng/skills"]
         let dir = tree + "/proj/.claude/skills"
-        let rest = ["maintenance/stale-docs-cleanup", "--force", "--dir", dir]
+        // Probe-verified (seam-b-e2e): gh requires the EXACT SKILL.md path —
+        // the recorded `github-path` frontmatter value is the bare directory
+        // ("maintenance/stale-docs-cleanup"), which gh rejects with
+        // "no skills found".
+        let rest = ["maintenance/stale-docs-cleanup/SKILL.md", "--force", "--dir", dir]
         #expect(install.argv == ghHead + rest)
         #expect(install.owningCLI == .github)
         #expect(install.dangerFlags.isEmpty)

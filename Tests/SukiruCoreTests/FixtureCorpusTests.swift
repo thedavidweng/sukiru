@@ -48,6 +48,8 @@ struct FixtureCorpusTests {
         FIX-USER-SCOPE-COPY-MODE
         FIX-OWNERSHIP-QUAD
         FIX-SCOPES
+        FIX-SCOPES-CROSS
+        FIX-ADOPT
         FIX-MULTI-HOST
         FIX-DRIFT
         FIX-DOUBLE-BOOKED

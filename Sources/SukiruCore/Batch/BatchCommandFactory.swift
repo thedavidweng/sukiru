@@ -29,20 +29,35 @@ enum BatchCommandFactory {
         )
     }
 
-    /// `npx skills add <recorded source> --skill <name> [-g] -y` — re-install
-    /// from the vercel lock's recorded source. This is BOTH the D22 drift
-    /// repair (`npx skills update` reports "already up to date" while
-    /// ignoring drifted copies) and the D10 keep-vercel arbitration (proven
-    /// side effect: it erases gh frontmatter provenance).
+    /// `npx skills add <recorded source> --skill <name> [-a <host>…] [--copy] [-g] -y` —
+    /// re-install from the vercel lock's recorded source. This is BOTH the
+    /// D22 drift repair (`npx skills update` reports "already up to date"
+    /// while ignoring drifted copies) and the D10 keep-vercel arbitration
+    /// (proven side effect: it erases gh frontmatter provenance).
+    ///
+    /// Probe-verified against skills@1.5.26 (seam-b-e2e): an UNTARGETED
+    /// `add` refreshes only the canonical `.agents/skills` copy and leaves
+    /// drifted or gh-overwritten copies in other host dirs (and their
+    /// provenance) untouched, so the planner passes every placement's host
+    /// in `agents`; `copy` is set when a physical (non-symlink) copy lives
+    /// outside the canonical store so the re-install refreshes in copy mode.
     static func vercelReinstall(
         name: String,
         source: String,
         scope: Scope,
+        agents: [String] = [],
+        copy: Bool = false,
         intent: String,
         consequence: String,
         workingDirectory: String? = nil
     ) -> BatchCommand {
         var argv = ["npx", "skills", "add", source, "--skill", name]
+        for agent in agents {
+            argv += ["-a", agent]
+        }
+        if copy {
+            argv.append("--copy")
+        }
         if scope == .user {
             argv.append("-g")
         }
