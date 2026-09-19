@@ -54,7 +54,8 @@ struct SearchView: View {
             .axButtonToken(
                 "sukiru.search.run",
                 disabled: state.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-                    .isEmpty)
+                    .isEmpty
+            )
             .disabled(
                 state.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
                     .isEmpty)
@@ -100,7 +101,7 @@ struct SearchView: View {
             // swiftlint:disable line_length
             explanation:
                 "Search the skills.sh marketplace or GitHub, preview any SKILL.md before installing, then send the install through Pending Changes."
-            // swiftlint:enable line_length
+                // swiftlint:enable line_length
         )
     }
 
@@ -169,7 +170,8 @@ struct SearchView: View {
                     }
                     .axButtonToken(
                         "sukiru.search.install",
-                        disabled: !result.isInstallable)
+                        disabled: !result.isInstallable
+                    )
                     .disabled(!result.isInstallable)
                     Spacer()
                 }

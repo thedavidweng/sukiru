@@ -1,8 +1,7 @@
 /// Inputs to a scan (architecture §4.2).
 ///
 /// `explicitRoots` come from `--root` flags and, per D5, REPLACE `SUKIRU_ROOTS`
-/// rather than merging with it. The M2 engine consumes these; the skeleton
-/// records them so the surface is stable.
+/// rather than merging with it.
 public struct ScanRequest: Equatable, Sendable {
     public let explicitRoots: [String]
     public let scope: Scope

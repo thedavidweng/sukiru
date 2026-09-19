@@ -30,7 +30,7 @@ struct PendingChangesView: View {
                     // swiftlint:disable line_length
                     explanation:
                         "Repairs and installs arrive here as reviewable command batches — use a finding's Fix button in Health, or Install in Search."
-                    // swiftlint:enable line_length
+                        // swiftlint:enable line_length
                 )
             }
         }

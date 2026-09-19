@@ -127,10 +127,6 @@ fn table(toolchain: &str) {
     );
     println!("// scalar 0x0...0x10FFFF; PathBuf and str Debug agreed everywhere.");
     println!("enum RustDebugEscapes {{");
-    println!("    // swift-format REQUIRES the trailing comma swiftlint forbids in");
-    println!("    // multi-line collection literals (known gate conflict; see the");
-    println!("    // core-worker skill) — suppress swiftlint for this array only.");
-    println!("    // swiftlint:disable trailing_comma");
     println!("    /// Sorted, inclusive, non-overlapping `(lo, hi)` scalar ranges.");
     println!("    static let unicodeEscapeRanges: [(lo: UInt32, hi: UInt32)] = [");
 
@@ -139,8 +135,12 @@ fn table(toolchain: &str) {
         .map(|(lo, hi)| format!("(0x{:x}, 0x{:x})", lo, hi))
         .collect();
     let mut line = String::from("        ");
-    for tuple in &tuples {
-        let piece = format!("{}, ", tuple);
+    for (index, tuple) in tuples.iter().enumerate() {
+        let piece = if index + 1 == tuples.len() {
+            tuple.clone()
+        } else {
+            format!("{}, ", tuple)
+        };
         if line.len() + piece.len() > 96 {
             println!("{}", line.trim_end());
             line = String::from("        ");
@@ -152,7 +152,6 @@ fn table(toolchain: &str) {
     }
 
     println!("    ]");
-    println!("    // swiftlint:enable trailing_comma");
     println!();
     println!("    /// Binary search: does `scalar` require the `\\u{{…}}` form?");
     println!("    static func needsUnicodeEscape(_ scalar: Unicode.Scalar) -> Bool {{");

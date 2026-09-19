@@ -112,9 +112,6 @@ extension Differ {
     // The comparable string fields of a lock entry, in diff-report order.
     // A computed property: KeyPath is not Sendable, so a stored static let
     // would trip Swift 6 global-state concurrency checks.
-    // swift-format requires the trailing comma swiftlint forbids in
-    // multi-line collection literals — suppressed for this field table only.
-    // swiftlint:disable trailing_comma
     private static var stringFields: [(name: String, path: KeyPath<VercelLockEntry, String?>)] {
         [
             ("source", \.source),
@@ -128,8 +125,7 @@ extension Differ {
             ("updatedAt", \.updatedAt),
             ("pluginName", \.pluginName),
             ("sourceBaseUrl", \.sourceBaseUrl),
-            ("wellKnownDigest", \.wellKnownDigest),
+            ("wellKnownDigest", \.wellKnownDigest)
         ]
     }
-    // swiftlint:enable trailing_comma
 }

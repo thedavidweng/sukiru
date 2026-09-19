@@ -55,7 +55,7 @@ struct RootView: View {
     }
 }
 
-/// Empty detail column for surfaces without a detail pane in M3.
+/// Empty detail column for surfaces without a detail pane.
 struct DetailPlaceholderView: View {
     var body: some View {
         Text("Nothing selected")

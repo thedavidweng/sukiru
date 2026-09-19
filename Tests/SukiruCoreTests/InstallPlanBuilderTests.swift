@@ -29,9 +29,10 @@ struct InstallPlanBuilderTests {
         #expect(batch.snapshotID == nil)
         #expect(batch.commands.count == 1)
         let command = batch.commands[0]
-        #expect(command.argv == [
-            "npx", "skills", "add", "SectionTN/stale-docs", "-s", "stale-docs", "-g", "-y"
-        ])
+        #expect(
+            command.argv == [
+                "npx", "skills", "add", "SectionTN/stale-docs", "-s", "stale-docs", "-g", "-y"
+            ])
         #expect(command.owningCLI == .vercel)
         #expect(command.workingDirectory == nil)
         #expect(batch.findingRefs.map(\.workspaceID) == ["user"])
@@ -44,9 +45,10 @@ struct InstallPlanBuilderTests {
         let batch = try InstallPlanBuilder().build(
             result: result, installer: .vercel, target: .project(root: "/tmp/proj"))
         let command = batch.commands[0]
-        #expect(command.argv == [
-            "npx", "skills", "add", "SectionTN/stale-docs", "-s", "stale-docs", "-p", "-y"
-        ])
+        #expect(
+            command.argv == [
+                "npx", "skills", "add", "SectionTN/stale-docs", "-s", "stale-docs", "-p", "-y"
+            ])
         #expect(command.workingDirectory == "/tmp/proj")
         #expect(batch.findingRefs.map(\.workspaceID) == ["project:/tmp/proj"])
     }
@@ -58,10 +60,11 @@ struct InstallPlanBuilderTests {
         let batch = try InstallPlanBuilder().build(
             result: result, installer: .github, target: .user, ghAgent: "codex")
         let command = batch.commands[0]
-        #expect(command.argv == [
-            "gh", "skill", "install", "SectionTN/stale-docs", "stale-docs",
-            "--agent", "codex", "--scope", "user", "-f"
-        ])
+        #expect(
+            command.argv == [
+                "gh", "skill", "install", "SectionTN/stale-docs", "stale-docs",
+                "--agent", "codex", "--scope", "user", "-f"
+            ])
         #expect(command.owningCLI == .github)
         #expect(command.workingDirectory == nil)
     }
@@ -72,10 +75,11 @@ struct InstallPlanBuilderTests {
             result: result, installer: .github, target: .project(root: "/tmp/proj"),
             ghAgent: "codex")
         let command = batch.commands[0]
-        #expect(command.argv == [
-            "gh", "skill", "install", "SectionTN/stale-docs", "stale-docs",
-            "--agent", "codex", "--scope", "project", "-f"
-        ])
+        #expect(
+            command.argv == [
+                "gh", "skill", "install", "SectionTN/stale-docs", "stale-docs",
+                "--agent", "codex", "--scope", "project", "-f"
+            ])
         #expect(command.workingDirectory == "/tmp/proj")
     }
 
@@ -85,10 +89,11 @@ struct InstallPlanBuilderTests {
             result: result, installer: .github, target: .user,
             ghAgent: "codex", ghPinRef: "v1.2.0")
         let command = batch.commands[0]
-        #expect(command.argv == [
-            "gh", "skill", "install", "SectionTN/stale-docs", "stale-docs",
-            "--agent", "codex", "--scope", "user", "-f", "--pin", "v1.2.0"
-        ])
+        #expect(
+            command.argv == [
+                "gh", "skill", "install", "SectionTN/stale-docs", "stale-docs",
+                "--agent", "codex", "--scope", "user", "-f", "--pin", "v1.2.0"
+            ])
         #expect(command.consequence?.contains("Pinned to v1.2.0") == true)
     }
 

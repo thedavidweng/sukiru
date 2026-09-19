@@ -66,9 +66,6 @@ struct DifferTests {
         // symlink's on-disk identity is its target string, which did not
         // change (its content hash follows the canonical dir, reported
         // there — no double-reporting).
-        // swift-format requires the trailing comma swiftlint forbids in
-        // multi-line collection literals — suppressed for this expectation.
-        // swiftlint:disable trailing_comma
         let expected: Set<String> = [
             "placement-added|" + home + "/.claude/skills/newbie",
             "placement-changed|" + home + "/.agents/skills/orphan",
@@ -78,9 +75,8 @@ struct DifferTests {
             "file-changed|" + tool + "/notes.md",
             "file-changed|" + project + "/skills-lock.json",
             "lock-entry-added|" + project + "/skills-lock.json",
-            "lock-entry-changed|" + project + "/skills-lock.json",
+            "lock-entry-changed|" + project + "/skills-lock.json"
         ]
-        // swiftlint:enable trailing_comma
         #expect(Self.keys(diff) == expected)
         let added = try #require(diff.entries.first { $0.kind == .lockEntryAdded })
         #expect(added.detail.contains("newskill"))

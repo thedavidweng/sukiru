@@ -62,7 +62,7 @@ struct SearchInstallEndToEndTests {
             pathOverride: bin + ":/usr/bin:/bin")
         let execution = try executor.execute(batch: reviewed, report: pre)
         #expect(execution.record.batchStatus == .succeeded)
-        #expect(execution.record.snapshotID != nil)
+        #expect(!execution.record.snapshotID.isEmpty)
 
         // The transcript proves the exact verified shape ran. The PWD field
         // is the executor's cwd (user-scope installs carry no working

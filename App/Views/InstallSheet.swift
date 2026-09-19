@@ -38,7 +38,8 @@ struct InstallSheet: View {
                 }
                 .axButtonToken(
                     "sukiru.search.install.confirm",
-                    disabled: !canConfirm)
+                    disabled: !canConfirm
+                )
                 .disabled(!canConfirm)
             }
         }
@@ -165,11 +166,15 @@ struct InstallSheet: View {
             // swiftlint:disable line_length
             Text(
                 String(
-                    format: String(localized: "gh skill install --agent %@: the skill's GitHub provenance is written into its frontmatter."),
-                    state.ghInstallAgent))
+                    format: String(
+                        localized:
+                            "gh skill install --agent %@: the skill's GitHub provenance is written into its frontmatter."
+                    ),
+                    state.ghInstallAgent)
+            )
             // swiftlint:enable line_length
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            .font(.caption)
+            .foregroundStyle(.secondary)
             HStack(spacing: 8) {
                 AXToken(token: "sukiru.search.install.pin")
                 TextField("Pin ref (optional: tag or SHA)", text: $state.ghPinRef)
@@ -181,7 +186,8 @@ struct InstallSheet: View {
     }
 
     private var canConfirm: Bool {
-        let ghReady = state.installInstaller != .github
+        let ghReady =
+            state.installInstaller != .github
             || !state.ghInstallAgent.isEmpty
         return ghReady && state.installCapabilityAvailable(state.installInstaller)
     }

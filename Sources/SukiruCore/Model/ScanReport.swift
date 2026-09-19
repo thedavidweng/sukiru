@@ -21,8 +21,6 @@ public enum Scope: String, Codable, Equatable, Sendable, CaseIterable {
 
 /// The seam-A read report, serialized with the D18 wire schema.
 ///
-/// At the skeleton milestone the collections are empty-but-schema-valid; the
-/// M2 read engine fills in real inventory, ownership, findings, and issues.
 public struct ScanReport: Codable, Equatable, Sendable {
     public let schemaVersion: Int
     public let workspaces: [Workspace]
