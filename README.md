@@ -1,8 +1,8 @@
 > **⚠️ Route switched (2026-09-14) · 路线已切换**
 >
-> The former Rust/GPUI implementation is preserved in full on the **[`archive/rust-gui`](../../tree/archive/rust-gui)** branch. `main` is the Swift/SwiftUI rebuild (Sukiru v1): scan, Health UI, and repair are shipped; in-app Search/Install is not.
+> The former Rust/GPUI implementation is preserved in full on the **[`archive/rust-gui`](../../tree/archive/rust-gui)** branch. `main` is the Swift/SwiftUI rebuild (Sukiru v1): scan, Health UI, repair, and Search/Install are shipped.
 >
-> 旧的 Rust/GPUI 全实现完整封存于 **`archive/rust-gui`** 分支；`main` 为 Swift/SwiftUI 重建（Sukiru v1）：扫描、体检 UI、修复已落地，应用内搜索/安装尚未交付。
+> 旧的 Rust/GPUI 全实现完整封存于 **`archive/rust-gui`** 分支；`main` 为 Swift/SwiftUI 重建（Sukiru v1）：扫描、体检 UI、修复、搜索/安装已全部落地。
 
 # Sukiru
 
@@ -36,18 +36,19 @@ Shipped:
   English + Simplified Chinese (`en` + `zh-Hans`).
 - **Seam B repair** — CommandBatchBuilder, SnapshotStore, CLIExecutor,
   Differ/Rollback; Pending Changes and Snapshots surfaces.
+- **Search / Install** — in-app search (skills.sh API + `gh skill search`),
+  SKILL.md preview, installer choice (`npx skills` / `gh skill`), routed
+  through the same Pending Changes → snapshot → post-diff → rollback
+  pipeline as repairs.
 
-Not shipped:
-
-- In-app **Search / Install** (`skills.sh` + `gh skill search`). The Search
-  sidebar row is a placeholder.
+Nothing else is planned for v1.
 
 ## Build, run, test
 
 Requires macOS 14+ and Swift 6.2.
 
 ```bash
-# Core library + CLI tests (~427)
+# Core library + CLI tests (~455)
 swift test
 
 # Real-CLI end-to-end (gated; skipped unless set)
