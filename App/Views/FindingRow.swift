@@ -3,8 +3,8 @@ import SwiftUI
 
 /// One finding row: a disclosure control carrying the finding token
 /// (`sukiru.health.finding.<ruleID>.<skill>`), a severity tag using the D3
-/// vocabulary, the D16 actions (`….reveal` into Library, `….fix` repair
-/// entry point — deep-links to Library until the M4 batch flow wires up),
+/// vocabulary, and the D16 actions (`….reveal` into Library, `….fix` into
+/// Pending Changes),
 /// and — when expanded — one line per evidence entry with the concrete
 /// paths, lock entries, and hash values the scan emitted
 /// (VAL-HEALTH-014/042).

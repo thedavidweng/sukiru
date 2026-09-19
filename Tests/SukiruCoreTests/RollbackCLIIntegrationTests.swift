@@ -91,13 +91,9 @@ struct RollbackCLIIntegrationTests {
         let record = try #require(try rollback.jsonObject())
         #expect(record["batchStatus"] as? String == "rolledBack")
         let items = try Self.items(of: record)
-        // swift-format requires the trailing comma swiftlint forbids in
-        // multi-line collection literals — suppressed for this set only.
-        // swiftlint:disable trailing_comma
         let vocabulary: Set<String> = [
-            "restored-from-snapshot", "deleted-batch-added", "unrestorable-with-reason",
+            "restored-from-snapshot", "deleted-batch-added", "unrestorable-with-reason"
         ]
-        // swiftlint:enable trailing_comma
         #expect(items.allSatisfy { vocabulary.contains($0["category"] as? String ?? "") })
         let orphanItem = try #require(items.first { ($0["path"] as? String) == orphan })
         #expect(orphanItem["category"] as? String == "restored-from-snapshot")

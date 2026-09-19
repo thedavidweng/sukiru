@@ -74,7 +74,8 @@ struct SkillPreviewFetcherTests {
             backend: .skillsDotSh)
         #expect(SkillPreviewFetcher.candidateURLs(for: result).isEmpty)
         let preview = try await SkillPreviewFetcher(
-            transport: StubMarketplaceTransport()).preview(of: result)
+            transport: StubMarketplaceTransport()
+        ).preview(of: result)
         #expect(preview == nil)
     }
 

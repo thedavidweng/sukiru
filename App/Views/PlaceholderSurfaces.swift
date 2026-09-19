@@ -1,9 +1,6 @@
 import SwiftUI
 
-/// M3-empty surfaces (§4.3): Pending Changes and Snapshots got their real M4
-/// surfaces (PendingChangesView.swift / SnapshotsView.swift); their empty
-/// states render through the same placeholder. Search got its real M5
-/// surface (SearchView.swift).
+/// Shared empty state for surfaces without content.
 struct SurfacePlaceholder: View {
     let token: String
     let icon: String

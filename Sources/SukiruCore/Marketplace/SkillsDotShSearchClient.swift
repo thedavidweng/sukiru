@@ -35,8 +35,9 @@ public struct SkillsDotShSearchClient: Sendable {
     /// Searches the marketplace. `limit` maps to the API's `limit` query
     /// parameter (probe verified: supports up to at least 50).
     public func search(query: String, limit: Int = 25) async throws -> [SkillSearchResult] {
-        guard var components = URLComponents(
-            url: Self.endpoint, resolvingAgainstBaseURL: false)
+        guard
+            var components = URLComponents(
+                url: Self.endpoint, resolvingAgainstBaseURL: false)
         else {
             throw MarketplaceError.transport("cannot build search URL")
         }

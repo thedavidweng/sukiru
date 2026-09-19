@@ -205,16 +205,6 @@ public enum BatchStatus: String, Codable, Equatable, Sendable, CaseIterable {
     case failed
     case rolledBack
 
-    /// Succeeded, failed, and rolled-back batches accept no further work
-    /// transitions (succeeded/failed may only be rolled back).
-    public var isTerminal: Bool {
-        switch self {
-        case .succeeded, .failed, .rolledBack:
-            return true
-        case .proposed, .reviewed, .executing:
-            return false
-        }
-    }
 }
 
 /// A refused lifecycle transition (VAL-REPAIR-055).

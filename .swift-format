@@ -15,7 +15,7 @@
   "lineBreakBetweenDeclarationAttributes": false,
   "lineLength": 100,
   "maximumBlankLines": 1,
-  "multiElementCollectionTrailingCommas": true,
+  "multiElementCollectionTrailingCommas": false,
   "noAssignmentInExpressions": {
     "allowedFunctions": [
       "XCTAssertNoThrow"

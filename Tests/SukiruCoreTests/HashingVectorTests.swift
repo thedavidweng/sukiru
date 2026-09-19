@@ -199,9 +199,6 @@ private struct RustDebugBatteryRow {
     }
 }
 
-// swift-format REQUIRES the trailing comma swiftlint forbids in multi-line
-// collection literals (known gate conflict) — suppress for this array only.
-// swiftlint:disable trailing_comma
 /// Ground truth produced BY rustc 1.98.0 (`format!("symlink:{:?}",
 /// PathBuf::from(target))`) via Scripts/rust-debug/generate.sh — never
 /// hand-computed; regenerate, don't edit. Covers: named escapes, NUL → `\0`,
@@ -282,6 +279,5 @@ private let rustDebugBattery: [RustDebugBatteryRow] = [
         expectedHex: "73796d6c696e6b3a226372616220f09fa6802e6d6422"),
     RustDebugBatteryRow(
         name: "astral-musical", targetHex: "f09d849e2e6d64",
-        expectedHex: "73796d6c696e6b3a22f09d849e2e6d6422"),
+        expectedHex: "73796d6c696e6b3a22f09d849e2e6d6422")
 ]
-// swiftlint:enable trailing_comma

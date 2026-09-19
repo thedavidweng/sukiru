@@ -104,16 +104,6 @@
         }
       }
     },
-    "Detecting…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "检测中…"
-          }
-        }
-      }
-    },
     "Double-booked": {
       "comment": "Library ownership badge: both installers claim the skill.",
       "localizations": {
@@ -758,17 +748,6 @@
         }
       }
     },
-    "Repairs arrive as reviewable command batches here in a later milestone.": {
-      "comment": "Pending Changes placeholder explanation.",
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "修复将以可审查的命令批次形式在后续里程碑中显示于此。"
-          }
-        }
-      }
-    },
     "Repository": {
       "comment": "Detail provenance field label: owner/repo.",
       "localizations": {
@@ -798,17 +777,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "搜索"
-          }
-        }
-      }
-    },
-    "Search is idle": {
-      "comment": "Search placeholder title.",
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搜索空闲"
           }
         }
       }
@@ -919,17 +887,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "在“健康”中查看发现"
-          }
-        }
-      }
-    },
-    "Skill search arrives in a later milestone. Enter a query then to find new skills.": {
-      "comment": "Search placeholder explanation.",
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "技能搜索将在后续里程碑提供。届时输入关键词即可查找新技能。"
           }
         }
       }

@@ -92,16 +92,12 @@ extension AppState {
         func option(_ action: DecisionAction, _ block: RepairBlock?) -> RepairOption {
             RepairOption(action: action, blocked: block)
         }
-        // Lint-gate conflict pattern (library/differ-rollback.md):
-        // swift-format mandates the trailing comma in these multi-line
-        // literals, swiftlint forbids it.
-        // swiftlint:disable trailing_comma
         if skill.ambiguous {
             // Attribution voided (D23): the ownerless decision set only.
             return [
                 option(.adopt, needsGitHub),
                 option(.cleanup, nil),
-                option(.leave, nil),
+                option(.leave, nil)
             ]
         }
         switch skill.ownership {
@@ -111,20 +107,20 @@ extension AppState {
             return [
                 option(.update, needsNode),
                 option(.cleanup, needsNode),
-                option(.leave, nil),
+                option(.leave, nil)
             ]
         case .github:
             return [
                 option(.update, needsGitHub),
                 option(.cleanup, needsNode),
-                option(.leave, nil),
+                option(.leave, nil)
             ]
         case .doubleBooked:
             // Both D10 arbitration paths start with an `npx skills` command;
             // keep-github additionally needs gh (gated inside the sheet).
             return [
                 option(.arbitrate, needsNode),
-                option(.leave, nil),
+                option(.leave, nil)
             ]
         case .ownerless:
             // Direct cleanup is a snapshot-protected file operation — it
@@ -132,10 +128,9 @@ extension AppState {
             return [
                 option(.adopt, needsGitHub),
                 option(.cleanup, nil),
-                option(.leave, nil),
+                option(.leave, nil)
             ]
         }
-        // swiftlint:enable trailing_comma
     }
 
     /// The Health-row degradation hint (VAL-CROSS-014): non-nil when EVERY

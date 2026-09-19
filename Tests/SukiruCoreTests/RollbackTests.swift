@@ -260,13 +260,9 @@ struct RollbackEngineTests {
         #expect(item.category == .unrestorableWithReason)
         #expect(item.reason != nil)
         // Every item uses exactly the three-category vocabulary (D9).
-        // swift-format requires the trailing comma swiftlint forbids in
-        // multi-line collection literals — suppressed for this set only.
-        // swiftlint:disable trailing_comma
         let categories: Set<RestoreItem.Category> = [
-            .restoredFromSnapshot, .deletedBatchAdded, .unrestorableWithReason,
+            .restoredFromSnapshot, .deletedBatchAdded, .unrestorableWithReason
         ]
-        // swiftlint:enable trailing_comma
         #expect(record.items.allSatisfy { categories.contains($0.category) })
         // Independent items still restore.
         let alias = tree.home.path + "/.claude/skills/orphan"
