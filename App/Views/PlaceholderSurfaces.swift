@@ -1,23 +1,9 @@
 import SwiftUI
 
-/// M3-empty surfaces (§4.3): Search exists in the sidebar but renders an
-/// explicit labeled placeholder until its milestone lands — never a blank
-/// pane or an error (VAL-HEALTH-028). Pending Changes and Snapshots got
-/// their real M4 surfaces (PendingChangesView.swift / SnapshotsView.swift);
-/// their empty states render through the same placeholder.
-struct SearchView: View {
-    var body: some View {
-        SurfacePlaceholder(
-            token: "sukiru.search.idle",
-            icon: "magnifyingglass",
-            title: "Search is idle",
-            explanation:
-                "Skill search arrives in a later milestone. Enter a query then to find new skills."
-        )
-    }
-}
-
-/// Shared placeholder: token carrier + icon + title + explanatory text.
+/// M3-empty surfaces (§4.3): Pending Changes and Snapshots got their real M4
+/// surfaces (PendingChangesView.swift / SnapshotsView.swift); their empty
+/// states render through the same placeholder. Search got its real M5
+/// surface (SearchView.swift).
 struct SurfacePlaceholder: View {
     let token: String
     let icon: String

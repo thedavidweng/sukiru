@@ -102,6 +102,24 @@ struct SukiruApp: App {
                 }
                 .keyboardShortcut("r", modifiers: .command)
             }
+            // The M5 search/install flow, keyboard-operable (story 29): the
+            // search field's onSubmit (Return in the field) runs the query;
+            // ⌘K re-runs the current query from anywhere, ⌘⇧I opens the
+            // installer-choice sheet for the selected result.
+            CommandMenu("Search") {
+                Button("Run Search") {
+                    state.performSearch()
+                }
+                .keyboardShortcut("k", modifiers: .command)
+                .disabled(
+                    state.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+                        .isEmpty)
+                Button("Install Selected Skill…") {
+                    state.presentInstallSheet()
+                }
+                .keyboardShortcut("i", modifiers: [.command, .shift])
+                .disabled(state.selectedSearchResult() == nil)
+            }
             // The M4 repair flow, fully keyboard-operable (VAL-CROSS-019).
             // Full Keyboard Access off means the Pending/Snapshots buttons
             // are not Tab stops, so every step — fix deep-link, decision,

@@ -252,6 +252,193 @@
         }
       }
     },
+    "Install Skill": {
+      "comment": "Install sheet title (story 23).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装技能"
+          }
+        }
+      }
+    },
+    "Install Selected Skill…": {
+      "comment": "Search menu: install command (⌘⇧I).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装所选技能…"
+          }
+        }
+      }
+    },
+    "Add to Pending Changes": {
+      "comment": "Install sheet: builds the batch and opens Pending Changes.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加入待处理变更"
+          }
+        }
+      }
+    },
+    "Backend": {
+      "comment": "Search bar: search-backend picker label (skills.sh / gh skill).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "后端"
+          }
+        }
+      }
+    },
+    "gh skill": {
+      "comment": "Search backend picker option: gh skill search.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "gh skill"
+          }
+        }
+      }
+    },
+    "gh skill install --agent %@: the skill's GitHub provenance is written into its frontmatter.": {
+      "comment": "Install sheet: gh agent-target note (interpolated: agent id).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "gh skill install --agent %@：技能的 GitHub 溯源会写入其 frontmatter。"
+          }
+        }
+      }
+    },
+    "gh unavailable": {
+      "comment": "Search bar: hint when gh is not available so the backend picker is disabled.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "gh 不可用"
+          }
+        }
+      }
+    },
+    "Pin ref (optional: tag or SHA)": {
+      "comment": "Install sheet: gh --pin field placeholder.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "钉版本 ref（可选：标签或 SHA）"
+          }
+        }
+      }
+    },
+    "Run Search": {
+      "comment": "Search menu: keyboard command (⌘K).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运行搜索"
+          }
+        }
+      }
+    },
+    "Target": {
+      "comment": "Install sheet: target scope field label.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目标"
+          }
+        }
+      }
+    },
+    "The install is a reviewable Command Batch: it runs through Pending Changes with a snapshot, post-run diff, and rollback.": {
+      "comment": "Install sheet explanation.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装是一个可审阅的命令批次：会经过「待处理变更」，带快照、事后 diff 与一键回滚。"
+          }
+        }
+      }
+    },
+    "The required CLI is unavailable in this environment; this installer cannot build a batch.": {
+      "comment": "Install sheet: capability-blocked installer hint.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前环境缺少所需的 CLI；该安装器无法构建批次。"
+          }
+        }
+      }
+    },
+    "User (global)": {
+      "comment": "Install sheet: user-scope target option.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用户（全局）"
+          }
+        }
+      }
+    },
+    "skills.sh": {
+      "comment": "Search backend picker option: skills.sh marketplace API.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "skills.sh"
+          }
+        }
+      }
+    },
+    "Install…": {
+      "comment": "Search result detail: opens the installer-choice sheet.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装…"
+          }
+        }
+      }
+    },
+    "Installs into %@ at project scope.": {
+      "comment": "Install sheet: project-scope target note (interpolated: project root).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将以项目作用域安装到 %@。"
+          }
+        }
+      }
+    },
+    "Agent target": {
+      "comment": "Install sheet: gh --agent field label.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目标 agent"
+          }
+        }
+      }
+    },
     "Internal": {
       "comment": "Library row badge for a host-internal placement.",
       "localizations": {
@@ -325,6 +512,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在加载资源库…"
+          }
+        }
+      }
+    },
+    "Loading preview…": {
+      "comment": "Search result detail: preview loading state.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在加载预览…"
           }
         }
       }
@@ -611,6 +809,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "搜索空闲"
+          }
+        }
+      }
+    },
+    "SKILL.md preview": {
+      "comment": "Search result detail: the read-only preview pane heading.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SKILL.md 预览"
+          }
+        }
+      }
+    },
+    "Search failed": {
+      "comment": "Search surface failure title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索失败"
+          }
+        }
+      }
+    },
+    "Search skills": {
+      "comment": "Search field placeholder.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索技能"
+          }
+        }
+      }
+    },
+    "Search skills by name": {
+      "comment": "Search idle placeholder title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按名称搜索技能"
+          }
+        }
+      }
+    },
+    "Search the skills.sh marketplace or GitHub, preview any SKILL.md before installing, then send the install through Pending Changes.": {
+      "comment": "Search idle placeholder explanation.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 skills.sh 市场或 GitHub 上搜索，安装前预览任意 SKILL.md，然后把安装送进「待处理变更」审阅。"
+          }
+        }
+      }
+    },
+    "Searching…": {
+      "comment": "Search surface loading state.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在搜索…"
           }
         }
       }
@@ -1123,6 +1387,74 @@
         }
       }
     },
+    "install.consequence.github": {
+      "comment": "Install sheet: consequences of choosing the gh skill installer.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub ledger: provenance is written into the skill's frontmatter (metadata.github-*), GitHub-only sources, installed for one agent with a pin option."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub 账本：溯源写入技能的 frontmatter（metadata.github-*），仅限 GitHub 来源，装给单个 agent，可钉版本。"
+          }
+        }
+      }
+    },
+    "install.consequence.vercel": {
+      "comment": "Install sheet: consequences of choosing the npx skills installer.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vercel ledger: the canonical copy lands in .agents/skills with host placement per the CLI's default agent coverage; non-GitHub sources are usable."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vercel 账本：canonical 副本落在 .agents/skills，宿主放置遵循 CLI 的默认 agent 覆盖；也支持非 GitHub 来源。"
+          }
+        }
+      }
+    },
+    "install.error.needsGitHub": {
+      "comment": "Install sheet: refusal when the gh CLI (≥ 2.90.0) is unavailable.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "gh (≥ 2.90.0) is unavailable in this environment; the GitHub installer cannot build a batch."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前环境没有可用的 gh（≥ 2.90.0）；GitHub 安装器无法构建批处理。"
+          }
+        }
+      }
+    },
+    "install.error.needsNode": {
+      "comment": "Install sheet: refusal when npx skills is not resolvable.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Node.js (npx) is unavailable in this environment; the Vercel installer cannot build a batch."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前环境没有可用的 Node.js（npx）；Vercel 安装器无法构建批处理。"
+          }
+        }
+      }
+    },
     "Quick Look SKILL.md": {
       "comment": "Library detail: preview the skill file in place.",
       "localizations": {
@@ -1272,12 +1604,13 @@
         }
       }
     },
-    "Repairs arrive here as reviewable command batches — use a finding's Fix button in Health.": {
+    "Repairs and installs arrive here as reviewable command batches — use a finding's Fix button in Health, or Install in Search.": {
+      "comment": "Pending Changes placeholder explanation.",
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "修复会以可审查的命令批次形式出现在这里——请在“体检”中使用发现项的“修复”按钮。"
+            "value": "修复与安装会以可审查的命令批次形式出现在这里——请在「体检」中使用发现项的「修复」按钮，或在「搜索」中使用「安装」。"
           }
         }
       }
@@ -2120,6 +2453,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "回滚选中的批次"
+          }
+        }
+      }
+    },
+    "Preview unavailable for this result.\nThe install re-resolves the exact skill through the official CLI.": {
+      "comment": "Search detail pane: a result whose SKILL.md could not be fetched; the install still works because the CLI re-resolves the exact skill.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview unavailable for this result.\nThe install re-resolves the exact skill through the official CLI."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法预览此结果。\n安装时会通过官方 CLI 重新解析确切技能。"
           }
         }
       }

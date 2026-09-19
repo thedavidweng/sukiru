@@ -27,8 +27,10 @@ struct PendingChangesView: View {
                     token: "sukiru.pending.empty",
                     icon: "list.bullet.rectangle",
                     title: "No pending changes",
+                    // swiftlint:disable line_length
                     explanation:
-                        "Repairs arrive here as reviewable command batches — use a finding's Fix button in Health."
+                        "Repairs and installs arrive here as reviewable command batches — use a finding's Fix button in Health, or Install in Search."
+                    // swiftlint:enable line_length
                 )
             }
         }

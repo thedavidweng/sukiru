@@ -25,9 +25,9 @@ final class AppState: ObservableObject {
         var id: String { rawValue }
     }
 
-    /// Scan lifecycle. `homeMissing` is the D4 fatal condition
-    /// (`SUKIRU_HOME` set but nonexistent): the app renders an explicit error
-    /// state instead of a misleadingly empty library (VAL-CROSS-022).
+    /// Scan lifecycle. `homeMissing` is the D4 fatal condition (`SUKIRU_HOME`
+    /// set but nonexistent): an explicit error state instead of a misleading
+    /// empty library (VAL-CROSS-022).
     enum ScanPhase: Equatable {
         case loading
         case loaded
@@ -39,9 +39,8 @@ final class AppState: ObservableObject {
     /// the findings that implicate this skill in this scope.
     struct HealthFocus: Equatable {
         let skillName: String
-        /// The ownership-bucket workspace id (`user` / `project:<root>`) —
-        /// findings carry either this id or a host workspace id nested under
-        /// it (`host:*` for user scope, `project:<root>#<host>` for project).
+        /// The ownership-bucket workspace id (`user` / `project:<root>`);
+        /// findings carry this id or a host workspace nested under it.
         let scopeGroup: String
     }
 
@@ -51,41 +50,39 @@ final class AppState: ObservableObject {
     /// nil while the (async, background) capability probes are in flight.
     @Published private(set) var capabilities: CapabilityReport?
     /// Runtime project-roots list (D20). Seeded from `SUKIRU_ROOTS`; add and
-    /// remove in Settings, then Refresh (or the automatic rescan below)
-    /// updates every surface.
+    /// remove in Settings, then Refresh updates every surface.
     @Published private(set) var projectRoots: [String]
     /// Selected row in the Settings project-roots list, driving the
     /// keyboard remove command (⌘⌫) — the per-row Remove buttons are not
     /// Tab stops with Full Keyboard Access off.
     @Published var selectedProjectRoot: String?
-    /// Selected skill in Library (identity via `Self.skillID`), surviving
-    /// surface switches.
+    /// Selected skill in Library (identity via `Self.skillID`), survives surface switches.
     @Published var selectedSkillID: String?
     /// Expanded finding rows in Health, surviving surface switches.
     @Published var expandedFindings: Set<String> = []
     /// Active Health skill focus (D16 deep-link), nil = unfiltered.
     @Published var healthFocus: HealthFocus?
     /// Active Health workspace filter (VAL-HEALTH-015): a workspace id from
-    /// the report (`user`, `host:<id>`, `project:<root>`, …), nil = all.
+    /// the report (`user`, `host:<id>`…), nil = all.
     @Published var healthWorkspaceFilter: String?
-    /// Selected finding row in Health (stable id via `Self.findingID`),
-    /// driving the keyboard reveal/evidence menu commands (VAL-CROSS-004).
+    /// Selected finding row in Health (stable id via `Self.findingID`); the
+    /// keyboard reveal/evidence menus act on it (VAL-CROSS-004).
     @Published var selectedFindingID: String?
     /// True while a Health "check now" run is in flight (non-reentrant,
-    /// VAL-HEALTH-046). Held for a minimum visible duration so the running
-    /// state is actually observable on sub-100ms fixture scans.
+    /// VAL-HEALTH-046). Held for a minimum duration so the running state is
+    /// observable on sub-100ms fixture scans.
     @Published private(set) var healthCheckRunning = false
 
     // MARK: - Repair / Command Batch state (M4, seam B)
 
     /// The finding a repair is being chosen for (Health "Fix…" deep-link,
-    /// D16/VAL-CROSS-006). Non-nil while the decision panel is up.
+    /// D16/VAL-CROSS-006); non-nil while the decision panel is up.
     @Published var repairDraft: RepairDraft?
-    /// The proposed batch under review in Pending Changes. Nil whenever no
+    /// The proposed batch under review in Pending Changes; nil whenever no
     /// batch is on the table (before a decision, after execute/discard).
     @Published var pendingBatch: CommandBatch?
     /// Indices of `pendingBatch.commands` the user has acknowledged
-    /// (VAL-REPAIR-007: Execute stays gated until every command is reviewed).
+    /// (VAL-REPAIR-007: Execute stays gated until each command is reviewed).
     @Published var reviewedCommands: Set<Int> = []
     /// Selected command row in Pending Changes (drives the detail pane and
     /// the keyboard review menu command).
@@ -102,17 +99,15 @@ final class AppState: ObservableObject {
     /// Execute and every rollback affordance (VAL-REPAIR-055: no rollback
     /// mid-execution; executions are globally serialized).
     @Published var batchMutationInFlight = false
-    /// The terminal record of the most recent in-app execution (succeeded or
-    /// failed) — the result banner on Pending Changes.
+    /// The most recent in-app execution (succeeded or failed) — the result
+    /// banner on Pending Changes.
     @Published var lastExecutionRecord: ExecutionRecord?
     /// A pre-command execution refusal (lock busy, snapshot failure).
     @Published var lastExecutionFailure: String?
-    /// The Snapshots history rows (batch executions + rollback events),
-    /// loaded from the on-disk execution records — persisted state survives
-    /// relaunches (VAL-CROSS-012).
+    /// Snapshots history rows (batch executions + rollback events) from the
+    /// on-disk records — persisted across relaunches (VAL-CROSS-012).
     @Published var historyRows: [HistoryRow] = []
-    /// Selected history row in Snapshots (drives the diff detail pane and
-    /// the keyboard rollback menu command).
+    /// Selected history row in Snapshots (drives the diff pane + rollback cmd).
     @Published var selectedHistoryID: String?
     /// Rollback refusal/error text, surfaced on the Snapshots surface.
     @Published var rollbackError: String?
@@ -125,9 +120,34 @@ final class AppState: ObservableObject {
     @Published var adoptRepo = ""
     @Published var adoptPath = ""
 
+    // MARK: - Search / Install state (M5, stories 22–24)
+
+    /// The query being run and the active backend (story 22): the skills.sh
+    /// API (network read) or `gh skill search` (needs gh ≥ 2.90).
+    @Published var searchQuery = ""
+    @Published var searchBackend: SkillSearchResult.Backend = .skillsDotSh
+    /// Search lifecycle, selected row, and its SKILL.md preview (story 24)
+    /// with fetch flags/errors.
+    @Published var searchPhase: SearchPhase = .idle
+    @Published var selectedSearchResultID: String?
+    @Published var searchPreview: String?
+    @Published var searchPreviewError: String?
+    @Published var searchPreviewLoading = false
+    /// Install sheet presentation, installer choice (story 23; Vercel
+    /// default — broader coverage) and target scope.
+    @Published var showingInstallSheet = false
+    @Published var installInstaller: InstallerChoice = .vercel
+    @Published var installTarget: InstallTarget = .user
+    /// gh-ledger install host (--agent; sheet offers the common host set)
+    /// and optional --pin ref.
+    @Published var ghInstallAgent = "codex"
+    @Published var ghPinRef = ""
+    /// Install-batch build refusal (stale source, malformed repo).
+    @Published var installError: String?
+
     /// The launch environment (SUKIRU_HOME / SUKIRU_ROOTS / XDG overrides),
-    /// identical wiring to the CLI (architecture §4.2). Read-only display
-    /// only; runtime root edits go through `projectRoots`.
+    /// identical wiring to the CLI (§4.2). Read-only; root edits via
+    /// `projectRoots`.
     let environment: SukiruEnvironment
     private let capabilityCache: CapabilityCache
 
@@ -201,11 +221,14 @@ final class AppState: ObservableObject {
     /// completions are dropped instead of clobbering newer state.
     private var scanGeneration = 0
 
+    /// Monotonic counter identifying the latest requested search; stale
+    /// completions are dropped instead of clobbering newer state.
+    var searchGeneration = 0
     /// Minimum time the running state stays visible once a scan starts.
     private static let minimumRunVisibility: Duration = .milliseconds(600)
 
-    /// Applies a finished scan on the main actor. Stale generations (a newer
-    /// rescan was requested while this one ran) are ignored entirely.
+    /// Applies a finished scan on the main actor; stale generations (a
+    /// newer rescan was requested meanwhile) are ignored entirely.
     private func applyScanResult(
         _ result: Result<ScanReport, any Error>,
         generation: Int,
@@ -237,7 +260,7 @@ final class AppState: ObservableObject {
     }
 
     /// Runs the capability probes off the main actor via the shared cache
-    /// (§8: never block launch). Repeat calls reuse the cache.
+    /// (§8: never block launch); repeat calls reuse it.
     func detectCapabilities() {
         let cache = capabilityCache
         Task.detached(priority: .utility) { [weak self] in

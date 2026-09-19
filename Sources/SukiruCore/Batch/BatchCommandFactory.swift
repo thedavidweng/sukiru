@@ -189,6 +189,92 @@ enum BatchCommandFactory {
         }
     }
 
+    // MARK: - new installs (stories 22–24)
+
+    /// `npx skills add <owner/repo> -s <name> (-g|-p) -y` — the verified
+    /// non-interactive NEW-install shape (probe-verified 2026-09-18 against
+    /// skills@1.5.x: `-y` runs with zero prompts; `-g`/`-p` pin the scope
+    /// explicitly, never relying on cwd auto-detection). Project scope
+    /// carries the root as `workingDirectory` (npx resolves `-p` from cwd).
+    static func vercelAdd(
+        repo: String,
+        skill: String,
+        target: InstallTarget
+    ) -> BatchCommand {
+        var argv = ["npx", "skills", "add", repo, "-s", skill]
+        let projectRoot: String?
+        switch target {
+        case .user:
+            argv.append("-g")
+            projectRoot = nil
+        case .project(let root):
+            argv.append("-p")
+            projectRoot = root
+        }
+        argv.append("-y")
+        return BatchCommand(
+            argv: argv,
+            displayString: BatchCommand.display(for: argv),
+            owningCLI: .vercel,
+            intent: "Install new skill '\(skill)' from \(repo) into the Vercel ledger"
+                + " (installer choice: npx skills add).",
+            dangerFlags: [],
+            warning: nil,
+            consequence:
+                "Installing with npx skills enters the skill into the Vercel lockfile"
+                + " ledger: the canonical copy lands in .agents/skills and host "
+                + "placements follow the CLI's default agent coverage.",
+            workingDirectory: projectRoot
+        )
+    }
+
+    /// `gh skill install <owner/repo> <name> --agent <agent> --scope user|project
+    /// [-f] [--pin <ref>]` — the verified non-interactive NEW-install shape
+    /// (probe-verified 2026-09-18 against gh 2.90+: `--agent` + `--scope`
+    /// select the placement, `-f` skips overwrite prompts). Project scope
+    /// carries the root as `workingDirectory` (gh resolves the repo from
+    /// cwd).
+    static func githubInstallNew(
+        repo: String,
+        skill: String,
+        agent: String,
+        target: InstallTarget,
+        pinRef: String?
+    ) -> BatchCommand {
+        var argv = ["gh", "skill", "install", repo, skill, "--agent", agent]
+        let projectRoot: String?
+        switch target {
+        case .user:
+            argv.append("--scope")
+            argv.append("user")
+            projectRoot = nil
+        case .project(let root):
+            argv.append("--scope")
+            argv.append("project")
+            projectRoot = root
+        }
+        argv.append("-f")
+        if let pinRef, !pinRef.isEmpty {
+            argv.append("--pin")
+            argv.append(pinRef)
+        }
+        return BatchCommand(
+            argv: argv,
+            displayString: BatchCommand.display(for: argv),
+            owningCLI: .github,
+            intent: "Install new skill '\(skill)' from \(repo) into the GitHub ledger"
+                + " (installer choice: gh skill install, agent \(agent)).",
+            dangerFlags: [],
+            warning: nil,
+            consequence:
+                "Installing with gh writes GitHub provenance into the skill's "
+                + "frontmatter (metadata.github-*): GitHub-only sources, installed "
+                + "for agent \(agent)."
+                + (pinRef.flatMap { !$0.isEmpty ? " Pinned to \($0)." : nil } ?? ""),
+            workingDirectory: projectRoot
+        )
+    }
+
     // MARK: - recorded-repo normalization
 
     /// The gh ledger records `github-repo` as a full URL (no `.git`);
