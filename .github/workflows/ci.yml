@@ -1,45 +1,31 @@
-name: ci
+name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
+    branches:
+      - main
 
 jobs:
-  gates:
-    name: swift gates
+  test:
+    name: Lint, Test and Build
     runs-on: macos-latest
+    timeout-minutes: 20
+
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Toolchain versions
-        run: |
-          swift --version
-          xcodebuild -version
+      - name: Install tools
+        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install swiftlint xcodegen
 
-      - name: Install gate tools
-        run: brew install swiftlint xcodegen
+      - name: Run SwiftLint (Strict Mode)
+        run: swiftlint lint --strict
 
-      - name: Resolve dependencies
-        run: swift package resolve
+      - name: Run test suite (Zero Warnings)
+        run: swift test -Xswiftc -warnings-as-errors
 
-      - name: Test (swift test)
-        run: swift test
-
-      # Build the SwiftUI app only once its XcodeGen spec exists.
-      # Until the app target lands, project.yml is absent and this step is a no-op.
-      - name: Build app (xcodegen generate && xcodebuild)
-        run: |
-          if [ -f project.yml ]; then
-            xcodegen generate
-            xcodebuild -scheme Sukiru -configuration Debug \
-              -destination 'platform=macOS,arch=arm64' build
-          else
-            echo "project.yml not present yet — skipping app build gate."
-          fi
-
-      - name: Lint (swiftlint)
-        run: swiftlint lint --strict Sources Tests App
-
-      - name: Format lint (swift format)
-        run: swift format lint --recursive --strict Sources Tests App
+      - name: Build application bundle
+        run: Scripts/build-app.sh

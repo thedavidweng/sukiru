@@ -26,14 +26,32 @@ one-click rollback.
 - **Deterministic reads** — identical disk state produces identical reports.
 - **Malformed data is a reported issue, never a crash.**
 
+## Installation · 安装
+
+**Homebrew (recommended · 推荐)**
+
+```bash
+brew install --cask thedavidweng/tap/sukiru
+```
+
+**Direct download · 直接下载**
+
+Grab `Sukiru.dmg` from [GitHub Releases](https://github.com/thedavidweng/gino/releases),
+drag **Sukiru.app** into `/Applications`, and launch.
+
+从 [GitHub Releases](https://github.com/thedavidweng/gino/releases) 下载
+`Sukiru.dmg`，将 **Sukiru.app** 拖入 `/Applications` 后启动。
+
 ## What works (v1)
 
 Shipped:
 
 - **Seam A scan engine** — ownership, drift, double-booked, ownerless, host
   inventory; `sukiru-cli scan` and `sukiru-cli capabilities`.
-- **Health UI** — Library, Health, Settings; Quick Look; Refresh; bilingual
-  English + Simplified Chinese (`en` + `zh-Hans`).
+- **Health UI** — Library, Health, Settings (standard ⌘, window), window
+  toolbar; Quick Look; Refresh; bilingual English + Simplified Chinese
+  (`en` + `zh-Hans`). Native controls only, so macOS 26+ picks up Liquid
+  Glass automatically.
 - **Seam B repair** — CommandBatchBuilder, SnapshotStore, CLIExecutor,
   Differ/Rollback; Pending Changes and Snapshots surfaces.
 - **Search / Install** — in-app search (skills.sh API + `gh skill search`),
@@ -48,7 +66,7 @@ Nothing else is planned for v1.
 Requires macOS 14+ and Swift 6.2.
 
 ```bash
-# Core library + CLI tests (~455)
+# Core library + CLI tests (~450)
 swift test
 
 # Real-CLI end-to-end (gated; skipped unless set)

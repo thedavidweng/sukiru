@@ -1,0 +1,79 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+
+      - name: Run Release Please
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        id: rp
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+
+      - name: Create or Update GitHub Release Notes
+        if: ${{ steps.rp.outputs.release_created == 'true' && steps.rp.outputs.tag_name != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          TAG: ${{ steps.rp.outputs.tag_name }}
+        run: |
+          set -e
+          VERSION="${TAG#v}"
+          ESCAPED_VERSION=$(printf '%s' "${VERSION}" | sed 's/\./\\./g')
+          NOTES=''
+          if [ -f CHANGELOG.md ]; then
+            NOTES=$(awk "/^## \[${ESCAPED_VERSION}\]/{found=1; next} /^## \[/{if(found) exit} found{print}" CHANGELOG.md || true)
+          fi
+          INSTALL=$(printf '%s\n' \
+            '# Installation' \
+            '' \
+            '```bash' \
+            '# Homebrew (macOS)' \
+            'brew install --cask thedavidweng/tap/sukiru' \
+            '```')
+          FULL_NOTES=$(printf '%s\n\n%s' "${NOTES:-Release $TAG}" "$INSTALL")
+          if gh release view "$TAG" &>/dev/null; then
+            gh release edit "$TAG" --notes "${FULL_NOTES}"
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes "${FULL_NOTES}"
+          fi
+
+      - name: Dispatch Release packaging
+        if: ${{ steps.rp.outputs.release_created == 'true' && steps.rp.outputs.tag_name != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG_NAME: ${{ steps.rp.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          existing_run="$(gh run list \
+            --repo "${GH_REPO}" \
+            --workflow release.yml \
+            --branch "${TAG_NAME}" \
+            --limit 5 \
+            --json databaseId,status \
+            --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | .[0].databaseId // empty')"
+          if [ -n "${existing_run}" ]; then
+            echo "Release workflow already running for ${TAG_NAME}: ${existing_run}"
+            exit 0
+          fi
+          echo "Dispatching release workflow for ${TAG_NAME}"
+          gh workflow run release.yml -f tag_name="${TAG_NAME}"
