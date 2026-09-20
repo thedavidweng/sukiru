@@ -705,7 +705,7 @@
       }
     },
     "Refresh": {
-      "comment": "Re-scan command (View menu and Settings).",
+      "comment": "Re-scan command (window toolbar and View menu).",
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -1271,19 +1271,8 @@
         }
       }
     },
-    "Library data": {
-      "comment": "Settings section: refresh control.",
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "库数据"
-          }
-        }
-      }
-    },
     "Re-reads the library from disk (⌘R). External changes appear only after Refresh.": {
-      "comment": "Settings refresh explanation (no filesystem watchers).",
+      "comment": "Toolbar Refresh tooltip (no filesystem watchers).",
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -1412,6 +1401,17 @@
         }
       }
     },
+    "Quick Look": {
+      "comment": "Toolbar button: Quick Look the selected skill (Library).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快速查看"
+          }
+        }
+      }
+    },
     "Quick Look SKILL.md": {
       "comment": "Library detail: preview the skill file in place.",
       "localizations": {
@@ -1430,6 +1430,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "快速查看所选技能"
+          }
+        }
+      }
+    },
+    "Quick Look the selected skill's SKILL.md (⌘Y).": {
+      "comment": "Toolbar Quick Look button tooltip.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快速查看所选技能的 SKILL.md（⌘Y）。"
           }
         }
       }

@@ -18,6 +18,55 @@ struct RootView: View {
         } detail: {
             detail
         }
+        .toolbar(content: toolbar)
+    }
+
+    /// The window toolbar: the global Refresh action (Finder-style; the
+    /// no-watchers model means external changes appear only after it) and
+    /// the Library-contextual Quick Look. On macOS 26+ the two groups are
+    /// separated by a fixed `ToolbarSpacer`, which the system renders as a
+    /// Liquid Glass divider between the grouped buttons (the same
+    /// availability-gated pattern as any standard SwiftUI app).
+    @ToolbarContentBuilder
+    private func toolbar() -> some ToolbarContent {
+        if #available(macOS 26.0, *) {
+            ToolbarItemGroup {
+                refreshToolbarButton
+            }
+            ToolbarSpacer(.fixed)
+            ToolbarItem(placement: .automatic) {
+                quickLookToolbarButton
+            }
+        } else {
+            ToolbarItemGroup {
+                refreshToolbarButton
+                quickLookToolbarButton
+            }
+        }
+    }
+
+    private var refreshToolbarButton: some View {
+        Button {
+            state.rescan()
+        } label: {
+            Label("Refresh", systemImage: "arrow.clockwise")
+        }
+        .axButtonToken("sukiru.toolbar.refresh", disabled: state.healthCheckRunning)
+        .disabled(state.healthCheckRunning)
+        .help("Re-reads the library from disk (⌘R). External changes appear only after Refresh.")
+    }
+
+    private var quickLookToolbarButton: some View {
+        Button {
+            state.quickLookSelectedSkill()
+        } label: {
+            Label("Quick Look", systemImage: "eye")
+        }
+        .axButtonToken(
+            "sukiru.toolbar.quicklook", disabled: !state.canQuickLookSelectedSkill()
+        )
+        .disabled(!state.canQuickLookSelectedSkill())
+        .help("Quick Look the selected skill's SKILL.md (⌘Y).")
     }
 
     @ViewBuilder
@@ -33,8 +82,6 @@ struct RootView: View {
             SnapshotsView()
         case .search:
             SearchView()
-        case .settings:
-            SettingsView()
         }
     }
 
@@ -49,7 +96,7 @@ struct RootView: View {
         case .snapshots:
             // Post-run diff / itemized rollback record (VAL-REPAIR-046).
             SnapshotsDetailView()
-        case .health, .search, .settings:
+        case .health, .search:
             DetailPlaceholderView()
         }
     }

@@ -14,7 +14,6 @@ struct SidebarView: View {
             row("Pending Changes", surface: .pending, icon: "list.bullet.rectangle")
             row("Snapshots", surface: .snapshots, icon: "camera.on.rectangle")
             row("Search", surface: .search, icon: "magnifyingglass")
-            row("Settings", surface: .settings, icon: "gear")
         }
         .listStyle(.sidebar)
     }

@@ -13,14 +13,14 @@ import SukiruCore
 @MainActor
 final class AppState: ObservableObject {
     /// Sidebar surfaces (§4.3). `library` is the first-launch surface (D15 —
-    /// no onboarding).
+    /// no onboarding). Settings lives in the standard macOS Settings scene
+    /// (⌘,), not the sidebar.
     enum Surface: String, CaseIterable, Identifiable, Hashable {
         case library
         case health
         case pending
         case snapshots
         case search
-        case settings
 
         var id: String { rawValue }
     }

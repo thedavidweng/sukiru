@@ -1,20 +1,19 @@
 import SukiruCore
 import SwiftUI
 
-/// The Settings surface. M3 scope: the explicit Refresh control
-/// (`sukiru.settings.refresh` — the app keeps no filesystem watchers, D7);
-/// the project-roots list (D20 — add/remove folders,
-/// `sukiru.settings.projects.add` / `.remove`); the launch-time capability
-/// panel (`sukiru.settings.capability.gh` / `.npx`, pending → settled,
-/// plus `sukiru.settings.readonlyNotice` when neither CLI is available);
-/// and a read-only environment section echoing the CLI's overrides.
+/// The Settings window (standard ⌘, scene). Scope: the project-roots list
+/// (D20 — add/remove folders, `sukiru.settings.projects.add` / `.remove`);
+/// the launch-time capability panel (`sukiru.settings.capability.gh` /
+/// `.npx`, pending → settled, plus `sukiru.settings.readonlyNotice` when
+/// neither CLI is available); and a read-only environment section echoing
+/// the CLI's overrides. Refresh lives in the window toolbar (and ⌘R), not
+/// here — the app keeps no filesystem watchers (D7).
 struct SettingsView: View {
     @EnvironmentObject private var state: AppState
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                refreshSection
                 projectRootsSection
                 capabilitiesSection
                 environmentSection
@@ -23,33 +22,6 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    // MARK: - refresh (VAL-HEALTH-036, D7 no-watchers)
-
-    /// The explicit-Refresh control. The app keeps NO filesystem watchers
-    /// (red line): external on-disk changes appear only after Refresh, here
-    /// or via ⌘R in the View menu.
-    private var refreshSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Library data")
-                .font(.headline)
-            HStack(spacing: 12) {
-                Button("Refresh") {
-                    state.rescan()
-                }
-                .axButtonToken(
-                    "sukiru.settings.refresh",
-                    disabled: state.healthCheckRunning
-                )
-                .disabled(state.healthCheckRunning)
-                let hint: LocalizedStringKey =
-                    "Re-reads the library from disk (⌘R). External changes appear only after Refresh."
-                Text(hint)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-        }
     }
 
     // MARK: - project roots (D20)
