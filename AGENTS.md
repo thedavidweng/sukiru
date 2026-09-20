@@ -1,3 +1,11 @@
+## Native red line
+
+- Swift only, Apple frameworks only. The UI layer takes no third-party
+  dependency, draws no window chrome, hard-codes no colors or materials, and
+  gates new system APIs behind `#available` so the platform's own look (Liquid
+  Glass and whatever follows) is inherited rather than imitated. Full
+  constraints and review checklist: `docs/adr/0006-pure-swift-apple-native-feel.md`.
+
 ## Code cleanliness and footprint
 
 - Keep changes minimal and focused. Do not add dead code, speculative abstractions,

@@ -105,7 +105,7 @@ swift run sukiru-cli capabilities
 
 ## Documentation
 
-- Architecture decisions: [`docs/adr/0001`](docs/adr/0001-pivot-to-zero-ledger-referee.md)–[`0005`](docs/adr/0005-glossary-and-legacy-disposition.md)
+- Architecture decisions: [`docs/adr/0001`](docs/adr/0001-pivot-to-zero-ledger-referee.md)–[`0006`](docs/adr/0006-pure-swift-apple-native-feel.md)
 - Glossary: [`CONTEXT.md`](CONTEXT.md)
 - Official-CLI collision-matrix experiments: [`docs/collision-matrix.md`](docs/collision-matrix.md)
 
