@@ -6,24 +6,8 @@
     {
       "layers" : [
         {
-          "image-name" : "SukiruBackplate.svg",
-          "name" : "Glass depth"
-        }
-      ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.2
-      },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.14
-      }
-    },
-    {
-      "layers" : [
-        {
           "image-name" : "SukiruStack.png",
-          "name" : "Capability stack"
+          "name" : "Sukiru skill organizer"
         }
       ],
       "shadow" : {
