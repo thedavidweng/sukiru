@@ -9,7 +9,7 @@ let package = Package(
         .executable(name: "sukiru-cli", targets: ["sukiru-cli"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/jpsim/Yams.git", from: "5.4.0")
+        .package(url: "https://github.com/jpsim/Yams.git", from: "6.2.2")
     ],
     targets: [
         .target(
