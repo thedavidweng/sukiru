@@ -11,7 +11,7 @@ on:
 jobs:
   test:
     name: Lint, Test and Build
-    runs-on: macos-latest
+    runs-on: [self-hosted, macos, arm64]
     timeout-minutes: 20
 
     steps:

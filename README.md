@@ -36,10 +36,10 @@ brew install --cask thedavidweng/tap/sukiru
 
 **Direct download · 直接下载**
 
-Grab `Sukiru.dmg` from [GitHub Releases](https://github.com/thedavidweng/gino/releases),
+Grab `Sukiru.dmg` from [GitHub Releases](https://github.com/thedavidweng/sukiru/releases),
 drag **Sukiru.app** into `/Applications`, and launch.
 
-从 [GitHub Releases](https://github.com/thedavidweng/gino/releases) 下载
+从 [GitHub Releases](https://github.com/thedavidweng/sukiru/releases) 下载
 `Sukiru.dmg`，将 **Sukiru.app** 拖入 `/Applications` 后启动。
 
 ## What works (v1)
