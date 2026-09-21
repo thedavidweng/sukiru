@@ -1404,6 +1404,8 @@ EOF
 # =====================================================================
 d="$(reset_fixture own-per-project)"
 mkdir -p "$d/.home"
+: >"$d/.home/.gitkeep"
+: >"$d/.home/.gitkeep"
 skill "$d/p1/.agents/skills/shared" "shared" "Locked in p1 only."
 skill "$d/p2/.agents/skills/shared" "shared" "Unprovenanced in p2."
 p1_hash="$(skill_md_hash "$d/p1/.agents/skills/shared")"
@@ -1719,6 +1721,7 @@ ln -s ../../.agents/skills/web-api "$d/.cursor/skills/web-api"
 # CLI spray residue: `.qoder` contains ONLY a bare (empty) `skills/` entry —
 # leftover, NOT installed (marks_installation tri-state).
 mkdir -p "$d/.qoder/skills"
+: >"$d/.qoder/skills/.gitkeep"
 cat >"$d/.agents/.skill-lock.json" <<'EOF'
 {
   "version": 3,
@@ -1934,6 +1937,7 @@ mkdir -p "$d/.home/.claude/skills"; : >"$d/.home/.claude/config.json"
 # (git cannot track the empty dir; `reset_pw_fixture` rebuilds it, and the
 # committed tree keeps it via the same convention as FIX-MULTI-HOST.)
 mkdir -p "$d/.home/.qoder/skills"
+: >"$d/.home/.qoder/skills/.gitkeep"
 # user scope: dangling symlink (action) + gh-owned skill (danger advisory,
 # action) + ownerless skill (files-without-lock, info)
 ln -s /nonexistent/rotted-target "$d/.home/.claude/skills/rotted-link"
