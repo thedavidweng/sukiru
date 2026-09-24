@@ -52,44 +52,36 @@ struct HealthView: View {
     private func homeMissingState(_ path: String) -> some View {
         // VAL-CROSS-022: zero skill findings plus an explicit environment
         // notice — never a misleadingly healthy or silently empty report.
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 36))
-                .foregroundStyle(.yellow)
+        ContentUnavailableView {
             HStack(spacing: 0) {
                 AXToken(token: "sukiru.health.environmentNotice")
-                Text("Environment problem: library root not found")
-                    .font(.title3.weight(.semibold))
+                Label(
+                    "Environment problem: library root not found",
+                    systemImage: "exclamationmark.triangle"
+                )
             }
-            Text(path)
-                .font(.callout.monospaced())
-                .foregroundStyle(.secondary)
-                .textSelection(.enabled)
-            HStack(spacing: 0) {
-                AXToken(token: "sukiru.health.summary")
-                Text("0 findings")
-                    .foregroundStyle(.secondary)
+        } description: {
+            VStack(spacing: 8) {
+                Text(path)
+                    .font(.callout.monospaced())
+                    .textSelection(.enabled)
+                HStack(spacing: 0) {
+                    AXToken(token: "sukiru.health.summary")
+                    Text("0 findings")
+                }
             }
         }
-        .padding(32)
     }
 
     private func failureState(_ message: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 36))
-                .foregroundStyle(.red)
+        ContentUnavailableView {
             HStack(spacing: 0) {
                 AXToken(token: "sukiru.health.error")
-                Text("Health check failed")
-                    .font(.title3.weight(.semibold))
+                Label("Health check failed", systemImage: "exclamationmark.triangle")
             }
+        } description: {
             Text(message)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: 420)
         }
-        .padding(32)
     }
 
     private var loadedState: some View {
@@ -201,37 +193,25 @@ struct HealthView: View {
     /// or a genuinely healthy library (VAL-HEALTH-033).
     @ViewBuilder
     private var emptyState: some View {
-        VStack(spacing: 12) {
-            if state.healthFocus != nil {
-                Image(systemName: "checkmark.seal")
-                    .font(.system(size: 36))
-                    .foregroundStyle(.green)
-                Text("No findings implicate this skill")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-            } else if state.healthWorkspaceFilter != nil {
-                Image(systemName: "checkmark.seal")
-                    .font(.system(size: 36))
-                    .foregroundStyle(.green)
+        if state.healthFocus != nil {
+            ContentUnavailableView {
+                Label("No findings implicate this skill", systemImage: "checkmark.seal")
+            }
+        } else if state.healthWorkspaceFilter != nil {
+            ContentUnavailableView {
                 HStack(spacing: 0) {
                     AXToken(token: "sukiru.health.emptyFilter")
-                    Text("No findings in this workspace")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
+                    Label("No findings in this workspace", systemImage: "checkmark.seal")
                 }
-            } else {
-                Image(systemName: "checkmark.seal")
-                    .font(.system(size: 36))
-                    .foregroundStyle(.green)
+            }
+        } else {
+            ContentUnavailableView {
                 HStack(spacing: 0) {
                     AXToken(token: "sukiru.health.healthy")
-                    Text("No findings — library looks healthy")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
+                    Label("No findings — library looks healthy", systemImage: "checkmark.seal")
                 }
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     /// One finding row plus its (collision-disambiguated) AX token.

@@ -8,6 +8,10 @@ import SwiftUI
 /// `sukiru.library.detail.provenance`. Provenance values are read straight
 /// from the same `ScanReport` the Health surface renders, so the two
 /// surfaces can never disagree (VAL-HEALTH-037).
+///
+/// Layout is a grouped `Form` — the same construction System Settings uses —
+/// so section grouping, row insets, and label alignment come from the system
+/// rather than from hand-tuned padding (ADR-0006).
 struct LibraryDetailView: View {
     @EnvironmentObject private var state: AppState
 
@@ -15,70 +19,99 @@ struct LibraryDetailView: View {
         if let skill = state.selectedSkill() {
             detail(skill)
         } else {
-            VStack(spacing: 12) {
-                Image(systemName: "doc.text.magnifyingglass")
-                    .font(.system(size: 32))
-                    .foregroundStyle(.secondary)
-                Text("Select a skill to inspect it")
-                    .foregroundStyle(.secondary)
+            ContentUnavailableView {
+                Label("Select a skill to inspect it", systemImage: "doc.text.magnifyingglass")
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
     private func detail(_ skill: Skill) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                AXToken(token: "sukiru.library.detail")
-                HStack(spacing: 12) {
-                    Text(skill.name)
-                        .font(.title2.weight(.semibold))
-                    Spacer()
-                    Button {
-                        state.quickLookSelectedSkill()
-                    } label: {
-                        Text("Quick Look SKILL.md")
-                    }
-                    .axButtonToken(
-                        "sukiru.library.quicklook",
-                        disabled: state.skillMarkdownURL(for: skill) == nil
-                    )
-                    .disabled(state.skillMarkdownURL(for: skill) == nil)
-                    Button {
-                        state.showFindings(for: skill)
-                    } label: {
-                        Text("Show findings in Health")
-                    }
-                    .axButtonToken("sukiru.library.detail.showFindings")
-                }
+        Form {
+            Section {
+                headerRow(skill)
                 if isVercelReadOnly(skill) {
-                    readOnlyHintBlock(skill)
+                    readOnlyNotice(skill)
                 }
                 if skill.ambiguous {
-                    // VAL-HEALTH-021 / D23: ambiguity voids attribution; the
-                    // ledger claims below stay visible as data, never as
-                    // authoritative ownership.
-                    HStack(spacing: 0) {
-                        AXToken(
-                            token: "sukiru.library.detail.ambiguous.\(AXTokens.skill(skill.name))")
-                        // swiftlint:disable line_length
-                        let explanation: LocalizedStringKey =
-                            "Ownership ambiguous: distinct copies of this name disagree, so attribution is voided and the skill is treated as ownerless. Ledger claims below are data, not verdicts."
-                        // swiftlint:enable line_length
-                        Text(explanation)
-                            .font(.callout)
-                            .foregroundStyle(.orange)
-                    }
-                    .accessibilityElement(children: .contain)
+                    ambiguousNotice(skill)
                 }
-                provenanceBlock(skill)
-                hostsBlock(skill)
-                placementsBlock(skill)
+                actionRow(skill)
             }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            provenanceSection(skill)
+            LibraryHostsSection(skill: skill, report: state.report)
+            placementsSection(skill)
+        }
+        .formStyle(.grouped)
+    }
+
+    // MARK: - header
+
+    private func headerRow(_ skill: Skill) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 0) {
+                AXToken(token: "sukiru.library.detail")
+                Text(skill.name)
+                    .font(.title2.weight(.semibold))
+                    .textSelection(.enabled)
+            }
+            HStack(spacing: 6) {
+                Text(ownershipText(skill))
+                Text(verbatim: "·")
+                scopeText(skill)
+            }
+            .font(.callout)
+            .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func actionRow(_ skill: Skill) -> some View {
+        HStack(spacing: 8) {
+            Button {
+                state.quickLookSelectedSkill()
+            } label: {
+                Label("Quick Look SKILL.md", systemImage: "eye")
+            }
+            .buttonStyle(.borderedProminent)
+            .axButtonToken(
+                "sukiru.library.quicklook",
+                disabled: state.skillMarkdownURL(for: skill) == nil
+            )
+            .disabled(state.skillMarkdownURL(for: skill) == nil)
+            Button {
+                state.showFindings(for: skill)
+            } label: {
+                Text("Show findings in Health")
+            }
+            .axButtonToken("sukiru.library.detail.showFindings")
+            Spacer(minLength: 0)
         }
     }
+
+    private func ownershipText(_ skill: Skill) -> LocalizedStringKey {
+        switch skill.ownership {
+        case .vercel: "Vercel"
+        case .github: "GitHub"
+        case .doubleBooked: "Double-booked"
+        case .ownerless: "Ownerless"
+        }
+    }
+
+    @ViewBuilder
+    private func scopeText(_ skill: Skill) -> some View {
+        if skill.scope == .user {
+            Text("User scope")
+        } else if let root = state.projectRoot(of: skill) {
+            Text(root)
+                .font(.callout.monospaced())
+                .lineLimit(1)
+                .truncationMode(.middle)
+        } else {
+            Text("Project scope")
+        }
+    }
+
+    // MARK: - notices
 
     /// §8 degradation: a skill claimed by the Vercel ledger (solely, or
     /// double-booked) is read-only while `npx skills` is unresolvable.
@@ -92,28 +125,48 @@ struct LibraryDetailView: View {
     /// §8 / VAL-HEALTH-024: with Node.js unavailable, skills claimed by the
     /// Vercel ledger cannot be repaired or updated — say so on the skill
     /// itself, never silently.
-    private func readOnlyHintBlock(_ skill: Skill) -> some View {
-        HStack(spacing: 0) {
-            AXToken(
-                token: "sukiru.library.detail.readonly.\(AXTokens.skill(skill.name))")
-            // swiftlint:disable line_length
-            let hint: LocalizedStringKey =
-                "Read-only — repairing or updating this skill needs Node.js (npx skills), which is not available. Everything else still works."
-            // swiftlint:enable line_length
-            Text(hint)
-                .font(.callout)
-                .foregroundStyle(.orange)
+    private func readOnlyNotice(_ skill: Skill) -> some View {
+        // swiftlint:disable line_length
+        let hint: LocalizedStringKey =
+            "Read-only — repairing or updating this skill needs Node.js (npx skills), which is not available. Everything else still works."
+        // swiftlint:enable line_length
+        return HStack(spacing: 0) {
+            AXToken(token: "sukiru.library.detail.readonly.\(AXTokens.skill(skill.name))")
+            Label {
+                Text(hint)
+            } icon: {
+                Image(systemName: "exclamationmark.triangle")
+            }
+            .font(.callout)
+            .foregroundStyle(.orange)
         }
         .accessibilityElement(children: .contain)
     }
 
-    private func provenanceBlock(_ skill: Skill) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 0) {
-                AXToken(token: "sukiru.library.detail.provenance")
-                Text("Provenance")
-                    .font(.headline)
+    /// VAL-HEALTH-021 / D23: ambiguity voids attribution; the ledger claims
+    /// below stay visible as data, never as authoritative ownership.
+    private func ambiguousNotice(_ skill: Skill) -> some View {
+        // swiftlint:disable line_length
+        let explanation: LocalizedStringKey =
+            "Ownership ambiguous: distinct copies of this name disagree, so attribution is voided and the skill is treated as ownerless. Ledger claims below are data, not verdicts."
+        // swiftlint:enable line_length
+        return HStack(spacing: 0) {
+            AXToken(token: "sukiru.library.detail.ambiguous.\(AXTokens.skill(skill.name))")
+            Label {
+                Text(explanation)
+            } icon: {
+                Image(systemName: "exclamationmark.triangle")
             }
+            .font(.callout)
+            .foregroundStyle(.orange)
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    // MARK: - provenance
+
+    private func provenanceSection(_ skill: Skill) -> some View {
+        Section {
             if let vercel = skill.provenance.vercel {
                 // The value parameter is a plain String (Text does not
                 // localize it), so fixed phrases go through
@@ -146,119 +199,32 @@ struct LibraryDetailView: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
+        } header: {
+            TokenSectionHeader(
+                token: "sukiru.library.detail.provenance", title: "Provenance")
         }
     }
 
-    // MARK: - host presence (VAL-HEALTH-009/010)
+    // MARK: - placements
 
-    /// One host-workspace row in the host-presence region.
-    struct HostEntry: Equatable {
-        let workspaceID: String
-        let hostID: String
-        let displayName: String
-        let installed: Bool
-    }
-
-    /// Hosts that see this skill: host workspaces whose skills root contains
-    /// one of the skill's non-internal placements. The canonical store
-    /// (`user` / `project:<root>`) is NOT a host and is never listed. A
-    /// leftover workspace (installed=false — CLI spray residue) is reported
-    /// as leftover, never as an installed host.
-    private func hostEntries(for skill: Skill) -> [HostEntry] {
-        guard let report = state.report else { return [] }
-        var entries: [HostEntry] = []
-        for placement in skill.placements where !placement.internal {
-            for workspace in report.workspaces {
-                guard let hostID = Self.hostID(of: workspace.id) else { continue }
-                let prefix = workspace.root.hasSuffix("/") ? workspace.root : workspace.root + "/"
-                guard placement.path == workspace.root || placement.path.hasPrefix(prefix) else {
-                    continue
-                }
-                let entry = HostEntry(
-                    workspaceID: workspace.id,
-                    hostID: hostID,
-                    displayName: HostTable.host(id: hostID)?.displayName ?? hostID,
-                    installed: workspace.installed)
-                if !entries.contains(entry) {
-                    entries.append(entry)
-                }
-            }
-        }
-        return entries.sorted {
-            $0.displayName == $1.displayName
-                ? $0.workspaceID < $1.workspaceID
-                : $0.displayName < $1.displayName
-        }
-    }
-
-    /// Extracts the host id from a host workspace id (`host:<id>` user scope,
-    /// `project:<root>#<id>` project scope); nil for canonical stores.
-    private static func hostID(of workspaceID: String) -> String? {
-        if workspaceID.hasPrefix("host:") {
-            return String(workspaceID.dropFirst("host:".count))
-        }
-        if let hash = workspaceID.lastIndex(of: "#") {
-            return String(workspaceID[workspaceID.index(after: hash)...])
-        }
-        return nil
-    }
-
-    private func hostsBlock(_ skill: Skill) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 0) {
-                AXToken(token: "sukiru.library.detail.hosts")
-                Text("Hosts")
-                    .font(.headline)
-            }
-            if skill.placements.contains(where: \.internal) {
-                Text("Internal skill — hidden from host-facing listings.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-            let entries = hostEntries(for: skill)
-            if entries.isEmpty {
-                Text("No host sees this skill.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(entries, id: \.workspaceID) { entry in
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        AXToken(token: "sukiru.library.detail.host.\(entry.hostID)")
-                        Text(entry.displayName)
-                            .font(.callout.weight(.medium))
-                        if entry.installed {
-                            Text("Installed")
-                                .font(.caption)
-                                .foregroundStyle(.green)
-                        } else {
-                            Text("Leftover (spray residue — not an install)")
-                                .font(.caption)
-                                .foregroundStyle(.orange)
-                        }
-                    }
-                    .accessibilityElement(children: .contain)
-                }
-            }
-        }
-    }
-
-    private func placementsBlock(_ skill: Skill) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Placements")
-                .font(.headline)
+    private func placementsSection(_ skill: Skill) -> some View {
+        Section {
             ForEach(skill.placements, id: \.path) { placement in
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                LabeledContent {
                     Text(placementKindText(placement.kind))
-                        .font(.caption.weight(.medium))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 1)
-                        .background(Color.secondary.opacity(0.15), in: Capsule())
+                        .font(.callout)
+                        .foregroundStyle(placement.kind == .brokenSymlink ? .orange : .secondary)
+                } label: {
                     Text(placement.path)
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.secondary)
+                        .font(.callout.monospaced())
                         .textSelection(.enabled)
+                        .lineLimit(2)
+                        .truncationMode(.middle)
                 }
             }
+        } header: {
+            TokenSectionHeader(
+                token: nil, title: "Placements", count: skill.placements.count)
         }
     }
 
@@ -272,14 +238,14 @@ struct LibraryDetailView: View {
         }
     }
 
+    // MARK: - building blocks
+
     private func field(_ name: LocalizedStringKey, _ value: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(name)
-                .font(.callout.weight(.medium))
-                .frame(width: 90, alignment: .trailing)
+        LabeledContent(name) {
             Text(value)
                 .font(.callout.monospaced())
                 .textSelection(.enabled)
+                .multilineTextAlignment(.trailing)
         }
     }
 }

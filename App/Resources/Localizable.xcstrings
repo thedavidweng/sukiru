@@ -682,6 +682,17 @@
         }
       }
     },
+    "Project scope": {
+      "comment": "Library detail subtitle for a project-scope skill whose root is unknown.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "项目范围"
+          }
+        }
+      }
+    },
     "Provenance": {
       "comment": "Detail section title: which installer claims the skill.",
       "localizations": {

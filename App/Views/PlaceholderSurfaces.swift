@@ -8,22 +8,13 @@ struct SurfacePlaceholder: View {
     let explanation: LocalizedStringKey
 
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 36))
-                .foregroundStyle(.secondary)
+        ContentUnavailableView {
             HStack(spacing: 0) {
                 AXToken(token: token)
-                Text(title)
-                    .font(.title3.weight(.semibold))
+                Label(title, systemImage: icon)
             }
+        } description: {
             Text(explanation)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 420)
         }
-        .padding(32)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

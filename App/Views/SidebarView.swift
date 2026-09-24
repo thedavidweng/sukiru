@@ -5,13 +5,16 @@ import SwiftUI
 /// e.g. `outline row sukiru.sidebar.library Library` — token AND localized
 /// title on the same row line.
 struct SidebarView: View {
+    @EnvironmentObject private var state: AppState
     @Binding var selection: AppState.Surface
 
     var body: some View {
         List(selection: $selection) {
             row("Library", surface: .library, icon: "books.vertical")
             row("Health", surface: .health, icon: "stethoscope")
+                .badge(state.report?.findings.count ?? 0)
             row("Pending Changes", surface: .pending, icon: "list.bullet.rectangle")
+                .badge(state.pendingBatch?.commands.count ?? 0)
             row("Snapshots", surface: .snapshots, icon: "camera.on.rectangle")
             row("Search", surface: .search, icon: "magnifyingglass")
         }

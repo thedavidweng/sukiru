@@ -30,27 +30,24 @@ struct PendingCommandDetailView: View {
     }
 
     private func detail(_ command: BatchCommand, index: Int) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                argvSection(command, index: index)
-                intentSection(command, index: index)
-                if !command.dangerFlags.isEmpty {
-                    dangerSection(command, index: index)
-                }
-                if let consequence = command.consequence {
-                    consequenceSection(consequence, index: index)
-                }
-                if let workingDirectory = command.workingDirectory {
-                    workdirSection(workingDirectory, index: index)
-                }
+        Form {
+            argvSection(command, index: index)
+            intentSection(command, index: index)
+            if !command.dangerFlags.isEmpty {
+                dangerSection(command, index: index)
             }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            if let consequence = command.consequence {
+                consequenceSection(consequence, index: index)
+            }
+            if let workingDirectory = command.workingDirectory {
+                workdirSection(workingDirectory, index: index)
+            }
         }
+        .formStyle(.grouped)
     }
 
     private func argvSection(_ command: BatchCommand, index: Int) -> some View {
-        DetailSection(token: "sukiru.pending.command.\(index).argv", title: "Full command") {
+        Section {
             // One argument per line: the full argv is inspectable with
             // nothing hidden (VAL-REPAIR-006).
             ForEach(Array(command.argv.enumerated()), id: \.offset) { pair in
@@ -64,20 +61,27 @@ struct PendingCommandDetailView: View {
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
+        } header: {
+            TokenSectionHeader(
+                token: "sukiru.pending.command.\(index).argv", title: "Full command",
+                count: command.argv.count)
         }
     }
 
     private func intentSection(_ command: BatchCommand, index: Int) -> some View {
-        DetailSection(token: "sukiru.pending.command.\(index).intent", title: "Intent") {
+        Section {
             Text(command.intent)
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+        } header: {
+            TokenSectionHeader(
+                token: "sukiru.pending.command.\(index).intent", title: "Intent")
         }
     }
 
     private func dangerSection(_ command: BatchCommand, index: Int) -> some View {
-        DetailSection(token: "sukiru.pending.command.\(index).danger", title: "Danger") {
+        Section {
             ForEach(command.dangerFlags, id: \.self) { flag in
                 Text(flag.rawValue)
                     .font(.caption.monospaced())
@@ -98,47 +102,33 @@ struct PendingCommandDetailView: View {
                     .foregroundStyle(.red)
                     .fixedSize(horizontal: false, vertical: true)
             }
+        } header: {
+            TokenSectionHeader(
+                token: "sukiru.pending.command.\(index).danger", title: "Danger")
         }
     }
 
     private func consequenceSection(_ consequence: String, index: Int) -> some View {
-        DetailSection(
-            token: "sukiru.pending.command.\(index).consequence", title: "Consequences"
-        ) {
+        Section {
             Text(consequence)
                 .font(.callout)
                 .foregroundStyle(.orange)
                 .fixedSize(horizontal: false, vertical: true)
+        } header: {
+            TokenSectionHeader(
+                token: "sukiru.pending.command.\(index).consequence", title: "Consequences")
         }
     }
 
     private func workdirSection(_ workingDirectory: String, index: Int) -> some View {
-        DetailSection(
-            token: "sukiru.pending.command.\(index).workdir", title: "Working directory"
-        ) {
+        Section {
             Text(workingDirectory)
                 .font(.callout.monospaced())
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
-        }
-    }
-}
-
-/// A headed detail section carrying its D21 token on the heading row.
-struct DetailSection<Content: View>: View {
-    let token: String
-    let title: LocalizedStringKey
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 0) {
-                AXToken(token: token)
-                Text(title)
-                    .font(.headline)
-            }
-            .accessibilityElement(children: .contain)
-            content
+        } header: {
+            TokenSectionHeader(
+                token: "sukiru.pending.command.\(index).workdir", title: "Working directory")
         }
     }
 }

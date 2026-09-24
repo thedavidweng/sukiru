@@ -12,6 +12,11 @@ import SwiftUI
 struct LibraryView: View {
     @EnvironmentObject private var state: AppState
 
+    /// Name filter, transient view state (the app keeps no ledger).
+    @State private var filter = ""
+    /// Sections the user collapsed, keyed by `SkillGroup.id`.
+    @State private var collapsedGroups: Set<String> = []
+
     var body: some View {
         Group {
             switch state.scanPhase {
@@ -43,49 +48,34 @@ struct LibraryView: View {
     }
 
     private func homeMissingState(_ path: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 36))
-                .foregroundStyle(.yellow)
+        // swiftlint:disable line_length
+        let guidance: LocalizedStringKey =
+            "The library root (SUKIRU_HOME) does not exist. Fix the path and press Refresh, or relaunch with a valid root."
+        // swiftlint:enable line_length
+        return ContentUnavailableView {
             HStack(spacing: 0) {
                 AXToken(token: "sukiru.library.error")
-                Text("Library root not found")
-                    .font(.title3.weight(.semibold))
+                Label("Library root not found", systemImage: "exclamationmark.triangle")
             }
-            Text(path)
-                .font(.callout.monospaced())
-                .foregroundStyle(.secondary)
-                .textSelection(.enabled)
-            // swiftlint:disable line_length
-            let guidance: LocalizedStringKey =
-                "The library root (SUKIRU_HOME) does not exist. Fix the path and press Refresh, or relaunch with a valid root."
-            // swiftlint:enable line_length
-            Text(guidance)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 420)
+        } description: {
+            VStack(spacing: 8) {
+                Text(path)
+                    .font(.callout.monospaced())
+                    .textSelection(.enabled)
+                Text(guidance)
+            }
         }
-        .padding(32)
     }
 
     private func failureState(_ message: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 36))
-                .foregroundStyle(.red)
+        ContentUnavailableView {
             HStack(spacing: 0) {
                 AXToken(token: "sukiru.library.error")
-                Text("Scan failed")
-                    .font(.title3.weight(.semibold))
+                Label("Scan failed", systemImage: "exclamationmark.triangle")
             }
+        } description: {
             Text(message)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 420)
         }
-        .padding(32)
     }
 
     @ViewBuilder
@@ -93,26 +83,18 @@ struct LibraryView: View {
         if let report = state.report, !report.skills.isEmpty {
             skillList(report)
         } else {
-            VStack(spacing: 12) {
-                Image(systemName: "tray")
-                    .font(.system(size: 36))
-                    .foregroundStyle(.secondary)
+            // swiftlint:disable line_length
+            let emptyNote: LocalizedStringKey =
+                "This library has no skill installations. Install skills with the official CLIs, or add a project root in Settings."
+            // swiftlint:enable line_length
+            ContentUnavailableView {
                 HStack(spacing: 0) {
                     AXToken(token: "sukiru.library.empty")
-                    Text("No skills found")
-                        .font(.title3.weight(.semibold))
+                    Label("No skills found", systemImage: "tray")
                 }
-                // swiftlint:disable line_length
-                let emptyNote: LocalizedStringKey =
-                    "This library has no skill installations. Install skills with the official CLIs, or add a project root in Settings."
-                // swiftlint:enable line_length
+            } description: {
                 Text(emptyNote)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 420)
             }
-            .padding(32)
         }
     }
 
@@ -140,44 +122,51 @@ struct LibraryView: View {
     }
 
     private func skillListContent(_ report: ScanReport) -> some View {
-        List(selection: $state.selectedSkillID) {
-            let userSkills = skills(in: .user, report: report)
-            if !userSkills.isEmpty {
-                Section {
-                    ForEach(userSkills, id: \.selfID) { skill in
+        let groups = groups(in: report)
+        return List(selection: $state.selectedSkillID) {
+            ForEach(groups) { group in
+                Section(isExpanded: expansion(of: group)) {
+                    ForEach(group.skills, id: \.selfID) { skill in
                         SkillRow(skill: skill)
                             .tag(skill.selfID)
                     }
                 } header: {
-                    HStack(spacing: 0) {
-                        AXToken(token: "sukiru.library.section.user")
-                        Text("User scope")
-                    }
-                    .accessibilityElement(children: .contain)
-                }
-            }
-            ForEach(projectRootsWithSkills(report), id: \.self) { root in
-                Section {
-                    ForEach(skills(projectRoot: root, report: report), id: \.selfID) { skill in
-                        SkillRow(skill: skill)
-                            .tag(skill.selfID)
-                    }
-                } header: {
-                    HStack(spacing: 0) {
-                        AXToken(token: "sukiru.library.section.project.\(AXTokens.path(root))")
-                        Text(root)
-                            .font(.callout.monospaced())
-                            .lineLimit(2)
-                    }
-                    .accessibilityElement(children: .contain)
+                    header(group)
                 }
             }
         }
         .listStyle(.inset)
+        .searchable(text: $filter, prompt: Text("Search skills"))
+        .overlay {
+            if groups.isEmpty && !filter.isEmpty {
+                ContentUnavailableView.search(text: filter)
+            }
+        }
     }
 
-    private func skills(in scope: Scope, report: ScanReport) -> [Skill] {
-        report.skills.filter { $0.scope == scope }
+    // MARK: - grouping
+
+    /// Groups matching skills into sections, dropping sections the filter
+    /// empties so a search never leaves a stranded header behind.
+    private func groups(in report: ScanReport) -> [SkillGroup] {
+        var groups: [SkillGroup] = []
+        let userSkills = report.skills.filter { $0.scope == .user && matches($0) }
+        if !userSkills.isEmpty {
+            groups.append(SkillGroup(kind: .user, skills: userSkills))
+        }
+        for root in projectRootsWithSkills(report) {
+            let skills = report.skills.filter {
+                $0.scope == .project && state.projectRoot(of: $0) == root && matches($0)
+            }
+            if !skills.isEmpty {
+                groups.append(SkillGroup(kind: .project(root), skills: skills))
+            }
+        }
+        return groups
+    }
+
+    private func matches(_ skill: Skill) -> Bool {
+        filter.isEmpty || skill.name.localizedCaseInsensitiveContains(filter)
     }
 
     /// Project roots that own at least one skill in the report, sorted for
@@ -185,74 +174,127 @@ struct LibraryView: View {
     private func projectRootsWithSkills(_ report: ScanReport) -> [String] {
         var roots: Set<String> = []
         for skill in report.skills where skill.scope == .project {
-            if let root = projectRoot(of: skill) {
+            if let root = state.projectRoot(of: skill) {
                 roots.insert(root)
             }
         }
         return roots.sorted()
     }
 
-    private func skills(projectRoot root: String, report: ScanReport) -> [Skill] {
-        report.skills.filter { $0.scope == .project && projectRoot(of: $0) == root }
+    private func expansion(of group: SkillGroup) -> Binding<Bool> {
+        Binding(
+            get: { !collapsedGroups.contains(group.id) },
+            set: { expanded in
+                if expanded {
+                    collapsedGroups.remove(group.id)
+                } else {
+                    collapsedGroups.insert(group.id)
+                }
+            })
     }
 
-    private func projectRoot(of skill: Skill) -> String? {
-        state.projectRoot(of: skill)
+    @ViewBuilder
+    private func header(_ group: SkillGroup) -> some View {
+        HStack(spacing: 6) {
+            switch group.kind {
+            case .user:
+                AXToken(token: "sukiru.library.section.user")
+                Text("User scope")
+            case .project(let root):
+                AXToken(token: "sukiru.library.section.project.\(AXTokens.path(root))")
+                Text(root)
+                    .font(.callout.monospaced())
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            Spacer(minLength: 8)
+            Text(group.skills.count, format: .number)
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+        }
+        .accessibilityElement(children: .contain)
     }
 }
 
-/// One skill row: token carrier + name + ownership badge (+ internal marker).
+/// One Library list section: the canonical user store, or one project root.
+private struct SkillGroup: Identifiable {
+    enum Kind: Equatable {
+        case user
+        case project(String)
+    }
+
+    let kind: Kind
+    let skills: [Skill]
+
+    var id: String {
+        switch kind {
+        case .user: "user"
+        case .project(let root): "project:\(root)"
+        }
+    }
+}
+
+/// One skill row: token carrier, name, and trailing state. Ownership reads as
+/// plain secondary text; color is reserved for the states that need a fix, so
+/// a healthy library shows no alarm colors at all.
 struct SkillRow: View {
     let skill: Skill
 
     var body: some View {
         HStack(spacing: 8) {
             AXToken(token: "sukiru.library.skillRow.\(AXTokens.skill(skill.name))")
+            Image(systemName: "book.closed")
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
             Text(skill.name)
-                .font(.body.weight(.medium))
+                .font(.body)
+                .lineLimit(1)
+                .truncationMode(.middle)
             if skill.ambiguous {
                 badge(text: "Ambiguous", color: .orange)
             }
-            Spacer()
+            Spacer(minLength: 8)
             if skill.placements.contains(where: \.internal) {
                 HStack(spacing: 0) {
                     AXToken(token: "sukiru.library.badge.internal.\(AXTokens.skill(skill.name))")
-                    badge(text: "Internal", color: .purple)
+                    Text("Internal")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
             HStack(spacing: 0) {
                 AXToken(token: "sukiru.library.badge.ownership.\(AXTokens.skill(skill.name))")
-                badge(text: ownershipText, color: ownershipColor)
+                ownershipMarker
             }
         }
         .padding(.vertical, 2)
     }
 
+    @ViewBuilder
+    private var ownershipMarker: some View {
+        switch skill.ownership {
+        case .vercel:
+            Text("Vercel")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        case .github:
+            Text("GitHub")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        case .doubleBooked:
+            badge(text: "Double-booked", color: .orange)
+        case .ownerless:
+            badge(text: "Ownerless", color: .orange)
+        }
+    }
+
     private func badge(text: LocalizedStringKey, color: Color) -> some View {
         Text(text)
-            .font(.caption.weight(.medium))
+            .font(.caption)
             .padding(.horizontal, 6)
             .padding(.vertical, 1)
-            .background(color.opacity(0.18), in: Capsule())
+            .background(color.opacity(0.15), in: Capsule())
             .foregroundStyle(color)
-    }
-
-    private var ownershipText: LocalizedStringKey {
-        switch skill.ownership {
-        case .vercel: "Vercel"
-        case .github: "GitHub"
-        case .doubleBooked: "Double-booked"
-        case .ownerless: "Ownerless"
-        }
-    }
-
-    private var ownershipColor: Color {
-        switch skill.ownership {
-        case .vercel: .blue
-        case .github: .green
-        case .doubleBooked: .orange
-        case .ownerless: .gray
-        }
     }
 }
 

@@ -40,6 +40,31 @@ struct AXToken: View {
     }
 }
 
+/// A `Form` / `List` section header: the D21 token carrier, the localized
+/// title, and an optional trailing count (the count reads as a system-styled
+/// secondary number, the way Finder and Mail label group sizes).
+struct TokenSectionHeader: View {
+    let token: String?
+    let title: LocalizedStringKey
+    var count: Int?
+
+    var body: some View {
+        HStack(spacing: 0) {
+            if let token {
+                AXToken(token: token)
+            }
+            Text(title)
+            if let count {
+                Spacer(minLength: 8)
+                Text(count, format: .number)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+}
+
 extension View {
     /// Applies a D21 token to a button-style control: label for VoiceOver,
     /// value so the computer-use tree dump prints `button, Value: <token>`.

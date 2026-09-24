@@ -33,21 +33,16 @@ struct SnapshotsDetailView: View {
     // MARK: - batch detail: commands + post-run diff
 
     private func batchDetail(_ record: ExecutionRecord) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                batchMetaSection(record)
-                batchCommandsSection(record)
-                diffSection(record)
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        Form {
+            batchMetaSection(record)
+            batchCommandsSection(record)
+            diffSection(record)
         }
+        .formStyle(.grouped)
     }
 
     private func batchMetaSection(_ record: ExecutionRecord) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Batch")
-                .font(.headline)
+        Section {
             Text(record.batchID)
                 .font(.caption.monospaced())
                 .foregroundStyle(.secondary)
@@ -59,13 +54,13 @@ struct SnapshotsDetailView: View {
             )
             .font(.caption)
             .foregroundStyle(.tertiary)
+        } header: {
+            TokenSectionHeader(token: nil, title: "Batch")
         }
     }
 
     private func batchCommandsSection(_ record: ExecutionRecord) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Commands")
-                .font(.headline)
+        Section {
             ForEach(record.commands, id: \.index) { command in
                 VStack(alignment: .leading, spacing: 2) {
                     Text(command.displayString)
@@ -91,6 +86,8 @@ struct SnapshotsDetailView: View {
                 }
                 .padding(.vertical, 2)
             }
+        } header: {
+            TokenSectionHeader(token: nil, title: "Commands", count: record.commands.count)
         }
     }
 
@@ -100,23 +97,21 @@ struct SnapshotsDetailView: View {
     @ViewBuilder
     private func diffSection(_ record: ExecutionRecord) -> some View {
         if record.diff.isEmpty {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                AXToken(token: "sukiru.snapshots.diff.empty")
-                Image(systemName: "equal.circle")
-                    .foregroundStyle(.secondary)
-                Text("No changes — the executed batch left the library unchanged.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-            .accessibilityElement(children: .contain)
-        } else {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 0) {
-                    AXToken(token: "sukiru.snapshots.diff.\(record.batchID)")
-                    Text("Post-run diff")
-                        .font(.headline)
+            Section {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    AXToken(token: "sukiru.snapshots.diff.empty")
+                    Image(systemName: "equal.circle")
+                        .foregroundStyle(.secondary)
+                    Text("No changes — the executed batch left the library unchanged.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
                 }
                 .accessibilityElement(children: .contain)
+            } header: {
+                TokenSectionHeader(token: nil, title: "Post-run diff")
+            }
+        } else {
+            Section {
                 ForEach(Array(record.diff.summary.enumerated()), id: \.offset) { pair in
                     Text(pair.element)
                         .font(.caption.monospaced())
@@ -124,6 +119,10 @@ struct SnapshotsDetailView: View {
                         .textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+            } header: {
+                TokenSectionHeader(
+                    token: "sukiru.snapshots.diff.\(record.batchID)", title: "Post-run diff",
+                    count: record.diff.summary.count)
             }
         }
     }
@@ -131,14 +130,8 @@ struct SnapshotsDetailView: View {
     // MARK: - rollback detail: itemized restore record
 
     private func rollbackDetail(_ record: RollbackRecord) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 0) {
-                    AXToken(token: "sukiru.snapshots.rollbackDetail.\(record.batchID)")
-                    Text("Rollback")
-                        .font(.headline)
-                }
-                .accessibilityElement(children: .contain)
+        Form {
+            Section {
                 Text(record.rolledBackAt)
                     .font(.caption.monospaced())
                     .foregroundStyle(.tertiary)
@@ -166,10 +159,13 @@ struct SnapshotsDetailView: View {
                     }
                     .padding(.vertical, 2)
                 }
+            } header: {
+                TokenSectionHeader(
+                    token: "sukiru.snapshots.rollbackDetail.\(record.batchID)",
+                    title: "Rollback", count: record.items.count)
             }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .formStyle(.grouped)
     }
 
     private func icon(for category: RestoreItem.Category) -> String {

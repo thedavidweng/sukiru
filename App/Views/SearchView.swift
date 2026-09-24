@@ -119,22 +119,14 @@ struct SearchView: View {
     }
 
     private func failureState(_ message: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 36))
-                .foregroundStyle(.red)
+        ContentUnavailableView {
             HStack(spacing: 0) {
                 AXToken(token: "sukiru.search.error")
-                Text("Search failed")
-                    .font(.title3.weight(.semibold))
+                Label("Search failed", systemImage: "exclamationmark.triangle")
             }
+        } description: {
             Text(message)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 420)
         }
-        .padding(32)
     }
 
     private var resultsContent: some View {
