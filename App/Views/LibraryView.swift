@@ -294,11 +294,14 @@ struct SkillRow: View {
     let skill: Skill
 
     var body: some View {
+        let hosts = LibraryHostsSection(
+            skill: skill, report: state.report, environment: state.environment,
+            projectRoot: state.projectRoot(of: skill)
+        )
+        .hostEntries().filter(\.installed)
         HStack(alignment: .top, spacing: 10) {
             AXToken(token: "sukiru.library.skillRow.\(AXTokens.skill(skill.name))")
-            Image(systemName: "book.closed")
-                .foregroundStyle(.secondary)
-                .accessibilityHidden(true)
+            AgentIconStrip(hosts: hosts)
             VStack(alignment: .leading, spacing: 3) {
                 HStack {
                     Text(skill.name)

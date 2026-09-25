@@ -5,8 +5,8 @@
 ## 约束（红线）
 
 - **语言与框架**：实现语言只用 Swift；UI 只用 SwiftUI + AppKit + Apple 系统框架。禁止 webview / Electron / Tauri / React Native / Flutter 外壳，禁止非 Apple 渲染栈（GPUI 等），禁止 Mac Catalyst 移植。
-- **UI 层零第三方依赖**：不引入第三方组件库、图标包、字体包、动画库。非 UI 层依赖仍受 AGENTS.md 的"每个依赖自证维护与体积成本"约束（当前只有 Yams，读侧 YAML 刚需）。
-- **只用系统素材**：语义颜色（`Color.primary`、`.secondary`、`.accentColor`…）、SF Symbols、系统字体。不硬编码颜色、圆角、阴影值来模仿系统外观。
+- **UI 层零第三方依赖**：不引入第三方组件库、图标包、字体包、动画库。识别外部 coding agent 所需的少量品牌标志作为内容资源引入，保留来源与许可，不作为控件图标。非 UI 层依赖仍受 AGENTS.md 的"每个依赖自证维护与体积成本"约束（当前只有 Yams，读侧 YAML 刚需）。
+- **系统控件只用系统素材**：语义颜色（`Color.primary`、`.secondary`、`.accentColor`…）、SF Symbols、系统字体；外部 agent 的品牌标志仅用于表示对应 agent。不硬编码颜色、圆角、阴影值来模仿系统外观。
 - **不自绘 chrome**：不自定义标题栏、侧边栏、滚动条、开关、进度条；窗口结构用 `NavigationSplitView`、设置用 `Settings` 场景、全局动作用 window toolbar、模态用系统 sheet / alert / `confirmationDialog`、预览走 Quick Look。
 - **新能力靠继承，不靠模仿**：系统新观感（macOS 26 的 Liquid Glass 等）必须由标准控件自动获得；需要新 API 时用 `#available` 门控做渐进增强，旧系统退回标准表现。任何"自己画一层玻璃"的实现视为违反红线。
 - **跟随系统偏好**：深浅色、强调色、Increase Contrast、Reduce Transparency、Reduce Motion、辅助功能字号、VoiceOver 标签一律跟随系统。不提供 app 内主题切换或 app 内语言切换；本地化（`en` + `zh-Hans`）由系统语言驱动。

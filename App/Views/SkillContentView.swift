@@ -15,8 +15,9 @@ struct SkillContentView: View {
                     Text(content)
                         .font(.body.monospaced())
                         .textSelection(.enabled)
+                        .frame(maxWidth: 720, alignment: .leading)
+                        .padding(24)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding()
                 }
             } else if let readError {
                 ContentUnavailableView {
