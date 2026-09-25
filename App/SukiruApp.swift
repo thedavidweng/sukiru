@@ -15,12 +15,6 @@ struct SukiruApp: App {
                 .onAppear { state.start() }
         }
         .windowResizability(.contentMinSize)
-        // The standard macOS Settings scene (⌘,): settings live in their own
-        // window like any native app, not in the sidebar.
-        Settings {
-            SettingsView()
-                .environmentObject(state)
-        }
         .commands {
             SidebarCommands()
             // Sidebar switching shortcuts (VAL-CROSS-003). Visible in the View
@@ -169,6 +163,12 @@ struct SukiruApp: App {
                 .keyboardShortcut("b", modifiers: [.command, .option])
                 .disabled(!state.canRollbackSelectedBatch)
             }
+        }
+        // The standard macOS Settings scene (⌘,): settings live in their own
+        // window like any native app, not in the sidebar.
+        Settings {
+            SettingsView()
+                .environmentObject(state)
         }
     }
 
