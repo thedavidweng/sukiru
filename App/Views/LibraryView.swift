@@ -14,6 +14,7 @@ struct LibraryView: View {
 
     /// Name filter, transient view state (the app keeps no ledger).
     @State private var filter = ""
+    @State private var attentionOnly = false
     /// Sections the user collapsed, keyed by `SkillGroup.id`.
     @State private var collapsedGroups: Set<String> = []
 
@@ -31,6 +32,21 @@ struct LibraryView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .navigationTitle(libraryTitle)
+        .navigationSubtitle(Text("\(skillCount) skills"))
+    }
+
+    private var libraryTitle: Text {
+        switch state.libraryScope {
+        case .all: Text("Library")
+        case .user: Text("User Library")
+        case .project(let root): Text(verbatim: URL(fileURLWithPath: root).lastPathComponent)
+        }
+    }
+
+    private var skillCount: Int {
+        guard let report = state.report else { return 0 }
+        return groups(in: report).reduce(0) { $0 + $1.skills.count }
     }
 
     // MARK: - states
@@ -124,23 +140,43 @@ struct LibraryView: View {
     private func skillListContent(_ report: ScanReport) -> some View {
         let groups = groups(in: report)
         return List(selection: $state.selectedSkillID) {
-            ForEach(groups) { group in
-                Section(isExpanded: expansion(of: group)) {
-                    ForEach(group.skills, id: \.selfID) { skill in
-                        SkillRow(skill: skill)
-                            .tag(skill.selfID)
+            if state.libraryScope == .all {
+                ForEach(groups) { group in
+                    Section(isExpanded: expansion(of: group)) {
+                        skillRows(group.skills)
+                    } header: {
+                        header(group)
                     }
-                } header: {
-                    header(group)
                 }
+            } else {
+                skillRows(groups.flatMap(\.skills))
             }
         }
         .listStyle(.inset)
-        .searchable(text: $filter, prompt: Text("Search skills"))
+        .searchable(text: $filter, placement: .toolbar, prompt: Text("Search skills"))
+        .safeAreaInset(edge: .top) {
+            Picker("Filter skills", selection: $attentionOnly) {
+                Text("All skills").tag(false)
+                Text("Needs attention").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .padding(.horizontal)
+            .padding(.vertical, 6)
+        }
         .overlay {
             if groups.isEmpty && !filter.isEmpty {
                 ContentUnavailableView.search(text: filter)
+            } else if groups.isEmpty && attentionOnly {
+                ContentUnavailableView("No skills need attention", systemImage: "checkmark.circle")
             }
+        }
+    }
+
+    private func skillRows(_ skills: [Skill]) -> some View {
+        ForEach(skills, id: \.selfID) { skill in
+            SkillRow(skill: skill)
+                .tag(skill.selfID)
         }
     }
 
@@ -150,13 +186,16 @@ struct LibraryView: View {
     /// empties so a search never leaves a stranded header behind.
     private func groups(in report: ScanReport) -> [SkillGroup] {
         var groups: [SkillGroup] = []
-        let userSkills = report.skills.filter { $0.scope == .user && matches($0) }
+        let userSkills = report.skills.filter {
+            $0.scope == .user && isInSelectedScope($0) && matches($0)
+        }
         if !userSkills.isEmpty {
             groups.append(SkillGroup(kind: .user, skills: userSkills))
         }
         for root in projectRootsWithSkills(report) {
             let skills = report.skills.filter {
-                $0.scope == .project && state.projectRoot(of: $0) == root && matches($0)
+                $0.scope == .project && state.projectRoot(of: $0) == root
+                    && isInSelectedScope($0) && matches($0)
             }
             if !skills.isEmpty {
                 groups.append(SkillGroup(kind: .project(root), skills: skills))
@@ -166,7 +205,20 @@ struct LibraryView: View {
     }
 
     private func matches(_ skill: Skill) -> Bool {
-        filter.isEmpty || skill.name.localizedCaseInsensitiveContains(filter)
+        if attentionOnly && state.findings(for: skill).isEmpty { return false }
+        return filter.isEmpty || skill.name.localizedCaseInsensitiveContains(filter)
+            || state.skillDescriptions[skill.selfID]?.localizedCaseInsensitiveContains(filter)
+                == true
+            || skill.provenance.github?.repo.localizedCaseInsensitiveContains(filter) == true
+            || skill.provenance.vercel?.source?.localizedCaseInsensitiveContains(filter) == true
+    }
+
+    private func isInSelectedScope(_ skill: Skill) -> Bool {
+        switch state.libraryScope {
+        case .all: true
+        case .user: skill.scope == .user
+        case .project(let root): skill.scope == .project && state.projectRoot(of: skill) == root
+        }
     }
 
     /// Project roots that own at least one skill in the report, sorted for
@@ -238,36 +290,59 @@ private struct SkillGroup: Identifiable {
 /// plain secondary text; color is reserved for the states that need a fix, so
 /// a healthy library shows no alarm colors at all.
 struct SkillRow: View {
+    @EnvironmentObject private var state: AppState
     let skill: Skill
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(alignment: .top, spacing: 10) {
             AXToken(token: "sukiru.library.skillRow.\(AXTokens.skill(skill.name))")
             Image(systemName: "book.closed")
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
-            Text(skill.name)
-                .font(.body)
-                .lineLimit(1)
-                .truncationMode(.middle)
-            if skill.ambiguous {
-                badge(text: "Ambiguous", color: .orange)
-            }
-            Spacer(minLength: 8)
-            if skill.placements.contains(where: \.internal) {
-                HStack(spacing: 0) {
-                    AXToken(token: "sukiru.library.badge.internal.\(AXTokens.skill(skill.name))")
-                    Text("Internal")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack {
+                    Text(skill.name)
+                        .font(.body.weight(.semibold))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    Spacer(minLength: 4)
+                    let findingCount = state.findings(for: skill).count
+                    if findingCount > 0 {
+                        Label("\(findingCount)", systemImage: "exclamationmark.circle")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel("\(findingCount) findings")
+                    }
                 }
-            }
-            HStack(spacing: 0) {
-                AXToken(token: "sukiru.library.badge.ownership.\(AXTokens.skill(skill.name))")
-                ownershipMarker
+                if let description = state.skillDescriptions[skill.selfID] {
+                    Text(description)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+                HStack(spacing: 8) {
+                    if skill.ambiguous {
+                        Label("Ambiguous", systemImage: "exclamationmark.triangle")
+                    }
+                    if skill.placements.contains(where: \.internal) {
+                        HStack(spacing: 0) {
+                            AXToken(
+                                token: "sukiru.library.badge.internal.\(AXTokens.skill(skill.name))"
+                            )
+                            Text("Internal")
+                        }
+                    }
+                    HStack(spacing: 0) {
+                        AXToken(
+                            token: "sukiru.library.badge.ownership.\(AXTokens.skill(skill.name))")
+                        ownershipMarker
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 4)
     }
 
     @ViewBuilder
@@ -275,26 +350,13 @@ struct SkillRow: View {
         switch skill.ownership {
         case .vercel:
             Text("Vercel")
-                .font(.caption)
-                .foregroundStyle(.secondary)
         case .github:
             Text("GitHub")
-                .font(.caption)
-                .foregroundStyle(.secondary)
         case .doubleBooked:
-            badge(text: "Double-booked", color: .orange)
+            Text("Double-booked")
         case .ownerless:
-            badge(text: "Ownerless", color: .orange)
+            Text("Ownerless")
         }
-    }
-
-    private func badge(text: LocalizedStringKey, color: Color) -> some View {
-        Text(text)
-            .font(.caption)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 1)
-            .background(color.opacity(0.15), in: Capsule())
-            .foregroundStyle(color)
     }
 }
 

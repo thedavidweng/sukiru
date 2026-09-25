@@ -14,6 +14,21 @@ import SwiftUI
 /// rather than from hand-tuned padding (ADR-0006).
 struct LibraryDetailView: View {
     @EnvironmentObject private var state: AppState
+    @State private var selectedTab: DetailTab = .overview
+
+    private enum DetailTab: String, CaseIterable {
+        case overview
+        case content
+        case locations
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .overview: "Overview"
+            case .content: "Content"
+            case .locations: "Locations"
+            }
+        }
+    }
 
     var body: some View {
         if let skill = state.selectedSkill() {
@@ -26,20 +41,77 @@ struct LibraryDetailView: View {
     }
 
     private func detail(_ skill: Skill) -> some View {
-        Form {
-            Section {
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 12) {
                 headerRow(skill)
-                if isVercelReadOnly(skill) {
-                    readOnlyNotice(skill)
-                }
-                if skill.ambiguous {
-                    ambiguousNotice(skill)
+                if let description = state.skillDescriptions[skill.selfID] {
+                    Text(description)
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                        .textSelection(.enabled)
                 }
                 actionRow(skill)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+
+            Picker("Skill detail", selection: $selectedTab) {
+                ForEach(DetailTab.allCases, id: \.self) { tab in
+                    Text(tab.title).tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .padding()
+
+            switch selectedTab {
+            case .overview:
+                overview(skill)
+            case .content:
+                SkillContentView(skill: skill)
+            case .locations:
+                Form {
+                    LibraryHostsSection(skill: skill, report: state.report)
+                    placementsSection(skill)
+                }
+                .formStyle(.grouped)
+            }
+        }
+        .onChange(of: skill.selfID) { _, _ in selectedTab = .overview }
+    }
+
+    private func overview(_ skill: Skill) -> some View {
+        Form {
+            Section("Status") {
+                LabeledContent("Hosts") {
+                    Text(
+                        LibraryHostsSection(skill: skill, report: state.report)
+                            .hostEntries().filter(\.installed).count,
+                        format: .number)
+                }
+                LabeledContent("Placements") {
+                    Text(skill.placements.count, format: .number)
+                }
+                LabeledContent("Findings") {
+                    Text(state.findings(for: skill).count, format: .number)
+                }
+                if isVercelReadOnly(skill) { readOnlyNotice(skill) }
+                if skill.ambiguous { ambiguousNotice(skill) }
+            }
             provenanceSection(skill)
-            LibraryHostsSection(skill: skill, report: state.report)
-            placementsSection(skill)
+            let findingCount = state.findings(for: skill).count
+            if findingCount > 0 {
+                Section("Needs attention") {
+                    Label("\(findingCount) findings", systemImage: "exclamationmark.circle")
+                    Text("Review the evidence and installer record before planning a repair.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                    Button("Inspect findings") {
+                        state.showFindings(for: skill)
+                    }
+                }
+            }
         }
         .formStyle(.grouped)
     }
@@ -205,6 +277,9 @@ struct LibraryDetailView: View {
         }
     }
 
+}
+
+extension LibraryDetailView {
     // MARK: - placements
 
     private func placementsSection(_ skill: Skill) -> some View {

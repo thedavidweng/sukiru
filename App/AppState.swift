@@ -12,19 +12,6 @@ import SukiruCore
 /// they survive surface switches (VAL-HEALTH-045).
 @MainActor
 final class AppState: ObservableObject {
-    /// Sidebar surfaces (§4.3). `library` is the first-launch surface (D15 —
-    /// no onboarding). Settings lives in the standard macOS Settings scene
-    /// (⌘,), not the sidebar.
-    enum Surface: String, CaseIterable, Identifiable, Hashable {
-        case library
-        case health
-        case pending
-        case snapshots
-        case search
-
-        var id: String { rawValue }
-    }
-
     /// Scan lifecycle. `homeMissing` is the D4 fatal condition (`SUKIRU_HOME`
     /// set but nonexistent): an explicit error state instead of a misleading
     /// empty library (VAL-CROSS-022).
@@ -45,8 +32,10 @@ final class AppState: ObservableObject {
     }
 
     @Published var surface: Surface = .library
+    @Published var libraryScope: LibraryScope = .all
     @Published private(set) var scanPhase: ScanPhase = .loading
     @Published private(set) var report: ScanReport?
+    @Published var skillDescriptions: [String: String] = [:]
     /// nil while the (async, background) capability probes are in flight.
     @Published private(set) var capabilities: CapabilityReport?
     /// Runtime project-roots list (D20). Seeded from `SUKIRU_ROOTS`; add and
@@ -219,7 +208,7 @@ final class AppState: ObservableObject {
 
     /// Monotonic counter identifying the latest requested scan; stale
     /// completions are dropped instead of clobbering newer state.
-    private var scanGeneration = 0
+    var scanGeneration = 0
 
     /// Monotonic counter identifying the latest requested search; stale
     /// completions are dropped instead of clobbering newer state.
@@ -240,6 +229,7 @@ final class AppState: ObservableObject {
             self.report = report
             self.scanPhase = .loaded
             self.pruneSelection(using: report)
+            loadSkillDescriptions(for: report, generation: generation)
         case .failure(let error):
             if let problem = error as? FatalEnvironmentProblem {
                 switch problem {
@@ -291,6 +281,10 @@ final class AppState: ObservableObject {
     /// Removes a project root (D20) and rescans.
     func removeProjectRoot(_ path: String) {
         projectRoots.removeAll { $0 == path }
+        if libraryScope == .project(path) {
+            libraryScope = .all
+            selectedSkillID = nil
+        }
         if selectedProjectRoot == path {
             selectedProjectRoot = nil
         }

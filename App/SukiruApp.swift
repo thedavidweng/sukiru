@@ -22,6 +22,7 @@ struct SukiruApp: App {
                 .environmentObject(state)
         }
         .commands {
+            SidebarCommands()
             // Sidebar switching shortcuts (VAL-CROSS-003). Visible in the View
             // menu, so the shortcuts are discoverable in-app.
             CommandGroup(after: .sidebar) {
@@ -188,6 +189,7 @@ struct SukiruApp: App {
         _ title: LocalizedStringKey, surface: AppState.Surface, key: KeyEquivalent
     ) -> some View {
         Button(title) {
+            if surface == .library { state.libraryScope = .all }
             state.surface = surface
         }
         .keyboardShortcut(key, modifiers: .command)

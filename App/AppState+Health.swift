@@ -204,6 +204,7 @@ extension AppState {
     /// lock-without-files ghost has no placement — VAL-SCAN-028).
     func revealInLibrary(for finding: Finding) {
         guard let skill = skill(matching: finding) else { return }
+        libraryScope = .all
         selectedSkillID = Self.skillID(skill)
         surface = .library
     }

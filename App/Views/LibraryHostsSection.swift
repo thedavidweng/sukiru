@@ -65,7 +65,7 @@ struct LibraryHostsSection: View {
     /// (`user` / `project:<root>`) is NOT a host and is never listed. A
     /// leftover workspace (installed=false — CLI spray residue) is reported
     /// as leftover, never as an installed host.
-    private func hostEntries() -> [HostEntry] {
+    func hostEntries() -> [HostEntry] {
         guard let report else { return [] }
         var entries: [HostEntry] = []
         for placement in skill.placements where !placement.internal {

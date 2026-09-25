@@ -10,7 +10,7 @@ struct RootView: View {
 
     var body: some View {
         NavigationSplitView {
-            SidebarView(selection: $state.surface)
+            SidebarView()
                 .navigationSplitViewColumnWidth(min: 180, ideal: 210, max: 280)
         } content: {
             content
