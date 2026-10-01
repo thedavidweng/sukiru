@@ -70,15 +70,12 @@ public struct DefaultFileSystemProbe: FileSystemProbe {
     }
 
     public func entryKind(atPath path: String) -> EntryKind? {
-        // attributesOfItem uses lstat semantics for the final path component:
-        // a symlink reports .typeSymbolicLink rather than its target's type.
-        guard let attributes = try? FileManager.default.attributesOfItem(atPath: path),
-            let type = attributes[.type] as? FileAttributeType
-        else {
-            return nil
-        }
-        switch type {
-        case .typeSymbolicLink:
+        // Plain lstat(2): `attributesOfItem` also reads extended attributes
+        // and catalog info on every call, which dominated scan time.
+        var info = stat()
+        guard lstat(path, &info) == 0 else { return nil }
+        switch info.st_mode & S_IFMT {
+        case S_IFLNK:
             // A symlink whose target string cannot be read (readlink failure
             // — e.g. a mid-scan replacement race) is UNINSPECTABLE, not
             // `.other`: returning nil lets callers surface an issue instead
@@ -88,9 +85,9 @@ public struct DefaultFileSystemProbe: FileSystemProbe {
                 return nil
             }
             return .symlink(target: target)
-        case .typeDirectory:
+        case S_IFDIR:
             return .directory
-        case .typeRegular:
+        case S_IFREG:
             return .file
         default:
             return .other

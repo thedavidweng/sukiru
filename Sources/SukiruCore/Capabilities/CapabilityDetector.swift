@@ -24,13 +24,27 @@ public struct CapabilityDetector: Sendable {
         self.init(runner: SystemCommandRunner(environment: environment))
     }
 
-    /// Runs both probes and assembles the report.
+    /// Runs both probes concurrently (they are independent subprocesses)
+    /// and assembles the report.
     public func detect() -> CapabilityReport {
-        CapabilityReport(
+        let npx = ProbeResult<CapabilityReport.NpxCapability>()
+        let group = DispatchGroup()
+        DispatchQueue.global(qos: .userInitiated).async(group: group) {
+            npx.value = detectNpx()
+        }
+        let github = detectGitHub()
+        group.wait()
+        return CapabilityReport(
             schemaVersion: CapabilityReport.currentSchemaVersion,
-            github: detectGitHub(),
-            npx: detectNpx()
+            github: github,
+            npx: npx.value ?? CapabilityReport.pending().npx
         )
+    }
+
+    /// One probe's result handed across threads; `group.wait()` orders the
+    /// write before the read.
+    private final class ProbeResult<Value: Sendable>: @unchecked Sendable {
+        var value: Value?
     }
 
     private func detectGitHub() -> CapabilityReport.GitHubCapability {

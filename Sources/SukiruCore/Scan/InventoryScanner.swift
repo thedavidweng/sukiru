@@ -86,7 +86,7 @@ public struct InventoryResult: Equatable, Sendable {
 public struct InventoryScanner: Sendable {
     private let fileSystem: FileSystemProbe
     private let parser: FrontmatterParser
-    private let hasher: ContentHasher
+    let hasher: ContentHasher
 
     public init(fileSystem: FileSystemProbe = DefaultFileSystemProbe()) {
         self.fileSystem = fileSystem
@@ -95,10 +95,16 @@ public struct InventoryScanner: Sendable {
     }
 
     /// Mutable accumulators threaded through the recursion.
-    private struct Outcome {
+    struct Outcome {
         var placements: [DiscoveredPlacement] = []
         var issues: [Issue] = []
         var findings: [Finding] = []
+        /// Parsed frontmatter by canonical directory: most placements are
+        /// symlinks into a few shared stores, so each SKILL.md is parsed
+        /// once. Failures are not cached; their issue names the placement.
+        var metadata: [String: SkillMetadata] = [:]
+        /// Placements awaiting a content hash (indices into `placements`).
+        var pendingHashes: [PendingHash] = []
     }
 
     /// Scans every workspace once (duplicate roots collapse onto the first
@@ -109,6 +115,7 @@ public struct InventoryScanner: Sendable {
         for workspace in workspaces where seenRoots.insert(workspace.workspace.root).inserted {
             scanWorkspace(workspace, into: &outcome)
         }
+        hashPlacements(in: &outcome)
         // Swift's sort is NOT stable: overlapping workspace roots (a nested
         // root, or a host dir inside another workspace's tree) can discover
         // the same placement path twice, so path alone is not a total order.
@@ -225,17 +232,22 @@ public struct InventoryScanner: Sendable {
         into outcome: inout Outcome
     ) {
         let skillFile = HostPathResolver.join(path, "SKILL.md")
-        let metadata: SkillMetadata
-        switch parser.parse(skillFileAt: skillFile) {
-        case .failure(let issue):
-            // skill-md-invalid / skill-md-unreadable flow into the issue
-            // stream; the directory yields no placement.
-            outcome.issues.append(issue)
-            return
-        case .success(let parsed):
-            metadata = parsed
-        }
         let canonicalPath = fileSystem.resolvedPath(atPath: path)
+        let metadata: SkillMetadata
+        if let canonicalPath, let parsed = outcome.metadata[canonicalPath] {
+            metadata = parsed
+        } else {
+            switch parser.parse(skillFileAt: skillFile) {
+            case .failure(let issue):
+                // skill-md-invalid / skill-md-unreadable flow into the issue
+                // stream; the directory yields no placement.
+                outcome.issues.append(issue)
+                return
+            case .success(let parsed):
+                metadata = parsed
+                if let canonicalPath { outcome.metadata[canonicalPath] = parsed }
+            }
+        }
         if canonicalPath == nil {
             outcome.issues.append(
                 Issue(
@@ -243,13 +255,9 @@ public struct InventoryScanner: Sendable {
                     path: path,
                     message: "path could not be fully resolved"))
         }
-        var contentHash: String?
-        switch hasher.computedHash(ofSkillAtPath: path) {
-        case .success(let hash):
-            contentHash = hash
-        case .failure(let issue):
-            outcome.issues.append(issue)
-        }
+        outcome.pendingHashes.append(
+            PendingHash(
+                index: outcome.placements.count, path: path, canonicalPath: canonicalPath))
         outcome.placements.append(
             DiscoveredPlacement(
                 name: metadata.name,
@@ -258,7 +266,7 @@ public struct InventoryScanner: Sendable {
                     kind: linkTarget == nil ? .directory : .symlink,
                     linkTarget: linkTarget,
                     canonicalPath: canonicalPath,
-                    contentHash: contentHash,
+                    contentHash: nil,
                     internal: metadata.internal,
                     managingAgent: linkTarget == nil
                         ? AgentManagedDirectories(fileSystem: fileSystem).managingAgent(
@@ -267,7 +275,7 @@ public struct InventoryScanner: Sendable {
                 workspaceID: workspace.workspace.id,
                 scopeGroup: workspace.scopeGroup,
                 candidateHosts: workspace.candidateHosts,
-                skillFilePath: metadata.skillFilePath,
+                skillFilePath: skillFile,
                 githubProvenance: metadata.githubProvenance
             ))
     }
