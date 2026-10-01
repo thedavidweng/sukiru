@@ -1,10 +1,28 @@
-# 0005 — 词汇统一与旧资产处置
+# 0005: Unify vocabulary and dispose of legacy assets
 
-旧 `spec.md`（随 archive 分支留档）§4 Glossary 与新 `CONTEXT.md` 的冲突裁决（2026-09-14 拍板）：
+- Status: Accepted
+- Date: 2026-09-14
 
-- **Untracked Skill → Ownerless Skill（野技能）**：CONTEXT.md 词条已立，旧词退役。
-- **Pending Change / Apply Batch**：名字保留（UI 沿用），语义改为**命令批次**——待执行的官方 CLI 命令序列及其预期效果，不再是文件操作计划。
-- **agents.rs 116 宿主表**：作为数据被 Sukiru 读侧吸收；`protocol.rs` 的 13 个公开读侧条目为移植参考（写侧函数不移植）。
-- **compatibility.toml 退役**：不再钉上游版本，latest + 能力探测（ADR-0002 / 0004）取代 pin 跑步机。
-- **e2e 差分对拍**（`tests/e2e_cli_diff.rs`）：随 archive 留档作参考，不再维护。
-- **碰撞矩阵实验**：授权立即执行（纯 CLI 受控混装，不写产品代码），产出落 `docs/collision-matrix.md`，校准 v1 检测规则。
+## Decision
+
+Conflicts between the glossary in §4 of the old `spec.md` (kept on the archive
+branch) and the new [`CONTEXT.md`](../../CONTEXT.md) are resolved as follows:
+
+- **Untracked Skill → Ownerless Skill.** The `CONTEXT.md` entry is the
+  standard; the old term is retired.
+- **Pending Change / Apply Batch.** The names stay (the UI keeps them), but
+  the meaning becomes a **command batch**: a sequence of official CLI commands
+  to run and their expected effects, no longer a file-operation plan.
+- **The `agents.rs` host table** is absorbed as data by Sukiru's read side.
+  The 13 public read-side entry points in `protocol.rs` serve as porting
+  references; write-side functions are not ported. (The table was cited as 116
+  hosts at the time; the absorbed table has 56. See ADR-0004.)
+- **`compatibility.toml` is retired.** Sukiru no longer pins upstream versions.
+  Using the latest version plus capability probing (ADR-0002 / ADR-0004)
+  replaces the pinning treadmill.
+- **Differential end-to-end tests** (`tests/e2e_cli_diff.rs`) stay in the
+  archive for reference and are no longer maintained.
+- **Collision matrix experiments** are approved to run immediately (controlled
+  mixed installs using only the CLIs, no product code). Results go to
+  [`docs/collision-matrix.md`](../collision-matrix.md) to calibrate the v1
+  detection rules.

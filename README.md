@@ -1,128 +1,179 @@
-> **⚠️ Route switched (2026-09-14) · 路线已切换**
->
-> The former Rust/GPUI implementation is preserved in full on the **[`archive/rust-gui`](../../tree/archive/rust-gui)** branch. `main` is the Swift/SwiftUI rebuild (Sukiru v1): scan, Health UI, repair, and Search/Install are shipped.
->
-> 旧的 Rust/GPUI 全实现完整封存于 **`archive/rust-gui`** 分支；`main` 为 Swift/SwiftUI 重建（Sukiru v1）：扫描、体检 UI、修复、搜索/安装已全部落地。
-
 # Sukiru
 
-Sukiru is a macOS native skill-library health checker and repairer. It
-orchestrates `npx skills` and `gh skill`; it never writes installer ledger
-state of its own ("零账本").
+[![CI](https://github.com/thedavidweng/sukiru/actions/workflows/ci.yml/badge.svg)](https://github.com/thedavidweng/sukiru/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/thedavidweng/sukiru)](https://github.com/thedavidweng/sukiru/releases)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey)
 
-It reads the two official agent-skill installer ledgers (Vercel `skills`
-lockfiles and GitHub `gh skill` frontmatter provenance) plus disk facts,
-determines per-skill **Ownership**, and produces an explainable health report.
-Repairs are executed **exclusively by the official CLIs**. Every write is a
-user-reviewed Command Batch wrapped in snapshot → execute → post-diff →
-one-click rollback.
+Sukiru is a fast, tiny, native macOS app that checks and repairs your coding
+agents' skill libraries. It manages skills by orchestrating the two official
+installers, `npx skills` and `gh skill`, and never keeps an install ledger of
+its own.
+
+## Why Sukiru
+
+Agent skills (directories with a `SKILL.md`) are installed by two official
+tools that keep separate records:
+
+- **Vercel `skills`** (`npx skills`) records installs in lockfiles
+  (`skills-lock.json` per project, `~/.agents/.skill-lock.json` globally).
+- **GitHub CLI** (`gh skill`) records provenance inside each skill's
+  `SKILL.md` frontmatter (`metadata.github-*`).
+
+Both write into the same agent directories, and neither reads the other's
+records. In controlled experiments ([collision matrix](docs/collision-matrix.md))
+this silently produced stale lock hashes, skills claimed by both tools,
+diverging copies, and cross-tool deletions. Hand-copied skills add a third
+category that no installer can update or cleanly remove.
+
+Sukiru reads both ledgers plus what is actually on disk, works out who owns
+each skill, explains every problem in plain language, and routes each fix to
+the tool that owns the skill.
+
+## Features
+
+- **Health report.** Problems are grouped into kinds you can act on: stale
+  lock records, broken links, copies where links belong, diverging copies,
+  skills with unknown sources, and ownership conflicts. Healthy layouts and
+  standing notices fold into Notes.
+- **One-click fixes.** Fix one problem or Fix All. Every fix becomes one
+  batch that you confirm once, in plain language, with the exact commands one
+  click away.
+- **Safe by construction.** Every batch runs as snapshot → execute → diff,
+  with one-click rollback. The last 10 snapshots are kept.
+- **Library.** See each skill's owner, provenance, pinned ref, and where it is
+  placed across agents. Switch a skill between link and copy mode.
+- **Search and install.** Search skills.sh and `gh skill search`, preview
+  `SKILL.md`, then install with the installer you choose, through the same
+  confirm → snapshot → rollback pipeline.
+- **Adopt unknown skills.** Find candidate sources for hand-copied skills and
+  bring them under an installer.
+- **Works without the CLIs.** With neither Node.js nor `gh` installed, Sukiru
+  is still a complete read-only health checker.
+- **Native.** Pure Swift, SwiftUI, and AppKit with system controls only, so it
+  follows your appearance, accessibility settings, and Liquid Glass on
+  macOS 26. Available in English and Simplified Chinese.
 
 ## Design principles
 
-- **Zero ledger** — Sukiru never writes installer ledger state. All
-  skill-library writes go through the official CLIs.
-- **No remote update checking** — that is the official CLIs' job.
-- **No filesystem watchers** — the app shows launch state plus explicit Refresh.
-- **Deterministic reads** — identical disk state produces identical reports.
-- **Malformed data is a reported issue, never a crash.**
+- **Zero ledger.** Sukiru never writes installer records. Ledger changes go
+  through the official CLIs only. Sukiru performs file operations directly
+  only for link management that no CLI offers (deleting a broken link,
+  replacing a copy with a link, turning a link into a copy), always inside a
+  snapshot.
+- **Ownership routes repairs.** There is no global "backend" setting. A skill
+  owned by `npx skills` is repaired with `npx skills`, and the same goes for
+  `gh skill`.
+- **No background activity.** No filesystem watchers and no remote update
+  checks. The app shows state at launch and when you click Refresh.
+- **Deterministic.** The same disk state always produces the same report.
+- **Malformed data is a reported problem, never a crash.**
 
-## Installation · 安装
+## Requirements
 
-**Homebrew (recommended · 推荐)**
+- macOS 14 Sonoma or later on Apple silicon.
+- Optional, to make changes:
+  - [Node.js](https://nodejs.org/en/download) for `npx skills`.
+  - [GitHub CLI](https://cli.github.com) 2.90.0 or later for `gh skill`.
+
+Sukiru detects both tools at launch and disables only the actions that need a
+missing tool.
+
+## Installation
+
+**Homebrew (recommended)**
 
 ```bash
 brew install --cask thedavidweng/tap/sukiru
 ```
 
-**Direct download · 直接下载**
+**Direct download**
 
-Grab `Sukiru.dmg` from [GitHub Releases](https://github.com/thedavidweng/sukiru/releases),
-drag **Sukiru.app** into `/Applications`, and launch.
+Download `Sukiru.dmg` from
+[GitHub Releases](https://github.com/thedavidweng/sukiru/releases), open it,
+and drag **Sukiru.app** into `/Applications`. Each release lists SHA-256
+checksums in `checksums.txt`.
 
-从 [GitHub Releases](https://github.com/thedavidweng/sukiru/releases) 下载
-`Sukiru.dmg`，将 **Sukiru.app** 拖入 `/Applications` 后启动。
+Release builds are not yet notarized by Apple. If macOS says Sukiru cannot be
+opened, open **System Settings › Privacy & Security** and click
+**Open Anyway** next to the Sukiru message.
 
-## What works (v1)
+## Getting started
 
-Shipped:
+1. Launch Sukiru. It scans your user-level skill directories automatically.
+2. To include project-level skills, add your project folders as project roots
+   (**View › Add Project Root…**, ⇧⌘A, or in Settings).
+3. Open **Health** to see problems and what caused them. Click a problem's
+   fix button, or **Fix All**.
+4. Review the confirmation sheet and confirm. To undo, use the result page or
+   **Repair › Roll Back Selected Batch**.
 
-- **Seam A scan engine** — ownership, drift, double-booked, ownerless, host
-  inventory; `sukiru-cli scan` and `sukiru-cli capabilities`.
-- **Health UI** — Library, Health, Settings (standard ⌘, window), window
-  toolbar; Quick Look; Refresh; bilingual English + Simplified Chinese
-  (`en` + `zh-Hans`). Native controls only, so macOS 26+ picks up Liquid
-  Glass automatically.
-- **Seam B repair** — CommandBatchBuilder, SnapshotStore, CLIExecutor,
-  Differ/Rollback; Pending Changes and Snapshots surfaces.
-- **Search / Install** — in-app search (skills.sh API + `gh skill search`),
-  SKILL.md preview, installer choice (`npx skills` / `gh skill`), routed
-  through the same Pending Changes → snapshot → post-diff → rollback
-  pipeline as repairs.
+## Privacy
 
-Nothing else is planned for v1.
+Sukiru has no accounts, analytics, or telemetry. It reads local files and
+runs the official CLIs on your machine. It connects to the network only when
+you search (the skills.sh search API and `gh skill search`), preview a
+skill's `SKILL.md` from GitHub, or run a CLI command that needs the network.
+Snapshots and execution records stay in
+`~/Library/Application Support/Sukiru`.
 
-## Build, run, test
+## Command-line interface
 
-Requires macOS 14+ and Swift 6.2.
-
-```bash
-# Core library + CLI tests (~450)
-swift test
-
-# Real-CLI end-to-end (gated; skipped unless set)
-SUKIRU_E2E=1 swift test
-```
-
-App (Xcode project generated from `project.yml`):
+The `sukiru-cli` tool exposes the same engine for scripting and testing:
 
 ```bash
-Scripts/build-app.sh
-Scripts/run-app.sh
+swift run sukiru-cli scan           # JSON health report
+swift run sukiru-cli capabilities   # detected installers and versions
+swift run sukiru-cli batch …        # build or run a repair batch from a decisions file
+swift run sukiru-cli rollback …     # restore a batch snapshot
 ```
 
-`Scripts/run-app.sh` execs the Mach-O binary so env overrides
-(`SUKIRU_HOME`, `SUKIRU_ROOTS`, …) are inherited. Do not launch a freshly
-built debug app with `open -F`.
+`SUKIRU_HOME` replaces `$HOME` for all path resolution, and `SUKIRU_ROOTS`
+adds colon-separated project roots. See [CONTRIBUTING.md](CONTRIBUTING.md)
+for details.
 
-After changing UI text, run `Scripts/sync-strings.sh` (after a build). It
-syncs `App/Resources/Localizable.xcstrings` with the strings the compiler
-extracted, the way Xcode does, and fails on stale or untranslated strings.
-Pass `-AppleLanguages '(zh-Hans)'` to `Scripts/run-app.sh` to preview a
-language; users pick one in Settings › General.
-
-### Environment
-
-- **`SUKIRU_HOME`** — replaces `$HOME` for all path resolution. Use it for
-  sandboxed launches and tests. A set-but-missing path is fatal (`sukiru-cli`
-  exits 2).
-- **`SUKIRU_ROOTS`** — colon-separated extra project roots.
-- **`SUKIRU_E2E=1`** — enables the real-CLI e2e suite. gh-networked cases
-  also need `GH_TOKEN`.
-
-Never run add / remove / update against the real `$HOME`. Point
-`SUKIRU_HOME` at a fixture or throwaway sandbox.
-
-CLI:
+## Building from source
 
 ```bash
-swift run sukiru-cli scan
-swift run sukiru-cli capabilities
+swift test                 # core library and CLI tests
+Scripts/build-app.sh       # generate the Xcode project and build Sukiru.app
+Scripts/run-app.sh         # run the debug app
 ```
+
+Building needs Xcode 26 or later (Swift 6.2) and
+[XcodeGen](https://github.com/yonaskolb/XcodeGen). See
+[CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow, quality gates, and
+test safety rules.
 
 ## Documentation
 
-- Architecture decisions: [`docs/adr/0001`](docs/adr/0001-pivot-to-zero-ledger-referee.md)–[`0006`](docs/adr/0006-pure-swift-apple-native-feel.md)
-- Glossary: [`CONTEXT.md`](CONTEXT.md)
-- Official-CLI collision-matrix experiments: [`docs/collision-matrix.md`](docs/collision-matrix.md)
+- [Glossary](CONTEXT.md): the domain terms used in code and UI.
+- [Architecture decision records](docs/adr/README.md).
+- [Collision matrix](docs/collision-matrix.md): experiments on how the two
+  official installers interact.
+- [Release notes](https://github.com/thedavidweng/sukiru/releases).
 
-## Archived implementation
+## Project history
 
-The retired Rust/GPUI application (the former "Gino") lives on the
-[`archive/rust-gui`](../../tree/archive/rust-gui) branch, including its
-`Cargo` project, `src/`, `tests/`, vendored `gpui-component`, and packaging
-scripts. It is reference-only; the Sukiru rebuild does not resurrect it.
+Sukiru began as "Gino", a Rust/GPUI reimplementation of the `skills` CLI. In
+September 2026 it was rebuilt as a native Swift app that delegates all
+installer writes to the official tools ([ADR-0001](docs/adr/0001-pivot-to-zero-ledger-referee.md)).
+The retired implementation is kept for reference on the
+[`archive/rust-gui`](https://github.com/thedavidweng/sukiru/tree/archive/rust-gui)
+branch.
+
+## Contributing and support
+
+- Bugs and feature requests: [GitHub Issues](https://github.com/thedavidweng/sukiru/issues).
+- Contributions: read [CONTRIBUTING.md](CONTRIBUTING.md) and the
+  [Code of Conduct](CODE_OF_CONDUCT.md).
+- Security issues: follow [SECURITY.md](SECURITY.md). Do not open a public
+  issue.
 
 ## License
 
-Copyright © 2026 David Weng. Released under the Apache License 2.0. See
-[LICENSE](LICENSE).
+Copyright © 2026 David Weng. Licensed under the [Apache License 2.0](LICENSE).
+
+Agent logos identify compatible tools and remain the property of their
+owners. Their sources and licenses are listed in
+[`App/Resources/AgentIcons-LICENSE.txt`](App/Resources/AgentIcons-LICENSE.txt).

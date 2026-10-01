@@ -1,23 +1,62 @@
-# 0004 — v1 产品契约：全量本地读侧 + 命令批次安全模型 + 体检先行
+# 0004: v1 product contract: full local read side, command-batch safety model, health check first
 
-零账本红线（ADR-0001）的具体形状（2026-09-14 grilling 批量拍板）：
+- Status: Accepted (the review step is amended by ADR-0007)
+- Date: 2026-09-14
 
-- **读侧全量自建**：两本账 schema（vercel `skills-lock.json` v1 / 全局 v3 锁 `~/.agents/.skill-lock.json`、gh `metadata.github-*`）、`SKILL.md` frontmatter 解析、116 宿主目录表（`agents.rs` 数据吸收）。**不做**远端更新检查（那是 `gh skill update --dry-run` / `npx skills update` 的职责，不造第二个 update）；**不建**写侧 diff 预测 planner（红线：写侧协议知识一行不建）。
-- **安全模型**：每个命令批次强制快照 → 执行 → 事后 diff → 一键回滚（沿用旧 spec §12 设计）。野技能的文件操作允许直接执行（无账可碰，受快照保护）。
-- **依赖**：锁 gh ≥ 2.90.0；vercel 侧探测 `npx skills` 可解析性、版本数字为辅；零捆绑（不自动安装任何 runtime，缺件按 ADR-0002 降级）。
-- **v1 检测规则**：跨宿主重复、symlink 真伪与断链、vercel 锁漂移（重算 computedHash 对账）、gh 溯源存在性 + pin 展示、有锁无文件、有文件无锁、双重记账。kitter / aghub 遗留识别推迟到 v2。
-- **MVP 里程碑**：只读体检版先发布（零写入风险、尽早验证需求），修复编排随后，新安装最后。
+## Context and decision
+
+This is the concrete shape of the zero-ledger red line (ADR-0001), decided in
+one batch in the 2026-09-14 design review:
+
+- **The read side is built entirely in-house.** Both ledger schemas (Vercel
+  `skills-lock.json` v1 and the global v3 lock `~/.agents/.skill-lock.json`;
+  `gh` `metadata.github-*`), `SKILL.md` frontmatter parsing, and the host
+  directory table absorbed from the archived `agents.rs`. (The decision record
+  originally cited 116 hosts; the absorbed table in `research/host-table.json`
+  has 56, from `vercel-labs/skills@1.5.9`.) Sukiru does **not** check for
+  remote updates; that is the job of `gh skill update --dry-run` and
+  `npx skills update`, and we do not build a second updater. Sukiru does
+  **not** build a planner that predicts write-side diffs (red line: no
+  write-side protocol knowledge).
+- **Safety model.** Every command batch is forced through snapshot → execute
+  → post-run diff → one-click rollback (carried over from §12 of the old
+  spec). File operations on ownerless skills may run directly (there is no
+  ledger to touch, and the snapshot protects them).
+- **Dependencies.** Require `gh` ≥ 2.90.0. On the Vercel side, probe whether
+  `npx skills` resolves, with the version number as a secondary signal. Bundle
+  nothing: never install a runtime automatically; degrade per ADR-0002 when a
+  tool is missing.
+- **v1 detection rules.** Duplicates across hosts; real versus broken
+  symlinks; Vercel lock drift (recompute `computedHash` and reconcile); `gh`
+  provenance presence and pin display; locked but missing on disk; on disk
+  but not locked; double-booked. Detecting kitter / aghub leftovers is
+  deferred to v2.
+- **MVP milestones.** Ship the read-only health check first (zero write risk,
+  validates demand early), then repair orchestration, then new installs.
 
 ## Consequences
 
-- 修复正确性依赖读侧归属判定；碰撞矩阵实验（受控 CLI 混装，产出见 `docs/collision-matrix.md`）校准检测规则的真实行为假设。
-- "写入前审查"的形态 = 命令预览 + 事后 diff + 回滚，而非文件级预测 diff。
+- Repair correctness depends on read-side ownership decisions. The collision
+  matrix experiments (controlled mixed installs with the real CLIs, see
+  [`docs/collision-matrix.md`](../collision-matrix.md)) calibrate the
+  assumptions behind the detection rules.
+- "Review before writing" takes the form of command preview + post-run diff +
+  rollback, not a predicted file-level diff.
 
-## 实验校准（2026-09-14 碰撞矩阵，见 docs/collision-matrix.md）
+## Calibration from experiments (2026-09-14 collision matrix)
 
-在上述清单基础上追加两条（由受控实验实锤）：
+Two rules were added to the list above, both confirmed by controlled
+experiments:
 
-- **canonical / 宿主副本分歧**：copy 模式下 gh `--force` 只改宿主副本、不动 `.agents/skills` canonical，造成双副本漂移且双方零警告。
-- **危险删除警示**：`npx skills remove` 是按名字的发现级删除，会跨归属删除（实测删掉 gh 独有技能）。派发该命令前必须警示与快照保护。
+- **Shared copy / host copy divergence.** In copy mode, `gh --force` changes
+  only the host copy and leaves the `.agents/skills` shared copy untouched.
+  The two copies drift apart and neither tool warns.
+- **Dangerous-removal warning.** `npx skills remove` deletes by name at
+  discovery level and crosses ownership (it deleted a `gh`-only skill in the
+  experiment). Dispatching it requires a warning and snapshot protection.
 
-另有事实修正：双记账的检测形态 = 同名技能同时具有 vercel 锁条目 + gh frontmatter 溯源；非交互 `npx add -y` 默认 copy 模式；同一源仓库两个安装器发现规则不同（维护性前缀仓库 gh 发现失败）。
+Factual corrections: a double-booked skill is detected as a skill name that
+has both a Vercel lock entry and `gh` frontmatter provenance; non-interactive
+`npx skills add -y` defaults to copy mode; the two installers use different
+discovery rules for the same source repository (`gh` fails to discover skills
+under a maintenance-style path prefix).

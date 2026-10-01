@@ -1,0 +1,49 @@
+name: Bug report
+description: Report something that does not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Security issues must be reported privately; see SECURITY.md.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+    validations:
+      required: true
+  - type: input
+    id: sukiru-version
+    attributes:
+      label: Sukiru version
+      description: Sukiru › About Sukiru
+    validations:
+      required: true
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+    validations:
+      required: true
+  - type: textarea
+    id: capabilities
+    attributes:
+      label: Installer versions
+      description: Output of `sukiru-cli capabilities`, or the versions of `gh` and `npx skills` you use.
+      render: json
+  - type: textarea
+    id: logs
+    attributes:
+      label: Scan report or logs
+      description: Optional. Remove private paths and names before posting.
+      render: text

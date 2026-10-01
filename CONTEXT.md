@@ -1,62 +1,97 @@
 # Sukiru
 
-原名 Gino（见 ADR-0003）。一个 macOS 原生应用：读两本官方账本与磁盘事实，检测并修复混乱的 agent 技能库；所有写操作委托官方 CLI，自身零账本。（决策见 docs/adr/。）
+Formerly Gino (see ADR-0003). A native macOS app that reads the two official
+installer ledgers plus disk facts, then detects and repairs messy agent skill
+libraries. All ledger writes are delegated to the official CLIs; Sukiru keeps
+no ledger of its own. Decisions are recorded in [`docs/adr/`](docs/adr/README.md).
 
 ## Language
 
-**Agent Skill（技能）**:
-一个包含 `SKILL.md` 的目录，agentskills.io 规范定义的可移植指令单元；宿主凭 frontmatter 激活它。
-_Avoid_: 插件、能力
+Each term lists the Simplified Chinese (`zh-Hans`) term used in the UI and
+the words to avoid.
 
-**Agent Host（宿主）**:
-消费技能目录的编码 agent（Claude Code、Codex、Cursor…）。宿主是即插即用的：只认目录里的文件，不关心谁装的。
-_Avoid_: 平台、客户端
+**Agent Skill** (技能):
+A directory containing a `SKILL.md`: the portable instruction unit defined by
+the agentskills.io specification. A host activates it through its frontmatter.
+_Avoid_: plugin, capability
 
-**Ledger（账本）**:
-安装器私有的安装记录（装了什么、来自哪、什么版本、装给谁），是更新/钉版/卸载的依据。账本是给安装器看的，不是给宿主看的。
-_Avoid_: 元数据、记录
+**Agent Host** (宿主):
+A coding agent that consumes skill directories (Claude Code, Codex, Cursor,
+…). Hosts are plug-and-play: they only see the files in the directory and do
+not care who installed them.
+_Avoid_: platform, client
 
-**Vercel 账本**:
-vercel CLI（`npx skills`）的账本，记在独立 lockfile（项目 `skills-lock.json`；全局 v3 锁 `~/.agents/.skill-lock.json`）。技能文件保持上游原样，账在旁边。
+**Ledger** (账本):
+An installer's private install record: what was installed, from where, at
+which version, and for whom. It drives update, pin, and uninstall. Ledgers
+exist for installers, not for hosts.
+_Avoid_: metadata, record
 
-**GitHub 账本**:
-`gh skill` 的账本，安装时直接写进 `SKILL.md` frontmatter 的 `metadata.github-*`（repo、path、ref、pinned、tree-sha）。账随身走。
+**Vercel Ledger** (Vercel 账本):
+The ledger of the Vercel CLI (`npx skills`), kept in separate lockfiles
+(project `skills-lock.json`; global v3 lock `~/.agents/.skill-lock.json`).
+Skill files stay byte-identical to upstream; the record lives beside them.
 
-**Provenance（溯源）**:
-账本条目里标识来源的部分：仓库、ref、内容 hash。
-_Avoid_: 来源信息
+**GitHub Ledger** (GitHub 账本):
+The ledger of `gh skill`, written at install time into the `SKILL.md`
+frontmatter as `metadata.github-*` (repo, path, ref, pinned, tree-sha). The
+record travels with the skill.
 
-**Ownerless Skill（野技能）**:
-两本账都没有记录的技能（手拷、脚本放置的）。宿主照常可用，但任何安装器都无法更新或干净卸载；修复的主要对象。
-_Avoid_: 未安装、Untracked Skill（旧 spec 用词，已退役）
+**Provenance** (溯源):
+The part of a ledger entry that identifies the source: repository, ref, and
+content hash.
+_Avoid_: source info
 
-**Drift（漂移）**:
-磁盘事实与账本记录脱节的状态（例：gh 更新后 vercel 锁里的内容 hash 过期，反之亦然）。
-_Avoid_: 不一致
+**Ownerless Skill** (野技能):
+A skill that neither ledger records (copied by hand or placed by a script).
+Hosts can still use it, but no installer can update or cleanly uninstall it.
+It is the main target of repair.
+_Avoid_: not installed, Untracked Skill (retired term from the old spec)
 
-**Ownership（归属）**:
-哪个账本认领了某个技能的事实，由账本记录判定，不由用户偏好决定；修复与更新按归属派发给对应的官方 CLI。
-_Avoid_: 后端选择、全局后端
+**Drift** (漂移):
+Disk facts and ledger records disagree. Example: after a `gh` update, the
+content hash in the Vercel lock is stale, or the reverse.
+_Avoid_: inconsistency
 
-**Adoption（收编）**:
-把野技能纳入某本账本、使其变为可管理的操作（例：`gh skill update` 交互模式询问来源并注入溯源）。收编需选择账本，因此是用户决策点。
-_Avoid_: 导入
+**Ownership** (归属):
+Which ledger claims a skill. It is a fact determined by ledger records, not a
+user preference. Repairs and updates are routed to the official CLI that owns
+the skill.
+_Avoid_: backend choice, global backend
 
-**Double-booked（双重记账）**:
-两本账本同时认领同一技能的状态；修复必须由用户裁决保留哪本，没有客观正确答案。
+**Adoption** (收编):
+Bringing an ownerless skill under a ledger so it becomes manageable. Example:
+interactive `gh skill update` asks for the source and injects provenance.
+Adoption requires choosing a ledger, so it is a user decision.
+_Avoid_: import
 
-**Command Batch（命令批次）**:
-待执行命令（官方 CLI 命令，以及 CLI 无法完成的链接管理文件操作）的序列及其预期效果；执行前整批确认一次，伴随快照，可回滚（ADR-0007）。UI 沿用 "Pending Changes" 叫法。
-_Avoid_: 文件操作计划（已退役的旧语义）
+**Double-booked** (双重记账):
+Both ledgers claim the same skill. The repair must let the user decide which
+ledger to keep; there is no objectively correct answer.
 
-**Agent-managed Skill（宿主自管技能）**:
-放在宿主自有记录管理的目录里的技能（Hermes 的 `.bundled_manifest` / `.hub/lock.json`、Codex 的 `.system/`）。归属为 `agent`，只展示不修复。
-_Avoid_: 内置技能
+**Command Batch** (命令批次):
+A sequence of commands to run and their expected effects. It contains
+official CLI commands, plus link-management file operations that no CLI can
+perform. The whole batch is confirmed once before it runs, is wrapped in a
+snapshot, and can be rolled back (ADR-0007). The UI keeps the name
+"Pending Changes".
+_Avoid_: file-operation plan (retired meaning)
 
-**Problem（问题）**:
-一条或多条检测发现归并成的、用户能理解的问题种类（如失效链接、副本代替链接），带说明与默认一键修复（ADR-0007）。健康布局与常驻提示是"备注"，不算问题。
-_Avoid_: 发现（Finding 是规则层的原始输出）
+**Agent-managed Skill** (宿主自管技能):
+A skill in a directory that a host manages with its own records (Hermes
+`.bundled_manifest` / `.hub/lock.json`, Codex `.system/`). Its ownership is
+`agent`; Sukiru shows it but never repairs it.
+_Avoid_: built-in skill
 
-**Shared Copy（共享副本）**:
-作用域共享技能目录（`~/.agents/skills` 或项目 `.agents/skills`）里的那份实体目录；各宿主目录里应是指向它的链接。
-_Avoid_: canonical、store
+**Problem** (问题):
+A user-facing kind of issue that one or more detection findings roll up into
+(for example a broken link, or a copy where a link belongs). Each kind has an
+explanation and a default one-click fix (ADR-0007). Healthy layouts and
+standing notices are Notes, not problems.
+_Avoid_: finding (a Finding is the raw output of the rule layer)
+
+**Shared Copy** (共享副本):
+The real skill directory in the scope's shared skills directory
+(`~/.agents/skills` or the project's `.agents/skills`). Each host directory
+should hold a link to it.
+_Avoid_: canonical, store

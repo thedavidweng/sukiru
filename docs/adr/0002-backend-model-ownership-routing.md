@@ -1,13 +1,38 @@
-# 0002 — 后端模型：能力探测 + 归属路由 + 安装器选择 + 缺件降级
+# 0002: Backend model: capability detection, ownership routing, installer choice, and graceful degradation
 
-两个官方 CLI（`npx skills`、`gh skill`）不是可互换的"后端"：账本互不可见——vercel 锁里的技能在 gh 眼里是"另一个工具装的"（其 update 会跳过或要求收编），frontmatter 溯源的技能对 `npx skills update` 是 unmanaged。因此应用**不做"全局后端选择"设置**：启动时能力探测（gh ≥ 2.90.0、Node 可用性）；修复/更新/卸载按技能的**归属**路由给认领它的 CLI；新安装时才由用户选择安装器（选哪个工具就进哪本账）；缺件时降级为只读体检，两个 CLI 都不在也仍是完整检测器。
+- Status: Accepted
+- Date: 2026-09-14
 
-## Considered Options
+## Context and decision
 
-- **全局后端偏好（用户二选一）**：弃。会让应用拿错工具去动别人账本里的东西：例：选 gh 去更新 vercel 锁里的技能 → 被跳过或引发双重记账。归属是事实，不是偏好。
+The two official CLIs (`npx skills`, `gh skill`) are not interchangeable
+backends, because neither can see the other's ledger. To `gh`, a skill in the
+Vercel lock was "installed by another tool" (its update skips it or asks to
+adopt it). To `npx skills update`, a skill with frontmatter provenance is
+unmanaged.
+
+Therefore the app **has no global backend setting**:
+
+- At launch it probes capabilities (`gh` ≥ 2.90.0, Node availability).
+- Repair, update, and uninstall are routed by each skill's **ownership** to the
+  CLI that claims it.
+- Only for a new install does the user choose the installer (the tool chosen
+  decides which ledger records it).
+- When a tool is missing, the app degrades to read-only health checks. With
+  neither CLI present it is still a complete detector.
+
+## Considered options
+
+- **Global backend preference (user picks one).** Rejected. The app would use
+  the wrong tool on skills in the other ledger. Example: choosing `gh` to update
+  a skill in the Vercel lock gets it skipped or creates a double-booked skill.
+  Ownership is a fact, not a preference.
 
 ## Consequences
 
-- 修复正确性直接依赖读侧核心对归属的判定可靠性（呼应 ADR-0001 的读侧红线）。
-- Double-booked 的修复必须问用户保留哪本账；野技能的 Adoption 是用户决策点（选哪本账收编）。
-- 裸机（无 Node 无 gh）= 完整体检器：应用首先是只读诊断价值，其次才是编排执行。
+- Repair correctness depends directly on how reliably the read-side core
+  determines ownership (echoing the read-side red line in ADR-0001).
+- Fixing a double-booked skill must ask the user which ledger to keep.
+  Adopting an ownerless skill is a user decision (which ledger adopts it).
+- On a bare machine (no Node, no `gh`), Sukiru is a complete health checker.
+  The app is a read-only diagnostic first and an orchestrator second.
