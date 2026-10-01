@@ -35,6 +35,8 @@ extension BatchCommand {
                 : String(localized: "command.warning.relink")
         case .materialize:
             return String(localized: "command.warning.materialize")
+        case .removeLeftoverSkillsDir:
+            return String(localized: "command.warning.removeLeftover")
         case nil:
             return nil
         }
@@ -66,6 +68,8 @@ extension FileOperation {
                 comment: "Direct file operation: the first path becomes a link to the second.")
         case .materialize(let path):
             return String(localized: "Replace the link \(Self.display(path)) with a copy")
+        case .removeLeftoverSkillsDir(let path):
+            return String(localized: "Remove the leftover folder \(Self.display(path))")
         }
     }
 

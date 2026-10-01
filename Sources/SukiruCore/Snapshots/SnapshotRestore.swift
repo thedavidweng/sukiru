@@ -21,6 +21,7 @@ extension SnapshotStore {
         let snapshotDir = HostPathResolver.join(snapshotsRoot(), id)
         var items: [RestoreItem] = []
         items += deleteBatchAdded(manifest: manifest, extraAddedPaths: extraAddedPaths)
+        items += restoreMissingDirectories(manifest: manifest)
         items += restoreLedgers(manifest: manifest, snapshotDir: snapshotDir)
         items += restorePayloads(manifest: manifest, snapshotDir: snapshotDir)
         items += restoreSymlinks(manifest: manifest)
@@ -174,6 +175,23 @@ extension SnapshotStore {
     }
 
     // MARK: - ledger + payload + symlink restore
+
+    /// Recreates container folders that existed before the batch and are
+    /// gone now (a removed leftover host folder). Placements restore into
+    /// them afterwards; an empty one has no placement to recreate it.
+    private func restoreMissingDirectories(manifest: SnapshotManifest) -> [RestoreItem] {
+        let probe = DefaultFileSystemProbe()
+        return manifest.preExistingDirectories.filter { probe.entryKind(atPath: $0) == nil }
+            .map { path in
+                do {
+                    try FileManager.default.createDirectory(
+                        atPath: path, withIntermediateDirectories: true)
+                    return RestoreItem(path: path, category: .restoredFromSnapshot, reason: nil)
+                } catch {
+                    return Self.unrestorable(path, error: error)
+                }
+            }
+    }
 
     private func restoreLedgers(
         manifest: SnapshotManifest,

@@ -10,6 +10,7 @@ extension ProblemKind {
         case .deadLink: "Dead links"
         case .copyInsteadOfLink: "Copies instead of links"
         case .outOfSync: "Copies out of sync"
+        case .leftoverHostDir: "Leftover folders of uninstalled agents"
         case .orphan: "Skills with no known source"
         case .ownerConflict: "Conflicting owners"
         case .unsupportedLock: "Lock from a newer installer"
@@ -27,6 +28,8 @@ extension ProblemKind {
             "problem.copyInsteadOfLink.explanation"
         case .outOfSync:
             "problem.outOfSync.explanation"
+        case .leftoverHostDir:
+            "problem.leftoverHostDir.explanation"
         case .orphan:
             "problem.orphan.explanation"
         case .ownerConflict:
@@ -44,6 +47,7 @@ extension ProblemKind {
         case .deadLink: "link"
         case .copyInsteadOfLink: "doc.on.doc"
         case .outOfSync: "arrow.triangle.2.circlepath"
+        case .leftoverHostDir: "folder.badge.minus"
         case .orphan: "questionmark.folder"
         case .ownerConflict: "person.2"
         case .unsupportedLock: "lock.trianglebadge.exclamationmark"

@@ -1,7 +1,8 @@
 import Foundation
 
 /// Placement-level planners (ADR-0007): stale lock entries, dead links,
-/// link ↔ copy mode, and Vercel adoption of ownerless skills.
+/// leftover host folders, link ↔ copy mode, and Vercel adoption of ownerless
+/// skills.
 extension CommandBatchBuilder {
     /// The ownership bucket (`user` / `project:<root>`) a workspace id
     /// belongs to: host workspaces (`host:<id>`, `project:<root>#<host>`)
@@ -65,6 +66,22 @@ extension CommandBatchBuilder {
                 name: name, path: path,
                 intent: "Delete the dead link '\(path)' (finding \(finding.ruleID)): the "
                     + "folder it points to no longer exists.")
+        ]
+    }
+
+    /// `leftover-host-dir`: delete the folder of links a CLI sprayed for an
+    /// agent that is not installed.
+    func leftoverHostCommands(entry: DecisionEntry, finding: Finding) throws -> [BatchCommand] {
+        guard let path = finding.evidence.first(where: { $0.kind == "skillsDir" })?.detail else {
+            throw DecisionProblem(
+                message: "finding '\(entry.findingID)' (\(finding.ruleID)) records no folder")
+        }
+        let hosts = finding.evidence.first { $0.kind == "hosts" }?.detail ?? finding.workspaceID
+        return [
+            BatchCommandFactory.removeLeftoverSkillsDir(
+                path: path, hosts: hosts,
+                intent: "Remove the leftover folder '\(path)' (finding \(finding.ruleID)): "
+                    + "\(hosts) is not installed, and the folder holds only links.")
         ]
     }
 

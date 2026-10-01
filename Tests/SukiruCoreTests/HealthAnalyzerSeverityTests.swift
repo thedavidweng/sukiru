@@ -52,7 +52,8 @@ struct HealthAnalyzerSeverityTests {
         case "broken-symlink", "vercel-lock-drift", "double-booked", "lock-without-files",
             "canonical-host-divergence", "dangerous-removal-surface":
             return .action
-        case "ambiguous-name", "symlink-authenticity", "lock-version-unsupported":
+        case "ambiguous-name", "symlink-authenticity", "lock-version-unsupported",
+            "leftover-host-dir":
             return .warning
         case "files-without-lock":
             return .info

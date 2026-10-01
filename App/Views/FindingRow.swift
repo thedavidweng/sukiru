@@ -31,7 +31,7 @@ struct FindingRow: View {
                 .buttonStyle(.borderless)
                 .axButtonToken(row.token)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(finding.skillName ?? finding.ruleID)
+                    Text(verbatim: subject)
                         .font(.callout.weight(.medium))
                     if let location {
                         Text(verbatim: location)
@@ -148,11 +148,19 @@ struct FindingRow: View {
         }
     }
 
+    /// What the finding is about: its skill, or the agents a leftover
+    /// folder was left for.
+    private var subject: String {
+        finding.skillName ?? finding.evidence.first { $0.kind == "hosts" }?.detail
+            ?? finding.ruleID
+    }
+
     /// The path the problem is about, abbreviated to `~`: the dead link, the
-    /// stray copy, or the lock file.
+    /// stray copy, the leftover folder, or the lock file.
     private var location: String? {
         let kinds = [
-            "linkPath", "impostorPath", "hostPath", "placementPath", "memberPath", "lockPath"
+            "linkPath", "impostorPath", "hostPath", "placementPath", "memberPath",
+            "skillsDir", "lockPath"
         ]
         guard
             let path = kinds.lazy.compactMap({ kind in

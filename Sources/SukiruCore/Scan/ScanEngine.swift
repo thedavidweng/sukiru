@@ -21,7 +21,7 @@ public struct ScanRequest: Equatable, Sendable {
 /// scopes (global lock for user scope, one project lock per project root),
 /// and resolves ownership per skill name per scope,
 /// then runs the HealthAnalyzer's detection rules over the
-/// groups and lock claims.
+/// groups and lock claims, and flags removable leftover host folders.
 public struct ScanEngine: Sendable {
     private let environment: SukiruEnvironment
     private let fileSystem: FileSystemProbe
@@ -56,7 +56,8 @@ public struct ScanEngine: Sendable {
         let resolution = OwnershipResolver().resolve(groups: groups, locks: claims.claims)
         let health = HealthAnalyzer(fileSystem: fileSystem).analyze(
             groups: groups, locks: claims.claims)
-        let findings = (inventory.findings + resolution.findings + health)
+        let leftovers = LeftoverHostRule.findings(workspaces: workspaces, fileSystem: fileSystem)
+        let findings = (inventory.findings + resolution.findings + health + leftovers)
             .sorted(by: Self.findingOrder)
         let issues = (inventory.issues + claims.issues).sorted {
             ($0.path, $0.kind, $0.message) < ($1.path, $1.kind, $1.message)

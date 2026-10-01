@@ -311,6 +311,8 @@ extension CommandBatchBuilder {
             return try staleLockCommands(entry: entry, finding: finding)
         case "broken-symlink":
             return try deadLinkCommands(entry: entry, finding: finding)
+        case LeftoverHostRule.ruleID:
+            return try leftoverHostCommands(entry: entry, finding: finding)
         default:
             break
         }

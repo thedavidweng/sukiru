@@ -51,6 +51,21 @@ extension BatchCommandFactory {
                 + "of '\(name)'. Later updates to the shared copy no longer reach it.")
     }
 
+    /// Removes a leftover host skills folder that holds only links, plus its
+    /// emptied parent.
+    static func removeLeftoverSkillsDir(
+        path: String, hosts: String, intent: String
+    ) -> BatchCommand {
+        fileOperation(
+            .removeLeftoverSkillsDir(path),
+            display: "remove leftover folder " + BatchCommand.display(for: [path]),
+            intent: intent,
+            flags: [.directFileOperation],
+            warning: "Direct removal of '\(path)', left behind for \(hosts), which is not "
+                + "installed. It holds only links, which are captured in the batch "
+                + "snapshot; the skills they point to are untouched.")
+    }
+
     private static func fileOperation(
         _ operation: FileOperation, display: String, intent: String,
         flags: [DangerFlag], warning: String

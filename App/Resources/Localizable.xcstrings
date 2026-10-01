@@ -286,6 +286,17 @@
         }
       }
     },
+    "Agents" : {
+      "comment" : "Evidence label: the agents a leftover folder was left for.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "智能体"
+          }
+        }
+      }
+    },
     "All" : {
       "comment" : "Workspace filter option: every workspace.",
       "localizations" : {
@@ -1254,6 +1265,17 @@
         }
       }
     },
+    "Leftover folders of uninstalled agents" : {
+      "comment" : "Health problem title.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未安装智能体的残留文件夹"
+          }
+        }
+      }
+    },
     "Library" : {
       "comment" : "Sidebar surface and menu title.",
       "localizations" : {
@@ -1315,6 +1337,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "链接到共享副本"
+          }
+        }
+      }
+    },
+    "Links" : {
+      "comment" : "Evidence label: how many links a leftover folder holds.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "链接数"
           }
         }
       }
@@ -2064,6 +2097,17 @@
         }
       }
     },
+    "Remove the leftover folder %@" : {
+      "comment" : "Direct file operation summary.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除残留文件夹 %@"
+          }
+        }
+      }
+    },
     "Removed (added by the batch)" : {
       "comment" : "Rollback result: the batch had created this path, so rollback removed it.",
       "localizations" : {
@@ -2608,6 +2652,17 @@
         }
       },
       "comment" : "Post-run diff entry."
+    },
+    "Skills folder" : {
+      "comment" : "Evidence label: a host's skills folder.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "技能文件夹"
+          }
+        }
+      }
     },
     "Skills with no known source" : {
       "localizations" : {
@@ -3497,6 +3552,23 @@
       },
       "comment" : "Batch review note. The argument is the skill name."
     },
+    "command.warning.removeLeftover" : {
+      "comment" : "Batch review note for removing a leftover agent folder.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sukiru removes this folder directly. It holds only links, which the snapshot keeps; the skills they point to are untouched."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sukiru 将直接移除此文件夹。它只包含链接，快照会保留它们；链接指向的技能不受影响。"
+          }
+        }
+      }
+    },
     "confirm.caution" : {
       "comment" : "Batch confirmation sheet.",
       "localizations" : {
@@ -4378,6 +4450,23 @@
         }
       }
     },
+    "problem.leftoverHostDir.explanation" : {
+      "comment" : "Health problem explanation.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When a CLI installs skills, it creates a skills folder for every agent it knows, even ones you never installed. These folders hold only links into the shared skills folder; removing them loses no skill, but leaving them makes those agents look installed. Remove deletes the folder (and its parent if that is left empty) and never touches the shared skills."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装技能时，CLI 会为它认识的每个智能体都创建技能文件夹，即使你没有安装那个智能体。这些文件夹只包含指向共享技能文件夹的链接，移除不会丢失任何技能；留着则会让人误以为装了这些智能体。“移除”会删除该文件夹（以及因此变空的上级文件夹），不会改动共享技能文件夹里的技能。"
+          }
+        }
+      }
+    },
     "problem.note.explanation" : {
       "comment" : "Health problem explanation.",
       "localizations" : {
@@ -4833,6 +4922,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "通过 npx skills 移除 %lld 项"
+          }
+        }
+      }
+    },
+    "summary.removeLeftover %lld" : {
+      "comment" : "Batch confirmation summary line, counted by kind.",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Remove %lld leftover agent folder"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Remove %lld leftover agent folders"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除 %lld 个残留的智能体文件夹"
           }
         }
       }

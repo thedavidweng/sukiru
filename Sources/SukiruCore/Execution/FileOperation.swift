@@ -2,8 +2,8 @@ import Foundation
 
 /// The direct file operations a batch may carry as `sukiru-fileop <verb>
 /// <path>…` commands (ADR-0007). None writes a ledger: they act only where no
-/// official CLI can — an ownerless payload, a dead link, or the link ↔ copy
-/// mode of a host-folder placement. The executor parses the argv back into
+/// official CLI can — an ownerless payload, a dead link, the link ↔ copy
+/// mode of a host-folder placement, or a leftover host folder. The executor parses the argv back into
 /// this type, so a malformed or unknown verb never runs.
 public enum FileOperation: Equatable, Sendable {
     /// Delete an ownerless skill directory.
@@ -17,6 +17,9 @@ public enum FileOperation: Equatable, Sendable {
     /// Replace a symlink with an independent copy of the directory it
     /// resolves to.
     case materialize(String)
+    /// Delete a leftover host skills folder that holds only links, then its
+    /// parent when nothing but Finder noise remains there.
+    case removeLeftoverSkillsDir(String)
 
     static let executable = "sukiru-fileop"
 
@@ -33,6 +36,8 @@ public enum FileOperation: Equatable, Sendable {
             self = .relink(path: argv[2], target: argv[3])
         case ("materialize", 3):
             self = .materialize(argv[2])
+        case ("remove-leftover-skills-dir", 3):
+            self = .removeLeftoverSkillsDir(argv[2])
         default:
             return nil
         }
@@ -48,6 +53,8 @@ public enum FileOperation: Equatable, Sendable {
             return [Self.executable, "relink", path, target]
         case .materialize(let path):
             return [Self.executable, "materialize", path]
+        case .removeLeftoverSkillsDir(let path):
+            return [Self.executable, "remove-leftover-skills-dir", path]
         }
     }
 
@@ -83,7 +90,29 @@ public enum FileOperation: Equatable, Sendable {
             try Self.replace(path) {
                 try fileManager.copyItem(atPath: resolved, toPath: path)
             }
+        case .removeLeftoverSkillsDir(let path):
+            try Self.removeLeftoverSkillsDir(path, probe: probe)
         }
+    }
+
+    /// Re-checks at run time that the folder still holds only links, so a
+    /// copy added since the scan is never deleted. The parent goes too when
+    /// it is left empty: an empty host config folder reads as an installed
+    /// agent to host detection.
+    private static func removeLeftoverSkillsDir(
+        _ path: String, probe: DefaultFileSystemProbe
+    ) throws {
+        guard LeftoverHostRule.linkCount(in: path, fileSystem: probe) != nil else {
+            throw FileOperationError("'\(path)' holds more than links; refusing to delete it")
+        }
+        let fileManager = FileManager.default
+        try fileManager.removeItem(atPath: path)
+        let parent = URL(fileURLWithPath: path).deletingLastPathComponent().path
+        guard parent != "/", parent != NSHomeDirectory(),
+            let rest = probe.directoryEntries(atPath: parent),
+            rest.allSatisfy(LeftoverHostRule.finderNoise.contains)
+        else { return }
+        try fileManager.removeItem(atPath: parent)
     }
 
     private static func relink(

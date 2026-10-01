@@ -36,7 +36,18 @@ copy fallback, backup before changes), we decided:
   layout operations that no CLI can perform go through `sukiru-fileop`, with
   danger flags, snapshot protection, and a path-containment pre-check:
   deleting a broken link (`delete-link`), replacing a copy with a link to the
-  shared copy (`relink`), and turning a link into a copy (`materialize`).
+  shared copy (`relink`), turning a link into a copy (`materialize`), and
+  removing a leftover host folder (`remove-leftover-skills-dir`).
+- **Leftover host folders (`leftover-host-dir`).** `npx skills add` creates a
+  skills folder for every host it knows, installed or not. A user-scope host
+  folder of an uninstalled host that holds only links is a problem; its fix
+  deletes the folder, plus its parent when only Finder files remain, since an
+  empty host config folder reads as an installed host. The operation
+  re-checks at run time that only links remain, and rollback recreates the
+  folders and links. A leftover folder holding a real copy is never flagged.
+- **The Health filter is per scope.** Most rules attribute findings to the
+  user scope or a project, not a host folder, so a per-host filter showed
+  every host as clean. The filter offers All, User scope, and each project.
 - **Stale lock records use `npx skills remove <name> -g -y`.** Testing showed
   it removes both the lock record and leftover links. Only broken links with
   no lock record, which `npx` cannot handle, use `delete-link`.

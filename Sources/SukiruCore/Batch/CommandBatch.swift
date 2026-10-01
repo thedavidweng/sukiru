@@ -5,8 +5,8 @@ import Foundation
 /// A batch maps findings + user decisions to an ordered list of commands.
 /// Ledger writes are ONLY official CLI invocations (`npx skills …`,
 /// `gh skill …`); direct file operations never touch a ledger and are limited
-/// to ownerless payloads and host-folder placements (dead links, link ↔ copy
-/// mode), always flagged as such (ADR-0007).
+/// to ownerless payloads, host-folder placements (dead links, link ↔ copy
+/// mode), and leftover host folders, always flagged as such (ADR-0007).
 
 /// Repair actions in the decisions-file vocabulary.
 public enum DecisionAction: String, Codable, Equatable, Sendable, CaseIterable {

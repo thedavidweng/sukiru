@@ -18,6 +18,8 @@ public enum ProblemKind: String, CaseIterable, Codable, Equatable, Sendable {
     case copyInsteadOfLink = "copy-instead-of-link"
     /// Copies of one skill whose contents disagree.
     case outOfSync = "out-of-sync"
+    /// A folder of links a CLI left for an agent that is not installed.
+    case leftoverHostDir = "leftover-host-dir"
     /// A skill no installer ledger or agent records: no remote source.
     case orphan
     /// Two ledgers (or unexplained copies) claim the same name.
@@ -48,6 +50,7 @@ public enum ProblemKind: String, CaseIterable, Codable, Equatable, Sendable {
         "symlink-authenticity": .copyInsteadOfLink,
         "canonical-host-divergence": .outOfSync,
         "vercel-lock-drift": .outOfSync,
+        LeftoverHostRule.ruleID: .leftoverHostDir,
         "files-without-lock": .orphan,
         "double-booked": .ownerConflict,
         "ambiguous-name": .ownerConflict,
@@ -64,7 +67,7 @@ public enum ProblemKind: String, CaseIterable, Codable, Equatable, Sendable {
     /// ledger) or there is nothing to repair. Fix All applies exactly this.
     public static func oneClickFix(for finding: Finding) -> DecisionAction? {
         switch of(finding) {
-        case .staleLockEntry, .deadLink:
+        case .staleLockEntry, .deadLink, .leftoverHostDir:
             return .cleanup
         case .copyInsteadOfLink:
             return .relink
