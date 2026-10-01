@@ -86,6 +86,20 @@ It syncs `App/Resources/Localizable.xcstrings` with the strings the compiler
 extracted, the way Xcode does, and fails on stale or untranslated strings. To
 preview a language, pass `-AppleLanguages '(zh-Hans)'` to `Scripts/run-app.sh`.
 
+### Documentation and website
+
+[README.md](README.md) has a Simplified Chinese translation,
+[README_zh.md](README_zh.md). Update both when behavior changes, and use the
+`zh-Hans` terms from the [glossary](CONTEXT.md).
+
+The [website](https://thedavidweng.github.io/sukiru/) is the static site in
+`site/` (English at `site/index.html`, Chinese at `site/zh/index.html`). The
+`Deploy site to GitHub Pages` workflow copies the screenshots from `public/`
+and the app icon into `site/assets/`, fills in the release version, and
+deploys on every push to `main` that touches the site. To preview locally,
+copy those assets into `site/assets/` and serve the folder with
+`python3 -m http.server -d site`; do not commit the copies.
+
 ## Quality gates
 
 CI runs these checks on every pull request. Run them locally first:

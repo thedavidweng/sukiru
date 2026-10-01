@@ -19,9 +19,9 @@ one batch in the 2026-09-14 design review:
   **not** build a planner that predicts write-side diffs (red line: no
   write-side protocol knowledge).
 - **Safety model.** Every command batch is forced through snapshot → execute
-  → post-run diff → one-click rollback (carried over from §12 of the old
-  spec). File operations on ownerless skills may run directly (there is no
-  ledger to touch, and the snapshot protects them).
+  → post-run diff → one-click rollback (carried over from the old spec, kept
+  on the archive branch). File operations on ownerless skills may run
+  directly (there is no ledger to touch, and the snapshot protects them).
 - **Dependencies.** Require `gh` ≥ 2.90.0. On the Vercel side, probe whether
   `npx skills` resolves, with the version number as a secondary signal. Bundle
   nothing: never install a runtime automatically; degrade per ADR-0002 when a

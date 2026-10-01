@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sukiru - 让技能库井井有条。</title>
+<meta name="description" content="Sukiru 是一款轻巧、快速的原生 macOS 应用，用来检查和修复编程智能体的技能库。它通过官方安装器 npx skills 与 gh skill 完成所有更改，自己从不维护账本。免费开源。" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" type="image/png" href="../assets/favicon.png" />
+<link rel="stylesheet" href="../assets/site.css" />
+<link rel="canonical" href="https://thedavidweng.github.io/sukiru/zh/" />
+<link rel="alternate" hreflang="en" href="https://thedavidweng.github.io/sukiru/" />
+<link rel="alternate" hreflang="zh-Hans" href="https://thedavidweng.github.io/sukiru/zh/" />
+<link rel="alternate" hreflang="x-default" href="https://thedavidweng.github.io/sukiru/" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Sukiru" />
+<meta property="og:description" content="在 macOS 上检查和修复编程智能体的技能库。" />
+<meta property="og:url" content="https://thedavidweng.github.io/sukiru/zh/" />
+<meta property="og:image" content="https://thedavidweng.github.io/sukiru/assets/og-image.jpg" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="1672" />
+<meta property="og:image:height" content="941" />
+<meta property="og:image:alt" content="Sukiru：管理编程智能体技能库的原生 macOS 应用" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Sukiru" />
+<meta name="twitter:image" content="https://thedavidweng.github.io/sukiru/assets/og-image.jpg" />
+<meta name="twitter:image:alt" content="Sukiru：管理编程智能体技能库的原生 macOS 应用" />
+</head>
+<body>
+
+<!-- Language banner: revealed by site.js when browser language ≠ page language -->
+<div id="lang-banner" hidden>
+  <p>This page is also available in English.</p>
+  <a id="lang-switch" class="banner-cta" href="../">View in English</a>
+  <button id="lang-dismiss" class="banner-close" aria-label="Dismiss language suggestion">✕</button>
+</div>
+
+<!-- Global nav -->
+<header class="global-nav">
+  <div class="wrap">
+    <a class="wordmark" href="https://github.com/thedavidweng">Made by David Weng</a>
+    <span class="spacer"></span>
+    <a href="https://github.com/thedavidweng/sukiru">GitHub</a>
+  </div>
+</header>
+
+<!-- Sub nav -->
+<div class="sub-nav">
+  <div class="wrap">
+    <a class="name" href="#overview"><img src="../assets/icon.webp" width="24" height="24" alt="" />Sukiru <span class="ver">{{APP_VERSION}}</span></a>
+    <nav aria-label="Section">
+      <a href="#overview">概览</a>
+      <a href="https://github.com/thedavidweng/sukiru/blob/main/README_zh.md">使用指南</a>
+      <a class="btn btn-primary btn-sm" href="#download">下载</a>
+    </nav>
+  </div>
+</div>
+
+<!-- Hero -->
+<section class="hero" id="overview">
+  <img class="hero-shot" src="../assets/screenshot-zh.webp" onerror="this.remove()" width="2138" height="1544" fetchpriority="high"
+       alt="Sukiru 主窗口，左侧为边栏，右侧为技能资源库" />
+  <div class="hero-meta">
+    <img class="hero-icon" src="../assets/icon.webp" width="128" height="128" alt="Sukiru 应用图标" />
+    <p class="hero-name">Sukiru</p>
+    <h1 class="mega">让技能库井井有条。</h1>
+    <p class="hero-desc">Sukiru 是一款轻巧、快速的原生 macOS 应用，用来检查和修复编程智能体的技能库。它通过官方安装器 <code>npx skills</code> 与 <code>gh skill</code> 完成所有更改，自己从不维护账本。</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/thedavidweng/sukiru/releases/latest">下载 Mac 版</a>
+      <a class="btn btn-ghost" href="https://github.com/thedavidweng/sukiru/blob/main/README_zh.md">了解更多</a>
+    </div>
+    <p class="fine-print muted">免费开源 · 需要搭载 Apple 芯片、运行 macOS 14 Sonoma 或更高版本的 Mac</p>
+  </div>
+</section>
+
+<!-- Health -->
+<section class="section" id="health">
+  <div class="inner">
+    <h2 class="display-lg">每个问题，都讲得明白。</h2>
+    <p class="lead">过期的锁记录、失效链接、内容分叉的副本，以及被两边同时记账的技能。</p>
+    <p class="copy">两个官方安装器写入同一批宿主目录，却互不读取对方的账本。Sukiru 同时读取两份账本，与磁盘上的实际情况比对，说明出了什么问题、原因是什么。健康的布局和长期提示会收进「备注」。</p>
+    <img class="section-shot" src="../assets/screenshot-health.webp" onerror="this.remove()" loading="lazy"
+         alt="Sukiru 健康视图，问题按类型分组，每项都有修复按钮" />
+    <p class="more chevron"><a href="https://github.com/thedavidweng/sukiru/blob/main/docs/collision-matrix.md">查看冲突实验（英文）</a></p>
+  </div>
+</section>
+
+<!-- Ownership -->
+<section class="section" id="ownership">
+  <div class="inner">
+    <h2 class="display-lg">一个技能，一个归属。</h2>
+    <p class="lead">每项修复都交给拥有该技能的安装器。</p>
+    <p class="copy">没有全局的「后端」设置。用 <code>npx skills</code> 安装的技能就用 <code>npx skills</code> 修复，用 <code>gh skill</code> 安装的技能就用 <code>gh skill</code> 修复。Sukiru 自己从不写入安装器的记录。</p>
+    <div class="code-block" aria-label="修复批次示例"><span class="t">npx skills</span> update find-skills -g -y
+<span class="t">gh skill</span> update pdf --dir ~/.claude/skills</div>
+    <p class="more chevron"><a href="https://github.com/thedavidweng/sukiru/blob/main/docs/adr/0001-pivot-to-zero-ledger-referee.md">为什么 Sukiru 不维护账本（英文）</a></p>
+  </div>
+</section>
+
+<!-- Library -->
+<section class="section" id="library">
+  <div class="inner">
+    <h2 class="display-lg">每个技能在哪里，一目了然。</h2>
+    <p class="lead">归属、溯源、固定的版本引用，以及在各个宿主中的位置。</p>
+    <p class="copy">查看每个技能由哪个安装器管理、在哪里以链接或副本存在。可在链接和副本之间切换，为手动复制的野技能查找来源，并把它们收编到某个安装器下。</p>
+    <img class="section-shot" src="../assets/screenshot-library.webp" onerror="this.remove()" loading="lazy"
+         alt="Sukiru 资源库视图，显示技能的归属、溯源及其在各宿主中的位置" />
+  </div>
+</section>
+
+<!-- Features -->
+<section class="section" id="features">
+  <div class="inner">
+    <h2 class="display-md">检查、修复、回滚。</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>一键修复</h3>
+        <p>单独修复一个问题，或全部修复。每次修复生成一个批次，只需确认一次，具体命令点一下即可查看。</p>
+      </div>
+      <div class="card">
+        <h3>安全为先</h3>
+        <p>每个批次都按「快照、执行、比对」运行，可一键回滚。保留最近 10 个快照。</p>
+      </div>
+      <div class="card">
+        <h3>搜索与安装</h3>
+        <p>搜索 skills.sh 和 <code>gh skill search</code>，预览 <code>SKILL.md</code>，再用你选定的安装器安装。</p>
+      </div>
+      <div class="card">
+        <h3>没有 CLI 也能用</h3>
+        <p>即使没装 Node.js 和 <code>gh</code>，Sukiru 依然是完整的只读健康检查工具。</p>
+      </div>
+      <div class="card">
+        <h3>原生体验</h3>
+        <p>纯 Swift，只用系统控件，跟随你的外观与辅助功能设置。支持英文和简体中文。</p>
+      </div>
+      <div class="card">
+        <h3>本地与隐私</h3>
+        <p>没有账户、分析或遥测，也没有后台活动。快照只保存在你的 Mac 上。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Download -->
+<section class="section" id="download">
+  <div class="inner">
+    <h2 class="display-lg">获取 Sukiru。</h2>
+    <p class="copy">使用 Homebrew 安装，或下载 DMG 并将 Sukiru 移入应用程序。Node.js 与 GitHub CLI 为可选项，安装后即可执行更改。</p>
+    <p><code class="brew">brew install --cask thedavidweng/tap/sukiru</code></p>
+    <div class="cta-row" style="margin-top:32px">
+      <a class="btn btn-primary" href="https://github.com/thedavidweng/sukiru/releases/latest">下载 DMG</a>
+      <a class="btn btn-ghost" href="https://github.com/thedavidweng/sukiru">GitHub 仓库</a>
+    </div>
+    <p class="fine-print muted" style="margin-top:18px">预编译版本采用临时签名。若遇 Gatekeeper 拦截，请打开“系统设置 › 隐私与安全性”，点击“仍要打开”。</p>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="cols">
+    <div>
+      <h4>Sukiru</h4>
+      <ul>
+        <li><a href="#overview">概览</a></li>
+        <li><a href="#health">健康检查</a></li>
+        <li><a href="#ownership">归属</a></li>
+        <li><a href="#library">资源库</a></li>
+        <li><a href="#features">功能</a></li>
+        <li><a href="#download">下载</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>资源</h4>
+      <ul>
+        <li><a href="https://github.com/thedavidweng/sukiru/blob/main/README_zh.md">文档</a></li>
+        <li><a href="https://github.com/thedavidweng/sukiru/blob/main/CONTEXT.md">术语表</a></li>
+        <li><a href="https://github.com/thedavidweng/sukiru/blob/main/docs/adr/README.md">设计决策</a></li>
+        <li><a href="https://github.com/thedavidweng/sukiru/blob/main/PRIVACY.md">隐私政策</a></li>
+        <li><a href="https://github.com/thedavidweng/sukiru/blob/main/CONTRIBUTING.md">参与贡献</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>社区</h4>
+      <ul>
+        <li><a href="https://github.com/thedavidweng/sukiru/releases">发行版本</a></li>
+        <li><a href="https://github.com/thedavidweng/sukiru/issues">问题反馈</a></li>
+        <li><a href="https://github.com/thedavidweng/sukiru/issues/new">功能建议</a></li>
+        <li><a href="https://github.com/thedavidweng/sukiru">GitHub 仓库</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="meta">
+    <p>Apple 与 macOS 是 Apple Inc. 在美国及其他国家或地区的注册商标。Sukiru 是独立的开源项目，与 Apple、Vercel 或 GitHub 均无关联。各智能体的名称与标志归其所有者所有。</p>
+    <p>本站不使用 Cookie，也不做任何统计分析。</p>
+  </div>
+  <div class="bottom">
+    <div>
+      <p>版权所有 © 2026 David Weng。基于 <a href="https://github.com/thedavidweng/sukiru/blob/main/LICENSE">Apache-2.0</a> 许可证发布。</p>
+      <p class="pipe"><a href="https://github.com/thedavidweng/sukiru/blob/main/PRIVACY.md">隐私政策</a>&ensp;|&ensp;<a href="https://github.com/thedavidweng/sukiru/blob/main/CONTRIBUTING.md">参与贡献</a>&ensp;|&ensp;<a href="https://github.com/thedavidweng/sukiru/releases">发行版本</a></p>
+    </div>
+    <p class="locale"><a href="../">English</a>&ensp;|&ensp;简体中文</p>
+  </div>
+</footer>
+
+<script src="../assets/site.js"></script>
+</body>
+</html>

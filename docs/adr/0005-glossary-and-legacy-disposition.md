@@ -5,7 +5,7 @@
 
 ## Decision
 
-Conflicts between the glossary in §4 of the old `spec.md` (kept on the archive
+Conflicts between the glossary in the old `spec.md` (kept on the archive
 branch) and the new [`CONTEXT.md`](../../CONTEXT.md) are resolved as follows:
 
 - **Untracked Skill → Ownerless Skill.** The `CONTEXT.md` entry is the

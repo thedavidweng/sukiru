@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sukiru - Skill libraries, sorted out.</title>
+<meta name="description" content="Sukiru is a fast, tiny, native macOS app that checks and repairs your coding agents' skill libraries. It works through the official npx skills and gh skill installers and never keeps a ledger of its own. Free and open source." />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" type="image/png" href="assets/favicon.png" />
+<link rel="stylesheet" href="assets/site.css" />
+<link rel="canonical" href="https://thedavidweng.github.io/sukiru/" />
+<link rel="alternate" hreflang="en" href="https://thedavidweng.github.io/sukiru/" />
+<link rel="alternate" hreflang="zh-Hans" href="https://thedavidweng.github.io/sukiru/zh/" />
+<link rel="alternate" hreflang="x-default" href="https://thedavidweng.github.io/sukiru/" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Sukiru" />
+<meta property="og:description" content="Check and repair your coding agents' skill libraries on macOS." />
+<meta property="og:url" content="https://thedavidweng.github.io/sukiru/" />
+<meta property="og:image" content="https://thedavidweng.github.io/sukiru/assets/og-image.jpg" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="1672" />
+<meta property="og:image:height" content="941" />
+<meta property="og:image:alt" content="Sukiru, a native macOS app for coding agent skill libraries" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Sukiru" />
+<meta name="twitter:image" content="https://thedavidweng.github.io/sukiru/assets/og-image.jpg" />
+<meta name="twitter:image:alt" content="Sukiru, a native macOS app for coding agent skill libraries" />
+</head>
+<body>
+
+<!-- Language banner: revealed by site.js when browser language ≠ page language -->
+<div id="lang-banner" hidden>
+  <p>此页面提供简体中文版本。</p>
+  <a id="lang-switch" class="banner-cta" href="zh/">切换到简体中文</a>
+  <button id="lang-dismiss" class="banner-close" aria-label="Dismiss language suggestion">✕</button>
+</div>
+
+<!-- Global nav -->
+<header class="global-nav">
+  <div class="wrap">
+    <a class="wordmark" href="https://github.com/thedavidweng">Made by David Weng</a>
+    <span class="spacer"></span>
+    <a href="https://github.com/thedavidweng/sukiru">GitHub</a>
+  </div>
+</header>
+
+<!-- Sub nav -->
+<div class="sub-nav">
+  <div class="wrap">
+    <a class="name" href="#overview"><img src="assets/icon.webp" width="24" height="24" alt="" />Sukiru <span class="ver">{{APP_VERSION}}</span></a>
+    <nav aria-label="Section">
+      <a href="#overview">Overview</a>
+      <a href="https://github.com/thedavidweng/sukiru#readme">User Guide</a>
+      <a class="btn btn-primary btn-sm" href="#download">Download</a>
+    </nav>
+  </div>
+</div>
+
+<!-- Hero -->
+<section class="hero" id="overview">
+  <img class="hero-shot" src="assets/screenshot.webp" onerror="this.remove()" width="2138" height="1544" fetchpriority="high"
+       alt="Sukiru main window with the sidebar on the left and the skill library on the right" />
+  <div class="hero-meta">
+    <img class="hero-icon" src="assets/icon.webp" width="128" height="128" alt="Sukiru app icon" />
+    <p class="hero-name">Sukiru</p>
+    <h1 class="mega">Skill libraries, sorted&nbsp;out.</h1>
+    <p class="hero-desc">Sukiru is a fast, tiny, native macOS app that checks and repairs your coding agents' skill libraries. It works through the official <code>npx skills</code> and <code>gh skill</code> installers and never keeps a ledger of its own.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/thedavidweng/sukiru/releases/latest">Download for Mac</a>
+      <a class="btn btn-ghost" href="https://github.com/thedavidweng/sukiru#readme">Learn more</a>
+    </div>
+    <p class="fine-print muted">Free and open source · Requires macOS 14 Sonoma or later on Apple silicon</p>
+  </div>
+</section>
+
+<!-- Health -->
+<section class="section" id="health">
+  <div class="inner">
+    <h2 class="display-lg">Every problem, in plain&nbsp;language.</h2>
+    <p class="lead">Stale lock records, broken links, diverging copies, and skills claimed by both installers.</p>
+    <p class="copy">Two official installers write into the same agent directories, and neither reads the other's records. Sukiru reads both, compares them with what is on disk, and explains what went wrong and why. Healthy layouts and standing notices fold into Notes.</p>
+    <img class="section-shot" src="assets/screenshot-health.webp" onerror="this.remove()" loading="lazy"
+         alt="Sukiru Health view listing problems grouped by kind, each with a fix button" />
+    <p class="more chevron"><a href="https://github.com/thedavidweng/sukiru/blob/main/docs/collision-matrix.md">See the collision experiments</a></p>
+  </div>
+</section>
+
+<!-- Ownership -->
+<section class="section" id="ownership">
+  <div class="inner">
+    <h2 class="display-lg">One skill. One&nbsp;owner.</h2>
+    <p class="lead">Each fix goes to the installer that owns the skill.</p>
+    <p class="copy">There is no global backend setting. A skill installed with <code>npx skills</code> is repaired with <code>npx skills</code>; a skill installed with <code>gh skill</code> is repaired with <code>gh skill</code>. Sukiru never writes installer records itself.</p>
+    <div class="code-block" aria-label="Example repair batch"><span class="t">npx skills</span> update find-skills -g -y
+<span class="t">gh skill</span> update pdf --dir ~/.claude/skills</div>
+    <p class="more chevron"><a href="https://github.com/thedavidweng/sukiru/blob/main/docs/adr/0001-pivot-to-zero-ledger-referee.md">Why Sukiru keeps no ledger</a></p>
+  </div>
+</section>
+
+<!-- Library -->
+<section class="section" id="library">
+  <div class="inner">
+    <h2 class="display-lg">Know where every skill&nbsp;lives.</h2>
+    <p class="lead">Owner, provenance, pinned ref, and placement across agents.</p>
+    <p class="copy">See which installer owns each skill and where it is linked or copied. Switch a skill between link and copy mode, find sources for hand-copied skills, and bring them under an installer.</p>
+    <img class="section-shot" src="assets/screenshot-library.webp" onerror="this.remove()" loading="lazy"
+         alt="Sukiru Library view showing a skill's owner, provenance, and locations across agents" />
+  </div>
+</section>
+
+<!-- Features -->
+<section class="section" id="features">
+  <div class="inner">
+    <h2 class="display-md">Check. Fix. Roll&nbsp;back.</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>One-Click Fixes</h3>
+        <p>Fix one problem or Fix All. Each fix becomes one batch that you confirm once, with the exact commands one click away.</p>
+      </div>
+      <div class="card">
+        <h3>Safe by Construction</h3>
+        <p>Every batch runs as snapshot, execute, diff. Roll back with one click. The last 10 snapshots are kept.</p>
+      </div>
+      <div class="card">
+        <h3>Search and Install</h3>
+        <p>Search skills.sh and <code>gh skill search</code>, preview <code>SKILL.md</code>, and install with the installer you choose.</p>
+      </div>
+      <div class="card">
+        <h3>Works Without the CLIs</h3>
+        <p>With neither Node.js nor <code>gh</code> installed, Sukiru is still a complete read-only health checker.</p>
+      </div>
+      <div class="card">
+        <h3>Native</h3>
+        <p>Pure Swift with system controls only. Follows your appearance and accessibility settings. In English and Simplified Chinese.</p>
+      </div>
+      <div class="card">
+        <h3>Local &amp; Private</h3>
+        <p>No accounts, analytics, or telemetry. No background activity. Snapshots stay on your Mac.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Download -->
+<section class="section" id="download">
+  <div class="inner">
+    <h2 class="display-lg">Get Sukiru.</h2>
+    <p class="copy">Install with Homebrew or download the DMG and move Sukiru to Applications. Node.js and the GitHub CLI are optional; install them to make changes.</p>
+    <p><code class="brew">brew install --cask thedavidweng/tap/sukiru</code></p>
+    <div class="cta-row" style="margin-top:32px">
+      <a class="btn btn-primary" href="https://github.com/thedavidweng/sukiru/releases/latest">Download the DMG</a>
+      <a class="btn btn-ghost" href="https://github.com/thedavidweng/sukiru">View on GitHub</a>
+    </div>
+    <p class="fine-print muted" style="margin-top:18px">Releases are ad-hoc signed. If Gatekeeper blocks launch, open System Settings › Privacy &amp; Security and click Open Anyway.</p>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="cols">
+    <div>
+      <h4>Sukiru</h4>
+      <ul>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#health">Health</a></li>
+        <li><a href="#ownership">Ownership</a></li>
+        <li><a href="#library">Library</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#download">Download</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Resources</h4>
+      <ul>
+        <li><a href="https://github.com/thedavidweng/sukiru#readme">Documentation</a></li>
+        <li><a href="https://github.com/thedavidweng/sukiru/blob/main/CONTEXT.md">Glossary</a></li>
+        <li><a href="https://github.com/thedavidweng/sukiru/blob/main/docs/adr/README.md">Design Decisions</a></li>
+        <li><a href="https://github.com/thedavidweng/sukiru/blob/main/PRIVACY.md">Privacy Policy</a></li>
+        <li><a href="https://github.com/thedavidweng/sukiru/blob/main/CONTRIBUTING.md">Contributing</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Community</h4>
+      <ul>
+        <li><a href="https://github.com/thedavidweng/sukiru/releases">Releases</a></li>
+        <li><a href="https://github.com/thedavidweng/sukiru/issues">Issues</a></li>
+        <li><a href="https://github.com/thedavidweng/sukiru/issues/new">Feature Requests</a></li>
+        <li><a href="https://github.com/thedavidweng/sukiru">GitHub Repository</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="meta">
+    <p>Apple and macOS are trademarks of Apple Inc., registered in the U.S. and other countries. Sukiru is an independent open-source project and is not affiliated with Apple, Vercel, or GitHub. Agent names and logos belong to their owners.</p>
+    <p>This site uses no cookies or analytics.</p>
+  </div>
+  <div class="bottom">
+    <div>
+      <p>Copyright © 2026 David Weng. Licensed under <a href="https://github.com/thedavidweng/sukiru/blob/main/LICENSE">Apache-2.0</a>.</p>
+      <p class="pipe"><a href="https://github.com/thedavidweng/sukiru/blob/main/PRIVACY.md">Privacy Policy</a>&ensp;|&ensp;<a href="https://github.com/thedavidweng/sukiru/blob/main/CONTRIBUTING.md">Contributing</a>&ensp;|&ensp;<a href="https://github.com/thedavidweng/sukiru/releases">Releases</a></p>
+    </div>
+    <p class="locale">English&ensp;|&ensp;<a href="zh/">简体中文</a></p>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+</body>
+</html>

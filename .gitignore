@@ -1,6 +1,6 @@
 .DS_Store
-# Finder noise inside Fixtures/ is load-bearing test data (VAL-SCAN-013:
-# .DS_Store/.localized must not flip a leftover host to installed). Negate the
+# Finder noise inside Fixtures/ is load-bearing test data
+# (.DS_Store/.localized must not flip a leftover host to installed). Negate the
 # global .DS_Store rule for the whole corpus so future residue fixtures cannot
 # silently drop these files.
 !Fixtures/**/.DS_Store
@@ -14,7 +14,7 @@ DerivedData/
 # Build output
 dist/
 # ... except inside Fixtures/, where a `dist/` directory is load-bearing
-# noise-dir fixture data (ignore-list, VAL-SCAN-011). Negations must follow
+# noise-dir fixture data (ignore-list). Negations must follow
 # the rule they override (last match wins).
 !Fixtures/**/dist/
 
@@ -23,3 +23,7 @@ dist/
 /.gino/
 target/
 .build-clt/
+
+# Website assets copied in by the Pages workflow
+/site/assets/icon.webp
+/site/assets/screenshot*.webp

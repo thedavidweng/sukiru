@@ -1,0 +1,68 @@
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "public/**"
+      - "Resources/AppIcon.webp"
+      - ".github/workflows/site.yml"
+  release:
+    types: [published]
+  schedule:
+    # Catches releases created by release-please (GITHUB_TOKEN events
+    # do not trigger the release event above).
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Assemble site with latest release version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Screenshots are optional; the pages drop an image that fails to load.
+          for shot in public/screenshot*.webp; do
+            if [ -e "$shot" ]; then cp "$shot" site/assets/; fi
+          done
+          cp Resources/AppIcon.webp site/assets/icon.webp
+          # Before the first release there is neither a release nor a tag;
+          # fall back to the release-please manifest version.
+          TAG=$(gh api "repos/${{ github.repository }}/releases/latest" --jq .tag_name 2>/dev/null) || TAG=""
+          case "$TAG" in
+            v[0-9]*) ;;
+            *) TAG=$(git describe --tags --abbrev=0 2>/dev/null) \
+                 || TAG="v$(jq -r '."."' .release-please-manifest.json)" ;;
+          esac
+          echo "Injecting version: $TAG"
+          sed -i "s/{{APP_VERSION}}/${TAG#v}/g" site/index.html site/zh/index.html
+
+      - name: Configure Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
