@@ -1,22 +1,82 @@
 {
   "fill" : {
-    "automatic-gradient" : "extended-srgb:0.03529,0.17255,0.21961,1.00000"
+    "automatic-gradient" : "extended-srgb:0.00000,0.56078,0.61176,1.00000"
   },
   "groups" : [
     {
       "layers" : [
         {
-          "image-name" : "SukiruStack.png",
-          "name" : "Sukiru skill organizer"
+          "fill-specializations" : [
+            {
+              "appearance" : "dark",
+              "value" : {
+                "solid" : "extended-srgb:1.00000,1.00000,1.00000,1.00000"
+              }
+            }
+          ],
+          "image-name" : "Su.svg",
+          "name" : "Su"
         }
       ],
       "shadow" : {
         "kind" : "neutral",
-        "opacity" : 0.4
+        "opacity" : 0.3
       },
       "translucency" : {
         "enabled" : true,
         "value" : 0.1
+      }
+    },
+    {
+      "layers" : [
+        {
+          "image-name" : "FrontCard.svg",
+          "name" : "Front Card"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.45
+      },
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0
+      }
+    },
+    {
+      "layers" : [
+        {
+          "image-name" : "BackCardRight.svg",
+          "name" : "Back Card Right",
+          "fill-specializations" : [
+            {
+              "appearance" : "dark",
+              "value" : {
+                "solid" : "extended-srgb:0.20392,0.52157,0.56078,1.00000"
+              }
+            }
+          ]
+        },
+        {
+          "image-name" : "BackCardLeft.svg",
+          "name" : "Back Card Left",
+          "fill-specializations" : [
+            {
+              "appearance" : "dark",
+              "value" : {
+                "solid" : "extended-srgb:0.16471,0.43137,0.46667,1.00000"
+              }
+            }
+          ]
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.35
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.25
       }
     }
   ],
