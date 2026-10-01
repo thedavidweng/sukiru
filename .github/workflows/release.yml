@@ -59,6 +59,6 @@ jobs:
             dist/Sukiru.dmg
             dist/Sukiru.zip
             dist/checksums.txt
-          generate_release_notes: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
