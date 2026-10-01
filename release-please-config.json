@@ -3,11 +3,13 @@
   "release-type": "simple",
   "tag-format": "v${version}",
   "always-update": true,
+  "bootstrap-sha": "a5975be139d4d260d3a510ab1a2428d6ae9c2b7e",
   "bump-minor-pre-major": false,
   "bump-patch-for-minor-pre-major": false,
   "packages": {
     ".": {
       "package-name": "sukiru",
+      "release-as": "1.0.0",
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": false,
       "changelog-sections": [
