@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// The cross-cutting scan guarantees of architecture §2/§4.2, exercised at
+/// The cross-cutting scan guarantees, exercised at
 /// the engine seam: determinism (byte-identical repeats, root-order
 /// independence), SUKIRU_HOME hermeticity, strict read-only behavior, and
 /// whole-report scope partitioning. The CLI-level twins of these tests live
@@ -34,7 +34,7 @@ struct ScanGuaranteeTests {
         return encoded
     }
 
-    @Test("VAL-SCAN-003: repeat scans of the same tree are byte-identical")
+    @Test("Repeat scans of the same tree are byte-identical")
     func repeatScansByteIdentical() throws {
         for fixture in ["scope-isolation", "FIX-DUPLICATES", "clean-copy-mode"] {
             let inputs = FixturePaths.homeAndRoots(fixture)
@@ -47,9 +47,9 @@ struct ScanGuaranteeTests {
         }
     }
 
-    @Test("VAL-SCAN-003: SUKIRU_ROOTS order does not change a single byte")
+    @Test("SUKIRU_ROOTS order does not change a single byte")
     func rootOrderIndependence() throws {
-        // The contract names THREE roots (a:b:c vs c:a:b): own-per-project's
+        // THREE roots (a:b:c vs c:a:b): own-per-project's
         // p1/p2 plus clean-copy-mode's proj as the third.
         let inputs = FixturePaths.homeAndRoots("own-per-project")
         let roots = inputs.roots + [FixturePaths.tree("clean-copy-mode") + "/proj"]
@@ -59,7 +59,7 @@ struct ScanGuaranteeTests {
         #expect(try forward.jsonData() == reversed.jsonData())
     }
 
-    @Test("VAL-SCAN-004: every reported path lies under SUKIRU_HOME or SUKIRU_ROOTS")
+    @Test("Every reported path lies under SUKIRU_HOME or SUKIRU_ROOTS")
     func hermeticityPathAudit() throws {
         // Scan a COPY of each fixture under $TMPDIR (outside the real home),
         // so that any leaked real-home path is unambiguous: the checked-in
@@ -91,7 +91,7 @@ struct ScanGuaranteeTests {
         }
     }
 
-    @Test("VAL-SCAN-051: scanning a tree leaves it byte-identical (read-only)")
+    @Test("Scanning a tree leaves it byte-identical (read-only)")
     func scanIsReadOnly() throws {
         for fixture in ["own-per-project", "FIX-CLEAN", "alias-link-mode", "FIX-GARBAGE"] {
             let inputs = FixturePaths.homeAndRoots(fixture)
@@ -103,7 +103,7 @@ struct ScanGuaranteeTests {
         }
     }
 
-    @Test("VAL-SCAN-005: --scope partitions workspaces, skills, findings, issues")
+    @Test("--scope partitions workspaces, skills, findings, issues")
     func scopePartitionsWholeReport() throws {
         let inputs = FixturePaths.homeAndRoots("scope-isolation")
         let all = try scan(home: inputs.home, roots: inputs.roots)

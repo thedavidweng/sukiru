@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
-# Generate the hash-parity canary fixture (VAL-SCAN-036, feature content-hasher).
+# Generate the hash-parity canary fixture.
 #
 # The real pinned skills CLI (skills@1.5.26) computes the project-lock
 # computedHash over a SOURCE skill tree whose file set is adversarial to the
-# hash algorithm (research/hash-algorithm.md):
+# hash algorithm:
 #   - ICU-collation-tricky names: SKILL.md vs scripts/ vs agents/, numeric-
 #     leading 10-x.md / 2-y.md, mixed case, a leading-underscore file;
 #   - metadata.json            — INCLUDED in project-scope hashing (unlike the
-#                                install-time copy filter, §4.2);
+#                                install-time copy filter);
 #   - .git/ and node_modules/  — EXCLUDED from hashing (content planted inside
 #                                must not change the digest);
 #   - node_modules/.bin/pkg    — a symlink inside the skill dir. It lives in an
 #     EXCLUDED directory on purpose: upstream's collectFiles excludes symlinks
 #     from the hash entirely (Node Dirent.isFile() is false for links), while
 #     Sukiru hashes a top-level symlink as the literal symlink:"<target>" bytes
-#     (archive convention, port-reference trap #7). Those two rules can never
+#     (archive convention). Those two rules can never
 #     produce the same digest for a symlink the CLI can see, so a CLI-parity
 #     canary cannot carry a hash-visible symlink. The symlink-convention
 #     behavior is pinned by unit vectors in HashingTests instead.
@@ -22,7 +22,7 @@
 # The fixture ships the CLI-hashed SOURCE tree byte-exactly as the placement
 # (proj/.agents/skills/hashprobe). A real copy-mode install would diverge from
 # the lock (copyDirectory strips metadata.json, dereferences symlinks, keeps
-# node_modules — §4.2); this fixture isolates HASH ALGORITHM parity, not copy
+# node_modules); this fixture isolates HASH ALGORITHM parity, not copy
 # fidelity.
 #
 # Gated behind SUKIRU_E2E=1 (runs the real CLI over the network). Never
@@ -61,7 +61,7 @@ require_e2e
 
 # Resolve the REAL node + npx-cli.js, bypassing mise shims: under a sandbox
 # HOME the shims bootstrap a whole Node toolchain into the sandbox (hundreds
-# of MB), which must not land in the committed fixture (library/environment.md).
+# of MB), which must not land in the committed fixture.
 REAL_NODE="$(HOME="$REAL_HOME" mise which node 2>/dev/null || true)"
 NPX_CLI=""
 if [ -n "$REAL_NODE" ]; then
@@ -171,13 +171,13 @@ mkdir -p "$home"
 : >"$home/.gitkeep"
 rm -f "$proj/.skills.out" "$proj/.skills.err"
 cat >"$dir/EXPECTATION.md" <<EOF
-# hash-parity — upstream computedHash parity canary (VAL-SCAN-036)
+# hash-parity — upstream computedHash parity canary
 
 \`proj/skills-lock.json\` was written by the REAL pinned $SKILLS_PIN CLI
 (\`add ../gen-source -s $SKILL -a claude-code --copy -y\`, local source, in a
 sandbox). \`proj/.agents/skills/$SKILL\` ships the CLI-hashed SOURCE tree
 byte-exactly — including files a real copy-mode install would have stripped
-(\`metadata.json\`) or materialized differently (hash-algorithm.md §4.2) —
+(\`metadata.json\`) or materialized differently —
 because this fixture isolates HASH ALGORITHM parity, not copy fidelity.
 
 Adversarial contents: ICU-collation-tricky names (\`SKILL.md\` vs \`scripts/\`

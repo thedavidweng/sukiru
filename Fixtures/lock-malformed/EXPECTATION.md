@@ -1,4 +1,4 @@
-# lock-malformed — expectation (VAL-SCAN-032)
+# lock-malformed — expectation
 
 Contents: `.agents/.skill-lock.json` is TRUNCATED, invalid JSON; one healthy
 skill `survivor` sits alongside.

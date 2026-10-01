@@ -3,8 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// Reader behavior against the checked-in fixture corpus (VAL-SCAN-022,
-/// VAL-SCAN-031, VAL-SCAN-032, VAL-SCAN-033, VAL-SCAN-034): every malformed
+/// Reader behavior against the checked-in fixture corpus: every malformed
 /// `SKILL.md` variant becomes a `skill-md-invalid` issue while the healthy
 /// sibling still parses, and the malformed/newer lock fixtures surface their
 /// issues without ever crashing.

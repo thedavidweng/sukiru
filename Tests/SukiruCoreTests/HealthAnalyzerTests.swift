@@ -137,7 +137,7 @@ struct HealthAnalyzerTests {
         let home = try TempTree()
         try home.file(".claude/config.json", contents: "{}")
         try home.file(".codex/config.json", contents: "{}")
-        // D23 ambiguity: two DIVERGENT copies with no canonical-store
+        // Ambiguity: two DIVERGENT copies with no canonical-store
         // placement for the lock to anchor them to.
         try home.file(
             ".claude/skills/dup/SKILL.md",
@@ -150,7 +150,7 @@ struct HealthAnalyzerTests {
 
         let report = try OwnershipBuilders.scan(home: home)
         let dup = try #require(report.skills.first { $0.name == "dup" })
-        #expect(dup.ambiguous, "two divergent unexplained copies make the name ambiguous (D23)")
+        #expect(dup.ambiguous, "two divergent unexplained copies make the name ambiguous")
         #expect(
             !report.findings.contains {
                 $0.ruleID == "dangerous-removal-surface" && $0.skillName == "dup"
@@ -231,6 +231,6 @@ struct HealthAnalyzerTests {
         let report = try scan(home: home, project: project)
         #expect(
             !report.findings.contains { $0.ruleID == "cross-host-duplicate" },
-            "scopes are governed separately (spec story 10); duplicates group per scope")
+            "scopes are governed separately; duplicates group per scope")
     }
 }

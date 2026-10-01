@@ -4,44 +4,44 @@ import Testing
 @testable import SukiruCore
 
 /// End-to-end contract tests for the `sukiru-cli` report surfaces
-/// (architecture §4.2, D18), driving the REAL built executable with an
+/// driving the REAL built executable with an
 /// explicit, hermetic environment. Nothing here inherits the developer's
 /// PATH/HOME; capability probes only ever meet temp PATH stubs. The
 /// safety-guarantee twins (exit codes, root precedence, subprocess-freedom,
 /// read-only) live in `CLIGuaranteeTests`.
 @Suite("sukiru-cli end-to-end contract")
 struct CLIIntegrationTests {
-    private let d18TopLevelKeys: Set<String> =
+    private let reportTopLevelKeys: Set<String> =
         ["schemaVersion", "workspaces", "skills", "findings", "issues"]
-    private let d18WorkspaceKeys: Set<String> = ["id", "kind", "root", "installed"]
+    private let reportWorkspaceKeys: Set<String> = ["id", "kind", "root", "installed"]
 
     private func stderrText(_ result: CLIRunner.Result) -> String {
         String(bytes: result.stderr, encoding: .utf8) ?? ""
     }
 
-    // MARK: VAL-SCAN-001 — complete D18 report, exit 0
+    // MARK: Complete report, exit 0
 
-    @Test("VAL-SCAN-001: scan emits a complete D18 ScanReport with exit 0")
+    @Test("Scan emits a complete ScanReport with exit 0")
     func scanReportShape() throws {
         let result = try CLIRunner.scanFixture("clean-copy-mode")
         #expect(result.exitCode == 0, "stderr: \(stderrText(result))")
         let object = try #require(try result.jsonObject())
-        #expect(Set(object.keys) == d18TopLevelKeys)
+        #expect(Set(object.keys) == reportTopLevelKeys)
         #expect(object["schemaVersion"] as? Int == 1)
 
         let workspaces = try #require(object["workspaces"] as? [[String: Any]])
         #expect(!workspaces.isEmpty)
         for workspace in workspaces {
-            #expect(Set(workspace.keys) == d18WorkspaceKeys)
+            #expect(Set(workspace.keys) == reportWorkspaceKeys)
             #expect(["user", "project"].contains(workspace["kind"] as? String))
             #expect(workspace["root"] is String)
             #expect(workspace["installed"] is Bool)
         }
     }
 
-    // MARK: VAL-SCAN-002 — capabilities report populated from PATH stubs
+    // MARK: Capabilities report populated from PATH stubs
 
-    @Test("VAL-SCAN-002: capabilities reports gh + npx from the cap-* fixtures, exit 0")
+    @Test("Capabilities reports gh + npx from the cap-* fixtures, exit 0")
     func capabilitiesFromPathStubs() throws {
         // The checked-in PATH-stub fixtures (cap-gh-ok: gh 2.100.0 with a
         // working skill surface; cap-npx-ok: skills 1.5.26). The deeper
@@ -67,7 +67,7 @@ struct CLIIntegrationTests {
         #expect(npx["skillsVersion"] as? String == "1.5.26")
     }
 
-    @Test("VAL-SCAN-002: capabilities with neither CLI reports unavailability, exit 0")
+    @Test("Capabilities with neither CLI reports unavailability, exit 0")
     func capabilitiesNeither() throws {
         let inputs = FixturePaths.homeAndRoots("FIX-EMPTY")
         let neitherPath = FixturePaths.tree("cap-neither") + "/bin:/usr/bin:/bin"
@@ -86,11 +86,11 @@ struct CLIIntegrationTests {
         #expect(npx["resolvable"] as? Bool == false)
     }
 
-    // MARK: VAL-SCAN-003 — determinism
+    // MARK: Determinism
 
-    @Test("VAL-SCAN-003: byte-identical repeat scans and root-order independence")
+    @Test("Byte-identical repeat scans and root-order independence")
     func determinism() throws {
-        // The contract names THREE roots (a:b:c vs c:a:b): own-per-project's
+        // THREE roots (a:b:c vs c:a:b): own-per-project's
         // p1/p2 plus clean-copy-mode's proj as the third.
         let inputs = FixturePaths.homeAndRoots("own-per-project")
         let roots = inputs.roots + [FixturePaths.tree("clean-copy-mode") + "/proj"]
@@ -109,9 +109,9 @@ struct CLIIntegrationTests {
         #expect(first.stdout == third.stdout)
     }
 
-    // MARK: VAL-SCAN-004 — hermeticity
+    // MARK: Hermeticity
 
-    @Test("VAL-SCAN-004: no path outside SUKIRU_HOME/SUKIRU_ROOTS appears in the report")
+    @Test("No path outside SUKIRU_HOME/SUKIRU_ROOTS appears in the report")
     func hermeticity() throws {
         // Scan a COPY under $TMPDIR (outside the real home) so a leaked
         // real-home path is unambiguous — the checked-in fixture legitimately
@@ -138,9 +138,9 @@ struct CLIIntegrationTests {
         #expect(!paths.contains { $0 == realHome || $0.hasPrefix(realHome + "/") })
     }
 
-    // MARK: VAL-SCAN-005 — scope partitioning
+    // MARK: Scope partitioning
 
-    @Test("VAL-SCAN-005: --scope user/project partition the report; all is their union")
+    @Test("--scope user/project partition the report; all is their union")
     func scopePartitioning() throws {
         let inputs = FixturePaths.homeAndRoots("scope-isolation")
         let all = try CLIRunner.scanFixture("scope-isolation")

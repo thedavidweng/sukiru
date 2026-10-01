@@ -5,11 +5,10 @@ import Testing
 
 /// `ContentHasher` behavior: ICU ordering parity with Node `localeCompare`,
 /// the project-scope exclusion set, failure-as-data, the hash-family
-/// discriminator, and the upstream parity canary fixture (VAL-SCAN-036).
+/// discriminator, and the upstream parity canary fixture.
 /// Digest golden vectors live in `HashingVectorTests`.
 ///
-/// Load-bearing rules (architecture §4.1, research/hash-algorithm.md,
-/// port-reference traps #6–#9): files sort with ICU collation via
+/// Load-bearing rules: files sort with ICU collation via
 /// `String.compare(_:options:[], range:nil, locale: en_US)` — NEVER
 /// `localizedStandardCompare`; directories `.git`/`node_modules` are excluded
 /// at every depth while `metadata.json` and dotfiles are included; symlinks
@@ -58,7 +57,7 @@ struct ContentHasherTests {
         }
 
         let collected = try #require(files(of: hasher.skillFiles(atPath: "\(tree.path)/\(skill)")))
-        // Node: [...].sort((a, b) => a.localeCompare(b)) — hash-algorithm.md §3.
+        // Node: [...].sort((a, b) => a.localeCompare(b)).
         let expected =
             """
             _x.md
@@ -181,7 +180,7 @@ struct ContentHasherTests {
         #expect(issue.kind == IssueKind.contentHashUnreadable)
     }
 
-    // MARK: - Hash family discriminator (hash-algorithm.md §0)
+    // MARK: - Hash family discriminator
 
     @Test("40-hex values are git tree SHAs; 64-hex are sha256 folder hashes")
     func hashFamilyDiscriminator() {
@@ -225,7 +224,7 @@ struct ContentHasherTests {
         #expect(issue?.path == "/s/mystery")
     }
 
-    // MARK: - Upstream parity canary (VAL-SCAN-036)
+    // MARK: - Upstream parity canary
 
     @Test("Canary fixture: recomputed hash equals the real CLI's lock value")
     func canaryFixtureMatchesUpstreamLock() throws {

@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// Vercel lock readers (architecture §4.1, port-reference §6).
+/// Vercel lock readers.
 ///
 /// Project lock v1 is probed in the fixed order `skills-lock.json` →
 /// `.agents/.skill-lock.json` → `.skill-lock.json` (first existing wins, never
@@ -223,7 +223,7 @@ struct VercelLockReaderTests {
 
     // MARK: Field extraction and unknown-field preservation
 
-    @Test("All known entry fields are extracted per architecture §4.1")
+    @Test("All known entry fields are extracted")
     func entryFieldsExtracted() throws {
         let tree = try TempTree()
         let json = """

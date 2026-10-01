@@ -4,7 +4,7 @@ import SwiftUI
 /// The single confirmation every batch needs before it runs: what will
 /// change in plain words, the exact commands one click away, then progress
 /// and the result with Undo. A snapshot is taken before the first command,
-/// so a confirmed batch stays reversible (VAL-REPAIR-007/023, ADR-0007).
+/// so a confirmed batch stays reversible (ADR-0007).
 struct BatchConfirmSheet: View {
     @EnvironmentObject private var state: AppState
 

@@ -4,17 +4,17 @@ import SukiruCore
 /// Snapshots-surface state: the on-disk batch history (execution records +
 /// rollback events) that backs the Snapshots view.
 ///
-/// The history is PERSISTED state written by the seam-B executors
+/// The history is PERSISTED state written by the batch executors
 /// (`CLIExecutor` / `Rollback`), read fresh from disk on launch, after every
-/// app-initiated mutation (D7), and on the surface's explicit Reload — it
-/// must survive relaunches (VAL-CROSS-012). The app keeps zero ledger or
+/// app-initiated mutation, and on the surface's explicit Reload — it
+/// must survive relaunches. The app keeps zero ledger or
 /// finding state of its own; these records are the execution transcript,
 /// not a ledger.
 @MainActor
 extension AppState {
     /// One row of the Snapshots history: a batch execution or a rollback
     /// event, interleaved by time so batch 1 → rollback → batch 2 reads as
-    /// three distinct, correctly ordered entries (VAL-CROSS-023).
+    /// three distinct, correctly ordered entries.
     enum HistoryRow: Equatable, Identifiable {
         case batch(ExecutionRecord)
         case rollback(RollbackRecord)
@@ -65,7 +65,7 @@ extension AppState {
 
     /// Reads `executions/<batchID>/record.json` (+ `rollback.json` when a
     /// rollback happened) into time-ordered rows. Unreadable entries are
-    /// skipped, never fatal (malformed data is data, §2).
+    /// skipped, never fatal (malformed data is data).
     nonisolated static func readHistoryRows(executionsRoot: String) -> [HistoryRow] {
         let fileManager = FileManager.default
         let names = (try? fileManager.contentsOfDirectory(atPath: executionsRoot)) ?? []

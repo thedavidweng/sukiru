@@ -1,6 +1,6 @@
 import Foundation
 
-/// Why gh is unavailable (D6: two states, but the reason is shown).
+/// Why gh is unavailable (two states, but the reason is shown).
 /// Nil on the report iff `available` is true.
 public enum GitHubUnavailableReason: String, Codable, Equatable, Sendable {
     /// No gh answered `gh --version` with a parseable version.
@@ -11,12 +11,12 @@ public enum GitHubUnavailableReason: String, Codable, Equatable, Sendable {
     case probeFailed = "probe-failed"
 }
 
-/// Launch-time capability detection output (architecture §4.2, D6), produced
-/// by `CapabilityDetector`. NEVER part of ScanReport (D2): capabilities are
+/// Launch-time capability detection output, produced
+/// by `CapabilityDetector`. NEVER part of ScanReport: capabilities are
 /// the sole command allowed to spawn probe subprocesses.
 public struct CapabilityReport: Codable, Equatable, Sendable {
     public struct GitHubCapability: Codable, Equatable, Sendable {
-        /// D6 two-state verdict: present AND ≥ 2.90.0 AND `gh skill` probe OK.
+        /// Two-state verdict: present AND ≥ 2.90.0 AND `gh skill` probe OK.
         public let available: Bool
         /// A gh executable answered `gh --version` with a parseable version.
         public let present: Bool

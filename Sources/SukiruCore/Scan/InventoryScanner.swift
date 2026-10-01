@@ -1,12 +1,12 @@
 import Foundation
 
-/// A placement enriched with the engine-side context the D18 wire `Placement`
-/// does not carry (architecture §4.1, port-reference trap 12).
+/// A placement enriched with the engine-side context the wire `Placement`
+/// does not carry.
 public struct DiscoveredPlacement: Equatable, Sendable {
     /// The skill name: parsed from `SKILL.md`, or the link's file name for a
     /// broken symlink (whose metadata is unreadable by definition).
     public let name: String
-    /// The D18 wire placement.
+    /// The wire placement.
     public let placement: Placement
     /// The workspace this placement was found in.
     public let workspaceID: String
@@ -15,14 +15,13 @@ public struct DiscoveredPlacement: Equatable, Sendable {
     public let scopeGroup: String
     /// ALL hosts whose skills dir is this placement's workspace root, in
     /// host-table order — never a single host id. trae/trae-cn share
-    /// `.trae/skills`; cline/dexto/warp/zed share the canonical store
-    /// (port-reference trap 12).
+    /// `.trae/skills`; cline/dexto/warp/zed share the canonical store.
     public let candidateHosts: [String]
     /// Absolute path of the parsed `SKILL.md` (for broken symlinks: the path
     /// it WOULD have, `<link>/SKILL.md` — the file is unreadable by
     /// definition). Ownership evidence references this path.
     public let skillFilePath: String
-    /// The gh-ledger claim from frontmatter, when present (architecture §6).
+    /// The gh-ledger claim from frontmatter, when present.
     public let githubProvenance: GitHubProvenance?
 
     public init(
@@ -62,8 +61,7 @@ public struct InventoryResult: Equatable, Sendable {
     }
 }
 
-/// Recursive placement discovery per workspace root (architecture §4.1,
-/// port-reference §3 `inventory.rs:184–466`).
+/// Recursive placement discovery per workspace root.
 ///
 /// The port is faithful on the load-bearing semantics:
 ///
@@ -276,8 +274,7 @@ public struct InventoryScanner: Sendable {
 
     /// Dangling links are first-class placements (visible and cleanable),
     /// named after the link file because the target's metadata is gone. An
-    /// issue AND a `broken-symlink` finding ride alongside (port-reference
-    /// §3 `record_broken_symlink`, trap 14).
+    /// issue AND a `broken-symlink` finding ride alongside.
     private func recordBrokenSymlink(
         at path: String,
         name: String,
@@ -320,7 +317,7 @@ public struct InventoryScanner: Sendable {
 
     private func linkEvidence(linkPath: String, linkTarget: String) -> [Evidence] {
         // Single-line literal: the two lint gates disagree on trailing commas
-        // in multi-line collection literals (library/environment.md).
+        // in multi-line collection literals.
         let link = Evidence(kind: "linkPath", detail: linkPath)
         let target = Evidence(kind: "linkTarget", detail: linkTarget)
         return [link, target]

@@ -1,6 +1,6 @@
-# Fixtures — seam-A test corpus
+# Fixtures — scan engine test corpus
 
-Two kinds of fixtures back the seam-A (read engine) tests and validators.
+Two kinds of fixtures back the scan engine tests and validators.
 
 ## Hand-built trees (checked in)
 
@@ -25,15 +25,15 @@ Trees: `FIX-EMPTY`, `FIX-CLEAN`, `FIX-INTERNAL`, `FIX-MALFORMED`, `FIX-GARBAGE`,
 `divergence-canonical`, `lock-version-old`, `lock-malformed`, `clean-copy-mode`,
 `impostor-copy`, `FIX-USER-SCOPE-COPY-MODE`.
 
-M3 health-area trees (app-level assertions): `FIX-OWNERSHIP-QUAD` (five skills,
+Health-area trees (app-level assertions): `FIX-OWNERSHIP-QUAD` (five skills,
 one per ownership state — two github: pinned + unpinned), `FIX-SCOPES`,
 `FIX-MULTI-HOST`, `FIX-DRIFT`, `FIX-DOUBLE-BOOKED`, `FIX-SYMLINK`,
 `FIX-HOST-DIVERGENCE`, `FIX-DIRTY-SUITE`, `FIX-MUTABLE`.
 
-M4 repair-area trees: `FIX-SCOPES-CROSS` (VAL-CROSS-017/018 — the same skill
+Repair-area trees: `FIX-SCOPES-CROSS` (the same skill
 name with DIFFERENT ownership per scope, findings in both scopes; committed
 because FIX-SCOPES is all-vercel/zero-findings and cannot stand in for it),
-`FIX-ADOPT` (VAL-REPAIR-045 — an ownerless skill whose name matches the real
+`FIX-ADOPT` (an ownerless skill whose name matches the real
 upstream test repo's `stale-docs-cleanup`, so the adopt shape re-anchors
 provenance onto the existing directory).
 
@@ -45,19 +45,18 @@ scan them with
 `SUKIRU_HOME=<tree>/.home SUKIRU_ROOTS=<tree>/proj`. Everything else IS the
 fake home.
 
-## Contract-name aliases
+## Defect-name aliases
 
-Three names in the validation-contract scan-area legend are covered by
-existing trees rather than dedicated directories. Validators MUST use this
-canonical mapping:
+Three defect names are covered by existing trees rather than dedicated
+directories. Validators MUST use this canonical mapping:
 
-| Legend name     | Proving tree  | Where the defect lives |
+| Defect name     | Proving tree  | Where the defect lives |
 |-----------------|---------------|------------------------|
 | `broken-link`   | `FIX-GARBAGE` | `.claude/skills/rotted -> /nonexistent/rotted-target` (dangling symlink) |
 | `unreadable-dir`| `FIX-GARBAGE` | `.agents/skills/locked-dir` (chmod 000 via `prepare-runtime.sh`) |
 | `dup-alias`     | `FIX-DUPLICATES` | the `alias-demo` group (canonical dir + two host symlinks) |
 
-Every other legend name maps 1:1 to a same-named tree above (or to a `CM-*` /
+Every other defect name maps 1:1 to a same-named tree above (or to a `CM-*` /
 `hash-parity` generated fixture).
 
 Some states cannot be stored in git (a chmod-000 unreadable directory). Apply
@@ -83,17 +82,15 @@ PATH="$PWD/Fixtures/cap-gh-ok/bin:$PWD/Fixtures/cap-npx-ok/bin:/usr/bin:/bin" \
 An "absent" fixture contributes an empty `bin/`; combine freely (e.g.
 `cap-gh-absent/bin:cap-npx-ok/bin` = gh absent, npx fine). Set
 `SUKIRU_STUB_TRANSCRIPT=<file>` to make every stub log its invocations —
-the validator's evidence (VAL-SCAN-037/057). `cap-gh-probe-fail` (gh 2.100.0,
-failing `gh skill --help`) is the VAL-SCAN-057 environment, an addition to
-the contract's six-name legend. These trees are also rebuilt by
+the validator's evidence. `cap-gh-probe-fail` (gh 2.100.0,
+failing `gh skill --help`) is the probe-failure environment. These trees are also rebuilt by
 `build-handbuilt.sh`.
 
 ## CLI-generated collision-matrix corpus (checked in)
 
 `CM-1, CM-2, CM-3, CM-5, CM-6, CM-8` are produced by scripting the REAL pinned
 `skills@1.5.26` CLI and `gh` in isolated sandbox HOMEs, reproducing the dirty
-states in `docs/collision-matrix.md`. The corpus IS committed (since
-`seam-a-corpus-validation`) so the snapshot suite and validators can run
+states in `docs/collision-matrix.md`. The corpus is committed so the snapshot suite and validators can run
 offline; regenerate it — never hand-edit it — with:
 
 ```

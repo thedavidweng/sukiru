@@ -3,8 +3,8 @@ import Testing
 
 @testable import SukiruCore
 
-/// InventoryScanner output-ordering guarantees (architecture §2: identical
-/// scans → byte-identical reports). Split from `InventoryScannerTests` to
+/// InventoryScanner output-ordering guarantees (identical scans →
+/// byte-identical reports). Split from `InventoryScannerTests` to
 /// stay inside the file/type length gates.
 @Suite("InventoryScanner determinism")
 struct InventoryScannerDeterminismTests {

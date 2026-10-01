@@ -3,10 +3,9 @@ import Testing
 
 @testable import SukiruCore
 
-/// Snapshot restore (D9): byte-identical payload and ledger restoration,
+/// Snapshot restore: byte-identical payload and ledger restoration,
 /// children-before-parents ordering, manifest-diff deletion of batch-added
-/// paths, and honest unrestorable reporting (VAL-REPAIR-037 + the store-side
-/// mechanics of VAL-REPAIR-034/036).
+/// paths, and honest unrestorable reporting.
 @Suite("SnapshotStore restore")
 struct SnapshotStoreRestoreTests {
     private typealias Support = SnapshotTestSupport
@@ -152,8 +151,8 @@ struct SnapshotStoreRestoreTests {
     }
 }
 
-/// End-to-end seam check over the committed corpus: a real scan + real
-/// batch build feeding capture (VAL-REPAIR-024/050 shapes).
+/// End-to-end check over the committed corpus: a real scan + real
+/// batch build feeding capture.
 @Suite("SnapshotStore corpus integration")
 struct SnapshotStoreIntegrationTests {
     private typealias Support = SnapshotTestSupport
@@ -180,7 +179,7 @@ struct SnapshotStoreIntegrationTests {
         let batch = try BatchTestSupport.build(report, decisions)
         let store = Support.makeStore(home: copy + "/.home")
         let manifest = try store.capture(batch: batch, report: report)
-        // Both ledger files captured byte-exact (VAL-REPAIR-024).
+        // Both ledger files captured byte-exact.
         let byPath = Dictionary(uniqueKeysWithValues: manifest.ledgers.map { ($0.path, $0) })
         for lockPath in [globalLock, copy + "/proj/skills-lock.json"] {
             let ledger = try #require(byPath[lockPath])
@@ -194,7 +193,7 @@ struct SnapshotStoreIntegrationTests {
         // Placement manifest == the scan's placements for the affected root.
         let expected = report.skills.flatMap(\.placements).map(\.path).sorted()
         #expect(manifest.placements.map(\.path) == expected)
-        // Full payload copies of EVERY touched skill dir (VAL-REPAIR-050).
+        // Full payload copies of EVERY touched skill dir.
         var dirs = [copy + "/proj/.agents/skills/stale-docs-cleanup"]
         dirs.append(copy + "/proj/.claude/skills/stale-docs-cleanup")
         #expect(manifest.payloads.map(\.path).sorted() == dirs.sorted())

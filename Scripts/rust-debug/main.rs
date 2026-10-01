@@ -1,5 +1,4 @@
-// Ground-truth generator for Sukiru's Rust-`Debug` symlink quoting
-// (port-reference trap #7, feature hasher-rust-debug-quoting-fix).
+// Ground-truth generator for Sukiru's Rust-`Debug` symlink quoting.
 //
 // The archived Rust CLI hashes a symlink inside a skill dir as
 // `format!("symlink:{target:?}")` where `target` is a `PathBuf`. This helper

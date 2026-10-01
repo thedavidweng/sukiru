@@ -70,15 +70,13 @@ enum BatchExecutionSupport {
 
 /// `sukiru-cli batch --execute` end-to-end: review gating, snapshot-first,
 /// serialized shim execution, failure states, timeout, lock contention,
-/// GH_TOKEN scoping, and dry-run/executed argv equality (VAL-REPAIR-007,
-/// 023, 027…031, 038…041, 053, 054, 058).
-/// Seam-B execution suite: serialized per house rule (spawns the CLI, which
-/// spawns shim CLIs).
+/// GH_TOKEN scoping, and dry-run/executed argv equality.
+/// Serialized because it spawns the CLI, which spawns shim CLIs.
 @Suite("sukiru-cli batch execution", .serialized)
 struct BatchExecutionCLIIntegrationTests {
     private typealias Support = BatchExecutionSupport
 
-    // MARK: - VAL-REPAIR-007: no execution without explicit review
+    // MARK: - No execution without explicit review
 
     @Test("--execute without --reviewed refuses: exit 1, no snapshot, byte-identical sandbox")
     func executeRequiresReview() throws {
@@ -101,7 +99,7 @@ struct BatchExecutionCLIIntegrationTests {
         #expect(before == after, "a refused execution must write nothing")
     }
 
-    // MARK: - VAL-REPAIR-023/029/038/058: ownerless fileop end-to-end
+    // MARK: - Ownerless fileop end-to-end
 
     @Test("Cleanup batch: executes, snapshots first, argv matches dry-run, canary untouched")
     func cleanupExecutionEndToEnd() throws {
@@ -137,7 +135,7 @@ struct BatchExecutionCLIIntegrationTests {
         let first = try #require(commands.only)
         #expect(first["status"] as? String == "succeeded")
         #expect(first["exitCode"] as? Int == 0)
-        #expect(first["argv"] as? [String] == dryArgv, "VAL-REPAIR-058: argv equality")
+        #expect(first["argv"] as? [String] == dryArgv, "Argv equality")
         #expect(first["stdoutFile"] is String)
         #expect(first["stderrFile"] is String)
         #expect(first["durationSeconds"] is Double)
@@ -146,7 +144,7 @@ struct BatchExecutionCLIIntegrationTests {
         #expect(canaryBytes == "do-not-touch")
     }
 
-    // MARK: - VAL-REPAIR-029/031/053: shimmed npx through the real CLI
+    // MARK: - Shimmed npx through the real CLI
 
     @Test("CM-1 update batch: shimmed npx runs once, in the project cwd, with contracted env")
     func shimmedUpdateExecution() throws {
@@ -191,7 +189,7 @@ struct BatchExecutionCLIIntegrationTests {
         #expect(stdout.contains("env-dump-ok"), "captured stdout file is non-empty")
     }
 
-    // MARK: - VAL-REPAIR-028/041: first command fails, second never runs
+    // MARK: - First command fails, second never runs
 
     @Test("keep-github batch: npx remove exits 3 → batch failed, gh install never runs")
     func failingFirstCommandStopsBatch() throws {
@@ -240,7 +238,7 @@ struct BatchExecutionCLIIntegrationTests {
         #expect(beforeLock == afterLock)
     }
 
-    // MARK: - VAL-REPAIR-040: timeout through the CLI flag
+    // MARK: - Timeout through the CLI flag
 
     @Test("--command-timeout stops a sleeping shim and reports timed-out")
     func timeoutViaCLI() throws {
@@ -270,7 +268,7 @@ struct BatchExecutionCLIIntegrationTests {
         #expect(duration < 30, "duration \(duration)s should be near the 1s timeout")
     }
 
-    // MARK: - VAL-REPAIR-027: a second batch is refused while one holds the lock
+    // MARK: - A second batch is refused while one holds the lock
 
     @Test("A held execution lock refuses another batch with a clear message")
     func concurrentBatchRefused() throws {
@@ -295,7 +293,7 @@ struct BatchExecutionCLIIntegrationTests {
         #expect(FileManager.default.fileExists(atPath: orphan))
     }
 
-    // MARK: - VAL-REPAIR-054: GH_TOKEN scoped to gh network commands at CLI level
+    // MARK: - GH_TOKEN scoped to gh network commands at CLI level
 
     @Test("GH_TOKEN reaches only the gh command; nothing persists the token value")
     func ghTokenScopingAtCLILevel() throws {

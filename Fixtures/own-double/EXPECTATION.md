@@ -1,4 +1,4 @@
-# own-double — expectation (VAL-SCAN-016)
+# own-double — expectation
 
 Contents: `double-tool` is present in the global v3 lock AND carries
 `metadata.github-repo` frontmatter — both ledgers claim the same name.

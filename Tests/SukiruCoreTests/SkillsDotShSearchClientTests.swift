@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// The skills.sh marketplace search client (story 22, skills.sh backend):
+/// The skills.sh marketplace search client (skills.sh backend):
 /// parse the verified API payload, normalize to SkillSearchResult, surface
 /// transport failures. Offline via the stub transport.
 @Suite("Skills.sh search client")

@@ -1,4 +1,4 @@
-# FIX-SCOPES-CROSS — expectation (VAL-CROSS-017 / VAL-CROSS-018)
+# FIX-SCOPES-CROSS — expectation
 
 Contents: the name `shared-tool` exists in BOTH scopes with DIFFERENT
 ownership — user scope (`.home/.agents/skills/shared-tool`) is vercel-owned
@@ -17,7 +17,7 @@ A correct scan MUST exit 0 and:
   `dangerous-removal-surface` advisories for those two names;
 - emit NO findings for `shared-tool` in user scope or `proj-locked`.
 
-VAL-CROSS-018 drives a repair batch against the PROJECT-scope ownerless
-`shared-tool` (direct file-op cleanup): the user scope's lock file,
+The cross-scope isolation test drives a repair batch against the
+PROJECT-scope ownerless `shared-tool` (direct file-op cleanup): the user scope's lock file,
 placements, and findings MUST stay byte-identical, and the snapshot manifest
 records only project-scope paths (plus the project lock probes).

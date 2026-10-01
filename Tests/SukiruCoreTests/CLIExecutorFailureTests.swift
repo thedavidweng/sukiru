@@ -5,13 +5,13 @@ import Testing
 
 /// The CLIExecutor terminal-state guarantees: stop-on-first-failure,
 /// timeout, missing CLI, and the workspace-root boundary for the
-/// ownerless-cleanup fileop exception (VAL-REPAIR-028/038…041).
-/// Seam-B execution suite: serialized per house rule (subprocess-heavy).
+/// ownerless-cleanup fileop exception.
+/// Serialized because the suite is subprocess-heavy.
 @Suite("CLI executor failure states", .serialized)
 struct CLIExecutorFailureTests {
     private typealias Support = ExecutorTestSupport
 
-    // MARK: - VAL-REPAIR-028/041: stop-on-first-failure with per-command status
+    // MARK: - Stop-on-first-failure with per-command status
 
     @Test("First-command failure stops the batch; command 2 never starts")
     func stopOnFirstFailure() throws {
@@ -43,7 +43,7 @@ struct CLIExecutorFailureTests {
         #expect(records[0].diagnostics?.contains("boom-stderr-marker") == true)
     }
 
-    // MARK: - VAL-REPAIR-040: timeout
+    // MARK: - Timeout
 
     @Test("A command past the timeout is terminated and stops the batch; no orphan survives")
     func timeoutTerminatesAndStopsBatch() throws {
@@ -69,7 +69,7 @@ struct CLIExecutorFailureTests {
         #expect(kill(pid, 0) != 0, "the timed-out process must not survive")
     }
 
-    // MARK: - VAL-REPAIR-039: CLI missing mid-flow
+    // MARK: - CLI missing mid-flow
 
     @Test("A missing npx is a clear failed state naming the tool, with the snapshot intact")
     func missingNpxIsAClearFailedState() throws {
@@ -89,7 +89,7 @@ struct CLIExecutorFailureTests {
         #expect(result.batch.snapshotID != nil, "snapshot exists so rollback can be offered")
     }
 
-    // MARK: - VAL-REPAIR-038: workspace-root boundary
+    // MARK: - Workspace-root boundary
 
     @Test("Ownerless fileop cleanup deletes inside workspace roots; canaries outside survive")
     func fileopCleanupStaysInsideWorkspaceRoots() throws {

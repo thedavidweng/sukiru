@@ -1,6 +1,6 @@
 import Foundation
 
-/// One parsed decision from the D12 decisions file (finding ID → action +
+/// One parsed decision from the decisions file (finding ID → action +
 /// optional choice).
 public struct DecisionEntry: Equatable, Sendable {
     public let findingID: String
@@ -14,7 +14,7 @@ public struct DecisionEntry: Equatable, Sendable {
     }
 }
 
-/// A decisions-file shape error (VAL-REPAIR-052). Every message names the
+/// A decisions-file shape error. Every message names the
 /// offending finding ID and/or value so a hand-written file is fixable
 /// without guessing.
 public enum DecisionsFileError: Error, Equatable, Sendable {
@@ -66,7 +66,7 @@ public enum DecisionsFileError: Error, Equatable, Sendable {
     }
 }
 
-/// Parses and validates the D12 decisions file:
+/// Parses and validates the decisions file:
 /// `{"<findingID>": {"action": "update|adopt|cleanup|leave|arbitrate|relink",
 /// "choice": …}}`.
 ///

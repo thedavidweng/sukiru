@@ -1,16 +1,16 @@
 import Foundation
 import SukiruCore
 
-/// Health-surface state derivations: skill focus (D16), per-workspace
-/// filtering (VAL-HEALTH-015/047), issue attribution (VAL-HEALTH-022), and
-/// the finding → Library reveal (VAL-HEALTH-038, VAL-CROSS-004). Stored
+/// Health-surface state derivations: skill focus, per-workspace
+/// filtering, issue attribution, and
+/// the finding → Library reveal. Stored
 /// properties live in `AppState.swift`; everything here is computed from
 /// them so the views stay dumb.
 @MainActor
 extension AppState {
     /// A finding paired with its index in the full report — the stable
     /// identity (`Self.findingID`) that survives filtering and surface
-    /// switches (VAL-HEALTH-045).
+    /// switches.
     struct FindingEntry: Equatable {
         let reportIndex: Int
         let finding: Finding
@@ -42,10 +42,10 @@ extension AppState {
         }
     }
 
-    // MARK: - D16 deep-link: Library skill → Health findings
+    // MARK: - Deep-link: Library skill → Health findings
 
     /// Navigates to Health showing only the findings that implicate `skill`
-    /// (D16 "show findings" action). The workspace filter is cleared so the
+    /// (the "show findings" action). The workspace filter is cleared so the
     /// focused list is never additionally narrowed by a stale selection.
     func showFindings(for skill: Skill) {
         healthFocus = HealthFocus(skillName: skill.name, scopeGroup: scopeGroup(for: skill))
@@ -72,7 +72,7 @@ extension AppState {
         }
     }
 
-    // MARK: - Workspace filter (VAL-HEALTH-015/047)
+    // MARK: - Workspace filter
 
     /// All findings with their report-wide indices, in report order.
     func healthEntries() -> [FindingEntry] {
@@ -84,7 +84,7 @@ extension AppState {
     /// Finding entries after applying the skill focus AND the workspace
     /// filter. The workspace filter matches a finding's workspace id exactly
     /// (per-workspace filtering; the sum of per-workspace counts equals the
-    /// total — VAL-HEALTH-034).
+    /// total).
     func visibleHealthEntries() -> [FindingEntry] {
         var entries = visibleHealthEntriesIgnoringWorkspaceFilter()
         if let filter = healthWorkspaceFilter {
@@ -105,7 +105,7 @@ extension AppState {
 
     /// The workspaces the filter offers, in report order, each with its
     /// (focus-aware) finding count so a zero-finding workspace is visible
-    /// and selectable (VAL-HEALTH-047).
+    /// and selectable.
     func workspaceFilterOptions() -> [(workspace: Workspace, count: Int)] {
         guard let report else { return [] }
         let focused = focusedFindings(report.findings)
@@ -134,7 +134,7 @@ extension AppState {
         !(report?.workspaces.isEmpty ?? true)
     }
 
-    // MARK: - Issues (VAL-HEALTH-022: malformed data renders sanely)
+    // MARK: - Issues (malformed data renders sanely)
 
     /// Issues are environment-level (they carry a path, not a workspace id),
     /// so they are attributed to a workspace by path: longest matching
@@ -142,7 +142,7 @@ extension AppState {
     /// scope (e.g. the global lock lives next to, not under, a skills root).
     /// While a skill focus is active, only issues whose path names the
     /// focused skill show — an unrelated issue must never read as a stale
-    /// finding for the focused skill (VAL-CROSS-005).
+    /// finding for the focused skill.
     func visibleIssues() -> [Issue] {
         guard let report else { return [] }
         var issues = report.issues
@@ -172,11 +172,11 @@ extension AppState {
         return "user"
     }
 
-    // MARK: - D16 deep-link: Health finding → Library skill (reveal)
+    // MARK: - Deep-link: Health finding → Library skill (reveal)
 
     /// The skill a finding implicates: same name AND same scope group as the
     /// finding's workspace, so a same-named skill in another workspace is
-    /// never selected by mistake (VAL-CROSS-004).
+    /// never selected by mistake.
     func skill(matching finding: Finding) -> Skill? {
         guard let report, let name = finding.skillName else { return nil }
         let group = Self.scopeGroup(ofWorkspaceID: finding.workspaceID)
@@ -198,10 +198,10 @@ extension AppState {
         return workspaceID
     }
 
-    /// Reveal-in-Library action (D16, VAL-HEALTH-038, VAL-CROSS-004):
+    /// Reveal-in-Library action:
     /// navigates to Library with the implicated skill's row selected and its
     /// detail open. No-op when the finding names no on-disk skill (e.g. a
-    /// lock-without-files ghost has no placement — VAL-SCAN-028).
+    /// lock-without-files ghost has no placement).
     func revealInLibrary(for finding: Finding) {
         guard let skill = skill(matching: finding) else { return }
         libraryScope = .all

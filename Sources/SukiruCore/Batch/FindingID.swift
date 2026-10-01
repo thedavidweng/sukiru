@@ -1,14 +1,14 @@
 import Foundation
 
-/// Stable, deterministic identifiers for findings — the keys of the D12
+/// Stable, deterministic identifiers for findings — the keys of the
 /// decisions file.
 ///
 /// The base ID is `<ruleID>:<workspaceID>:<skillName or "-">`. When several
 /// findings share one base (e.g. per-placement drift findings), repeats are
 /// suffixed `#2`, `#3`, … in the report's defined sorted order. IDs are never
 /// parsed back; they are minted from a scan and compared by equality, which
-/// is exactly what makes stale references rejectable at batch construction
-/// (VAL-REPAIR-056): an ID minted from an older scan no longer appears in a
+/// is exactly what makes stale references rejectable at batch construction:
+/// an ID minted from an older scan no longer appears in a
 /// fresh one.
 public enum FindingID {
     /// Assigns IDs to every finding, in the report's deterministic order.

@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// `SKILL.md` frontmatter parsing (architecture §4.1, port-reference §7).
+/// `SKILL.md` frontmatter parsing.
 ///
 /// The parser reproduces upstream `split_frontmatter` byte-for-byte: a strict
 /// start delimiter (`---\n`/`---\r\n` at byte 0, no BOM tolerance), and the

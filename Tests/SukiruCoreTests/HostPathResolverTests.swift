@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// Base-resolution semantics for host paths (architecture §4.1): Home / Xdg /
+/// Base-resolution semantics for host paths: Home / Xdg /
 /// Env bases, empty-string guards, the SUKIRU_HOME hermeticity seam, and the
 /// openclaw legacy-name probe order.
 @Suite("Host path resolution")

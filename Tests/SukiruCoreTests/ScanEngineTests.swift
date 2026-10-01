@@ -47,7 +47,7 @@ struct ScanEngineTests {
         }
     }
 
-    @Test("JSON output is deterministic and carries the D18 top-level keys")
+    @Test("JSON output is deterministic and carries the report top-level keys")
     func deterministicJSON() throws {
         let report = ScanReport()
         let first = try report.jsonData()
@@ -59,7 +59,7 @@ struct ScanEngineTests {
         #expect(keys == ["schemaVersion", "workspaces", "skills", "findings", "issues"])
     }
 
-    @Test("--scope partitions workspaces into user and project (VAL-SCAN-005 shape)")
+    @Test("--scope partitions workspaces into user and project")
     func scopePartition() throws {
         let home = try TempTree()
         let project = try TempTree()
@@ -80,7 +80,7 @@ struct ScanEngineTests {
         #expect(all.workspaces == userOnly.workspaces + projectOnly.workspaces)
     }
 
-    @Test("Explicit roots replace SUKIRU_ROOTS, never merge (D5)")
+    @Test("Explicit roots replace SUKIRU_ROOTS, never merge")
     func explicitRootsReplace() throws {
         let home = try TempTree()
         let envRoot = try TempTree()

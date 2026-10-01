@@ -1,14 +1,14 @@
 import Foundation
 
-/// The seam-B Command Batch model (architecture §7, decisions D8–D14).
+/// The Command Batch model.
 ///
 /// A batch maps findings + user decisions to an ordered list of commands.
 /// Ledger writes are ONLY official CLI invocations (`npx skills …`,
 /// `gh skill …`); direct file operations never touch a ledger and are limited
 /// to ownerless payloads and host-folder placements (dead links, link ↔ copy
-/// mode), always flagged as such (red line §2, VAL-REPAIR-018, ADR-0007).
+/// mode), always flagged as such (ADR-0007).
 
-/// Repair actions in the D12 decisions vocabulary.
+/// Repair actions in the decisions-file vocabulary.
 public enum DecisionAction: String, Codable, Equatable, Sendable, CaseIterable {
     case update
     case adopt
@@ -21,9 +21,9 @@ public enum DecisionAction: String, Codable, Equatable, Sendable, CaseIterable {
 
 /// The explicit user choice accompanying an action.
 ///
-/// Arbitration choices encode as the strings `"keep-vercel"` / `"keep-github"`
-/// (D10); GitHub adoption carries the user-supplied source as
-/// `{"repo": "owner/repo", "path": "repo-relative/skill/path"}` (D11); Vercel
+/// Arbitration choices encode as the strings `"keep-vercel"` / `"keep-github"`;
+/// GitHub adoption carries the user-supplied source as
+/// `{"repo": "owner/repo", "path": "repo-relative/skill/path"}`; Vercel
 /// adoption carries `{"source": "owner/repo"}` (the skill keeps its name).
 public enum DecisionChoice: Equatable, Sendable {
     case keepVercel
@@ -82,17 +82,17 @@ extension DecisionChoice: Codable {
     }
 }
 
-/// Which official CLI a batch command belongs to (VAL-REPAIR-002).
+/// Which official CLI a batch command belongs to.
 ///
 /// `.file` marks the non-CLI command class: a direct file operation that
-/// writes no ledger (always danger-flagged, VAL-REPAIR-018, ADR-0007).
+/// writes no ledger (always danger-flagged, ADR-0007).
 public enum OwningCLI: String, Codable, Equatable, Sendable {
     case vercel
     case github
     case file
 }
 
-/// Danger flags carried on batch commands (VAL-REPAIR-020, VAL-REPAIR-018).
+/// Danger flags carried on batch commands.
 public enum DangerFlag: String, Codable, Equatable, Sendable {
     /// `npx skills remove` deletes by name across ownership
     /// (collision-matrix scenario 6) — every remove carries this flag.
@@ -107,7 +107,7 @@ public enum DangerFlag: String, Codable, Equatable, Sendable {
 }
 
 /// A skill endangered by a name-based `npx skills remove`, with the ledger
-/// that owns it (VAL-REPAIR-021).
+/// that owns it.
 public struct AtRiskSkill: Codable, Equatable, Sendable {
     public let skill: String
     public let ownership: String
@@ -118,9 +118,9 @@ public struct AtRiskSkill: Codable, Equatable, Sendable {
     }
 }
 
-/// One command in a batch (architecture §7).
+/// One command in a batch.
 public struct BatchCommand: Codable, Equatable, Sendable {
-    /// The complete argument vector, nothing elided (VAL-REPAIR-006).
+    /// The complete argument vector, nothing elided.
     public let argv: [String]
     /// Human-readable rendering of the same invocation.
     public let displayString: String
@@ -131,9 +131,9 @@ public struct BatchCommand: Codable, Equatable, Sendable {
     /// Danger prose, present whenever `dangerFlags` is non-empty.
     public let warning: String?
     /// Cross-ledger skills endangered by a name-based removal, when
-    /// detectable from the scan (VAL-REPAIR-021).
+    /// detectable from the scan.
     public let atRiskSkills: [AtRiskSkill]
-    /// Consequence text for destructive-by-design commands (D10/D11/D22):
+    /// Consequence text for destructive-by-design commands:
     /// the English rendering of `consequenceKind`.
     public let consequence: String?
     /// The structured consequence, for presentation layers that localize.
@@ -190,8 +190,8 @@ public struct BatchCommand: Codable, Equatable, Sendable {
     }
 }
 
-/// A batch's reference to the finding that motivated a decision
-/// (VAL-REPAIR-003): the finding ID plus the D18 fields it round-trips to.
+/// A batch's reference to the finding that motivated a decision:
+/// the finding ID plus the wire fields it round-trips to.
 public struct FindingRef: Codable, Equatable, Sendable {
     public let findingID: String
     public let ruleID: String
@@ -206,7 +206,7 @@ public struct FindingRef: Codable, Equatable, Sendable {
     }
 }
 
-/// The user decision record that produced part of a batch (D12).
+/// The user decision record that produced part of a batch.
 public struct BatchDecision: Codable, Equatable, Sendable {
     public let findingID: String
     public let action: DecisionAction
@@ -219,8 +219,7 @@ public struct BatchDecision: Codable, Equatable, Sendable {
     }
 }
 
-/// Batch lifecycle states (architecture §7). Terminal states are terminal
-/// (VAL-REPAIR-055).
+/// Batch lifecycle states. Terminal states are terminal.
 public enum BatchStatus: String, Codable, Equatable, Sendable, CaseIterable {
     case proposed
     case reviewed
@@ -231,7 +230,7 @@ public enum BatchStatus: String, Codable, Equatable, Sendable, CaseIterable {
 
 }
 
-/// A refused lifecycle transition (VAL-REPAIR-055).
+/// A refused lifecycle transition.
 public enum BatchTransitionError: Error, Equatable, Sendable {
     case illegalTransition(from: BatchStatus, target: BatchStatus)
 
@@ -245,10 +244,10 @@ public enum BatchTransitionError: Error, Equatable, Sendable {
     }
 }
 
-/// A reviewable command batch (architecture §7, D8).
+/// A reviewable command batch.
 ///
 /// `snapshotID` is always present in the wire JSON — explicitly `null` until
-/// execution commits the snapshot (VAL-REPAIR-004) — so the type carries a
+/// execution commits the snapshot — so the type carries a
 /// custom encoder instead of the synthesized omit-when-nil behavior.
 public struct CommandBatch: Equatable, Sendable {
     public let id: String
@@ -278,7 +277,7 @@ public struct CommandBatch: Equatable, Sendable {
         self.status = status
     }
 
-    /// Whether the lifecycle permits `status → target` (architecture §7).
+    /// Whether the lifecycle permits `status → target`.
     public static func allowsTransition(from status: BatchStatus, to target: BatchStatus) -> Bool {
         switch (status, target) {
         case (.proposed, .reviewed),
@@ -347,7 +346,7 @@ extension CommandBatch: Codable {
         try container.encode(findingRefs, forKey: .findingRefs)
         try container.encode(decisions, forKey: .decisions)
         try container.encode(commands, forKey: .commands)
-        // Explicit null when nil (VAL-REPAIR-004), never an omitted key.
+        // Explicit null when nil, never an omitted key.
         try container.encode(snapshotID, forKey: .snapshotID)
         try container.encode(status, forKey: .status)
     }

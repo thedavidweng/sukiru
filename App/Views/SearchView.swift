@@ -1,14 +1,14 @@
 import SukiruCore
 import SwiftUI
 
-/// The Search surface (M5, story 22): query field, live backend picker
+/// The Search surface: query field, live backend picker
 /// (skills.sh API / `gh skill search`), results list, and the per-result
-/// detail column. Selecting a row loads the read-only SKILL.md preview
-/// (story 24); "Install…" opens the installer-choice sheet (story 23) whose
+/// detail column. Selecting a row loads the read-only SKILL.md preview;
+/// "Install…" opens the installer-choice sheet whose
 /// resulting Command Batch lands on the standard Pending Changes flow.
 ///
-/// The backend picker gates on launch capabilities (§8): skills.sh is
-/// always available (a pure network read, zero CLIs — story 27), gh is
+/// The backend picker gates on launch capabilities: skills.sh is
+/// always available (a pure network read, zero CLIs), gh is
 /// offered only when gh ≥ 2.90.0 is live.
 struct SearchView: View {
     @EnvironmentObject private var state: AppState
@@ -66,8 +66,8 @@ struct SearchView: View {
         .padding(.vertical, 10)
     }
 
-    /// Backend picker (story 22). gh is gated on capability: with gh
-    /// unavailable the picker shows only skills.sh (story 26 — GitHub-side
+    /// Backend picker. gh is gated on capability: with gh
+    /// unavailable the picker shows only skills.sh (GitHub-side
     /// features clearly absent, everything else works).
     @ViewBuilder
     private var backendPicker: some View {
@@ -211,7 +211,7 @@ struct SearchView: View {
         }
     }
 
-    /// The read-only SKILL.md preview (story 24): raw text, never rendered
+    /// The read-only SKILL.md preview: raw text, never rendered
     /// (prompt-injection risk is inspected, not trusted). Loads on
     /// selection; unavailable previews render an explicit note, the row
     /// stays installable.

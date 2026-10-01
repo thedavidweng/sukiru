@@ -1,7 +1,7 @@
 import SukiruCore
 import SwiftUI
 
-/// The Health workspace filter bar (VAL-HEALTH-015/047): one option per
+/// The Health workspace filter bar: one option per
 /// report workspace (plus "All"), each showing its finding count so a
 /// zero-finding workspace is visible and selectable. The bar carries the
 /// `sukiru.health.filter.workspace` token; each option button carries
@@ -86,7 +86,7 @@ struct HealthFilterBar: View {
 }
 
 /// Banner shown while the Health surface is focused on one skill by the
-/// Library "show findings" deep-link (D16, VAL-CROSS-005).
+/// Library "show findings" deep-link.
 struct HealthFocusBanner: View {
     @EnvironmentObject private var state: AppState
     let focus: AppState.HealthFocus

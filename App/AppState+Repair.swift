@@ -1,29 +1,28 @@
 import Foundation
 import SukiruCore
 
-/// Repair-surface state derivations and intents (M4, seam B): the Health →
-/// Pending Changes deep-link (D16, VAL-CROSS-006), the per-ownership decision
-/// set with capability gating (§8, VAL-REPAIR-049), batch construction via
-/// `CommandBatchBuilder`, the single batch confirmation (VAL-REPAIR-007),
+/// Repair-surface state derivations and intents: the Health →
+/// Pending Changes deep-link, the per-ownership decision
+/// set with capability gating, batch construction via
+/// `CommandBatchBuilder`, the single batch confirmation,
 /// serialized in-app execution through `CLIExecutor`,
 /// one-click rollback through `Rollback`, and the on-disk batch history that
 /// backs the Snapshots surface.
 ///
 /// Views stay dumb: they render `pendingBatch` / `historyRows` and dispatch
-/// these intents. All writes go through SukiruCore (zero ledger red line).
+/// these intents. All writes go through SukiruCore (Sukiru keeps no ledger of its own).
 @MainActor
 extension AppState {
-    /// A finding the user chose to repair (Health "Fix…"), carrying the D12
+    /// A finding the user chose to repair (Health "Fix…"), carrying the
     /// finding ID minted from the CURRENT report — the same ID space the
-    /// batch builder validates against, so a stale draft fails naturally
-    /// (VAL-REPAIR-056).
+    /// batch builder validates against, so a stale draft fails naturally.
     struct RepairDraft: Equatable {
         let findingID: String
         let finding: Finding
     }
 
-    /// Why a repair decision is unavailable in this environment (§8
-    /// degradation, VAL-REPAIR-049). The view layer renders the hint text.
+    /// Why a repair decision is unavailable in this environment
+    /// (capability degradation). The view layer renders the hint text.
     enum RepairBlock: Equatable {
         /// The decision needs `npx skills`, which is not resolvable.
         case needsNode
@@ -41,9 +40,9 @@ extension AppState {
         var id: String { action.rawValue }
     }
 
-    // MARK: - Health → Pending deep-link (D16, VAL-CROSS-006)
+    // MARK: - Health → Pending deep-link
 
-    /// Starts the repair flow for a finding: mints its D12 ID against the
+    /// Starts the repair flow for a finding: mints its finding ID against the
     /// current report and opens the decision panel in Pending Changes. For a
     /// double-booked finding no batch exists until the arbitration choice is
     /// made — the decision panel enforces that order.
@@ -71,10 +70,10 @@ extension AppState {
         return skill(matching: draft.finding)
     }
 
-    // MARK: - decision set + capability gating (§8, VAL-REPAIR-049)
+    // MARK: - decision set + capability gating
 
     /// The decisions applicable to a finding, ownership-routed exactly like
-    /// `CommandBatchBuilder` (architecture §6): vercel/github get update +
+    /// `CommandBatchBuilder`: vercel/github get update +
     /// cleanup, double-booked gets arbitration only, ownerless (and
     /// ambiguous, attribution voided) get adopt/cleanup/leave. A decision
     /// whose owning CLI is unavailable is `blocked` — never offered as an
@@ -83,8 +82,8 @@ extension AppState {
         guard let skill = skill(matching: finding) else { return [] }
         // Optimistic while the background probes are in flight (nil): the
         // common case is "available", and a genuinely missing CLI still
-        // fails loudly at execution (VAL-REPAIR-039) — but once settled, a
-        // missing capability blocks construction up front (VAL-REPAIR-049).
+        // fails loudly at execution — but once settled, a
+        // missing capability blocks construction up front.
         let npxResolvable = capabilities?.npx.resolvable ?? true
         let ghAvailable = capabilities?.github.available ?? true
         let needsNode: RepairBlock? = npxResolvable ? nil : .needsNode
@@ -93,7 +92,7 @@ extension AppState {
             RepairOption(action: action, blocked: block)
         }
         if skill.ambiguous {
-            // Attribution voided (D23): the ownerless decision set only.
+            // Attribution voided: the ownerless decision set only.
             return [
                 option(.adopt, needsGitHub),
                 option(.cleanup, nil),
@@ -117,7 +116,7 @@ extension AppState {
                 option(.leave, nil)
             ]
         case .doubleBooked:
-            // Both D10 arbitration paths start with an `npx skills` command;
+            // Both arbitration paths start with an `npx skills` command;
             // keep-github additionally needs gh (gated inside the sheet).
             return [
                 option(.arbitrate, needsNode),
@@ -137,7 +136,7 @@ extension AppState {
         }
     }
 
-    /// The Health-row degradation hint (VAL-CROSS-014): non-nil when EVERY
+    /// The Health-row degradation hint: non-nil when EVERY
     /// actionable repair of this finding needs a missing CLI — the row then
     /// says so inline instead of pretending a batch could be built.
     func repairBlockHint(for finding: Finding) -> RepairBlock? {
@@ -160,8 +159,8 @@ extension AppState {
     // MARK: - decision dispatch
 
     /// Dispatches a chosen decision. `arbitrate` and `adopt` open their
-    /// sheets (D10/D11 input collection); `leave` closes the draft without
-    /// creating anything (VAL-REPAIR-019); `update`/`cleanup` build the
+    /// sheets to collect their input; `leave` closes the draft without
+    /// creating anything; `update`/`cleanup` build the
     /// batch immediately.
     func chooseRepair(_ action: DecisionAction) {
         guard let draft = repairDraft else { return }
@@ -169,7 +168,7 @@ extension AppState {
             .first(where: { $0.action == action })?.blocked
         if let blocked {
             // Defense in depth — the button is never rendered, but a menu
-            // shortcut must refuse just as loudly (VAL-REPAIR-049).
+            // shortcut must refuse just as loudly.
             repairBlockNotice = blocked
             return
         }
@@ -181,8 +180,7 @@ extension AppState {
         case .arbitrate:
             showingArbitrationSheet = true
         case .adopt:
-            // D11: both inputs are user-supplied; never prefilled
-            // (VAL-REPAIR-051).
+            // Both inputs are user-supplied; never prefilled.
             adoptRepo = ""
             adoptPath = ""
             showingAdoptSheet = true
@@ -200,12 +198,12 @@ extension AppState {
         showingAdoptSheet = false
     }
 
-    /// D10: the arbitration sheet's explicit surviving-ledger choice. There
+    /// The arbitration sheet's explicit surviving-ledger choice. There
     /// is no default; dismissing the sheet creates no batch.
     func confirmArbitration(keepVercel: Bool) {
         showingArbitrationSheet = false
         if !keepVercel, capabilities?.github.available == false {
-            // keep-github re-anchors through gh (D10); refuse up front when
+            // keep-github re-anchors through gh; refuse up front when
             // gh is unavailable.
             repairBlockNotice = .needsGitHub
             return
@@ -214,7 +212,7 @@ extension AppState {
             action: .arbitrate, choice: keepVercel ? .keepVercel : .keepGitHub)
     }
 
-    /// D11: the adopt sheet's proceed action. Both inputs are required; the
+    /// The adopt sheet's proceed action. Both inputs are required; the
     /// sheet's proceed control is disabled while either is empty, and this
     /// re-guards so a keyboard path cannot slip past.
     func confirmAdoption() {
@@ -240,7 +238,7 @@ extension AppState {
                 fixSkipped = []
                 showingBatchConfirm = true
             } else {
-                // All-leave decisions produce no batch (VAL-REPAIR-019).
+                // All-leave decisions produce no batch.
                 repairDraft = nil
             }
         } catch {
@@ -248,7 +246,7 @@ extension AppState {
         }
     }
 
-    // MARK: - confirm + execute (VAL-REPAIR-007)
+    // MARK: - confirm + execute
 
     /// A batch runs only from the batch confirmation, once per batch, and
     /// never while another mutation is in flight.
@@ -258,7 +256,7 @@ extension AppState {
 
     /// Executes the reviewed batch through the serialized CLIExecutor:
     /// snapshot → commands → post-run diff, off the main actor. On
-    /// completion every surface auto-refreshes (D7 — the app initiated the
+    /// completion every surface auto-refreshes (the app initiated the
     /// mutation, so it rescans without waiting for explicit Refresh).
     func executePendingBatch() {
         guard let batch = pendingBatch, let report, canExecutePendingBatch,
@@ -289,10 +287,10 @@ extension AppState {
         rescan()
     }
 
-    // MARK: - rollback (D9, VAL-REPAIR-034/055)
+    // MARK: - rollback
 
     /// Whether a batch row currently offers rollback: succeeded/failed (not
-    /// already rolled back) and no mutation in flight (VAL-REPAIR-055).
+    /// already rolled back) and no mutation in flight.
     func canRollback(batchID: String) -> Bool {
         guard !batchMutationInFlight else { return false }
         let row = historyRows.first(where: { $0.id == "batch-" + batchID })
@@ -313,8 +311,8 @@ extension AppState {
         rollbackBatch(String(selectedHistoryID.dropFirst("batch-".count)))
     }
 
-    /// One-click rollback (D9): restores the batch's pre-execution state
-    /// from its snapshot, then auto-refreshes every surface (D7). Rollback
+    /// One-click rollback: restores the batch's pre-execution state
+    /// from its snapshot, then auto-refreshes every surface. Rollback
     /// takes the same cross-process execution lock as executions.
     func rollbackBatch(_ batchID: String) {
         guard canRollback(batchID: batchID) else { return }

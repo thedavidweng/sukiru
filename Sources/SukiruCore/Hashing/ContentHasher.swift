@@ -1,7 +1,7 @@
 import CryptoKit
 import Foundation
 
-/// One hashed entry of a skill directory (port-reference §6 `SkillFile`):
+/// One hashed entry of a skill directory:
 /// the `/`-joined path relative to the skill root plus the exact bytes that
 /// participate in the digest. For a symlink the bytes are the literal string
 /// `symlink:"<target>"` (Rust-Debug quoting), never the target's content.
@@ -16,9 +16,7 @@ public struct SkillFile: Equatable, Sendable {
 }
 
 /// Byte-exact reproduction of the upstream `skills` CLI's project-lock
-/// `computedHash` (architecture §4.1, research/hash-algorithm.md §1–§3,
-/// port-reference §6 `collect_project_skill_files` / `hash_files` and traps
-/// #6–#9).
+/// `computedHash` (upstream `collect_project_skill_files` / `hash_files`).
 ///
 /// The algorithm, normatively:
 /// 1. Recursively collect regular files under the skill root. Directories
@@ -30,24 +28,24 @@ public struct SkillFile: Equatable, Sendable {
 ///    string) and is NEVER descended into. Upstream's `collectFiles` EXCLUDES
 ///    symlinks entirely (Node `Dirent.isFile()` is false for links), so a
 ///    symlink-bearing tree can never match a real CLI lock — that divergence
-///    is documented upstream behavior (hash-algorithm.md §4.2), and the
+///    is documented upstream behavior, and the
 ///    archive's deterministic convention is kept so symlinked skills still
 ///    fingerprint stably for Sukiru's own duplicate/divergence detection.
 /// 3. Relative paths join components with `/`; a literal `\` inside a file
 ///    NAME becomes `/` (upstream's `.split("\\").join("/")` quirk, reproduced).
 /// 4. Entries sort by ICU collation —
 ///    `String.compare(_:options:[], range:nil, locale: en_US)`, verified
-///    against Node's `localeCompare` (hash-algorithm.md §3). NEVER
+///    against Node's `localeCompare`. NEVER
 ///    `localizedStandardCompare` (it diverges on numeric names). A bytewise
 ///    tiebreak keeps collation-equal-but-distinct paths deterministic.
 /// 5. SHA-256 over `utf8(relativePath) + fileBytes` per entry, concatenated
 ///    with NO separators, no length prefixes, no trailing delimiter.
 ///
 /// The global lock's `skillFolderHash` is a git tree SHA — passthrough
-/// display only, NEVER recomputed here (hash-algorithm.md §6).
+/// display only, NEVER recomputed here.
 public struct ContentHasher: Sendable {
     /// The collation locale whose ordering matches Node's default
-    /// `localeCompare` on the verified filename sets (hash-algorithm.md §3).
+    /// `localeCompare` on the verified filename sets.
     private static let collationLocale = Locale(identifier: "en_US")
 
     private let fileSystem: FileSystemProbe
@@ -56,7 +54,7 @@ public struct ContentHasher: Sendable {
         self.fileSystem = fileSystem
     }
 
-    // MARK: - Hash family discriminator (hash-algorithm.md §0)
+    // MARK: - Hash family discriminator
 
     /// Upstream's discriminator: a 40-hex value is a git tree SHA (global
     /// `skillFolderHash`, `metadata.github-tree-sha`) — provenance data only,
@@ -180,8 +178,8 @@ public struct ContentHasher: Sendable {
     }
 
     /// The bytes a symlink contributes: `symlink:"<target>"` where the target
-    /// is quoted exactly like Rust's `{:?}` on the `PathBuf` target
-    /// (port-reference trap #7): wrapped in double quotes, with the named
+    /// is quoted exactly like Rust's `{:?}` on the `PathBuf` target:
+    /// wrapped in double quotes, with the named
     /// escapes `\t` `\r` `\n` `\\` `\"` and NUL rendered `\0`. A single quote
     /// is NEVER escaped. Every other scalar that Rust's `is_printable` table
     /// or the Grapheme_Extend property marks non-printable (combining marks,

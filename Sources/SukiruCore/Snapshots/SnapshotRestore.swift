@@ -1,6 +1,6 @@
 import Foundation
 
-/// Snapshot restore (architecture §4.1 SnapshotStore + D9): the rollback
+/// Snapshot restore: the rollback
 /// mechanics behind one-click rollback. Restores ledger bytes and payload
 /// trees, deletes batch-added paths per the manifest diff, and reports every
 /// item honestly. Compensating CLI commands are NOT used in v1.
@@ -14,7 +14,7 @@ extension SnapshotStore {
     /// the Differ pass batch-added placements its post-run rescan found in
     /// host dirs the manifest does not watch; they pass the same safety
     /// filter as swept paths. A failure on one item never aborts the others;
-    /// it is reported as `unrestorable-with-reason` (VAL-REPAIR-036).
+    /// it is reported as `unrestorable-with-reason`.
     @discardableResult
     public func restore(id: String, extraAddedPaths: [String] = []) throws -> RestoreRecord {
         let manifest = try load(id: id)
@@ -254,7 +254,7 @@ extension SnapshotStore {
 
     /// Directory placements without a payload are not the batch's targets;
     /// if one nonetheless vanished during the batch, report it honestly
-    /// instead of silently claiming a clean rollback (VAL-REPAIR-036).
+    /// instead of silently claiming a clean rollback.
     private func reportVanishedPlacements(manifest: SnapshotManifest) -> [RestoreItem] {
         let payloadPaths = Set(manifest.payloads.map(\.path))
         let probe = DefaultFileSystemProbe()

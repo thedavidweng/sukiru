@@ -1,4 +1,4 @@
-# divergence-canonical — expectation (VAL-SCAN-029)
+# divergence-canonical — expectation
 
 Contents: a copy-mode install in `proj/` — canonical `.agents/skills/web-tool`
 plus host copy `.claude/skills/web-tool`, both under ONE v1 lock source

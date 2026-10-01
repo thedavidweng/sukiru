@@ -1,4 +1,4 @@
-# own-per-project — expectation (VAL-SCAN-055)
+# own-per-project — expectation
 
 Contents: the name `shared` in TWO project roots — locked by the project v1
 lock in `p1` (whose computedHash matches disk), present as a bare placement

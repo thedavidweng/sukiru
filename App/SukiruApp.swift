@@ -22,7 +22,7 @@ struct SukiruApp: App {
                 }
             }
             SidebarCommands()
-            // Sidebar switching shortcuts (VAL-CROSS-003). Visible in the View
+            // Sidebar switching shortcuts. Visible in the View
             // menu, so the shortcuts are discoverable in-app.
             CommandGroup(after: .sidebar) {
                 sidebarCommand("Library", surface: .library, key: "1")
@@ -31,7 +31,7 @@ struct SukiruApp: App {
                 sidebarCommand("Snapshots", surface: .snapshots, key: "4")
                 sidebarCommand("Search", surface: .search, key: "5")
                 Divider()
-                // Quick Look in place (VAL-HEALTH-023/030). ⌘Y mirrors the
+                // Quick Look in place. ⌘Y mirrors the
                 // Finder convention; the shortcut label in this menu is the
                 // in-app discoverability surface.
                 Button("Quick Look Selected Skill") {
@@ -39,7 +39,7 @@ struct SukiruApp: App {
                 }
                 .keyboardShortcut("y", modifiers: .command)
                 .disabled(!state.canQuickLookSelectedSkill())
-                // D16 deep-link without a mouse (Full Keyboard Access off
+                // Deep-link without a mouse (Full Keyboard Access off
                 // means Tab never reaches the detail button, but menu items
                 // stay reachable via ⌘⇧F and Help-menu search).
                 Button("Show Findings for Selected Skill") {
@@ -54,7 +54,7 @@ struct SukiruApp: App {
                 }
                 .disabled(state.healthFocus == nil)
                 Divider()
-                // D16 reveal without a mouse (VAL-CROSS-004 keyboard path;
+                // Reveal without a mouse (keyboard path;
                 // Full Keyboard Access off means Tab never reaches the
                 // finding-row buttons, but menu items stay reachable).
                 Button("Reveal Selected Finding in Library") {
@@ -104,7 +104,7 @@ struct SukiruApp: App {
                 }
                 .keyboardShortcut("r", modifiers: .command)
             }
-            // The M5 search/install flow, keyboard-operable (story 29): the
+            // The search/install flow, keyboard-operable: the
             // search field's onSubmit (Return in the field) runs the query;
             // ⌘K re-runs the current query from anywhere, ⌘⇧I opens the
             // installer-choice sheet for the selected result.
@@ -122,7 +122,7 @@ struct SukiruApp: App {
                 .keyboardShortcut("i", modifiers: [.command, .shift])
                 .disabled(state.selectedSearchResult() == nil)
             }
-            // The M4 repair flow, fully keyboard-operable (VAL-CROSS-019).
+            // The repair flow, fully keyboard-operable.
             // Full Keyboard Access off means the Pending/Snapshots buttons
             // are not Tab stops, so every step — fix deep-link, decision,
             // batch confirmation, execute, discard, rollback — has a menu
@@ -171,7 +171,7 @@ struct SukiruApp: App {
 
     /// A repair-decision menu command: enabled only while a draft is open
     /// AND the decision is available (never capability-blocked — a blocked
-    /// decision shows its hint in Pending Changes instead, VAL-REPAIR-049).
+    /// decision shows its hint in Pending Changes instead).
     private func decisionCommand(
         _ title: LocalizedStringKey, action: DecisionAction, key: KeyEquivalent
     ) -> some View {

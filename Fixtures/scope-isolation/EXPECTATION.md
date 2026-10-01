@@ -1,4 +1,4 @@
-# scope-isolation — expectation (VAL-SCAN-005 / VAL-SCAN-007)
+# scope-isolation — expectation
 
 Contents: the name `shared-skill` installed TWICE — user scope
 (`.home/.agents/skills/shared-skill`, claimed by the global v3 lock) and project
@@ -20,4 +20,4 @@ A correct scan MUST:
 - with `--scope user` report ONLY user-scope items, with `--scope project` ONLY
   project-scope items, and with `--scope all` exactly the union;
 - NOT flag `shared-skill` as ambiguous (one placement per scope; the ambiguity
-  rule is per-scope, D1).
+  rule is per-scope).

@@ -1,9 +1,9 @@
 import Foundation
 
-/// HTTP capabilities needed by the Search milestone (stories 22/24).
+/// HTTP capabilities needed by marketplace search and preview.
 ///
 /// The scan/repair core is offline-deterministic by contract; search is the
-/// ONE network surface (§8: "may fetch remote metadata"), and it is
+/// ONE network surface, and it is
 /// strictly read-only — a marketplace query or a raw SKILL.md fetch never
 /// writes anything. The transport is injectable so core tests stay fully
 /// offline (stub transports return fixture payloads).
@@ -50,7 +50,7 @@ public struct URLSessionMarketplaceTransport: MarketplaceTransport {
 }
 
 /// Search/preview failures, always surfaced to the user, never swallowed
-/// (malformed data is a reported issue, never a crash — §2).
+/// (malformed data is a reported issue, never a crash).
 public enum MarketplaceError: Error, Equatable, Sendable {
     case transport(String)
     /// The response body did not decode into the expected shape.

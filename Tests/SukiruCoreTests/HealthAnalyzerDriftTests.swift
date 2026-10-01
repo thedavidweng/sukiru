@@ -4,7 +4,7 @@ import Testing
 @testable import SukiruCore
 
 /// HealthAnalyzer's `vercel-lock-drift` rule: evidence shape and the
-/// recompute-eligibility gate (hash-algorithm.md §4.4), unit-level over
+/// recompute-eligibility gate, unit-level over
 /// TempTree through ScanEngine.
 @Suite("HealthAnalyzer vercel-lock-drift gating")
 struct HealthAnalyzerDriftTests {

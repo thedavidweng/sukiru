@@ -4,7 +4,7 @@ import Testing
 @testable import SukiruCore
 
 /// End-to-end tri-state checks: the real scan engine over the checked-in
-/// scan-area fixtures (VAL-SCAN-012/013/014).
+/// scan-area fixtures.
 @Suite("Host tri-state against checked-in fixtures")
 struct HostFixtureScanTests {
     /// `Fixtures/` at the repository root, located relative to this source file.

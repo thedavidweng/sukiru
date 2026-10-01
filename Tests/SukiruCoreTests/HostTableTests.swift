@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// Guards the embedded 56-host table (architecture §4.1): the generated Swift
+/// Guards the embedded 56-host table: the generated Swift
 /// data must stay byte-for-byte faithful to `research/host-table.json`, which
 /// is the ported source of truth (NOT the ADRs' phantom "116").
 @Suite("Host table integrity")

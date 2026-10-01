@@ -1,6 +1,6 @@
 import Foundation
 
-/// One normalized skill from the Search milestone (stories 22–24).
+/// One normalized skill from marketplace search.
 ///
 /// Both search backends (skills.sh marketplace API and `gh skill search`)
 /// normalize into this one value so the app renders a single row shape and

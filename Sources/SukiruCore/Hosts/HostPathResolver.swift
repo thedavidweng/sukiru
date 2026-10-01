@@ -1,6 +1,6 @@
 /// Resolves host directory paths through the environment-abstraction seam.
 ///
-/// Base resolution (architecture §4.1, port-reference §1):
+/// Base resolution:
 /// - `Home` → `$HOME` (the resolved `SukiruEnvironment.home`).
 /// - `Xdg` → `$XDG_CONFIG_HOME` if set and non-empty, else `$HOME/.config`.
 /// - `Env` → `$<envHomeVar>` if set and non-empty, else `$HOME/<envFallbackDir>`
@@ -58,7 +58,7 @@ public struct HostPathResolver: Sendable {
 
     /// The resolved absolute global skills root for a host.
     ///
-    /// `openclaw` is special-cased (port-reference §1): it probes `.openclaw`,
+    /// `openclaw` is special-cased: it probes `.openclaw`,
     /// `.clawdbot`, `.moltbot` under `$HOME` in order and returns
     /// `<first existing>/skills`, falling back to `.openclaw/skills`.
     public func globalSkillsRoot(for host: HostSpec) -> String {

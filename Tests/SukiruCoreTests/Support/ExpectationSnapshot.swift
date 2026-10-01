@@ -1,7 +1,6 @@
 import Foundation
 
-/// Committed per-fixture scan expectations for the seam-A corpus suite
-/// (feature `seam-a-corpus-validation`). A snapshot is a fixture's normalized
+/// Committed per-fixture scan expectations for the corpus suite. A snapshot is a fixture's normalized
 /// `sukiru-cli scan --format json` stdout: every occurrence of the fixture's
 /// absolute base path is replaced with `<FIXTURE>`, so the committed
 /// expectation is machine-independent while everything else (hashes,

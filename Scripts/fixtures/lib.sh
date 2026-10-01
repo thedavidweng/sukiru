@@ -4,7 +4,7 @@
 # Sourced by generate.sh. Provides the sandbox recipe, the real-$HOME canary,
 # the pinned-CLI wrappers, and the SUKIRU_E2E gate. Never persists GH_TOKEN.
 
-# The pinned skills CLI version for the whole corpus (architecture D17).
+# The pinned skills CLI version for the whole corpus.
 SKILLS_PIN="skills@1.5.26"
 
 # The canary must be captured BEFORE any HOME override. Records the real home
@@ -77,7 +77,7 @@ force_rm_rf() {
 }
 
 # require_e2e — the network gate. Generation that shells real CLIs only runs
-# under SUKIRU_E2E=1 (architecture §9, testing strategy).
+# under SUKIRU_E2E=1.
 require_e2e() {
     if [ "${SUKIRU_E2E:-0}" != "1" ]; then
         cat >&2 <<'EOF'

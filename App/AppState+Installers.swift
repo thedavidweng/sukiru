@@ -1,7 +1,7 @@
 import AppKit
 import SukiruCore
 
-/// The official CLIs Sukiru delegates installs and repairs to (D6), and how
+/// The official CLIs Sukiru delegates installs and repairs to, and how
 /// Settings can install or update them through Homebrew.
 enum InstallerTool: String, CaseIterable, Identifiable {
     case github

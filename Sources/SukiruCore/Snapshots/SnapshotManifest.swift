@@ -1,7 +1,7 @@
 import Foundation
 
-/// The on-disk manifest of one snapshot (architecture §4.1 SnapshotStore,
-/// D9): what existed before the batch ran — both ledger files byte-exact,
+/// The on-disk manifest of one snapshot: what existed before the batch ran —
+/// both ledger files byte-exact,
 /// every placement of the affected scopes, and full payload copies of every
 /// skill directory the batch may touch.
 ///
@@ -22,7 +22,7 @@ public struct SnapshotManifest: Codable, Equatable, Sendable {
     public let createdAt: String
     /// Ledger file records, sorted by path.
     public let ledgers: [LedgerSnapshot]
-    /// The placement manifest (VAL-REPAIR-024), sorted by path.
+    /// The placement manifest, sorted by path.
     public let placements: [PlacementSnapshot]
     /// Full payload copies of touched skill dirs, sorted by original path.
     public let payloads: [PayloadSnapshot]
@@ -33,7 +33,7 @@ public struct SnapshotManifest: Codable, Equatable, Sendable {
     /// including EMPTY ones with zero placements (e.g. an empty
     /// `~/.qoder/skills`). Restore adds them to the empty-ancestor pruning
     /// stop set so a spray rollback never deletes pre-existing containers
-    /// (VAL-REPAIR-034 byte-equality). Sorted.
+    /// (rollback must restore the tree byte-for-byte). Sorted.
     public let preExistingDirectories: [String]
 
     public init(
@@ -79,7 +79,7 @@ public struct LedgerSnapshot: Codable, Equatable, Sendable {
     }
 }
 
-/// One placement of the pre-run scan (VAL-REPAIR-024: path, kind, link
+/// One placement of the pre-run scan (path, kind, link
 /// target, content hash), carried verbatim from the ScanReport.
 public struct PlacementSnapshot: Codable, Equatable, Sendable {
     public let path: String
@@ -97,8 +97,8 @@ public struct PlacementSnapshot: Codable, Equatable, Sendable {
     }
 }
 
-/// A full recursive copy of one skill directory the batch may touch
-/// (VAL-REPAIR-025/050), stored at a snapshot-relative path.
+/// A full recursive copy of one skill directory the batch may touch,
+/// stored at a snapshot-relative path.
 public struct PayloadSnapshot: Codable, Equatable, Sendable {
     /// Absolute path of the skill directory on disk.
     public let path: String
@@ -114,7 +114,7 @@ public struct PayloadSnapshot: Codable, Equatable, Sendable {
     }
 }
 
-/// A snapshot-store listing entry (VAL-REPAIR-026 history correlation).
+/// A snapshot-store listing entry, correlated with batch history.
 public struct SnapshotSummary: Codable, Equatable, Sendable {
     public let id: String
     public let batchID: String
@@ -128,8 +128,8 @@ public struct SnapshotSummary: Codable, Equatable, Sendable {
 }
 
 /// One restored or deleted path in a rollback record. The three categories
-/// are exactly the VAL-REPAIR-036 vocabulary; there is no
-/// "compensated-via-CLI" category in v1 (D9).
+/// are restored, deleted, and unrestorable-with-reason; there is no
+/// "compensated-via-CLI" category in v1.
 public struct RestoreItem: Codable, Equatable, Sendable {
     public enum Category: String, Codable, Equatable, Sendable {
         case restoredFromSnapshot = "restored-from-snapshot"

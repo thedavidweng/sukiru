@@ -5,6 +5,6 @@ overwrites the host copy, silently ERASES the gh frontmatter provenance, and
 writes a vercel lock entry. Scan with SUKIRU_HOME=<CM-5>/.home,
 SUKIRU_ROOTS=<CM-5>/proj.
 
-Expect (VAL-SCAN-046): ownership=vercel; NO github provenance anywhere
+Expect: ownership=vercel; NO github provenance anywhere
 (documents the silent erasure as observable fact); NO double-booked finding
 (the gh ledger claim is gone from disk).

@@ -1,6 +1,6 @@
 import Foundation
 
-/// The installer a new skill lands in (story 23). Each choice routes the
+/// The installer a new skill lands in. Each choice routes the
 /// install through exactly one official CLI → one ledger; the UI must spell
 /// out the consequences before the batch is built.
 public enum InstallerChoice: String, Codable, Equatable, Hashable, Sendable, CaseIterable {
@@ -26,7 +26,7 @@ public enum InstallerChoice: String, Codable, Equatable, Hashable, Sendable, Cas
     }
 
     /// Which capability gate the sheet consults before offering the choice
-    /// (§8 degradation): vercel needs npx resolvable, github needs gh ≥
+    /// (capability degradation): vercel needs npx resolvable, github needs gh ≥
     /// 2.90.0 + the `gh skill` surface.
     public var capabilityGate: CapabilityGate {
         switch self {
@@ -36,14 +36,14 @@ public enum InstallerChoice: String, Codable, Equatable, Hashable, Sendable, Cas
     }
 }
 
-/// Why an installer choice is unavailable in this environment (§8) — the
+/// Why an installer choice is unavailable in this environment — the
 /// install-sheet mirror of AppState.RepairBlock, in core so it is testable.
 public enum CapabilityGate: Equatable, Sendable {
     case needsNode
     case needsGitHub
 }
 
-/// The install target scope (story 23): the global user store
+/// The install target scope: the global user store
 /// (`npx -g` / `gh --scope user`) or one project root (`npx -p` /
 /// `gh --scope project`, cwd = root).
 public enum InstallTarget: Equatable, Hashable, Sendable {
@@ -87,10 +87,9 @@ public enum InstallPlanError: Error, Equatable, Sendable {
     }
 }
 
-/// Builds a reviewable install `CommandBatch` from one search result
-/// (stories 13, 22–24).
+/// Builds a reviewable install `CommandBatch` from one search result.
 ///
-/// The batch reuses the exact seam-B safety model: same `CommandBatch` value
+/// The batch reuses the exact repair safety model: same `CommandBatch` value
 /// (snapshot → per-command review → execute → post-run diff → one-click
 /// rollback). Its `findingRefs` carry a synthetic `new-install` ref naming
 /// the target ownership bucket so the executor's affected scope, ledger
@@ -161,7 +160,7 @@ public struct InstallPlanBuilder: Sendable {
                     skillName: result.name,
                     workspaceID: workspaceID)
             ],
-            // Installs are not D12 finding-fix decisions: the D12 vocabulary
+            // Installs are not finding-fix decisions: the decisions vocabulary
             // (update/adopt/cleanup/leave/arbitrate) stays sealed, and the
             // executor + snapshot/diff/rollback pipeline read only the
             // finding refs for affected-scope derivation.

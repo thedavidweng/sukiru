@@ -1,4 +1,4 @@
-/// Stable `Issue.kind` vocabulary (architecture §5, D18).
+/// Stable `Issue.kind` vocabulary.
 ///
 /// Issue kinds are part of the scan wire surface — validators match on these
 /// strings, so they must never be renamed casually.

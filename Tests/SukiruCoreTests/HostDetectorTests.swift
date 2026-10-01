@@ -3,8 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// Ordered host detection and the load-bearing `marks_installation` rule
-/// (architecture §4.1, port-reference §1–2; validation VAL-SCAN-012/013/014).
+/// Ordered host detection and the load-bearing `marks_installation` rule.
 @Suite("Host detection")
 struct HostDetectorTests {
     private struct Rig {
@@ -156,7 +155,7 @@ struct HostDetectorTests {
     @Test("Empty-marker hosts probe the resolved base and never fall through to $HOME")
     func emptyMarkerNoFallthrough() throws {
         // $HOME has unrelated content but no .claude: claude-code must NOT be
-        // detected (VAL-SCAN-014).
+        // detected.
         let rig = Rig(
             vars: ["SUKIRU_HOME": "/h"],
             files: ["/h/notes.txt"],

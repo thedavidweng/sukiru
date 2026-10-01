@@ -5,7 +5,7 @@ import Testing
 
 /// Snapshot capture: storage location, byte-exact ledgers, placement
 /// manifest, full payload copies of every touched skill dir regardless of
-/// ownership (VAL-REPAIR-024/025/050, architecture §4.1 SnapshotStore + D9).
+/// ownership.
 @Suite("SnapshotStore capture")
 struct SnapshotStoreCaptureTests {
     private typealias Support = SnapshotTestSupport
@@ -103,7 +103,7 @@ struct SnapshotStoreCaptureTests {
         #expect(manifest.payloads.map(\.path) == [orphan])
         // A user-scope-only batch records no project lock candidates.
         #expect(!manifest.ledgers.contains { $0.path.hasPrefix(tree.project.path) })
-        // The global lock is always captured (VAL-REPAIR-024).
+        // The global lock is always captured.
         let globalLock = tree.home.path + "/.agents/.skill-lock.json"
         #expect(manifest.ledgers.contains { $0.path == globalLock })
     }
@@ -160,7 +160,7 @@ struct SnapshotStoreCaptureTests {
 
 /// Retention pruning: at most 10 snapshots survive, oldest pruned first, and
 /// every surviving manifest is complete and parseable at every inspection
-/// point (VAL-REPAIR-026).
+/// point.
 @Suite("SnapshotStore retention")
 struct SnapshotStoreRetentionTests {
     private typealias Support = SnapshotTestSupport
@@ -197,7 +197,7 @@ struct SnapshotStoreRetentionTests {
     }
 }
 
-/// Path-traversal-safe load (VAL-REPAIR-024 store integrity): hostile ids
+/// Path-traversal-safe load (store integrity): hostile ids
 /// and hostile stored paths inside a manifest are rejected, never resolved.
 @Suite("SnapshotStore load safety")
 struct SnapshotStoreLoadSafetyTests {

@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// Seam-A end-to-end corpus validation (feature `seam-a-corpus-validation`).
+/// End-to-end scan validation over the committed fixture corpus.
 ///
 /// Every FIX-* and CM-* fixture tree — plus `scope-isolation` — is scanned
 /// through the REAL `sukiru-cli` binary and its full report is compared
@@ -21,7 +21,7 @@ import Testing
 @Suite("Corpus expectation snapshots")
 struct CorpusExpectationTests {
     /// The parameterized corpus: every checked-in FIX-*/CM-* directory plus
-    /// scope-isolation (the VAL-SCAN-007 tree). Discovered from disk so a new
+    /// scope-isolation. Discovered from disk so a new
     /// fixture without a recorded snapshot fails loudly.
     static let corpus: [String] = discoverCorpus()
 
@@ -89,9 +89,9 @@ struct CorpusExpectationTests {
         #expect(!ExpectationSnapshot.recordMode(environment: [:]))
     }
 
-    // MARK: VAL-SCAN-041 — benign trees produce zero actionable findings
+    // MARK: Benign trees produce zero actionable findings
 
-    @Test("VAL-SCAN-041a: FIX-EMPTY scans clean — no content, no findings, no issues")
+    @Test("FIX-EMPTY scans clean — no content, no findings, no issues")
     func emptyTreeIsBenign() throws {
         let report = try CLIRunner.scanReport("FIX-EMPTY")
         #expect(report.schemaVersion == ScanReport.currentSchemaVersion)
@@ -101,7 +101,7 @@ struct CorpusExpectationTests {
         #expect(report.issues.isEmpty)
     }
 
-    @Test("VAL-SCAN-041b: FIX-CLEAN (one physical placement per name) yields zero findings")
+    @Test("FIX-CLEAN (one physical placement per name) yields zero findings")
     func cleanTreeHasNoFindings() throws {
         let report = try CLIRunner.scanReport("FIX-CLEAN")
         #expect(!report.skills.isEmpty)
@@ -109,9 +109,9 @@ struct CorpusExpectationTests {
         #expect(report.issues.isEmpty)
     }
 
-    // MARK: VAL-SCAN-042 — garbage-everything robustness
+    // MARK: Garbage-everything robustness
 
-    @Test("VAL-SCAN-042: every statically-planted defect is reported, exit 0")
+    @Test("Every statically-planted defect is reported, exit 0")
     func garbageCoverage() throws {
         let report = try CLIRunner.scanReport("FIX-GARBAGE")
 
@@ -145,11 +145,11 @@ struct CorpusExpectationTests {
         #expect(!report.findings(rule: "broken-symlink").isEmpty)
     }
 
-    @Test("VAL-SCAN-042: an unreadable directory is an issue and suppresses nothing")
+    @Test("An unreadable directory is an issue and suppresses nothing")
     func garbageUnreadableDirectory() throws {
         // Caveat: chmod-000 is ineffective when tests run as ROOT (some CI
         // containers) — the directory stays readable and the locked-dir
-        // assertions below would fail. The mission gate is a macOS developer
+        // assertions below would fail. The required gate is a macOS developer
         // machine, where this is a non-issue.
         let fileManager = FileManager.default
         let sandbox = try TempTree()

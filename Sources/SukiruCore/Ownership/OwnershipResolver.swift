@@ -3,7 +3,7 @@
 ///
 /// The bucket key is `user` for the global (v3) lock and `project:<root>` for
 /// each project (v1) lock — resolution is independent per project root and
-/// per user scope, with no cross-scope leakage (architecture §6, VAL-SCAN-055).
+/// per user scope, with no cross-scope leakage.
 public struct ScopeLockClaim: Equatable, Sendable {
     /// The ownership bucket this lock governs (`user` / `project:<root>`).
     public let scopeGroup: String
@@ -20,7 +20,7 @@ public struct ScopeLockClaim: Equatable, Sendable {
     }
 }
 
-/// The resolver's full output: the D18 skills plus the findings ownership
+/// The resolver's full output: the wire-format skills plus the findings ownership
 /// resolution itself raises.
 public struct OwnershipResolution: Equatable, Sendable {
     /// Resolved logical skills, in `SkillInventory` group order.
@@ -36,17 +36,16 @@ public struct OwnershipResolution: Equatable, Sendable {
     }
 }
 
-/// Resolves per-skill ownership from the two ledgers plus disk facts
-/// (architecture §6, D1).
+/// Resolves per-skill ownership from the two ledgers plus disk facts.
 ///
 /// For skill name N in scope S: `v` = N has an entry in S's Vercel lock;
 /// `g` = any placement of N in S carries `metadata.github-repo`.
 /// v∧g → double-booked, v∧¬g → vercel, ¬v∧g → github, ¬v∧¬g → ownerless.
-/// When N is ambiguous (the D23 refined trigger — the scope's UNEXPLAINED
+/// When N is ambiguous (the refined trigger — the scope's UNEXPLAINED
 /// placements hold ≥2 distinct content hashes, computed by `SkillInventory`
 /// after alias collapse), attribution is VOIDED: ownership reports ownerless
 /// with `ambiguous: true`, never a guess — while the ledger claims stay
-/// surfaced in `provenance` as non-authoritative data (VAL-SCAN-018).
+/// surfaced in `provenance` as non-authoritative data.
 ///
 /// The resolver also emits the findings only ownership data can produce:
 /// `ambiguous-name` (warning, one placementPath per colliding directory),
@@ -99,7 +98,7 @@ public struct OwnershipResolver: Sendable {
         return OwnershipResolution(skills: skills, findings: findings)
     }
 
-    /// The §6 truth table. Ambiguity voids attribution first (D1): an
+    /// The ownership truth table. Ambiguity voids attribution first: an
     /// ambiguous name is treated as ownerless, never guessed. An agent's own
     /// ledger only applies when neither installer ledger claims the name.
     static func ownership(
@@ -149,7 +148,7 @@ public struct OwnershipResolver: Sendable {
 
     /// `ambiguous-name` (warning): one placementPath per DISTINCT canonical
     /// path, the first path-sorted member standing in for each. The TRIGGER
-    /// is the D23 unexplained-hash partition (computed by `SkillInventory`),
+    /// is the unexplained-hash partition (computed by `SkillInventory`),
     /// but the evidence deliberately lists EVERY physical location of the
     /// name — including lock- or gh-explained copies — because it answers
     /// "where does this name live", not "which copies collided".

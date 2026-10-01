@@ -89,7 +89,7 @@ public enum CLIParser {
         }
     }
 
-    /// `rollback --batch <batch-id> [--format json]` (D9 one-click
+    /// `rollback --batch <batch-id> [--format json]` (one-click
     /// rollback). `--batch` is required and names the executed batch whose
     /// execution record + snapshot drive the restore.
     private static func parseRollback(_ args: [String]) -> Result<CLICommand, CLIParseError> {
@@ -157,10 +157,10 @@ public enum CLIParser {
 
     /// `batch --decisions <file.json> [--dry-run | --execute [--reviewed]
     /// [--command-timeout <seconds>]] [--root <path>]… [--scope …]
-    /// [--format json]` (D12). `--decisions` is required. `--dry-run`
+    /// [--format json]`. `--decisions` is required. `--dry-run`
     /// renders the reviewable batch and writes nothing; `--execute` runs the
     /// snapshot/execute pipeline and REFUSES unless `--reviewed`
-    /// acknowledges the review (VAL-REPAIR-007).
+    /// acknowledges the review.
     private static func parseBatch(_ args: [String]) -> Result<CLICommand, CLIParseError> {
         var options = BatchOptions()
         var index = 0

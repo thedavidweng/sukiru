@@ -4,17 +4,17 @@ import Testing
 @testable import SukiruCore
 
 /// End-to-end safety guarantees of the `sukiru-cli` scan surface
-/// (architecture D4/D5, §2 invariants): exit codes, `--root` precedence,
+/// exit codes, `--root` precedence,
 /// subprocess-freedom, and strict read-only behavior, exercised against the
 /// REAL built executable with an explicit, hermetic environment.
 @Suite("sukiru-cli safety guarantees")
 struct CLIGuaranteeTests {
-    private let d18TopLevelKeys: Set<String> =
+    private let reportTopLevelKeys: Set<String> =
         ["schemaVersion", "workspaces", "skills", "findings", "issues"]
 
-    // MARK: VAL-SCAN-048 — exit codes (D4)
+    // MARK: Exit codes
 
-    @Test("VAL-SCAN-048: exit 2 only when SUKIRU_HOME is set but nonexistent")
+    @Test("Exit 2 only when SUKIRU_HOME is set but nonexistent")
     func exitCode2ForMissingHome() throws {
         let missing = "/tmp/sukiru-nonexistent-\(UUID().uuidString)"
         let env = ["PATH": "/usr/bin:/bin", "SUKIRU_HOME": missing]
@@ -24,12 +24,12 @@ struct CLIGuaranteeTests {
         #expect(scan.stdout.isEmpty)
         #expect(try scan.jsonObject() == nil)
 
-        // D4 applies to every command.
+        // The exit-code contract applies to every command.
         let capabilities = try CLIRunner.run(["capabilities"], environment: env)
         #expect(capabilities.exitCode == 2)
     }
 
-    @Test("VAL-SCAN-048: unknown flag exits 1; garbage fixtures still exit 0")
+    @Test("Unknown flag exits 1; garbage fixtures still exit 0")
     func exitCodesUsageAndGarbage() throws {
         let inputs = FixturePaths.homeAndRoots("FIX-EMPTY")
         let env = CLIRunner.fixtureEnvironment(home: inputs.home)
@@ -45,9 +45,9 @@ struct CLIGuaranteeTests {
         #expect(try garbage.jsonObject() != nil)
     }
 
-    // MARK: VAL-SCAN-049 — --root replaces SUKIRU_ROOTS (D5)
+    // MARK: Root flag replaces SUKIRU_ROOTS
 
-    @Test("VAL-SCAN-049: --root replaces SUKIRU_ROOTS, never merges")
+    @Test("--root replaces SUKIRU_ROOTS, never merges")
     func rootReplacesRoots() throws {
         let perProject = FixturePaths.homeAndRoots("own-per-project")
         let rootA = perProject.roots[0]
@@ -84,9 +84,9 @@ struct CLIGuaranteeTests {
         return workspaces.compactMap { $0["id"] as? String }
     }
 
-    // MARK: VAL-SCAN-050 — zero subprocesses during scan (D2)
+    // MARK: Zero subprocesses during scan
 
-    @Test("VAL-SCAN-050: scan spawns zero subprocesses (PATH logging shims stay silent)")
+    @Test("Scan spawns zero subprocesses (PATH logging shims stay silent)")
     func zeroSubprocesses() throws {
         let shims = try TempTree()
         let log = shims.path + "/invocations.log"
@@ -113,14 +113,14 @@ struct CLIGuaranteeTests {
         let invocations = (try? String(contentsOfFile: log, encoding: .utf8)) ?? ""
         #expect(invocations.isEmpty, "scan spawned subprocesses: \(invocations)")
 
-        // D2: the report carries no capability/version fields — D18 keys only.
+        // The report carries no capability/version fields — report keys only.
         let object = try #require(try result.jsonObject())
-        #expect(Set(object.keys) == d18TopLevelKeys)
+        #expect(Set(object.keys) == reportTopLevelKeys)
     }
 
-    // MARK: VAL-SCAN-051 — strictly read-only
+    // MARK: Strictly read-only
 
-    @Test("VAL-SCAN-051: scan and capabilities leave the fixture tree byte-identical")
+    @Test("Scan and capabilities leave the fixture tree byte-identical")
     func readOnly() throws {
         let fixture = FixturePaths.tree("scope-isolation")
         let inputs = FixturePaths.homeAndRoots("scope-isolation")
@@ -138,7 +138,7 @@ struct CLIGuaranteeTests {
         #expect(before == after)
     }
 
-    @Test("VAL-SCAN-051: read-only holds while capabilities really spawns probe subprocesses")
+    @Test("Read-only holds while capabilities really spawns probe subprocesses")
     func readOnlyWithLiveProbeStubs() throws {
         // The base test's PATH holds no gh/npx stubs, so its capabilities run
         // spawns nothing. This variant composes the cap-* stub bins so the

@@ -3,10 +3,9 @@ import Testing
 
 @testable import SukiruCore
 
-/// Smoke test for the checked-in fixture corpus (feature `fixture-corpus`,
-/// architecture D17).
+/// Smoke test for the checked-in fixture corpus.
 ///
-/// It guarantees two things the rest of the seam-A milestone depends on:
+/// It guarantees two things the rest of the scan engine tests depend on:
 /// every required hand-built tree is present with an expectation note, and the
 /// read engine loads every fixture directory without throwing, producing a
 /// schema-valid report. As the engine grows past the skeleton, this becomes a
@@ -22,7 +21,7 @@ struct FixtureCorpusTests {
         .deletingLastPathComponent()  // repo root
         .appendingPathComponent("Fixtures", isDirectory: true)
 
-    /// Hand-built trees that MUST be checked in (this feature's scope + D17).
+    /// Hand-built trees that MUST be checked in.
     /// Newline-listed to stay within the line-length gate without multi-line
     /// collection-literal trailing-comma churn.
     static let requiredHandBuilt: [String] =

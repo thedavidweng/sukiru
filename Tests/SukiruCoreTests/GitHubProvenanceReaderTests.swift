@@ -4,7 +4,7 @@ import Testing
 @testable import SukiruCore
 
 /// GitHub provenance extraction from `metadata.github-*` frontmatter keys
-/// (architecture §4.1): `github-repo` presence IS the gh-ledger claim; the pin
+/// `github-repo` presence IS the gh-ledger claim; the pin
 /// state is tri-state where an absent key means unpinned.
 @Suite("GitHub provenance reader")
 struct GitHubProvenanceReaderTests {

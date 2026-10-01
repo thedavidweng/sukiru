@@ -3,8 +3,8 @@ import Testing
 
 @testable import SukiruCore
 
-/// Capability result caching (architecture §4.1/§8: detection never blocks
-/// anything; results are cached). The app queries capabilities repeatedly
+/// Capability result caching (detection never blocks anything; results are
+/// cached). The app queries capabilities repeatedly
 /// (Settings panel, inline hints); the cache guarantees those queries never
 /// re-probe subprocesses until explicitly refreshed.
 @Suite("Capability caching")

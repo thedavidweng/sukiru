@@ -1,4 +1,4 @@
-# cap-gh-ok — expectation (VAL-SCAN-002 / VAL-SCAN-037)
+# cap-gh-ok — expectation
 
 Contents: `bin/gh` — a stub reporting `gh version 2.100.0 (2026-01-15)` whose
 `gh skill --help` exits 0. No npx stub here (compose with `cap-npx-ok`).

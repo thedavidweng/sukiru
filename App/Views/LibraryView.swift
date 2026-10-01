@@ -1,13 +1,13 @@
 import SukiruCore
 import SwiftUI
 
-/// The Library surface (§4.3): every skill every host sees, grouped per
+/// The Library surface: every skill every host sees, grouped per
 /// workspace with project vs user scope separated. Rows carry
 /// `sukiru.library.skillRow.<name>` labels and ownership badges
 /// (`sukiru.library.badge.ownership.<name>`); internal skills carry
 /// `sukiru.library.badge.internal.<name>`.
 ///
-/// Scrolling correctness (VAL-HEALTH-043) comes from `List`: all rows are
+/// Scrolling correctness comes from `List`: all rows are
 /// exposed in the AX tree and pointer/keyboard scrolling reaches them.
 struct LibraryView: View {
     @EnvironmentObject private var state: AppState
@@ -152,8 +152,7 @@ struct LibraryView: View {
     private func skillList(_ report: ScanReport) -> some View {
         ScrollViewReader { proxy in
             skillListContent(report)
-                // The Health → Library deep-link (D16, VAL-HEALTH-038,
-                // VAL-CROSS-004) must land with the implicated row visible,
+                // The Health → Library deep-link must land with the implicated row visible,
                 // not merely selected somewhere offscreen.
                 .onChange(of: state.selectedSkillID) { _, newSelection in
                     if let newSelection {

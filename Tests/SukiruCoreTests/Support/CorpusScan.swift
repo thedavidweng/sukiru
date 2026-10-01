@@ -3,10 +3,10 @@ import Testing
 
 @testable import SukiruCore
 
-/// Shared helpers for the seam-A corpus suites: decode a fixture's scan into
+/// Shared helpers for the corpus suites: decode a fixture's scan into
 /// the typed `ScanReport` and query findings without JSONSerialization noise.
 extension CLIRunner {
-    /// Runs `scan --format json` against a fixture and decodes the D18
+    /// Runs `scan --format json` against a fixture and decodes the
     /// report. A non-zero exit fails the test with the CLI's stderr.
     static func scanReport(
         _ fixture: String,

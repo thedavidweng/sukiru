@@ -3,10 +3,10 @@ import Foundation
 /// Errors raised BEFORE any command of the batch runs.
 public enum ExecutionError: Error, Equatable, Sendable {
     /// The batch was never reviewed — execution is refused with no
-    /// snapshot, no subprocess, and no writes (VAL-REPAIR-007).
+    /// snapshot, no subprocess, and no writes.
     case notReviewed(current: BatchStatus)
     /// Another batch execution holds the cross-process lock
-    /// (VAL-REPAIR-027: two batches never execute concurrently).
+    /// (two batches never execute concurrently).
     case busy(lockPath: String)
 
     /// Human-readable refusal.
@@ -34,28 +34,26 @@ public struct ExecutionResult: Equatable, Sendable {
     }
 }
 
-/// The seam-B serialized subprocess runner (architecture §4.1/§10).
+/// The serialized subprocess runner for Command Batches.
 ///
 /// Invariants enforced here:
 /// - **Global serialization**: a process-wide gate plus a cross-process
 ///   mkdir lock — `npx`/`bunx` share one global install cache and race on
-///   cold start (VAL-REPAIR-027).
-/// - **Review gate**: only `reviewed` batches execute (VAL-REPAIR-007).
-/// - **Snapshot before the first command**, always (VAL-REPAIR-023).
+///   cold start.
+/// - **Review gate**: only `reviewed` batches execute.
+/// - **Snapshot before the first command**, always.
 /// - **stdout/stderr to FILES, never pipes** (the 65 536-byte `npx --json`
-///   pipe-truncation trap, VAL-REPAIR-030); stdin is `/dev/null` (no TTY).
+///   pipe-truncation trap); stdin is `/dev/null` (no TTY).
 /// - **Environment contract**: `CI=1`, `SKILLS_TELEMETRY=0`, `HOME` is
-///   always the Sukiru-resolved home (= `SUKIRU_HOME` in sandboxes,
-///   VAL-REPAIR-053); `GH_TOKEN` is stripped from every child and injected
-///   only into gh (github-ledger) commands, never persisted
-///   (VAL-REPAIR-054).
+///   always the Sukiru-resolved home (= `SUKIRU_HOME` in sandboxes);
+///   `GH_TOKEN` is stripped from every child and injected
+///   only into gh (github-ledger) commands, never persisted.
 /// - **Stop-on-first-failure** with per-command status, exit code, captured
-///   output files, and duration (VAL-REPAIR-028/029).
-/// - **Per-command timeout** terminating the child's whole process group
-///   (VAL-REPAIR-040).
+///   output files, and duration.
+/// - **Per-command timeout** terminating the child's whole process group.
 /// - **Workspace boundary**: direct file operations (the ownerless-cleanup
 ///   exception) are preflighted against the batch's touched workspace roots
-///   and refused out-of-bounds (VAL-REPAIR-038).
+///   and refused out-of-bounds.
 public struct CLIExecutor: Sendable {
     /// Default per-command timeout: far above the ~4.7 s cold `npx`
     /// resolution and realistic install times.
@@ -117,7 +115,7 @@ public struct CLIExecutor: Sendable {
 
         // Snapshot BEFORE the first command runs — even when the first
         // command fails immediately, the snapshot and its ledger checksums
-        // exist (VAL-REPAIR-023); capture is all-or-nothing.
+        // exist; capture is all-or-nothing.
         let store = SnapshotStore(environment: environment)
         let manifest = try store.capture(batch: batch, report: report)
 
@@ -127,10 +125,10 @@ public struct CLIExecutor: Sendable {
             bounds: workspaceBounds(batch: batch, report: report),
             recordDirectory: recordDirectory)
 
-        // Post-run diff (architecture §4.1 Differ): rescan the batch's
+        // Post-run diff: rescan the batch's
         // affected roots and measure against the pre-run scan + snapshot.
         // Computed for succeeded AND failed batches alike — a failed batch's
-        // diff documents the partial state (VAL-REPAIR-042).
+        // diff documents the partial state.
         let affected = AffectedScope(
             workspaceIDs: batch.findingRefs.map(\.workspaceID))
         let postReport = try ScanEngine(environment: environment).scan(affected.scanRequest)
@@ -153,8 +151,8 @@ public struct CLIExecutor: Sendable {
         return ExecutionResult(batch: finalBatch, record: record)
     }
 
-    /// Runs every command in order, stopping on the first failure
-    /// (VAL-REPAIR-028); unreached commands are recorded `.notRun`.
+    /// Runs every command in order, stopping on the first failure;
+    /// unreached commands are recorded `.notRun`.
     private func runCommands(
         _ commands: [BatchCommand], bounds: [String], recordDirectory: String
     ) -> [CommandExecution] {
@@ -219,7 +217,7 @@ public struct CLIExecutor: Sendable {
 
     // MARK: - environment + PATH
 
-    /// The child environment (architecture §10, VAL-REPAIR-031/053/054).
+    /// The child environment.
     func childEnvironment(for command: BatchCommand) -> [String: String] {
         var environment = ProcessInfo.processInfo.environment
         // GH_TOKEN is stripped from EVERY child and re-injected only into

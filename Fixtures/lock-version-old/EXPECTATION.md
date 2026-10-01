@@ -1,4 +1,4 @@
-# lock-version-old — expectation (VAL-SCAN-031)
+# lock-version-old — expectation
 
 Contents: `proj/skills-lock.json` has `version: 0`, BELOW the supported
 project-lock v1, with an entry claiming the on-disk `old-tool`.

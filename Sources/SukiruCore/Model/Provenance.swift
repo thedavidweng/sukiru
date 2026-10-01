@@ -1,7 +1,7 @@
-/// Per-ledger provenance surfaced on a skill (architecture §6, D18).
+/// Per-ledger provenance surfaced on a skill.
 ///
 /// Provenance is DATA, not a verdict: an ambiguous name keeps its ledger
-/// claims visible here while `ownership` stays voided (VAL-SCAN-018).
+/// claims visible here while `ownership` stays voided.
 public struct SkillProvenance: Codable, Equatable, Sendable {
     /// The Vercel lock claim, when the skill's scope lock carries its name.
     public let vercel: VercelProvenance?
@@ -14,9 +14,9 @@ public struct SkillProvenance: Codable, Equatable, Sendable {
     }
 }
 
-/// The Vercel lock entry as surfaced on a skill (D18).
+/// The Vercel lock entry as surfaced on a skill.
 ///
-/// The hash key is scope-correct (VAL-SCAN-019): a PROJECT lock entry exposes
+/// The hash key is scope-correct: a PROJECT lock entry exposes
 /// `computedHash` and never `skillFolderHash`; a GLOBAL entry exposes
 /// `skillFolderHash` and never `computedHash`. Nil optionals are omitted from
 /// the wire JSON entirely (synthesized Codable drops them).
@@ -32,7 +32,7 @@ public struct VercelProvenance: Codable, Equatable, Sendable {
     public let skillFolderHash: String?
     public let installedAt: String?
     public let updatedAt: String?
-    /// Unknown entry-level keys, preserved verbatim (VAL-SCAN-022). Nil when
+    /// Unknown entry-level keys, preserved verbatim. Nil when
     /// the entry carries none, so the key is omitted from the wire JSON.
     public let extras: [String: JSONValue]?
 

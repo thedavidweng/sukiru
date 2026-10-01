@@ -3,15 +3,15 @@ import Foundation
 import Quartz
 import SukiruCore
 
-/// In-place Quick Look of a `SKILL.md` via the shared `QLPreviewPanel`
-/// (architecture §4.3: "Quick Look of any SKILL.md in place"). The panel is
+/// In-place Quick Look of a `SKILL.md` via the shared `QLPreviewPanel`.
+/// The panel is
 /// app-owned UI chrome — previewing is a pure read of a file the scan already
 /// inventoried, so this lives in the app layer, not SukiruCore.
 ///
 /// One shared panel: previewing another skill reloads the same panel in
 /// place; dismissing it (Esc / close button) returns focus to the app window
 /// with Library selection untouched (selection state lives in `AppState`,
-/// which the panel never mutates — VAL-HEALTH-023).
+/// which the panel never mutates).
 ///
 /// `QLPreviewPanel` always talks to its data source on the main thread, so
 /// the item storage is `nonisolated(unsafe)` rather than actor-hopping.
@@ -23,7 +23,7 @@ final class QuickLookPreviewer: NSObject, QLPreviewPanelDataSource, QLPreviewPan
 
     /// Opens (or retargets) the Quick Look panel on the given file. ⌘Y is a
     /// TOGGLE: calling this while the panel is visible closes it instead of
-    /// retargeting (VAL-CROSS-019 keyboard journey).
+    /// retargeting, so one shortcut both opens and dismisses it.
     @MainActor func preview(fileAt url: URL) {
         if let panel = QLPreviewPanel.shared(), panel.isVisible {
             panel.close()
@@ -40,8 +40,8 @@ final class QuickLookPreviewer: NSObject, QLPreviewPanelDataSource, QLPreviewPan
         // straight back out.
         panel.reloadData()
         // QLPreviewPanel opens at a floating window level, which drops it
-        // out of layer-0 window listings (computer-use evidence for
-        // VAL-HEALTH-023 reads the window list). Demote to normal level once
+        // out of layer-0 window listings (computer-use verification
+        // reads the window list). Demote to normal level once
         // open so the panel is enumerable like any other window.
         panel.level = .normal
         panel.title = String(localized: "quicklook.title \(url.lastPathComponent)")
@@ -51,7 +51,7 @@ final class QuickLookPreviewer: NSObject, QLPreviewPanelDataSource, QLPreviewPan
     /// whenever the panel is closed).
     private var escapeMonitor: Any?
 
-    /// VAL-CROSS-019: keyboard-only Quick Look dismiss. QLPreviewPanel does
+    /// Keyboard-only Quick Look dismiss. QLPreviewPanel does
     /// not close on Escape by itself (only its close button works), so a
     /// local key-down monitor closes it before the event is dispatched. The
     /// panel belongs to this app, so its key events pass through the local

@@ -1,4 +1,4 @@
-/// The sole fatal environment condition (architecture D4): the process exits
+/// The sole fatal environment condition: the process exits
 /// with code 2 when this is present.
 public enum FatalEnvironmentProblem: Error, Equatable, Sendable {
     /// `SUKIRU_HOME` was set to a path that does not exist.
@@ -28,7 +28,7 @@ public struct SukiruEnvironment: Equatable, Sendable {
     /// captured ONLY when `SUKIRU_HOME` is NOT overriding home. Under an
     /// override (tests and validation), this is empty so that nothing outside
     /// the fixture is read — the sole permitted external probe is `/etc/codex`
-    /// existence (architecture §4.2, VAL-SCAN-004 hermeticity).
+    /// existence, which keeps fixture scans hermetic.
     private let externalEnv: [String: String]
 
     public static let sukiruHomeKey = "SUKIRU_HOME"
@@ -85,7 +85,7 @@ public struct SukiruEnvironment: Equatable, Sendable {
         externalEnv[key]
     }
 
-    /// Returns the fatal environment problem (architecture D4), if any: an
+    /// Returns the fatal environment problem, if any: an
     /// overridden `SUKIRU_HOME` pointing at a path that does not exist.
     public func fatalProblem(fileSystem: FileSystemProbe) -> FatalEnvironmentProblem? {
         guard homeIsOverridden, !fileSystem.exists(atPath: home) else {

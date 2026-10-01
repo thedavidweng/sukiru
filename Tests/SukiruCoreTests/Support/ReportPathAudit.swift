@@ -1,6 +1,6 @@
 import Foundation
 
-/// Hermeticity audit support (VAL-SCAN-004): collects every absolute path
+/// Hermeticity audit support: collects every absolute path
 /// string appearing anywhere in a parsed JSON tree and checks each one lies
 /// under an allowed root.
 enum ReportPathAudit {

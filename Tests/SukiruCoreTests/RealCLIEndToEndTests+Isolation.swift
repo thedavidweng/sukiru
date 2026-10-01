@@ -3,16 +3,16 @@ import Testing
 
 @testable import SukiruCore
 
-/// Seam-B e2e, continued: adopt provenance, ownerless cleanup, and the
-/// VAL-CROSS-018 cross-scope isolation loop. Same suite struct as
-/// `SeamBEndToEndTests.swift`, so the `.serialized` trait and the
+/// Real-CLI e2e, continued: adopt provenance, ownerless cleanup, and the
+/// cross-scope isolation loop. Same suite struct as
+/// `RealCLIEndToEndTests.swift`, so the `.serialized` trait and the
 /// SUKIRU_E2E gate cover these tests too.
-extension SeamBEndToEndTests {
-    // MARK: - VAL-REPAIR-045: adopt shows github provenance after rescan
+extension RealCLIEndToEndTests {
+    // MARK: - Adopt shows github provenance after rescan
 
     @Test(
-        "VAL-REPAIR-045: adopt on FIX-ADOPT → github provenance on disk, finding gone",
-        .enabled(if: SeamBE2ESupport.gitHubToken != nil, "GH_TOKEN required for gh skill install")
+        "Adopt on FIX-ADOPT → github provenance on disk, finding gone",
+        .enabled(if: RealCLIE2ESupport.gitHubToken != nil, "GH_TOKEN required for gh skill install")
     )
     func adoptShowsGitHubProvenance() throws {
         let tree = try TempTree()
@@ -50,7 +50,7 @@ extension SeamBEndToEndTests {
         // Note: `dangerous-removal-surface` legitimately PERSISTS — it
         // advises on every name the vercel ledger does not claim, and a
         // github-adopted skill is still inside `npx skills remove`'s blast
-        // radius (HealthAnalyzer). VAL-REPAIR-045 only requires the
+        // radius (HealthAnalyzer). Adopt only requires the
         // files-without-lock finding to clear.
 
         // Contract-verified frontmatter formats: repo URL without `.git`,
@@ -66,9 +66,9 @@ extension SeamBEndToEndTests {
         try canary.verifyUnchanged()
     }
 
-    // MARK: - VAL-REPAIR-043: ownerless cleanup makes the finding disappear
+    // MARK: - Ownerless cleanup makes the finding disappear
 
-    @Test("VAL-REPAIR-043: ownerless cleanup on FIX-FILES-NO-LOCK clears the finding on rescan")
+    @Test("Ownerless cleanup on FIX-FILES-NO-LOCK clears the finding on rescan")
     func ownerlessCleanupMakesFindingDisappear() throws {
         let tree = try TempTree()
         let copy = try Batch.copyFixture("FIX-FILES-NO-LOCK", into: tree)
@@ -90,9 +90,9 @@ extension SeamBEndToEndTests {
         try canary.verifyUnchanged()
     }
 
-    // MARK: - VAL-CROSS-018: cross-scope action isolation
+    // MARK: - Cross-scope action isolation
 
-    @Test("VAL-CROSS-018: project-scope cleanup on FIX-SCOPES-CROSS leaves user scope untouched")
+    @Test("Project-scope cleanup on FIX-SCOPES-CROSS leaves user scope untouched")
     func crossScopeActionIsolation() throws {
         let tree = try TempTree()
         let copy = try Batch.copyFixture("FIX-SCOPES-CROSS", into: tree)

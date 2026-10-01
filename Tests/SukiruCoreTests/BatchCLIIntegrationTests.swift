@@ -57,13 +57,12 @@ enum BatchCLITestSupport {
     }
 }
 
-/// Dry-run rendering of every decision type (architecture D12,
-/// VAL-REPAIR-001…005, 010, 014, 015, 017, 018).
+/// Dry-run rendering of every decision type.
 @Suite("sukiru-cli batch dry-run rendering")
 struct BatchCLIDryRunTests {
     private typealias Support = BatchCLITestSupport
 
-    // MARK: - VAL-REPAIR-005: dry-run renders everything, writes nothing
+    // MARK: - Dry-run renders everything, writes nothing
 
     @Test("CM-3 keep-vercel dry-run: full batch JSON, exit 0, fixture byte-identical")
     func dryRunWritesNothing() throws {
@@ -84,7 +83,7 @@ struct BatchCLIDryRunTests {
         let commands = try #require(batch["commands"] as? [[String: Any]])
         #expect(commands.count == 1)
         let argv = try #require(commands[0]["argv"] as? [String])
-        // D22 targeted re-install (probe-verified, seam-b-e2e): a plain
+        // Targeted re-install (probe-verified against the real CLI): a plain
         // untargeted `add` refreshes ONLY the canonical store and leaves the
         // gh-overwritten host copy (and its provenance) untouched, so the
         // arbitration names every placement host explicitly.
@@ -124,7 +123,7 @@ struct BatchCLIDryRunTests {
         #expect(commands[1]["dangerFlags"] as? [String] == [])
     }
 
-    // MARK: - VAL-REPAIR-001/002/009/010: routing surfaces
+    // MARK: - Routing surfaces
 
     @Test("CM-1 update dry-run: every command is an official CLI call with intent + owning CLI")
     func officialCLIOnly() throws {
@@ -167,7 +166,7 @@ struct BatchCLIDryRunTests {
         #expect(!argv.contains("--all"))
     }
 
-    // MARK: - VAL-REPAIR-017/018: ownerless adopt and cleanup
+    // MARK: - Ownerless adopt and cleanup
 
     @Test("ownerless adopt dry-run renders the gh re-anchoring shape")
     func adoptDryRun() throws {
@@ -202,7 +201,7 @@ struct BatchCLIDryRunTests {
         #expect(flags.contains("ownerless-cleanup"))
     }
 
-    // MARK: - VAL-REPAIR-019: leave produces no batch
+    // MARK: - Leave produces no batch
 
     @Test("leave-only decisions: exit 0, no batch JSON, sandbox unchanged")
     func leaveNoBatch() throws {
@@ -219,7 +218,7 @@ struct BatchCLIDryRunTests {
     }
 }
 
-/// Invalid decisions files and refusals (VAL-REPAIR-012, 013, 052, 056) plus
+/// Invalid decisions files and refusals plus
 /// the no-execution guarantee of this build.
 @Suite("sukiru-cli batch refusals")
 struct BatchCLIRefusalTests {

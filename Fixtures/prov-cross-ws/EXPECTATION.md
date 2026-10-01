@@ -1,4 +1,4 @@
-# prov-cross-ws — expectation (VAL-SCAN-021)
+# prov-cross-ws — expectation
 
 Contents: the same logical skill `shared` installed by gh into TWO workspaces —
 the user-scope claude-code host dir (`.home/.claude/skills/shared`) and a

@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// InventoryScanner tests (architecture §4.1, port-reference §3): placement
+/// InventoryScanner tests: placement
 /// discovery, symlink/broken-symlink handling, the HostTable-derived ignore
 /// list, alias collapse, and issue streaming — unit-level over TempTree.
 @Suite("InventoryScanner placement discovery")
@@ -222,14 +222,14 @@ struct InventoryScannerTests {
         try home.file(".claude/config.json", contents: "{}")
         try home.file(".agents/skills/dup/SKILL.md", contents: skillMD("dup"))
         try home.file(".claude/skills/dup/SKILL.md", contents: skillMD("dup"))
-        // D23: divergence comes from content hashes, not paths.
+        // Divergence comes from content hashes, not paths.
         try home.file(".claude/skills/dup/extra.txt", contents: "divergent")
 
         let report = try scan(home: home)
         let dup = try #require(report.skills.first { $0.name == "dup" })
         #expect(report.skills.count == 1)
         #expect(dup.placements.count == 2)
-        #expect(dup.ambiguous == true, "D23: unexplained copies with ≥2 distinct hashes")
+        #expect(dup.ambiguous == true, "Unexplained copies with ≥2 distinct hashes")
     }
 
     @Test("Placements carry the full candidate host set for shared dirs (trap 12)")
@@ -268,7 +268,7 @@ struct InventoryScannerTests {
         #expect(known.contains(".curated"))
         #expect(known.contains(".experimental"))
         #expect(known.contains(".system"))
-        // Archive phantoms matching no host are gone (port-reference §3).
+        // Archive phantoms matching no host are gone.
         #expect(!known.contains(".opencode"))
         #expect(!known.contains(".autohand"))
         // Every dotted first component of a host projectSkillDir is known.
@@ -290,8 +290,7 @@ struct InventoryScannerTests {
     }
 }
 
-/// Fixture-tree end-to-end checks over the checked-in scan-area corpus
-/// (VAL-SCAN-006/008/009/010/011/035 fixtures).
+/// Fixture-tree end-to-end checks over the checked-in scan-area corpus.
 @Suite("InventoryScanner against checked-in fixtures")
 struct InventoryScannerFixtureTests {
     private func scan(fixture name: String, projectRoot: String? = nil) throws -> ScanReport {

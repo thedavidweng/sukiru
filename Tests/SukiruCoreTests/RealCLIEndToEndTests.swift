@@ -3,24 +3,24 @@ import Testing
 
 @testable import SukiruCore
 
-/// Seam-B end-to-end validation against the REAL pinned CLIs in sandboxed
-/// HOMEs (VAL-REPAIR-043/044/045, VAL-CROSS-018, node-absent degradation).
-/// Serialized per house rule: each test spawns `sukiru-cli`, which spawns
+/// End-to-end validation against the REAL pinned CLIs in sandboxed HOMEs
+/// (repair, arbitration, adopt, cross-scope isolation, node-absent
+/// degradation). Serialized because each test spawns `sukiru-cli`, which spawns
 /// the real `npx`/`gh` (network access, downloads per sandbox). The suite
-/// continues in `SeamBEndToEndTests+Isolation.swift` (same struct, so the
+/// continues in `RealCLIEndToEndTests+Isolation.swift` (same struct, so the
 /// serialized trait covers every test).
 @Suite(
-    "seam-B end-to-end (real CLIs, sandboxed HOMEs)",
+    "Real-CLI end-to-end (sandboxed HOMEs)",
     .serialized,
-    .enabled(if: SeamBE2ESupport.enabled, "set SUKIRU_E2E=1 to run the real-CLI e2e suite")
+    .enabled(if: RealCLIE2ESupport.enabled, "set SUKIRU_E2E=1 to run the real-CLI e2e suite")
 )
-struct SeamBEndToEndTests {
-    typealias Support = SeamBE2ESupport
+struct RealCLIEndToEndTests {
+    typealias Support = RealCLIE2ESupport
     typealias Batch = BatchExecutionSupport
 
-    // MARK: - VAL-REPAIR-043: drift repair makes the findings disappear
+    // MARK: - Drift repair makes the findings disappear
 
-    @Test("VAL-REPAIR-043: real-npx drift repair on CM-1 clears drift + divergence on rescan")
+    @Test("Real-npx drift repair on CM-1 clears drift + divergence on rescan")
     func driftRepairMakesFindingsDisappear() throws {
         let tree = try TempTree()
         let fixture = try Support.prepare("CM-1", into: tree)
@@ -34,7 +34,7 @@ struct SeamBEndToEndTests {
         // matches the lock, the .claude copy no longer does.
         let hostCopy = root + "/.claude/skills/stale-docs-cleanup/SKILL.md"
         let original = try String(contentsOfFile: hostCopy, encoding: .utf8)
-        try (original + "\nLocal drift introduced by the seam-B e2e suite.\n")
+        try (original + "\nLocal drift introduced by the real-CLI e2e suite.\n")
             .write(toFile: hostCopy, atomically: true, encoding: .utf8)
 
         let pre = try Batch.scanObject(home: home, roots: roots)
@@ -48,7 +48,7 @@ struct SeamBEndToEndTests {
             home: home, roots: roots, decisions: [driftID: ["action": "update"]],
             tree: tree, bin: bin)
 
-        // D22 targeted reinstall against the REAL CLI: every placement host
+        // Targeted reinstall against the REAL CLI: every placement host
         // named, copy mode (an untargeted `add` refreshes only the canonical
         // store and the drift would survive — probe-verified).
         let transcript = try Support.transcript(tree)
@@ -77,9 +77,9 @@ struct SeamBEndToEndTests {
         try canary.verifyUnchanged()
     }
 
-    // MARK: - VAL-REPAIR-043/044: keep-vercel arbitration end-to-end
+    // MARK: - keep-vercel arbitration end-to-end
 
-    @Test("VAL-REPAIR-043/044: keep-vercel on CM-3 → single vercel ownership, findings gone")
+    @Test("Keep-vercel on CM-3 → single vercel ownership, findings gone")
     func keepVercelRepairsDoubleBooked() throws {
         let tree = try TempTree()
         let fixture = try Support.prepare("CM-3", into: tree)
@@ -107,7 +107,7 @@ struct SeamBEndToEndTests {
         let post = try Batch.scanObject(home: home, roots: roots)
         let ownership = try Support.skillOwnership(
             post, name: "stale-docs-cleanup", scope: "project")
-        #expect(ownership == "vercel", "VAL-REPAIR-044: single ownership = kept ledger")
+        #expect(ownership == "vercel", "Single ownership = kept ledger")
         let postFindings = try Support.findingIdentities(post)
         #expect(!postFindings.contains { $0.hasPrefix("double-booked|") })
         #expect(!postFindings.contains { $0.hasPrefix("vercel-lock-drift|") })
@@ -115,11 +115,11 @@ struct SeamBEndToEndTests {
         try canary.verifyUnchanged()
     }
 
-    // MARK: - VAL-REPAIR-044: keep-github arbitration end-to-end
+    // MARK: - keep-github arbitration end-to-end
 
     @Test(
-        "VAL-REPAIR-044: keep-github on CM-3 → single github ownership, no double-booked",
-        .enabled(if: SeamBE2ESupport.gitHubToken != nil, "GH_TOKEN required for gh skill install")
+        "Keep-github on CM-3 → single github ownership, no double-booked",
+        .enabled(if: RealCLIE2ESupport.gitHubToken != nil, "GH_TOKEN required for gh skill install")
     )
     func keepGitHubRepairsDoubleBooked() throws {
         let tree = try TempTree()
@@ -138,7 +138,7 @@ struct SeamBEndToEndTests {
             tree: tree, bin: bin, token: Support.gitHubToken)
         #expect(record["snapshotID"] is String)
 
-        // The D10 sequence against the real CLIs: danger-flagged npx remove
+        // The keep-github arbitration sequence against the real CLIs: danger-flagged npx remove
         // first, then gh install --force --dir re-anchoring the provenance.
         let lines = try Support.transcript(tree).split(separator: "\n").map(String.init)
         #expect(lines.count == 2)
@@ -155,7 +155,7 @@ struct SeamBEndToEndTests {
         let post = try Batch.scanObject(home: home, roots: roots)
         let ownership = try Support.skillOwnership(
             post, name: "stale-docs-cleanup", scope: "project")
-        #expect(ownership == "github", "VAL-REPAIR-044: single ownership = kept ledger")
+        #expect(ownership == "github", "Single ownership = kept ledger")
         let postFindings = try Support.findingIdentities(post)
         #expect(
             !postFindings.contains { $0.hasPrefix("double-booked|") },
@@ -163,7 +163,7 @@ struct SeamBEndToEndTests {
         // Known upstream side effect (probe-verified): `npx skills remove`
         // writes a spurious entry to the GLOBAL lock even from a project
         // cwd, so the user scope may show `lock-without-files` afterwards.
-        // The contract scopes VAL-REPAIR-044 to the arbitrated skill's
+        // The arbitration check is scoped to the arbitrated skill's
         // single ownership; the pollution is documented here so a future
         // skills CLI that stops polluting is a visible, intentional change.
         try canary.verifyUnchanged()

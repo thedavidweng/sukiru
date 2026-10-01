@@ -1,6 +1,6 @@
 import Foundation
 
-/// Per-command execution outcome (VAL-REPAIR-028 vocabulary): every command
+/// Per-command execution outcome: every command
 /// in the batch is individually reported, including the ones that never ran.
 public enum CommandExecutionStatus: String, Codable, Equatable, Sendable, CaseIterable {
     case succeeded
@@ -9,7 +9,8 @@ public enum CommandExecutionStatus: String, Codable, Equatable, Sendable, CaseIt
     case notRun = "not-run"
 }
 
-/// WHY a command failed — the clear terminal states of VAL-REPAIR-039…042.
+/// WHY a command failed — each kind is a distinct, clearly reported terminal
+/// state.
 public enum CommandFailureKind: String, Codable, Equatable, Sendable {
     /// The CLI executable was not found on PATH (names the tool in
     /// `diagnostics`).
@@ -27,7 +28,7 @@ public enum CommandFailureKind: String, Codable, Equatable, Sendable {
     /// A direct file operation failed.
     case fileOperationFailed = "file-operation-failed"
     /// A direct file operation targeted a path outside the batch's
-    /// workspace roots and was refused before running (VAL-REPAIR-038).
+    /// workspace roots and was refused before running.
     case outOfBounds = "out-of-bounds"
 }
 
@@ -35,8 +36,7 @@ public enum CommandFailureKind: String, Codable, Equatable, Sendable {
 /// JSON: a `not-run` command carries only the identifying fields.
 public struct CommandExecution: Codable, Equatable, Sendable {
     public let index: Int
-    /// The argv that was exec'd — byte-equal to the reviewed batch's argv
-    /// (VAL-REPAIR-058).
+    /// The argv that was exec'd — byte-equal to the reviewed batch's argv.
     public let argv: [String]
     public let displayString: String
     public let owningCLI: OwningCLI
@@ -49,12 +49,12 @@ public struct CommandExecution: Codable, Equatable, Sendable {
     /// Human-readable terminal-state diagnostics (missing tool, stderr tail,
     /// timeout note).
     public let diagnostics: String?
-    /// Absolute paths of the captured output FILES (never pipes —
-    /// VAL-REPAIR-029/030).
+    /// Absolute paths of the captured output FILES (never pipes, which
+    /// truncate large output).
     public let stdoutFile: String?
     public let stderrFile: String?
     /// ISO-8601 fractional-second timestamps; strictly non-overlapping and
-    /// in batch order (VAL-REPAIR-027).
+    /// in batch order.
     public let startedAt: String?
     public let endedAt: String?
     public let durationSeconds: Double?
@@ -92,7 +92,7 @@ public struct CommandExecution: Codable, Equatable, Sendable {
     }
 }
 
-/// The batch-level execution record — the seam-B transcript index.
+/// The batch-level execution record — the index of a batch's transcript.
 ///
 /// Persisted as `record.json` inside `recordDirectory`
 /// (`<home>/Library/Application Support/Sukiru/executions/<batchID>/`), next
@@ -103,10 +103,10 @@ public struct ExecutionRecord: Codable, Equatable, Sendable {
 
     public let schemaVersion: Int
     public let batchID: String
-    /// The snapshot committed BEFORE the first command ran (VAL-REPAIR-023).
+    /// The snapshot committed BEFORE the first command ran.
     public let snapshotID: String
     /// `succeeded` or `failed` at execution time; a later rollback flips the
-    /// persisted record to `rolledBack` (architecture §7).
+    /// persisted record to `rolledBack`.
     public let batchStatus: BatchStatus
     public let commandTimeoutSeconds: Double
     public let startedAt: String
@@ -114,8 +114,8 @@ public struct ExecutionRecord: Codable, Equatable, Sendable {
     public let durationSeconds: Double
     public let recordDirectory: String
     public let commands: [CommandExecution]
-    /// The post-run diff (architecture §4.1 Differ): always present, even
-    /// when the batch changed nothing (VAL-REPAIR-032/033).
+    /// The post-run diff (computed by `Differ`): always present, even
+    /// when the batch changed nothing.
     public let diff: BatchDiff
     /// The batch's affected scope, persisted so a later rollback process
     /// rescans exactly the same surface (the sprayed-symlink gap).

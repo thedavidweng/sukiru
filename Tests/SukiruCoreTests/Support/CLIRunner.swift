@@ -1,7 +1,7 @@
 import Foundation
 
 /// Locates and runs the built `sukiru-cli` executable for end-to-end CLI
-/// contract tests (VAL-SCAN-001…005, 048…051).
+/// contract tests.
 ///
 /// `swift test` builds every target of the package, so the executable sits
 /// next to the test bundle in `<repo>/.build/debug/`. `SUKIRU_CLI_BINARY`

@@ -1,4 +1,4 @@
-# FIX-MULTI-HOST — expectation (M3 health-area, VAL-HEALTH-005/009)
+# FIX-MULTI-HOST — expectation
 
 Contents: `web-api` lives in the canonical user store (`.agents/skills`,
 global v3 lock, ownership=vercel) and is SYMLINKED into three host global

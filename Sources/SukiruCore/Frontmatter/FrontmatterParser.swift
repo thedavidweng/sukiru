@@ -1,7 +1,7 @@
 import Foundation
 import Yams
 
-/// Validated `SKILL.md` frontmatter (port-reference §7, `SkillMetadata`).
+/// Validated `SKILL.md` frontmatter.
 public struct SkillMetadata: Equatable, Sendable {
     /// The required, trimmed, non-empty `name` field.
     public let name: String
@@ -30,7 +30,7 @@ public struct SkillMetadata: Equatable, Sendable {
 }
 
 /// Parses `SKILL.md` frontmatter with byte-exact upstream semantics
-/// (architecture §4.1, port-reference §7 `split_frontmatter`):
+/// (upstream `split_frontmatter`):
 ///
 /// - The start delimiter is STRICT: the file's first bytes must be `---\n` or
 ///   `---\r\n`. There is no BOM tolerance and no leading-blank-line tolerance.

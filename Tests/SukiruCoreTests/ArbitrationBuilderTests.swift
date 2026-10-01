@@ -3,13 +3,13 @@ import Testing
 
 @testable import SukiruCore
 
-/// Double-booked arbitration (VAL-REPAIR-013…016, D10) and the finding-ID
+/// Double-booked arbitration and the finding-ID
 /// scheme the decisions file keys on.
 @Suite("CommandBatchBuilder double-booked arbitration")
 struct ArbitrationBuilderTests {
     private typealias Support = BatchTestSupport
 
-    // MARK: - VAL-REPAIR-013: no batch before an explicit surviving-ledger choice
+    // MARK: - No batch before an explicit surviving-ledger choice
 
     @Test("CM-3: update on a double-booked finding refuses, naming the skill and both choices")
     func updateNeedsArbitration() throws {
@@ -44,16 +44,16 @@ struct ArbitrationBuilderTests {
         #expect(joined.contains("vercel"))
     }
 
-    // MARK: - VAL-REPAIR-014: keep-vercel re-installs from the recorded source
+    // MARK: - keep-vercel re-installs from the recorded source
 
-    @Test("CM-3 keep-vercel: exactly the D10 re-install, no gh mutation, consequence text")
+    @Test("CM-3 keep-vercel: exactly the vercel re-install, no gh mutation, consequence text")
     func keepVercel() throws {
         let report = try OwnershipBuilders.scanSplitFixture("CM-3")
         let findingID = try Support.findingID(report, "double-booked", "stale-docs-cleanup")
         let batch = try Support.build(
             report, [Support.decide(findingID, .arbitrate, .keepVercel)])
         let command = try #require(batch.commands.only)
-        // D22 targeted re-install (probe-verified, seam-b-e2e): an untargeted
+        // Targeted re-install (probe-verified against the real CLI): an untargeted
         // `add` refreshes only the canonical store; the gh-overwritten host
         // copy (and its provenance) would survive. Every placement host is
         // named explicitly.
@@ -70,7 +70,7 @@ struct ArbitrationBuilderTests {
         #expect(batch.decisions.only?.choice == .keepVercel)
     }
 
-    // MARK: - VAL-REPAIR-015: keep-github is remove (danger-flagged) then re-install
+    // MARK: - keep-github is remove (danger-flagged) then re-install
 
     @Test("CM-3 keep-github: npx remove then gh install --force --dir, in that order")
     func keepGitHub() throws {
@@ -91,7 +91,7 @@ struct ArbitrationBuilderTests {
         #expect(remove.atRiskSkills == atRisk)
         let ghHead = ["gh", "skill", "install", "thedavidweng/skills"]
         let dir = tree + "/proj/.claude/skills"
-        // Probe-verified (seam-b-e2e): gh requires the EXACT SKILL.md path —
+        // Probe-verified against the real CLI: gh requires the EXACT SKILL.md path —
         // the recorded `github-path` frontmatter value is the bare directory
         // ("maintenance/stale-docs-cleanup"), which gh rejects with
         // "no skills found".

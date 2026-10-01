@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// The raw SKILL.md preview fetcher (story 24): exact URL for gh results
+/// The raw SKILL.md preview fetcher: exact URL for gh results
 /// (which carry the repo-relative path), the standard-location candidates
 /// for skills.sh results, first-200-wins, and nil when nothing resolves —
 /// preview failure never blocks the install.

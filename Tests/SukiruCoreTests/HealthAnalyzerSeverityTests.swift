@@ -3,15 +3,15 @@ import Testing
 
 @testable import SukiruCore
 
-/// The D3 severity mapping swept over the whole checked-in fixture corpus
-/// (VAL-SCAN-052): every finding on every fixture carries the severity D3
+/// The finding severity mapping swept over the whole checked-in fixture
+/// corpus: every finding on every fixture carries the severity the mapping
 /// assigns its rule (cross-host-duplicate disambiguated by subtype evidence).
-@Suite("HealthAnalyzer D3 severity sweep")
+@Suite("HealthAnalyzer severity sweep")
 struct HealthAnalyzerSeverityTests {
-    // MARK: - VAL-SCAN-052: D3 severity sweep
+    // MARK: - Severity sweep
 
-    @Test("Every finding on every dirty fixture matches the D3 severity mapping")
-    func severitiesMatchD3() throws {
+    @Test("Every finding on every dirty fixture matches the severity mapping")
+    func severitiesMatchMapping() throws {
         let fileManager = FileManager.default
         let entries = try fileManager.contentsOfDirectory(
             at: FixturePaths.root, includingPropertiesForKeys: [.isDirectoryKey])
@@ -38,16 +38,16 @@ struct HealthAnalyzerSeverityTests {
                 let name = finding.skillName ?? "-"
                 let message =
                     "\(entry.lastPathComponent): \(finding.ruleID)/\(name) "
-                    + "is \(finding.severity), D3 says \(Self.d3Severity(for: finding))"
-                #expect(finding.severity == Self.d3Severity(for: finding), "\(message)")
+                    + "is \(finding.severity), expected \(Self.expectedSeverity(for: finding))"
+                #expect(finding.severity == Self.expectedSeverity(for: finding), "\(message)")
             }
         }
         #expect(scanned >= 30)
     }
 
-    /// The D3 severity for a finding: the fixed rule table, with
+    /// The expected severity for a finding: the fixed rule table, with
     /// cross-host-duplicate disambiguated by its subtype evidence.
-    private static func d3Severity(for finding: Finding) -> Severity {
+    private static func expectedSeverity(for finding: Finding) -> Severity {
         switch finding.ruleID {
         case "broken-symlink", "vercel-lock-drift", "double-booked", "lock-without-files",
             "canonical-host-divergence", "dangerous-removal-surface":

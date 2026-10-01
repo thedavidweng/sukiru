@@ -56,12 +56,12 @@ enum BatchTestSupport {
 }
 
 /// Ownership-routed updates, drift repair, ownerless/ambiguous refusals,
-/// adopt, and cleanup (VAL-REPAIR-009…012, 017…021, D13, D22).
+/// adopt, and cleanup.
 @Suite("CommandBatchBuilder ownership routing")
 struct CommandBatchBuilderTests {
     private typealias Support = BatchTestSupport
 
-    // MARK: - VAL-REPAIR-009: vercel update routes to npx, scope-flagged
+    // MARK: - Vercel update routes to npx, scope-flagged
 
     @Test("CM-1: update on a vercel-ledger finding is npx skills update <name> -p -y")
     func vercelProjectUpdate() throws {
@@ -88,7 +88,7 @@ struct CommandBatchBuilderTests {
         #expect(command.owningCLI == .vercel)
     }
 
-    // MARK: - VAL-REPAIR-010 / D13: github update routes to gh, narrowly targeted
+    // MARK: - Github update routes to gh, narrowly targeted
 
     @Test("CM-2: update on a github-ledger skill is gh skill update <name> --dir <dir>")
     func githubUpdate() throws {
@@ -105,7 +105,7 @@ struct CommandBatchBuilderTests {
         #expect(!batch.commands.contains { $0.argv.first == "npx" })
     }
 
-    // MARK: - D22: drift repair re-installs from the recorded source
+    // MARK: - Drift repair re-installs from the recorded source
 
     @Test("FIX-DRIFT: update on a vercel-lock-drift finding re-installs from the recorded source")
     func driftRepairReinstalls() throws {
@@ -122,7 +122,7 @@ struct CommandBatchBuilderTests {
         #expect(!command.argv.contains("update"), "drift repair must never use update")
     }
 
-    // MARK: - VAL-REPAIR-012: ownerless skills are never silently routed
+    // MARK: - Ownerless skills are never silently routed
 
     @Test("FIX-FILES-NO-LOCK: update on an ownerless skill is refused, naming adopt/cleanup")
     func ownerlessUpdateRefused() throws {
@@ -134,7 +134,7 @@ struct CommandBatchBuilderTests {
         #expect(joined.contains("orphan"))
     }
 
-    // MARK: - VAL-REPAIR-057: ambiguous names route as ownerless
+    // MARK: - Ambiguous names route as ownerless
 
     @Test("FIX-AMBIGUOUS: update refuses with an attribution-voided explanation")
     func ambiguousUpdateRefused() throws {
@@ -156,7 +156,7 @@ struct CommandBatchBuilderTests {
         #expect(problems.joined(separator: "\n").contains("no on-disk placement"))
     }
 
-    // MARK: - VAL-REPAIR-017 / D11: ownerless adopt
+    // MARK: - Ownerless adopt
 
     @Test("FIX-FILES-NO-LOCK: adopt produces the gh re-anchoring install shape")
     func ownerlessAdopt() throws {
@@ -199,7 +199,7 @@ struct CommandBatchBuilderTests {
         #expect(joined.contains("vercel"))
     }
 
-    // MARK: - VAL-REPAIR-018: ownerless cleanup is a flagged file operation
+    // MARK: - Ownerless cleanup is a flagged file operation
 
     @Test("FIX-FILES-NO-LOCK: cleanup is a flagged direct file operation, not a CLI command")
     func ownerlessCleanup() throws {
@@ -218,7 +218,7 @@ struct CommandBatchBuilderTests {
         #expect(warning.contains("orphan"))
     }
 
-    // MARK: - VAL-REPAIR-020 / 021: npx skills remove danger flag + at-risk naming
+    // MARK: - npx skills remove danger flag + at-risk naming
 
     @Test("CM-6: cleanup on a github-owned skill dispatches npx skills remove with named at-risk")
     func githubCleanupDanger() throws {
@@ -260,7 +260,7 @@ struct CommandBatchBuilderTests {
         #expect(warning.contains("across ownership"))
     }
 
-    // MARK: - VAL-REPAIR-019: leave-as-is produces no batch
+    // MARK: - leave-as-is produces no batch
 
     @Test("leave-only decisions produce no batch at all")
     func leaveProducesNoBatch() throws {
@@ -271,7 +271,7 @@ struct CommandBatchBuilderTests {
         #expect(batch == nil)
     }
 
-    // MARK: - batch envelope (VAL-REPAIR-003 / 004)
+    // MARK: - batch envelope
 
     @Test("batch envelope: proposed status, nil snapshot, findingRefs round-trip, injected id/date")
     func batchEnvelope() throws {
@@ -308,7 +308,7 @@ struct CommandBatchBuilderTests {
         #expect(batch.commands.count == 1)
     }
 
-    @Test("unknown finding IDs are rejected by name as unknown or stale (VAL-REPAIR-056)")
+    @Test("unknown finding IDs are rejected by name as unknown or stale")
     func unknownFindingID() throws {
         let report = try OwnershipBuilders.scanSplitFixture("CM-1")
         let problems = Support.problems(report, [Support.decide("bogus-rule:user:nope", .update)])

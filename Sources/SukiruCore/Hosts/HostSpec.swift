@@ -5,8 +5,7 @@ import Foundation
 /// Ported verbatim from `research/host-table.json` (56 hosts), which itself was
 /// extracted from the retired Rust implementation's `SPECS` array. The static
 /// data lives in the generated `HostTableData.swift`; a unit test asserts the
-/// count (56) and byte-parity with the JSON. Field semantics (architecture
-/// §4.1, port-reference §1):
+/// count (56) and byte-parity with the JSON. Field semantics:
 ///
 /// - `projectSkillDir` is relative to a project root.
 /// - `globalSkillDirRelative` is relative to the RESOLVED base (see
@@ -78,7 +77,7 @@ public struct HostSpec: Equatable, Sendable, Codable {
     }
 }
 
-/// Per-host installation state (port-reference §2 tri-state).
+/// Per-host installation state (a tri-state).
 ///
 /// The official CLI sprays symlinks into every known agent layout regardless of
 /// what is actually installed, so plain directory existence is not evidence of

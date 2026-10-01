@@ -1,4 +1,4 @@
-# FIX-DRIFT — expectation (M3 health-area, VAL-HEALTH-014/038)
+# FIX-DRIFT — expectation
 
 Contents: project root `proj/` holds `drifted`, whose SKILL.md was edited
 out-of-band after install — the v1 lock's computedHash (hash of the ORIGINAL

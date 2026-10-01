@@ -1,22 +1,22 @@
 import SukiruCore
 import SwiftUI
 
-/// The Health surface (§4.3): one-click health check (`sukiru.health.checkNow`,
-/// non-reentrant while running — `sukiru.health.loading` + `.disabled` suffix,
-/// VAL-HEALTH-046), a summary line (`sukiru.health.summary`) counting
+/// The Health surface: one-click health check (`sukiru.health.checkNow`,
+/// non-reentrant while running — `sukiru.health.loading` + `.disabled` suffix),
+/// a summary line (`sukiru.health.summary`) counting
 /// problems and how many Fix All (`sukiru.health.fixAll`) repairs in one
 /// confirmed batch, a per-workspace filter
-/// (`sukiru.health.filter.workspace`, VAL-HEALTH-015) with an explicit
-/// empty-filter state (VAL-HEALTH-047), findings grouped by plain-language
+/// (`sukiru.health.filter.workspace`) with an explicit
+/// empty-filter state, findings grouped by plain-language
 /// problem (`sukiru.health.group.<problem>`, `ProblemKind`; notes collapsed)
 /// with per-finding disclosure
 /// rows (`sukiru.health.finding.<ruleID>.*`) whose evidence expands to the
-/// concrete paths, lock entries, and hashes the scan emitted
-/// (VAL-HEALTH-014/042), and a separate issues section for malformed data
-/// (`sukiru.health.issue.<kind>.*`, VAL-HEALTH-022).
+/// concrete paths, lock entries, and hashes the scan emitted,
+/// and a separate issues section for malformed data
+/// (`sukiru.health.issue.<kind>.*`).
 ///
 /// Disclosure and selection state live in `AppState`, so they survive surface
-/// switches (VAL-HEALTH-045). A health check is a rescan in M3 — the findings
+/// switches. A health check is a rescan — the findings
 /// derive from the scan report.
 struct HealthView: View {
     @EnvironmentObject private var state: AppState
@@ -52,7 +52,7 @@ struct HealthView: View {
     }
 
     private func homeMissingState(_ path: String) -> some View {
-        // VAL-CROSS-022: zero skill findings plus an explicit environment
+        // Zero skill findings plus an explicit environment
         // notice — never a misleadingly healthy or silently empty report.
         ContentUnavailableView {
             HStack(spacing: 0) {
@@ -111,7 +111,7 @@ struct HealthView: View {
                     .foregroundStyle(.secondary)
             }
             if state.healthCheckRunning {
-                // VAL-HEALTH-046: the run state stays visible while a check
+                // The run state stays visible while a check
                 // is in flight, even when a previous report is on screen.
                 HStack(spacing: 6) {
                     ProgressView()
@@ -152,7 +152,7 @@ struct HealthView: View {
     }
 
     /// Counts problems, not notes; the full row count (notes included)
-    /// still equals the rendered rows (VAL-HEALTH-034).
+    /// still equals the rendered rows.
     private var summaryText: String {
         let problems = problemEntries.count
         let fixable = state.fixableEntries(problemEntries).count
@@ -193,9 +193,9 @@ struct HealthView: View {
         }
     }
 
-    /// Explicit empty states, distinguished by cause: skill focus (D16),
-    /// workspace filter landing on a zero-finding workspace (VAL-HEALTH-047),
-    /// or a genuinely healthy library (VAL-HEALTH-033).
+    /// Explicit empty states, distinguished by cause: skill focus,
+    /// workspace filter landing on a zero-finding workspace,
+    /// or a genuinely healthy library.
     @ViewBuilder
     private var emptyState: some View {
         if state.healthFocus != nil {

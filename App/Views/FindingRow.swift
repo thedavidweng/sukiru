@@ -3,12 +3,11 @@ import SwiftUI
 
 /// One finding row: a disclosure control carrying the finding token
 /// (`sukiru.health.finding.<ruleID>.<skill>`), the skill and the path the
-/// problem is about, its one-click fix (`….oneClickFix`), the D16 actions
+/// problem is about, its one-click fix (`….oneClickFix`), the deep-link actions
 /// (`….reveal` into Library, `….fix` into Pending Changes), and — when
-/// expanded — the rule, a D3 severity tag, and one line per evidence entry
+/// expanded — the rule, a severity tag, and one line per evidence entry
 /// with the concrete
-/// paths, lock entries, and hash values the scan emitted
-/// (VAL-HEALTH-014/042).
+/// paths, lock entries, and hash values the scan emitted.
 struct FindingRow: View {
     @EnvironmentObject private var state: AppState
     let row: HealthView.FindingRowItem
@@ -69,9 +68,9 @@ struct FindingRow: View {
                         }
                         .axButtonToken("\(row.token).reveal")
                         Button("Other Repairs…") {
-                            // D16 repair entry point (M4): deep-links into
+                            // Repair entry point: deep-links into
                             // Pending Changes with this finding's decision
-                            // panel open (VAL-CROSS-006).
+                            // panel open.
                             state.beginRepair(for: finding)
                         }
                         .axButtonToken("\(row.token).fix")
@@ -91,7 +90,7 @@ struct FindingRow: View {
                     .help("More actions for this finding")
                 }
             }
-            // §8 / VAL-CROSS-014: when EVERY actionable repair of this
+            // When EVERY actionable repair of this
             // finding needs a CLI that is missing in this environment, the
             // row says so inline — the Fix flow then shows the same hint in
             // Pending Changes instead of building a doomed batch.
@@ -141,7 +140,7 @@ struct FindingRow: View {
         return state.skill(matching: finding)
     }
 
-    /// The localized label for a fully-blocked repair (§8 degradation).
+    /// The localized label for a fully-blocked repair (capability degradation).
     private func repairBlockLabel(_ block: AppState.RepairBlock) -> LocalizedStringKey {
         switch block {
         case .needsNode: return "health.repairBlocked.needsNode"
@@ -163,7 +162,7 @@ struct FindingRow: View {
         return (path as NSString).abbreviatingWithTildeInPath
     }
 
-    /// VAL-HEALTH-041: the Finding model (D18) has no message field, so the
+    /// The Finding model has no message field, so the
     /// dangerous-removal-surface blast radius is spelled out at the view
     /// layer — naming the at-risk skill and stating that
     /// `npx skills remove <name>` would delete it by name across ownership.
@@ -200,7 +199,7 @@ struct FindingRow: View {
     }
 }
 
-/// One issue row (VAL-HEALTH-022): malformed data surfaces as data, never a
+/// One issue row: malformed data surfaces as data, never a
 /// crash. The kind, the concrete path, and the parser's message render
 /// directly — no disclosure needed, nothing hidden.
 struct IssueRow: View {

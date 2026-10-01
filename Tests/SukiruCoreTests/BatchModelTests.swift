@@ -3,8 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// The CommandBatch wire model and its lifecycle state machine
-/// (architecture §7, VAL-REPAIR-004, VAL-REPAIR-055).
+/// The CommandBatch wire model and its lifecycle state machine.
 @Suite("CommandBatch model and lifecycle")
 struct BatchModelTests {
     private func makeBatch(status: BatchStatus) -> CommandBatch {
@@ -42,7 +41,7 @@ struct BatchModelTests {
         #expect(rolledBack.status == .rolledBack)
     }
 
-    // MARK: - VAL-REPAIR-055: terminal states are terminal; no rollback mid-execution
+    // MARK: - Terminal states are terminal; no rollback mid-execution
 
     @Test("terminal states refuse every further transition")
     func terminalStatesRefuse() {
@@ -87,7 +86,7 @@ struct BatchModelTests {
         }
     }
 
-    // MARK: - VAL-REPAIR-004: wire shape starts proposed with explicit null snapshotID
+    // MARK: - Wire shape starts proposed with explicit null snapshotID
 
     @Test("batch JSON carries snapshotID as an explicit null and status proposed")
     func wireShape() throws {

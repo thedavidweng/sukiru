@@ -4,7 +4,7 @@ import Testing
 @testable import SukiruCore
 
 /// End-to-end assertions for the CLI-generated collision-matrix corpus
-/// (feature `seam-a-corpus-validation`, VAL-SCAN-043…047 and VAL-SCAN-007).
+
 ///
 /// The CM-* trees are REAL dirty states produced by the pinned
 /// skills@1.5.26 CLI and gh in sandboxes (`Scripts/fixtures/generate.sh`);
@@ -21,9 +21,9 @@ struct CollisionMatrixCorpusTests {
         try #require(report.skills.first { $0.name == name }, "skill \(name) not inventoried")
     }
 
-    // MARK: VAL-SCAN-043 — CM-1 npx copy-mode baseline
+    // MARK: CM-1 npx copy-mode baseline
 
-    @Test("VAL-SCAN-043: CM-1 is vercel-owned with a warning exact-duplicate and nothing else")
+    @Test("CM-1 is vercel-owned with a warning exact-duplicate and nothing else")
     func cm1CopyModeBaseline() throws {
         let report = try CLIRunner.scanReport("CM-1")
         let skill = try skill(in: report, named: Self.skillName)
@@ -53,9 +53,9 @@ struct CollisionMatrixCorpusTests {
         #expect(!report.hasUserScopeLockNoise)
     }
 
-    // MARK: VAL-SCAN-044 — CM-2 gh baseline
+    // MARK: CM-2 gh baseline
 
-    @Test("VAL-SCAN-044: CM-2 is github-owned with full provenance and the danger advisory")
+    @Test("CM-2 is github-owned with full provenance and the danger advisory")
     func cm2GitHubBaseline() throws {
         let report = try CLIRunner.scanReport("CM-2")
         let skill = try skill(in: report, named: Self.skillName)
@@ -76,9 +76,9 @@ struct CollisionMatrixCorpusTests {
         #expect(!report.hasUserScopeLockNoise)
     }
 
-    // MARK: VAL-SCAN-045 — CM-3 double-booked tri-symptom
+    // MARK: CM-3 double-booked tri-symptom
 
-    @Test("VAL-SCAN-045: CM-3 shows double-booked + drift + divergence in one scan")
+    @Test("CM-3 shows double-booked + drift + divergence in one scan")
     func cm3TriSymptom() throws {
         let report = try CLIRunner.scanReport("CM-3")
         let skill = try skill(in: report, named: Self.skillName)
@@ -105,9 +105,9 @@ struct CollisionMatrixCorpusTests {
         #expect(!report.hasUserScopeLockNoise)
     }
 
-    // MARK: VAL-SCAN-046 — CM-5 reverse double-booked (provenance erased)
+    // MARK: CM-5 reverse double-booked (provenance erased)
 
-    @Test("VAL-SCAN-046: CM-5 reflects post-erasure truth — vercel-only, no github trace")
+    @Test("CM-5 reflects post-erasure truth — vercel-only, no github trace")
     func cm5ProvenanceErased() throws {
         let report = try CLIRunner.scanReport("CM-5")
         let skill = try skill(in: report, named: Self.skillName)
@@ -119,9 +119,9 @@ struct CollisionMatrixCorpusTests {
         #expect(!report.hasUserScopeLockNoise)
     }
 
-    // MARK: VAL-SCAN-047 — CM-8 mixed install, three-source resolution (D23)
+    // MARK: CM-8 mixed install, three-source resolution
 
-    @Test("VAL-SCAN-047: CM-8 resolves double-booked, never ambiguous, with both claims as data")
+    @Test("CM-8 resolves double-booked, never ambiguous, with both claims as data")
     func cm8ThreeSourceResolution() throws {
         let report = try CLIRunner.scanReport("CM-8")
         let skill = try skill(in: report, named: Self.skillName)
@@ -134,7 +134,7 @@ struct CollisionMatrixCorpusTests {
         #expect(paths.contains { $0.contains(".claude/skills/") })
         #expect(paths.contains { $0.contains(".qoder/skills/") })
 
-        // D23: the .qoder copy is hash-explained by the lock-anchored
+        // The .qoder copy is hash-explained by the lock-anchored
         // canonical placement, so the name is NOT ambiguous; ownership is
         // double-booked with BOTH ledger claims surfaced as data.
         #expect(skill.ownership == .doubleBooked)
@@ -164,9 +164,9 @@ struct CollisionMatrixCorpusTests {
         #expect(!report.hasUserScopeLockNoise)
     }
 
-    // MARK: VAL-SCAN-007 — scope separation and isolation
+    // MARK: Scope separation and isolation
 
-    @Test("VAL-SCAN-007: project scope never leaks into user scope")
+    @Test("Project scope never leaks into user scope")
     func scopeIsolation() throws {
         let report = try CLIRunner.scanReport("scope-isolation")
 

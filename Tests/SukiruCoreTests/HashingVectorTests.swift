@@ -7,11 +7,10 @@ import Testing
 ///
 /// Every expected digest below was produced independently of the Swift
 /// implementation: the `sortcase` vector is the REAL `skills@1.5.26` CLI's
-/// own lock value (research/hash-algorithm.md §8, fixture preserved from the
-/// research sandbox); the symlink vectors quote their `symlink:"<target>"`
+/// own lock value (preserved from a research sandbox); the symlink vectors quote their `symlink:"<target>"`
 /// bytes with rustc 1.98.0 ITSELF as the oracle (`format!("symlink:{:?}",
 /// PathBuf)`) via Scripts/rust-debug/generate.sh, composed into a digest by
-/// the Node reference (port-reference trap #7). They pin byte-exactness of
+/// the Node reference. They pin byte-exactness of
 /// the digest construction: SHA-256 over `utf8(relativePath) + bytes`,
 /// sorted by ICU collation, no separators.
 @Suite("Content hasher golden vectors")

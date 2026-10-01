@@ -1,4 +1,4 @@
-# FIX-DIRTY-SUITE — expectation (M3 health-area workhorse)
+# FIX-DIRTY-SUITE — expectation
 
 One tree triggering several rules at once, with findings in BOTH scopes:
 
@@ -11,14 +11,13 @@ One tree triggering several rules at once, with findings in BOTH scopes:
   `proj-orphan` no ledger -> `files-without-lock` (info).
 - `.qoder/` contains ONLY an empty `skills/` entry: CLI spray residue, a
   leftover workspace (installed=false) with ZERO placements and ZERO
-  findings — the Health workspace filter's reachable empty state
-  (VAL-HEALTH-047).
+  findings — the Health workspace filter's reachable empty state.
 
 Scan with SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/proj.
 
 A correct scan MUST exit 0 with exactly these EIGHT findings: the five above
 PLUS a `dangerous-removal-surface` advisory for each ownerless name
-(`user-orphan`, `proj-orphan`, `rotted-link`) — VAL-SCAN-030 fires on
+(`user-orphan`, `proj-orphan`, `rotted-link`) — the advisory fires on
 gh-owned AND ownerless skills. Two severity levels render (action + info);
 the dangling link additionally surfaces as a `broken-symlink` ISSUE. Each
 finding carries its rule's concrete evidence. Ownership: gh-owned=github,

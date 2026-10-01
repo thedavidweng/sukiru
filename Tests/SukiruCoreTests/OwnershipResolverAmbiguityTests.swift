@@ -3,8 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// OwnershipResolver ambiguity and scope-independence rules (architecture D1
-/// as refined by D23, VAL-SCAN-018/055/056) — unit-level over TempTree,
+/// OwnershipResolver ambiguity and scope-independence rules — unit-level over TempTree,
 /// through ScanEngine.
 @Suite("OwnershipResolver ambiguity and scope rules")
 struct OwnershipResolverAmbiguityTests {
@@ -13,7 +12,7 @@ struct OwnershipResolverAmbiguityTests {
         let home = try TempTree()
         try home.file(".claude/config.json", contents: "{}")
         try home.file(".codex/config.json", contents: "{}")
-        // D23: two DIVERGENT copies, neither hash-explained (the lock claims
+        // Two DIVERGENT copies, neither hash-explained (the lock claims
         // the name but there is no canonical-store placement to anchor to)
         // nor gh-provenanced — both unexplained, two distinct hashes.
         let first = try home.file(
@@ -63,13 +62,13 @@ struct OwnershipResolverAmbiguityTests {
         let demo = try #require(report.skills.first { $0.name == "demo" })
         #expect(report.skills.count == 1)
         #expect(demo.placements.count == 3)
-        #expect(demo.ambiguous == false, "D1 negative: aliases collapse to one canonical path")
+        #expect(demo.ambiguous == false, "Aliases collapse to one canonical path")
         #expect(demo.ownership == .vercel, "ownership resolves normally on an alias group")
         #expect(!report.findings.contains { $0.ruleID == "ambiguous-name" })
         #expect(!report.findings.contains { $0.ruleID == "files-without-lock" })
     }
 
-    @Test("D23 anchor: lock + canonical + hash-identical copy is vercel, never ambiguous")
+    @Test("Lock anchor: lock + canonical + hash-identical copy is vercel, never ambiguous")
     func lockExplainedIdenticalCopyNotAmbiguous() throws {
         let home = try TempTree()
         try home.file(".claude/config.json", contents: "{}")
@@ -86,12 +85,12 @@ struct OwnershipResolverAmbiguityTests {
         #expect(demo.placements.count == 2)
         #expect(
             demo.ambiguous == false,
-            "D23(a): the copy is hash-identical to the lock-anchored canonical placement")
+            "The copy is hash-identical to the lock-anchored canonical placement")
         #expect(demo.ownership == .vercel)
         #expect(!report.findings.contains { $0.ruleID == "ambiguous-name" })
     }
 
-    @Test("D23 anchor: lock + canonical + lone divergent copy is divergence, never ambiguity")
+    @Test("Lock anchor: lock + canonical + lone divergent copy is divergence, never ambiguity")
     func lockAnchoredDivergentCopyIsDivergenceNotAmbiguity() throws {
         let home = try TempTree()
         let project = try TempTree()
@@ -113,7 +112,7 @@ struct OwnershipResolverAmbiguityTests {
         #expect(web.placements.count == 2)
         #expect(
             web.ambiguous == false,
-            "D23: ONE unexplained hash (the divergent copy) never triggers ambiguity")
+            "ONE unexplained hash (the divergent copy) never triggers ambiguity")
         #expect(web.ownership == .vercel)
         #expect(!report.findings.contains { $0.ruleID == "ambiguous-name" })
 

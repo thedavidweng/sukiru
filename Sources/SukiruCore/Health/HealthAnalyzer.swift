@@ -1,9 +1,9 @@
 import Foundation
 
-/// The seam-A health rules (architecture §5, D3) that neither the inventory
+/// The health rules that neither the inventory
 /// scanner nor the ownership resolver can own.
 ///
-/// Origin boundaries (library/read-side-porting.md):
+/// Origin boundaries:
 /// - `broken-symlink` findings originate in `InventoryScanner`;
 /// - `ambiguous-name`, `double-booked`, and `files-without-lock` originate in
 ///   `OwnershipResolver`.
@@ -12,8 +12,8 @@ import Foundation
 /// owns:
 /// - `cross-host-duplicate` (subtypes `alias` info / `exact` warning /
 ///   `divergent` warning) — ports the archive's `AliasDuplicate` /
-///   `ExactDuplicate` classes (port-reference §4), grouped PER OWNERSHIP
-///   BUCKET: project and user scopes are governed separately (spec story 10),
+///   `ExactDuplicate` classes, grouped PER OWNERSHIP
+///   BUCKET: project and user scopes are governed separately,
 ///   so a name present once per scope is not a duplicate.
 /// - `symlink-authenticity` (warning) — the double-copied impostor: user-scope
 ///   managed layout (global lock entry + canonical store placement) implies
@@ -21,7 +21,7 @@ import Foundation
 ///   rotted structure. Project scope is exempt: non-interactive `add --copy`
 ///   is the stock layout there (collision-matrix scenario 1).
 /// - `vercel-lock-drift` (action) — recomputed `computedHash` disagrees with a
-///   PROJECT lock entry, per placement. Gated by hash-algorithm.md §4.4: only
+///   PROJECT lock entry, per placement. Gated by `RecomputeEligibility`: only
 ///   recompute-eligible trees (ASCII relative paths; no symlinks,
 ///   `node_modules/`, `metadata.json`, `__pycache__/`, `__pypackages__/` in
 ///   the tree), a 64-hex stored hash, and a known sourceType can be compared
@@ -30,7 +30,7 @@ import Foundation
 ///   never recomputable — and never 64-hex, so the gate also catches it).
 /// - `lock-without-files` (action) — a lock entry whose name has no healthy
 ///   (non-broken) placement in that scope; the ledger claim alone conjures no
-///   skill (VAL-SCAN-028).
+///   skill.
 /// - `canonical-host-divergence` (action) — ports the archive's
 ///   `SourceDuplicate`: one lock source identity, >1 distinct content hash.
 /// - `dangerous-removal-surface` (action) — advisory for every name the vercel
@@ -43,12 +43,12 @@ import Foundation
 ///   NEWER than supported is surfaced as a finding with
 ///   lockPath/foundVersion/supportedVersion evidence (FIX-MALFORMED); the lock
 ///   is still best-effort parsed by the reader. Older incompatible locks stay
-///   issue-only (VAL-SCAN-031). All other anomaly kinds (ledger-unreadable,
+///   issue-only. All other anomaly kinds (ledger-unreadable,
 ///   skill-md-*, directory-unreadable) remain issues owned by the readers and
 ///   scanner, per their fixture expectations.
 public struct HealthAnalyzer: Sendable {
     /// Source types whose project `computedHash` describes a recomputable
-    /// on-disk tree (hash-algorithm.md §4.4). Space-listed to avoid a
+    /// on-disk tree. Space-listed to avoid a
     /// multi-line collection literal (repo lint gates conflict on those).
     private static let recomputableSourceTypes: Set<String> = Set(
         "github local node_modules well-known".split(separator: " ").map(String.init))
@@ -87,7 +87,7 @@ public struct HealthAnalyzer: Sendable {
 
     /// Duplicate classes for one name within one ownership bucket. Broken
     /// symlinks never participate (no canonical path, no content); classes
-    /// are not mutually exclusive (archive parity, port-reference §4).
+    /// are not mutually exclusive (archive parity).
     /// Agent-managed copies are the agent's own and never count as
     /// duplicates of an installer's copy.
     private func duplicateFindings(for group: SkillGroup) -> [Finding] {
@@ -227,7 +227,7 @@ public struct HealthAnalyzer: Sendable {
         return findings
     }
 
-    /// The §4.4 confidence gate, delegated to `RecomputeEligibility`.
+    /// The drift confidence gate, delegated to `RecomputeEligibility`.
     private func recomputeIneligibility(atPath root: String) -> [String] {
         RecomputeEligibility(fileSystem: fileSystem).reasons(atPath: root)
     }
@@ -328,7 +328,7 @@ public struct HealthAnalyzer: Sendable {
     /// A lock NEWER than supported surfaces as a finding carrying the
     /// versionStatus evidence (lockPath/foundVersion/supportedVersion); the
     /// reader still best-effort parses it. Older incompatible locks are
-    /// issue-only per VAL-SCAN-031.
+    /// issue-only.
     private func lockVersionFindings(locks: [ScopeLockClaim]) -> [Finding] {
         var findings: [Finding] = []
         for claim in locks {

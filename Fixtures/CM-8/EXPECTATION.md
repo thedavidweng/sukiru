@@ -6,7 +6,7 @@ copy in `.qoder/skills` byte-identical to the canonical one. One name, three
 physical placements, two partial ledgers. Scan with SUKIRU_HOME=<CM-8>/.home,
 SUKIRU_ROOTS=<CM-8>/proj.
 
-Expect (VAL-SCAN-047, D23): all three placements surfaced with correct
+Expect: all three placements surfaced with correct
 kinds/paths. The .qoder copy is hash-explained by the lock-anchored canonical
 placement and the .claude copy carries gh frontmatter, so NO placement is
 unexplained and the name is NOT ambiguous — NO `ambiguous-name` finding.

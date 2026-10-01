@@ -3,11 +3,11 @@ import Testing
 
 @testable import SukiruCore
 
-/// The post-run Differ (architecture §4.1 + D9): rescan of the affected
+/// The post-run Differ: rescan of the affected
 /// roots diffed against the pre-run scan and the snapshot — placements
 /// added/removed/changed, file-level changes inside snapshotted payloads,
 /// ledger byte changes, and lock-entry deltas. An untouched tree yields an
-/// explicitly empty diff (VAL-REPAIR-032/033).
+/// explicitly empty diff.
 @Suite("Differ")
 struct DifferTests {
     private typealias Support = SnapshotTestSupport

@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// The D12 decisions-file vocabulary parser (VAL-REPAIR-052): strict shape
+/// The decisions-file vocabulary parser: strict shape
 /// validation with naming messages, before any finding lookups happen.
 @Suite("DecisionsFile parsing and vocabulary validation")
 struct DecisionsFileTests {
@@ -83,7 +83,7 @@ struct DecisionsFileTests {
 
     // MARK: - choice rules per action
 
-    @Test("arbitrate requires choice keep-vercel or keep-github (VAL-REPAIR-052)")
+    @Test("arbitrate requires choice keep-vercel or keep-github")
     func arbitrateChoice() throws {
         #expect(try message(parse("{\"f\": {\"action\": \"arbitrate\"}}")).contains("choice"))
         let badJSON = "{\"f\": {\"action\": \"arbitrate\", \"choice\": \"keep-neither\"}}"
@@ -95,7 +95,7 @@ struct DecisionsFileTests {
         #expect(try message(parse(object)).contains("keep-vercel"))
     }
 
-    @Test("adopt requires repo and path, repo in owner/repo shape (D11)")
+    @Test("adopt requires repo and path, repo in owner/repo shape")
     func adoptChoice() throws {
         #expect(try message(parse("{\"f\": {\"action\": \"adopt\"}}")).contains("repo"))
         let noPath = "{\"f\": {\"action\": \"adopt\", \"choice\": {\"repo\": \"acme/tools\"}}}"

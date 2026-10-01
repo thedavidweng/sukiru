@@ -1,4 +1,4 @@
-# lock-unknown-fields — expectation (VAL-SCAN-022)
+# lock-unknown-fields — expectation
 
 Contents: a SUPPORTED (v3) global lock whose `known-tool` entry carries extra
 unknown keys (`channel: "beta"`, `priority: 7`) and whose top level carries

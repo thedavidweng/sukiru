@@ -1,7 +1,7 @@
 import SukiruCore
 import SwiftUI
 
-/// The installer-choice sheet (story 23): pick npx skills (Vercel ledger)
+/// The installer-choice sheet: pick npx skills (Vercel ledger)
 /// or gh skill (GitHub ledger), see the consequences spelled out, choose
 /// the target scope (user global vs a project root), and for gh the agent
 /// (and optional pin). "Add to Pending Changes" builds the Command Batch
@@ -77,7 +77,7 @@ struct InstallSheet: View {
         }
     }
 
-    // MARK: - installer choice (story 23)
+    // MARK: - installer choice
 
     private var installerChoice: some View {
         VStack(alignment: .leading, spacing: 8) {

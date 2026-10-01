@@ -4,13 +4,12 @@ import Testing
 @testable import SukiruCore
 
 /// `sukiru-cli batch --execute` → post-run diff → `sukiru-cli rollback`
-/// end-to-end (VAL-REPAIR-032…036): the diff is attached to the batch record
+/// end-to-end: the diff is attached to the batch record
 /// and lists precisely the real changes; an empty diff is explicit; rollback
 /// restores the pre-batch state byte-identically for succeeded AND failed
 /// batches; the rollback record itemizes every outcome in the three-category
 /// vocabulary, including an honest unrestorable-with-reason.
-/// Seam-B CLI suite: serialized per house rule (spawns the CLI, which may
-/// spawn shim CLIs).
+/// Serialized because it spawns the CLI, which may spawn shim CLIs.
 @Suite("sukiru-cli diff + rollback", .serialized)
 struct RollbackCLIIntegrationTests {
     private typealias Support = BatchExecutionSupport
@@ -61,7 +60,7 @@ struct RollbackCLIIntegrationTests {
         return (record, batchID)
     }
 
-    // MARK: - VAL-REPAIR-032/034: diff content + byte-identical rollback
+    // MARK: - Diff content + byte-identical rollback
 
     @Test("Round-trip: cleanup diff lists the removal, rollback restores byte-exactly")
     func cleanupRoundTrip() throws {
@@ -99,7 +98,7 @@ struct RollbackCLIIntegrationTests {
         #expect(orphanItem["category"] as? String == "restored-from-snapshot")
 
         // Post-rollback: the sandbox checksum AND the scan report match the
-        // pre-batch state exactly (VAL-REPAIR-034).
+        // pre-batch state exactly.
         #expect(try Self.sandboxChecksum(root: copy) == checksumBefore)
         let postScan = try CLIRunner.run(
             ["scan", "--format", "json"],
@@ -115,7 +114,7 @@ struct RollbackCLIIntegrationTests {
         #expect(persisted?["batchStatus"] as? String == "rolledBack")
     }
 
-    // MARK: - VAL-REPAIR-033: an empty diff is present and explicit
+    // MARK: - An empty diff is present and explicit
 
     @Test("A batch whose commands change nothing yields an explicit empty diff")
     func emptyDiffIsPresent() throws {
@@ -144,7 +143,7 @@ struct RollbackCLIIntegrationTests {
         #expect(summary[0].localizedCaseInsensitiveContains("no change"))
     }
 
-    // MARK: - VAL-REPAIR-035: rollback of a failed batch
+    // MARK: - Rollback of a failed batch
 
     @Test("A batch failed mid-way rolls back command 1's effects")
     func failedBatchRollsBack() throws {
@@ -214,7 +213,7 @@ struct RollbackCLIIntegrationTests {
         return bin
     }
 
-    // MARK: - VAL-REPAIR-036: honest unrestorable reporting through the CLI
+    // MARK: - Honest unrestorable reporting through the CLI
 
     @Test("A sabotaged snapshot payload surfaces as unrestorable-with-reason")
     func unrestorableFixture() throws {
@@ -222,7 +221,7 @@ struct RollbackCLIIntegrationTests {
         let copy = try Support.copyFixture("FIX-FILES-NO-LOCK", into: tree)
         let executed = try Self.executeCleanup(home: copy, tree: tree)
         // Make the snapshot's stored payload unreadable between snapshot and
-        // rollback (the contract's constructible unrestorable fixture).
+        // rollback (the constructible unrestorable case).
         let snapshotID = try #require(executed.record["snapshotID"] as? String)
         let manifestPath =
             copy + "/Library/Application Support/Sukiru/snapshots/"

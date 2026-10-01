@@ -1,4 +1,4 @@
-# own-vercel — expectation (VAL-SCAN-015 / VAL-SCAN-019)
+# own-vercel — expectation
 
 Contents: two skills with lock entries and NO github frontmatter.
 `global-tool` (user scope, global v3 lock) and `proj-tool` (project scope,

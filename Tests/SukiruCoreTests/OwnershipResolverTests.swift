@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// OwnershipResolver ownership states (architecture §6, D18): the four
+/// OwnershipResolver ownership states: the four
 /// verdicts and their provenance surfacing — unit-level over TempTree,
 /// through ScanEngine.
 @Suite("OwnershipResolver ownership states")

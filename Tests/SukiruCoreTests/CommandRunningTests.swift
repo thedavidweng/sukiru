@@ -4,7 +4,7 @@ import Testing
 @testable import SukiruCore
 
 /// `SystemCommandRunner` against the REAL filesystem (the one seam allowed
-/// to spawn subprocesses, architecture D2). Capability detection itself is
+/// to spawn subprocesses). Capability detection itself is
 /// tested with stubs in `CapabilityDetectorTests`; these tests exercise the
 /// runner mechanics.
 @Suite("System command runner")

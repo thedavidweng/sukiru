@@ -1,7 +1,7 @@
 import Foundation
 
 /// Fetches the raw `SKILL.md` of a search result for pre-install review
-/// (story 24: prompt-injection risk is inspected, not trusted).
+/// (prompt-injection risk is inspected, not trusted).
 ///
 /// Read-only by design (the core never writes). The URL is derived from the
 /// result's own data:

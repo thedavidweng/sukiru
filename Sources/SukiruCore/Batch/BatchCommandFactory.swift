@@ -1,7 +1,6 @@
 import Foundation
 
-/// Constructors for every command shape a batch may contain
-/// (architecture §4.1 repair side, D10/D11/D13/D22).
+/// Constructors for every command shape a batch may contain.
 ///
 /// Ledger writes are only official CLI invocations — `npx skills …` (vercel
 /// ledger) and `gh skill …` (github ledger). Flagged direct file operations
@@ -10,8 +9,8 @@ import Foundation
 enum BatchCommandFactory {
     // MARK: - npx skills (vercel ledger)
 
-    /// `npx skills update <name> (-p|-g) -y` — the plain vercel update
-    /// (VAL-REPAIR-009). NEVER used for drift repair (D22). Project-scope
+    /// `npx skills update <name> (-p|-g) -y` — the plain vercel update.
+    /// NEVER used for drift repair. Project-scope
     /// commands carry the project root as `workingDirectory` (npx resolves
     /// `-p` literally from cwd).
     static func vercelUpdate(
@@ -32,11 +31,11 @@ enum BatchCommandFactory {
 
     /// `npx skills add <recorded source> --skill <name> [-a <host>…] [--copy] [-g] -y` —
     /// re-install from the vercel lock's recorded source. This is BOTH the
-    /// D22 drift repair (`npx skills update` reports "already up to date"
-    /// while ignoring drifted copies) and the D10 keep-vercel arbitration
+    /// drift repair (`npx skills update` reports "already up to date"
+    /// while ignoring drifted copies) and the keep-vercel arbitration
     /// (proven side effect: it erases gh frontmatter provenance).
     ///
-    /// Probe-verified against skills@1.5.26 (seam-b-e2e): an UNTARGETED
+    /// Probe-verified against skills@1.5.26: an UNTARGETED
     /// `add` refreshes only the canonical `.agents/skills` copy and leaves
     /// drifted or gh-overwritten copies in other host dirs (and their
     /// provenance) untouched, so the planner passes every placement's host
@@ -77,8 +76,8 @@ enum BatchCommandFactory {
 
     /// `npx skills remove <name> [-g] -y` — name-based, ledger-blind deletion
     /// (collision-matrix scenario 6). ALWAYS carries the dangerous-deletion
-    /// flag and warning (VAL-REPAIR-020), naming detectable at-risk
-    /// cross-ledger skills (VAL-REPAIR-021).
+    /// flag and warning, naming detectable at-risk
+    /// cross-ledger skills.
     static func vercelRemove(
         name: String,
         scope: Scope,
@@ -106,7 +105,7 @@ enum BatchCommandFactory {
         )
     }
 
-    /// The dangerous-deletion warning prose (VAL-REPAIR-020/021): removal is
+    /// The dangerous-deletion warning prose: removal is
     /// by name across ownership, and detectable at-risk skills are named with
     /// their owning ledger.
     static func dangerousDeletionWarning(name: String, atRisk: [AtRiskSkill]) -> String {
@@ -124,8 +123,8 @@ enum BatchCommandFactory {
     // MARK: - gh skill (github ledger)
 
     /// `gh skill update <name> --dir <dir>` per placement directory — the
-    /// narrowest targeting available (D13: named skill + `--dir`, never a
-    /// bare `--all`), one command per distinct skills dir (VAL-REPAIR-010).
+    /// narrowest targeting available (named skill + `--dir`, never a
+    /// bare `--all`), one command per distinct skills dir.
     static func githubUpdates(name: String, dirs: [String], finding: Finding) -> [BatchCommand] {
         dirs.map { dir in
             let argv = ["gh", "skill", "update", name, "--dir", dir]
@@ -143,7 +142,7 @@ enum BatchCommandFactory {
 
     /// `gh skill install <owner/repo> <path> --force --dir <dir>` — the
     /// verified non-interactive re-anchoring shape, used for ownerless
-    /// adoption (D11) and the D10 keep-github arbitration.
+    /// adoption and the keep-github arbitration.
     static func githubInstall(
         repo: String,
         path: String,
@@ -165,8 +164,8 @@ enum BatchCommandFactory {
 
     // MARK: - ownerless direct file operations
 
-    /// Flagged direct deletion of an ownerless skill's directory placements
-    /// (VAL-REPAIR-018): no CLI owns the skill, so cleanup is a file
+    /// Flagged direct deletion of an ownerless skill's directory placements:
+    /// no CLI owns the skill, so cleanup is a file
     /// operation — explicitly flagged, and always snapshotted before
     /// execution by the batch pipeline.
     static func ownerlessCleanups(
@@ -190,7 +189,7 @@ enum BatchCommandFactory {
         }
     }
 
-    // MARK: - new installs (stories 22–24)
+    // MARK: - new installs
 
     /// `npx skills add <owner/repo> -s <name> [--copy] (-g|-p) -y` — the verified
     /// non-interactive NEW-install shape (probe-verified 2026-09-18 against

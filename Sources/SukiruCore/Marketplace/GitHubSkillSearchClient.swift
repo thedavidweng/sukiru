@@ -1,11 +1,11 @@
 import Foundation
 
-/// The `gh skill search` client (story 22, github backend).
+/// The `gh skill search` client (github backend).
 ///
 /// `gh skill search <query> --json description,namespace,path,repo,skillName,stars
 /// -L <limit>` is a local subprocess (needs gh ≥ 2.90.0) that queries the
 /// GitHub Code Search API. The `path` it returns is the repo-relative
-/// `SKILL.md` path, which makes preview (story 24) precise.
+/// `SKILL.md` path, which makes preview precise.
 ///
 /// The transport is the existing `CommandRunning` seam, so tests stub the
 /// subprocess outcome exactly like the capability detectors do.

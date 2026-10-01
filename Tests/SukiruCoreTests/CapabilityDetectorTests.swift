@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// Capability detection (architecture §4.1/§8, D6) with an injectable command
+/// Capability detection with an injectable command
 /// runner — no real subprocesses in unit tests. gh is `available` iff present
 /// AND ≥ 2.90.0 AND `gh skill --help` exits 0; npx skills is `resolvable`
 /// with its version when `npx -y skills@latest --version` succeeds.

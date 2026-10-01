@@ -6,7 +6,7 @@ in the sandbox project `proj/` (codex resolves to the canonical .agents/skills,
 claude-code to .claude/skills; --copy forces two physical copies). Scan with
 SUKIRU_HOME=<CM-1>/.home, SUKIRU_ROOTS=<CM-1>/proj.
 
-Expect (VAL-SCAN-043): ownership=vercel for `stale-docs-cleanup`; project v1 lock
+Expect: ownership=vercel for `stale-docs-cleanup`; project v1 lock
 `proj/skills-lock.json` with source/sourceType/skillPath/computedHash; two
 placements — canonical `.agents/skills` + `.claude/skills` physical copy —
 as an EXACT cross-host duplicate (same hash, distinct paths). NO drift, NO

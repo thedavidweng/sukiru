@@ -37,7 +37,7 @@ public protocol FileSystemProbe: Sendable {
     /// component resolved, absolute result), or nil when the path does not
     /// exist or cannot be resolved. `URL.resolvingSymlinksInPath` is NOT a
     /// substitute — it never errors on missing paths and disagrees with
-    /// realpath on `/var` vs `/private/var` (port-reference §3).
+    /// realpath on `/var` vs `/private/var`.
     func resolvedPath(atPath path: String) -> String?
 }
 

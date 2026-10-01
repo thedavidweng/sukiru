@@ -2,9 +2,9 @@ import SukiruCore
 import SwiftUI
 
 /// The Settings window (standard ⌘, scene), paged like Contacts. Projects
-/// edits the saved project folders (D20); Installers checks, installs, and
-/// updates the official CLIs Sukiru delegates to (D6). Refresh lives in the
-/// main window toolbar (and ⌘R) because the app keeps no watchers (D7).
+/// edits the saved project folders; Installers checks, installs, and
+/// updates the official CLIs Sukiru delegates to. Refresh lives in the
+/// main window toolbar (and ⌘R) because the app keeps no watchers.
 struct SettingsView: View {
     var body: some View {
         if #available(macOS 15.0, *) {
@@ -26,7 +26,7 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - Projects (D20)
+// MARK: - Projects
 
 private struct ProjectsSettingsPane: View {
     @EnvironmentObject private var state: AppState
@@ -130,7 +130,7 @@ private struct ProjectsSettingsPane: View {
     }
 }
 
-// MARK: - Installers (D6, surfaced per VAL-CROSS-001)
+// MARK: - Installers
 
 private struct InstallersSettingsPane: View {
     @EnvironmentObject private var state: AppState
@@ -140,7 +140,7 @@ private struct InstallersSettingsPane: View {
         Form {
             Section {
                 // Rows render from the first frame in a checking state while
-                // the background probes run, then settle (VAL-HEALTH-004).
+                // the background probes run, then settle.
                 InstallerRow(
                     tool: .github, title: "GitHub CLI", token: "sukiru.settings.capability.gh",
                     status: state.capabilities.map { githubStatus($0.github) })
@@ -180,8 +180,8 @@ private struct InstallersSettingsPane: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if neitherCLI {
-                // §8: with neither CLI, Sukiru is the full read-only
-                // diagnostician; the notice is explicit (VAL-HEALTH-026).
+                // With neither CLI, Sukiru is the full read-only
+                // diagnostician; the notice is explicit.
                 Section {
                     HStack(alignment: .firstTextBaseline, spacing: 0) {
                         AXToken(token: "sukiru.settings.readonlyNotice")
@@ -229,7 +229,7 @@ private struct InstallersSettingsPane: View {
         case nil: reason = ""
         }
         // A present-but-too-old gh shows BOTH the detected version and the
-        // unsupported state (VAL-HEALTH-027); absence shows the bare reason.
+        // unsupported state; absence shows the bare reason.
         if let version = github.version {
             return .outdated(String(localized: "capability.unavailableAt \(version) \(reason)"))
         }

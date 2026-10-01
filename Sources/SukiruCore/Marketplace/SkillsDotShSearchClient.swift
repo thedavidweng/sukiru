@@ -1,12 +1,12 @@
 import Foundation
 
-/// The skills.sh marketplace search client (story 22, `skills.sh` backend).
+/// The skills.sh marketplace search client (`skills.sh` backend).
 ///
 /// `GET https://skills.sh/api/search?q=<query>&limit=<n>` returns
 /// `{"skills": [{"id", "skillId", "name", "installs", "source"}]}`. This is
 /// a pure network read with NO subprocess (`npx` is never required), so
-/// search stays available in every degraded environment (§8, stories
-/// 25–27). The response's `source` is the `owner/repo` slug the installers
+/// search stays available in every degraded environment. The
+/// response's `source` is the `owner/repo` slug the installers
 /// accept; `id` is `owner/repo/skill-name` (the display path).
 public struct SkillsDotShSearchClient: Sendable {
     /// One skill entry in the marketplace response.

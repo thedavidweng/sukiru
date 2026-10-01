@@ -1,5 +1,4 @@
-# The CLI-generated collision-matrix corpus (CM-*) IS checked in since
-# seam-a-corpus-validation: the corpus suite asserts committed expectation
+# The CLI-generated collision-matrix corpus (CM-*) IS checked in: the corpus suite asserts committed expectation
 # snapshots, so the trees must be versioned with them. Regenerate with
 # Scripts/fixtures/generate.sh (network + pinned skills@1.5.26 + gh);
 # the generator resets each sandbox .home to a pristine .gitkeep'd dir and
@@ -8,7 +7,7 @@
 # Generator scratch / runtime-only states.
 .check-sandbox/
 
-# Capability-probe pollution (library/app-shell.md): running the app or
+# Capability-probe pollution: running the app or
 # `sukiru-cli capabilities` with SUKIRU_HOME=<fixture> makes the mise-shimmed
 # npx bootstrap node/caches into the fixture HOME. Never commit these.
 **/.local/

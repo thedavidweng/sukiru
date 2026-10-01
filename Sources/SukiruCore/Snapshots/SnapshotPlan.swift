@@ -1,13 +1,13 @@
 import Foundation
 
-/// Pure capture planning (architecture §4.1 SnapshotStore, D9): which ledger
+/// Pure capture planning: which ledger
 /// paths, placements, payload sources, and watched directories a batch plus
 /// the pre-run scan imply. Split from SnapshotStore so the decision logic is
 /// reviewable without disk writes.
 struct SnapshotPlan: Equatable, Sendable {
     /// Absolute ledger file paths to record, sorted: ALWAYS the global lock
     /// plus every project-lock probe candidate of every touched project root
-    /// (VAL-REPAIR-024 captures both lock files; absent candidates are
+    /// (both lock files are captured; absent candidates are
     /// recorded so rollback can delete a lock the batch creates there).
     let ledgerPaths: [String]
     /// The placement manifest: every placement of every skill in every

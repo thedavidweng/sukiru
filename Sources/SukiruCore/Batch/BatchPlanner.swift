@@ -2,7 +2,7 @@ import Foundation
 
 /// The per-action planners of `CommandBatchBuilder` (split out to keep each
 /// file focused; internal to the module, exercised through the public
-/// `build` seam).
+/// `build` entry point).
 extension CommandBatchBuilder {
     // MARK: - skill resolution
 
@@ -52,7 +52,7 @@ extension CommandBatchBuilder {
     }
 
     /// The targeted re-install shape for a project-scope skill
-    /// (probe-verified against skills@1.5.26, seam-b-e2e): an untargeted
+    /// (probe-verified against skills@1.5.26): an untargeted
     /// `npx skills add … --skill <name>` refreshes ONLY the canonical
     /// `.agents/skills` copy — drifted or gh-overwritten copies in other
     /// host dirs are left untouched, findings included. So when the skill
@@ -162,7 +162,7 @@ extension CommandBatchBuilder {
         }
     }
 
-    // MARK: - arbitrate (D10)
+    // MARK: - arbitrate
 
     func arbitrateCommands(
         entry: DecisionEntry, finding: Finding, report: ScanReport
@@ -200,7 +200,7 @@ extension CommandBatchBuilder {
         }
     }
 
-    /// The D10 keep-github sequence: FIRST the danger-flagged
+    /// The keep-github arbitration sequence: FIRST the danger-flagged
     /// `npx skills remove` (deleting by name across ownership is the point),
     /// THEN `gh skill install <repo> <path> --force --dir <dir>` re-anchoring
     /// from the recorded gh provenance.
@@ -222,7 +222,7 @@ extension CommandBatchBuilder {
             intent: "Arbitrate '\(skill.name)' keeping the GitHub ledger (finding "
                 + "\(finding.ruleID)): remove every copy by name before re-anchoring.",
             workingDirectory: projectRoot(of: finding))
-        // Probe-verified (seam-b-e2e): the recorded `github-path` is the
+        // Probe-verified: the recorded `github-path` is the
         // skill's repo-relative DIRECTORY, but `gh skill install` requires
         // the exact SKILL.md path — a bare directory fails with
         // "no skills found".
@@ -239,7 +239,7 @@ extension CommandBatchBuilder {
 
     /// The gh-provenanced placement's parent skills dir: recovered from the
     /// double-booked finding's `skillMdPath` evidence (contract-guaranteed
-    /// for double-booked names, VAL-SCAN-016), falling back to the first
+    /// for double-booked names), falling back to the first
     /// sorted placement dir.
     func ghProvenanceDir(
         skill: Skill, finding: Finding, report: ScanReport
@@ -259,7 +259,7 @@ extension CommandBatchBuilder {
         return first
     }
 
-    // MARK: - adopt (D11)
+    // MARK: - adopt
 
     func adoptCommands(
         entry: DecisionEntry, finding: Finding, report: ScanReport
@@ -320,7 +320,7 @@ extension CommandBatchBuilder {
         }
         if skill.ownership == .ownerless {
             // Ambiguous names land here too (attribution voided → ownerless
-            // routing, VAL-REPAIR-057).
+            // routing).
             let paths = skill.placements.filter { $0.kind == .directory }.map(\.path).sorted()
             guard !paths.isEmpty else {
                 throw noDirectoryPlacements(skill: skill, entry: entry)
@@ -337,7 +337,7 @@ extension CommandBatchBuilder {
                     name: skill.name, paths: paths, finding: finding)
         }
         // Ledger-owned skills remove through the vercel CLI (gh has no remove
-        // command); cross-ledger names are named as at-risk (VAL-REPAIR-021).
+        // command); cross-ledger names are named as at-risk.
         let atRisk: [AtRiskSkill] =
             skill.ownership == .vercel
             ? [] : [AtRiskSkill(skill: skill.name, ownership: skill.ownership.rawValue)]

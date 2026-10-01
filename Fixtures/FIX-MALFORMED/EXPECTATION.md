@@ -11,5 +11,5 @@ A correct scan MUST:
   with a missing-name reason, and NOT create a placement for `nameless`;
 - emit a `lock-version-unsupported` finding (found=4, supported=3) yet
   best-effort parse the lock (`healthy` still readable) and surface the unknown
-  keys (VAL-SCAN-022/031);
+  keys;
 - still inventory the `healthy` sibling.

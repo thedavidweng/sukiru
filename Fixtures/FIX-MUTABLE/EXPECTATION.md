@@ -1,4 +1,4 @@
-# FIX-MUTABLE — expectation (M3 health-area, VAL-HEALTH-035/036)
+# FIX-MUTABLE — expectation
 
 Contents: one vercel-owned user-scope skill `greet` (global v3 lock) — a
 zero-findings clean tree. Validators COPY this tree, launch the app against

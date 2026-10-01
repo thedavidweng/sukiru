@@ -1,5 +1,4 @@
-/// Builds the workspace root set for a scan (architecture §4.1,
-/// port-reference §3).
+/// Builds the workspace root set for a scan.
 ///
 /// User scope: the canonical `~/.agents/skills` store plus every detected or
 /// leftover host global dir. Leftover roots (CLI spray residue) stay in the
@@ -7,7 +6,7 @@
 ///
 /// Project scope: for each registered project root, the canonical
 /// `.agents/skills` store plus one workspace per host project dir. Project
-/// host detection is intentionally permissive (port-reference §2): a plain
+/// host detection is intentionally permissive: a plain
 /// existence test on the skills dir OR the detection marker, never
 /// `marks_installation`. Hosts sharing a project dir (trae/trae-cn share
 /// `.trae/skills`) collapse to one workspace per path; the first host in
@@ -15,14 +14,14 @@
 ///
 /// The output order is defined and deterministic: user scope first (canonical
 /// then hosts in host-table order), then project scopes sorted by root.
-/// A workspace enriched with the engine-side context the D18 wire
+/// A workspace enriched with the engine-side context the wire
 /// `Workspace` does not carry.
 public struct EnumeratedWorkspace: Equatable, Sendable {
-    /// The D18 wire workspace.
+    /// The wire workspace.
     public let workspace: Workspace
     /// ALL hosts whose resolved skills dir IS this workspace's root, in
-    /// host-table order — never a single host id (port-reference trap 12:
-    /// trae/trae-cn share project dir `.trae/skills`; cline/dexto/warp/zed
+    /// host-table order — never a single host id
+    /// (trae/trae-cn share project dir `.trae/skills`; cline/dexto/warp/zed
     /// share the canonical store).
     public let candidateHosts: [String]
     /// The ownership/ambiguity bucket: `user` for user scope, `project:<root>`
@@ -50,7 +49,7 @@ public struct WorkspaceEnumerator: Sendable {
     }
 
     /// All workspaces in both scopes, in defined order. `projectRoots` is the
-    /// already-resolved root set (D5 precedence is the caller's job).
+    /// already-resolved root set (root precedence is the caller's job).
     public func enumerate(projectRoots: [String]) -> [Workspace] {
         enumerateDetailed(projectRoots: projectRoots).map(\.workspace)
     }
@@ -127,7 +126,7 @@ public struct WorkspaceEnumerator: Sendable {
             let root = resolver.projectSkillsRoot(for: host, projectRoot: projectRoot)
             guard !seen.contains(root) else { continue }
             let dirExists = fileSystem.exists(atPath: root)
-            // ARCHIVE DIVERGENCE (deliberate; library/read-side-porting.md):
+            // ARCHIVE DIVERGENCE (deliberate):
             // the archive probes `project_root.join(detection_marker).exists()`
             // UNGUARDED, and `Path::join("")` is the root itself — so the
             // archive registered a phantom project workspace for every

@@ -1,6 +1,6 @@
 import Foundation
 
-/// What a destructive-by-design command does beyond its argv (D10/D11/D22).
+/// What a destructive-by-design command does beyond its argv.
 ///
 /// The case is the language-neutral source of truth: `BatchCommand` stores
 /// it beside the English `text` so presentation layers can localize it while
@@ -9,11 +9,11 @@ public enum CommandConsequence: Codable, Equatable, Sendable {
     /// A re-install from the recorded source discards local edits.
     case resetsToUpstream
     /// As `resetsToUpstream`, and the re-install erases gh frontmatter
-    /// provenance (D10 keep-vercel).
+    /// provenance (keep-vercel arbitration).
     case resetsToUpstreamErasingGitHubProvenance
-    /// A gh re-install resets content to the recorded ref (D10 keep-github).
+    /// A gh re-install resets content to the recorded ref (keep-github arbitration).
     case resetsToGitHubRef
-    /// gh adoption merge-overwrites the existing directory (D11).
+    /// gh adoption merge-overwrites the existing directory.
     case mergeOverwritesCollidingFiles
     /// Vercel adoption replaces local copies with links to a fresh shared copy.
     case replacesCopiesWithSharedLinks

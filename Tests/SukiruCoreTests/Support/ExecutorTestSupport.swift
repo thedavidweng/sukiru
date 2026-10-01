@@ -163,7 +163,7 @@ enum ExecutorTestSupport {
     }
 
     /// Recursive byte search: whether ANY regular file under `root` contains
-    /// `needle` (the GH_TOKEN persistence grep, VAL-REPAIR-054).
+    /// `needle` (the GH_TOKEN persistence grep).
     static func treeContains(_ root: String, needle: String) -> Bool {
         let needleData = Data(needle.utf8)
         guard let enumerator = FileManager.default.enumerator(atPath: root) else {

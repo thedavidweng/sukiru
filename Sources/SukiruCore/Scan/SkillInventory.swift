@@ -1,6 +1,5 @@
 /// One logical skill name within one ownership bucket, before ownership
-/// resolution (architecture D1 as refined by D23; port-reference §4 alias
-/// collapse).
+/// resolution (after alias collapse).
 ///
 /// Grouping key is `(scopeGroup, name)`: one logical skill per skill name per
 /// ownership bucket (`user` scope, or one bucket per project root — ownership
@@ -8,9 +7,9 @@
 /// to ONE canonical path, e.g. host symlinks into the canonical store) are
 /// one logical skill with N placements and are never ambiguous by themselves.
 ///
-/// A group is `ambiguous` per the D23 refined trigger (see
+/// A group is `ambiguous` per the refined trigger (see
 /// `SkillInventory.isAmbiguous`): the naive ">1 distinct canonical paths"
-/// reading of D1 is wrong because every stock copy-mode install has two
+/// reading is wrong because every stock copy-mode install has two
 /// physical copies. Broken symlinks carry no canonical path and no content
 /// hash and therefore never create ambiguity.
 public struct SkillGroup: Equatable, Sendable {
@@ -18,7 +17,7 @@ public struct SkillGroup: Equatable, Sendable {
     public let name: String
     /// The ownership bucket: `user` or `project:<root>`.
     public let scopeGroup: String
-    /// D23: the bucket's unexplained placements hold ≥2 distinct content
+    /// The bucket's unexplained placements hold ≥2 distinct content
     /// hashes (computed by `SkillInventory.groups`, which needs the scope's
     /// lock claim).
     public let ambiguous: Bool
@@ -53,10 +52,10 @@ public struct SkillGroup: Equatable, Sendable {
 ///
 /// Group order is defined: by name, then user scope before project buckets,
 /// then bucket name; members within a group sort by path. The
-/// OwnershipResolver turns groups plus ledger claims into D18 skills.
+/// OwnershipResolver turns groups plus ledger claims into wire-format skills.
 public enum SkillInventory {
     /// Builds the sorted skill groups from scanner output. `locks` feed the
-    /// D23 ambiguity trigger: whether the vercel ledger claims a name decides
+    /// ambiguity trigger: whether the vercel ledger claims a name decides
     /// which placements are hash-explained by the canonical store.
     public static func groups(
         from discovered: [DiscoveredPlacement],
@@ -110,7 +109,7 @@ public enum SkillInventory {
             }
     }
 
-    /// The D23 refined ambiguity trigger (architecture §11), per name per
+    /// The refined ambiguity trigger, per name per
     /// scope after alias collapse.
     ///
     /// Placements partition into EXPLAINED and UNEXPLAINED. A placement is
@@ -124,7 +123,7 @@ public enum SkillInventory {
     ///     identical to one that does.
     ///
     /// The name is AMBIGUOUS iff the unexplained placements contain ≥2
-    /// distinct content hashes. Consequences (D23): stock copy-mode installs
+    /// distinct content hashes. Consequences: stock copy-mode installs
     /// are vercel-owned exact duplicates, never ambiguous; a gh-overwritten
     /// copy is double-booked, not ambiguous; two divergent copies with no
     /// ledger story for either ARE ambiguous; a lone divergent copy alongside
@@ -144,7 +143,7 @@ public enum SkillInventory {
             return (member, hash)
         }
         let lockClaims = claim?.lock.entries[name] != nil
-        // D23(a) anchors on THE canonical-store placement. Scanner invariant
+        // The trigger anchors on THE canonical-store placement. Scanner invariant
         // this relies on: one skills dir per workspace per name, so at most
         // one placement per name carries `workspaceID == scopeGroup`.
         let canonicalHash = hashed.first { $0.member.workspaceID == $0.member.scopeGroup }?.hash

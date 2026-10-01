@@ -1,4 +1,4 @@
-# FIX-OWNERSHIP-QUAD — expectation (M3 health-area)
+# FIX-OWNERSHIP-QUAD — expectation
 
 Contents: FIVE user-scope skills, one per ownership state the UI asserts on:
 - `vercel-skill` — canonical `.agents/skills/vercel-skill` + global v3 lock
@@ -17,5 +17,5 @@ double-booked-skill=double-booked, ownerless-skill=ownerless. Expected
 findings: `double-booked` (both-ledger evidence), `dangerous-removal-surface`
 for gh-pinned, gh-unpinned, and ownerless-skill, and `files-without-lock` for
 ownerless-skill. This is deliberately NOT a clean tree — github/ownerless
-skills always raise the advisory, which is why FIX-CLEAN stays vercel-only
-(VAL-SCAN-041b); do not merge the two.
+skills always raise the advisory, which is why FIX-CLEAN stays vercel-only;
+do not merge the two.

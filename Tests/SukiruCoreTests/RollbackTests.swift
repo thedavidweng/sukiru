@@ -59,12 +59,12 @@ enum RollbackTestSupport {
     }
 }
 
-/// One-click rollback (architecture §4.1 + D9, VAL-REPAIR-034/035/036):
+/// One-click rollback:
 /// restores ledgers byte-exact, restores payloads, deletes batch-added
 /// paths (including placements a rescan finds beyond the watched dirs),
 /// works for succeeded AND failed batches, and itemizes every outcome
 /// honestly. No compensating CLI commands anywhere.
-/// Serialized per the seam-B house rule: these tests execute batches through
+/// Serialized because these tests execute batches through
 /// the real CLIExecutor, whose reaper starves under parallel scheduling.
 @Suite("Rollback engine", .serialized)
 struct RollbackEngineTests {
@@ -115,8 +115,8 @@ struct RollbackEngineTests {
         #expect(orphanItem.category == .restoredFromSnapshot)
         #expect(!record.items.contains { $0.category == .unrestorableWithReason })
         #expect(try TreeChecksum.manifest(root: orphan) == before)
-        // A post-rollback rescan byte-matches the original pre-batch scan
-        // (VAL-REPAIR-034): same placements, same ownership, same findings.
+        // A post-rollback rescan byte-matches the original pre-batch scan:
+        // same placements, same ownership, same findings.
         let post = try OwnershipBuilders.scan(home: tree.home, projectRoots: [tree.project])
         #expect(try post.jsonData() == tree.report.jsonData())
         // The batch transcript flips to rolledBack and the rollback record
@@ -189,7 +189,7 @@ struct RollbackEngineTests {
         let item = try #require(record.items.first { $0.path == sprayed })
         #expect(item.category == .deletedBatchAdded)
         // The spray-created container dirs go too: the sandbox returns to
-        // the pre-batch state byte-for-byte (VAL-REPAIR-034).
+        // the pre-batch state byte-for-byte.
         #expect(!fileManager.fileExists(atPath: tree.home.path + "/.qoder"))
         #expect(!record.items.contains { $0.category == .unrestorableWithReason })
         let post = try OwnershipBuilders.scan(home: tree.home, projectRoots: [tree.project])
@@ -223,7 +223,7 @@ struct RollbackEngineTests {
         #expect(sprayedItem.category == .deletedBatchAdded)
         #expect(!fileManager.fileExists(atPath: sprayed))
         // The pre-existing containers survive and are NOT itemized as
-        // deleted-batch-added (VAL-REPAIR-034 byte-equality).
+        // deleted-batch-added (byte-equality).
         let qoder = tree.home.path + "/.qoder"
         #expect(fileManager.fileExists(atPath: emptyHost))
         #expect(fileManager.fileExists(atPath: qoder))
@@ -244,7 +244,7 @@ struct RollbackEngineTests {
         let result = try Roll.execute(
             Roll.cleanupBatch(refs: refs, path: orphan),
             report: tree.report, environment: environment)
-        // The constructible unrestorable fixture (VAL-REPAIR-036): make a
+        // The constructible unrestorable fixture: make a
         // snapshot payload file unreadable between snapshot and rollback.
         let store = SnapshotStore(environment: environment)
         let manifest = try store.load(id: result.record.snapshotID)
@@ -259,7 +259,7 @@ struct RollbackEngineTests {
         let item = try #require(record.items.first { $0.path == orphan })
         #expect(item.category == .unrestorableWithReason)
         #expect(item.reason != nil)
-        // Every item uses exactly the three-category vocabulary (D9).
+        // Every item uses exactly the three-category vocabulary.
         let categories: Set<RestoreItem.Category> = [
             .restoredFromSnapshot, .deletedBatchAdded, .unrestorableWithReason
         ]

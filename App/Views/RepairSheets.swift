@@ -1,7 +1,7 @@
 import SukiruCore
 import SwiftUI
 
-/// The double-booked arbitration sheet (D10, VAL-REPAIR-016): exactly two
+/// The double-booked arbitration sheet: exactly two
 /// explicit choices — keep the Vercel ledger or keep the GitHub ledger —
 /// each with its consequences spelled out, and NO default (nothing is
 /// preselected, Return does not confirm). Dismissing the sheet (Cancel /
@@ -9,8 +9,8 @@ import SwiftUI
 struct ArbitrationSheet: View {
     @EnvironmentObject private var state: AppState
 
-    /// keep-github re-anchors through `gh skill install` (D10); with gh
-    /// unavailable the choice is disabled and says why (§8).
+    /// keep-github re-anchors through `gh skill install`; with gh
+    /// unavailable the choice is disabled and says why.
     private var ghUnavailable: Bool {
         state.capabilities?.github.available == false
     }
@@ -46,7 +46,7 @@ struct ArbitrationSheet: View {
         .frame(width: 560)
     }
 
-    /// D10 keep-vercel: re-install from the vercel lock's recorded source;
+    /// Keep-vercel: re-install from the vercel lock's recorded source;
     /// content resets to upstream, local edits are lost, and the re-install
     /// erases the GitHub frontmatter provenance.
     private var keepVercelChoice: some View {
@@ -68,7 +68,7 @@ struct ArbitrationSheet: View {
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
     }
 
-    /// D10 keep-github: FIRST the danger-flagged `npx skills remove`
+    /// Keep-github: FIRST the danger-flagged `npx skills remove`
     /// (deleting by name across ownership is the point), THEN
     /// `gh skill install --force` re-anchoring the recorded provenance;
     /// content resets to the gh-recorded ref, local edits are lost.
@@ -101,7 +101,7 @@ struct ArbitrationSheet: View {
     }
 }
 
-/// The ownerless adopt sheet (D11, VAL-REPAIR-051): the user supplies BOTH
+/// The ownerless adopt sheet: the user supplies BOTH
 /// the `owner/repo` source and the repo-relative skill path — neither field
 /// is prefilled and the proceed control stays disabled (`.disabled` AX
 /// suffix) while either is empty. The merge-overwrite warning is always

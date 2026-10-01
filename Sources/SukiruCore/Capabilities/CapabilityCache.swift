@@ -1,6 +1,6 @@
 import Foundation
 
-/// Caches `CapabilityDetector` results (architecture §4.1/§8: detection never
+/// Caches `CapabilityDetector` results (detection never
 /// blocks anything; results are cached).
 ///
 /// The app queries capabilities repeatedly — the Settings panel, inline

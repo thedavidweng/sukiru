@@ -3,21 +3,20 @@ import Testing
 
 @testable import SukiruCore
 
-/// The Search/Install milestone's real-CLI end-to-end validation (stories
-/// 22–24): an install batch built by `InstallPlanBuilder` executes through
+/// Search/Install real-CLI end-to-end validation: an install batch built by `InstallPlanBuilder` executes through
 /// the REAL pinned `npx skills` into a sandboxed HOME, and the post-state
 /// rescan shows the skill installed with Vercel ownership. This proves the
 /// verified non-interactive command shape end to end, exactly like the
-/// seam-B e2e harness (logging wrappers, transcript, real-$HOME canary).
+/// real-CLI e2e harness (logging wrappers, transcript, real-$HOME canary).
 ///
 /// Gated: skipped unless `SUKIRU_E2E=1` (network + toolchain required).
 @Suite(
     "search/install end-to-end (real CLI, sandboxed HOME)",
     .serialized,
-    .enabled(if: SeamBE2ESupport.enabled, "set SUKIRU_E2E=1 to run the real-CLI install e2e")
+    .enabled(if: RealCLIE2ESupport.enabled, "set SUKIRU_E2E=1 to run the real-CLI install e2e")
 )
 struct SearchInstallEndToEndTests {
-    /// The real upstream repo + skill proven by the seam-B fixtures (the
+    /// The real upstream repo + skill proven by the real-CLI e2e fixtures (the
     /// same source the CM corpus was generated against).
     static let upstreamRepo = "thedavidweng/skills"
     static let upstreamSkill = "stale-docs-cleanup"
@@ -26,11 +25,11 @@ struct SearchInstallEndToEndTests {
     func installEndToEnd() throws {
         let tree = try TempTree()
         let home = try tree.dir("home")
-        let canary = SeamBE2ESupport.HomeCanary()
+        let canary = RealCLIE2ESupport.HomeCanary()
         defer { try? canary.verifyUnchanged() }
 
-        let tools = try SeamBE2ESupport.resolveTools()
-        let bin = try SeamBE2ESupport.installToolWrappers(tools, into: tree)
+        let tools = try RealCLIE2ESupport.resolveTools()
+        let bin = try RealCLIE2ESupport.installToolWrappers(tools, into: tree)
 
         // Pre-state: an empty sandboxed user scope, scanned like the app
         // would scan before building the batch.
@@ -41,7 +40,7 @@ struct SearchInstallEndToEndTests {
         #expect(pre.skills.isEmpty, "sandbox starts with no skills")
 
         // Build the install batch exactly as the app's Search → Install
-        // sheet does (story 23: search result + installer + target).
+        // sheet does (search result + installer + target).
         let result = SkillSearchResult(
             name: Self.upstreamSkill,
             repo: Self.upstreamRepo,
@@ -58,7 +57,7 @@ struct SearchInstallEndToEndTests {
         // PATH with logging wrappers; HOME is the sandbox).
         let executor = CLIExecutor(
             environment: environment,
-            commandTimeout: SeamBE2ESupport.batchTimeout,
+            commandTimeout: RealCLIE2ESupport.batchTimeout,
             pathOverride: bin + ":/usr/bin:/bin")
         let execution = try executor.execute(batch: reviewed, report: pre)
         #expect(execution.record.batchStatus == .succeeded)
@@ -67,12 +66,12 @@ struct SearchInstallEndToEndTests {
         // The transcript proves the exact verified shape ran. The PWD field
         // is the executor's cwd (user-scope installs carry no working
         // directory); the sandbox isolation is the HOME assertion below.
-        let transcript = try SeamBE2ESupport.transcript(tree)
+        let transcript = try RealCLIE2ESupport.transcript(tree)
         #expect(
             transcript.contains(
                 "skills add \(Self.upstreamRepo) -s \(Self.upstreamSkill) -g -y"),
             "install transcript shows the exact verified command: \(transcript)")
-        let npxEnv = try SeamBE2ESupport.envDump(tree, tool: "npx")
+        let npxEnv = try RealCLIE2ESupport.envDump(tree, tool: "npx")
         #expect(npxEnv.contains("HOME=\(home)"), "npx ran with the sandboxed HOME")
 
         // Post-state: the rescan shows the skill installed, Vercel-owned
@@ -86,7 +85,7 @@ struct SearchInstallEndToEndTests {
 
         // The snapshot captured the pre-batch ledger state; rollback must be
         // available for the terminal batch (the install writes are covered
-        // by the same seam-B safety model).
+        // by the same batch safety model).
         let record = execution.record
         let canRollback =
             record.batchStatus == .succeeded && !record.snapshotID.isEmpty

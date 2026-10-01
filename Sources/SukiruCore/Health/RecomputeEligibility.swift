@@ -1,15 +1,15 @@
 import Foundation
 
-/// The hash-algorithm.md §4.4 confidence gate for `vercel-lock-drift`:
+/// The confidence gate for `vercel-lock-drift`:
 /// reasons a placement's tree can NOT be faithfully compared against a lock
 /// `computedHash`. Empty means recompute-eligible.
 ///
-/// Each disqualifier mirrors a known hash-vs-copy divergence (§4.2): symlinks
+/// Each disqualifier mirrors a known hash-vs-copy divergence: symlinks
 /// (excluded from the upstream hash, dereferenced into real files by the
 /// install copy filter), `node_modules/` (copied but not hashed),
 /// `metadata.json` — file OR directory — / `__pycache__/` / `__pypackages__/`
 /// (hashed but not copied), and non-ASCII relative paths (the upstream ordering is
-/// locale-sensitive for non-ASCII names, §3). `.git/` is excluded by BOTH
+/// locale-sensitive for non-ASCII names). `.git/` is excluded by BOTH
 /// sides and is harmless, so it is skipped silently. Any unreadable or
 /// uninspectable entry also disqualifies — "cannot verify" never becomes a
 /// drift accusation.

@@ -1,10 +1,10 @@
-# hash-parity — upstream computedHash parity canary (VAL-SCAN-036)
+# hash-parity — upstream computedHash parity canary
 
 `proj/skills-lock.json` was written by the REAL pinned skills@1.5.26 CLI
 (`add ../gen-source -s hashprobe -a claude-code --copy -y`, local source, in a
 sandbox). `proj/.agents/skills/hashprobe` ships the CLI-hashed SOURCE tree
 byte-exactly — including files a real copy-mode install would have stripped
-(`metadata.json`) or materialized differently (hash-algorithm.md §4.2) —
+(`metadata.json`) or materialized differently —
 because this fixture isolates HASH ALGORITHM parity, not copy fidelity.
 
 Adversarial contents: ICU-collation-tricky names (`SKILL.md` vs `scripts/`

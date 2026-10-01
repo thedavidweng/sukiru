@@ -1,6 +1,6 @@
 import Foundation
 
-/// Scope selector for a scan (architecture §4.2, D5).
+/// Scope selector for a scan.
 public enum Scope: String, Codable, Equatable, Sendable, CaseIterable {
     case user
     case project
@@ -19,7 +19,7 @@ public enum Scope: String, Codable, Equatable, Sendable, CaseIterable {
     }
 }
 
-/// The seam-A read report, serialized with the D18 wire schema.
+/// The read-only scan report, serialized with the stable wire schema.
 ///
 public struct ScanReport: Codable, Equatable, Sendable {
     public let schemaVersion: Int
@@ -27,10 +27,10 @@ public struct ScanReport: Codable, Equatable, Sendable {
     public let skills: [Skill]
     public let findings: [Finding]
     public let issues: [Issue]
-    /// Unknown TOP-LEVEL lock keys, preserved verbatim (VAL-SCAN-022), keyed
+    /// Unknown TOP-LEVEL lock keys, preserved verbatim, keyed
     /// by the scope's ownership-bucket/canonical workspace id (`user` /
     /// `project:<root>`). Nil when no read lock carries unknown keys, so the
-    /// key is omitted from the wire JSON (D18 stays additive).
+    /// key is omitted from the wire JSON (the schema stays additive).
     public let lockExtras: [String: [String: JSONValue]]?
 
     public static let currentSchemaVersion = 1
@@ -58,7 +58,7 @@ public struct ScanReport: Codable, Equatable, Sendable {
     }
 }
 
-/// A scanned workspace (D18: `{id, kind, root, installed}`).
+/// A scanned workspace (`{id, kind, root, installed}`).
 public struct Workspace: Codable, Equatable, Sendable {
     public enum Kind: String, Codable, Equatable, Sendable {
         case user
@@ -78,7 +78,7 @@ public struct Workspace: Codable, Equatable, Sendable {
     }
 }
 
-/// Ownership classes (architecture §6, D18).
+/// Ownership classes.
 public enum Ownership: String, Codable, Equatable, Sendable {
     case vercel
     case github
@@ -89,11 +89,11 @@ public enum Ownership: String, Codable, Equatable, Sendable {
     case agent
 }
 
-/// One logical skill, collapsing alias placements (D18).
+/// One logical skill, collapsing alias placements.
 ///
-/// `ownership` is the resolved verdict (architecture §6); `provenance` carries
+/// `ownership` is the resolved verdict; `provenance` carries
 /// the raw per-ledger claims as data — for an ambiguous name the claims stay
-/// visible while ownership is voided to `ownerless` (VAL-SCAN-018).
+/// visible while ownership is voided to `ownerless`.
 public struct Skill: Codable, Equatable, Sendable {
     public let name: String
     public let scope: Scope
@@ -105,7 +105,7 @@ public struct Skill: Codable, Equatable, Sendable {
     public let managingAgent: String?
 }
 
-/// A physical placement of a skill on disk (D18).
+/// A physical placement of a skill on disk.
 public struct Placement: Codable, Equatable, Sendable {
     public enum Kind: String, Codable, Equatable, Sendable {
         case directory
@@ -124,20 +124,20 @@ public struct Placement: Codable, Equatable, Sendable {
     public let managingAgent: String?
 }
 
-/// Detection-rule severities (architecture D3).
+/// Detection-rule severities.
 public enum Severity: String, Codable, Equatable, Sendable {
     case action
     case warning
     case info
 }
 
-/// A single piece of structured evidence backing a finding (D18).
+/// A single piece of structured evidence backing a finding.
 public struct Evidence: Codable, Equatable, Sendable {
     public let kind: String
     public let detail: String
 }
 
-/// A health finding (D18).
+/// A health finding.
 public struct Finding: Codable, Equatable, Sendable {
     public let ruleID: String
     public let severity: Severity
@@ -146,7 +146,7 @@ public struct Finding: Codable, Equatable, Sendable {
     public let evidence: [Evidence]
 }
 
-/// A non-fatal problem surfaced during a scan (D18: `{kind, path, message}`).
+/// A non-fatal problem surfaced during a scan (`{kind, path, message}`).
 ///
 /// `Error` conformance lets parsers hand issues back through `Result` without
 /// wrapping; semantically an issue is always data, never a thrown failure.

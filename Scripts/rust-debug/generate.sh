@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Regenerate the Rust-Debug escaping table and print the ground-truth battery
-# for ContentHasher.rustDebugQuotedSymlink (port-reference trap #7).
+# for ContentHasher.rustDebugQuotedSymlink.
 #
 #   Scripts/rust-debug/generate.sh
 #

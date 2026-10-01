@@ -1,4 +1,4 @@
-# FIX-ADOPT — expectation (VAL-REPAIR-045)
+# FIX-ADOPT — expectation
 
 Contents: a two-part tree (`.home` + `proj`, scan with
 SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/proj) whose project scope

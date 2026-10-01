@@ -1,15 +1,15 @@
 import Foundation
 
-/// Launch-time capability detection (architecture §4.1/§8, D6).
+/// Launch-time capability detection.
 ///
 /// gh has two states only: `available` (present AND ≥ 2.90.0 AND
 /// `gh skill --help` exits 0) or `unavailable` — `present` / `version` /
 /// `meetsMinimum` record WHY. npx skills is reported as resolvable with its
 /// version when `npx -y skills@latest --version` succeeds. Detection results
-/// never feed ScanReport (D2); only `sukiru-cli capabilities` and the app's
+/// never feed ScanReport; only `sukiru-cli capabilities` and the app's
 /// capability panel consume them.
 public struct CapabilityDetector: Sendable {
-    /// The minimum gh version whose `gh skill` surface Sukiru drives (§8).
+    /// The minimum gh version whose `gh skill` surface Sukiru drives.
     public static let minimumGHVersion = "2.90.0"
 
     private let runner: any CommandRunning
@@ -43,7 +43,7 @@ public struct CapabilityDetector: Sendable {
         }
         guard Self.version(version, isAtLeast: Self.minimumGHVersion) else {
             // Below the `gh skill` floor: no probe — the subcommand may not
-            // exist and D6 treats both as unavailable either way.
+            // exist and both cases count as unavailable either way.
             return CapabilityReport.GitHubCapability(
                 available: false, present: true, version: version, meetsMinimum: false,
                 reason: .tooOld)

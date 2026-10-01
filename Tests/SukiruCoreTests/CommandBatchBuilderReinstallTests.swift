@@ -3,8 +3,8 @@ import Testing
 
 @testable import SukiruCore
 
-/// D22 targeted re-install routing (probe-verified against skills@1.5.26,
-/// seam-b-e2e): an UNTARGETED `npx skills add <source> --skill <name>`
+/// Targeted re-install routing (probe-verified against skills@1.5.26): an
+/// UNTARGETED `npx skills add <source> --skill <name>`
 /// refreshes ONLY the canonical `.agents/skills` copy, leaving drifted or
 /// gh-overwritten host copies (and their provenance) untouched — so drift
 /// repair and keep-vercel arbitration name every placement's host

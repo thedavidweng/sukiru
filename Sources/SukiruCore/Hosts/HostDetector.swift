@@ -1,5 +1,4 @@
-/// Per-host installed/leftover/absent detection (architecture §4.1,
-/// port-reference §1–2).
+/// Per-host installed/leftover/absent detection.
 ///
 /// Detection here is for USER (global) scope. It never consults the process
 /// working directory, so scans stay deterministic and hermetic; the only
@@ -17,7 +16,7 @@ public struct HostDetector: Sendable {
         self.resolver = HostPathResolver(environment: environment, fileSystem: fileSystem)
     }
 
-    /// The load-bearing rule (port-reference §2): a plain file always counts; a
+    /// The load-bearing rule: a plain file always counts; a
     /// non-directory does not; an unreadable directory counts (plain
     /// existence); otherwise a directory marks an installation UNLESS its
     /// entire content is a bare `skills` entry (ignoring `.DS_Store` /
@@ -39,7 +38,7 @@ public struct HostDetector: Sendable {
         return !(sawSkills && !sawOther)
     }
 
-    /// Ordered detection algorithm (port-reference §1, `is_detected_at`),
+    /// Ordered detection algorithm (`is_detected_at`),
     /// evaluated for the user/global scope (no cwd). Each step short-circuits.
     public func isDetected(_ host: HostSpec) -> Bool {
         // 1. universal is a pseudo-host; never "installed".

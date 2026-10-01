@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// D21 accessibility-label grammar support.
+/// Accessibility-label token grammar support.
 ///
 /// The computer-use tree (orca) exposes accessibility LABELS, not
 /// identifiers, and its text dump prints one string per element: a static
@@ -17,7 +17,7 @@ import SwiftUI
 /// - `axButtonToken` — buttons flatten their content away and print only
 ///   `button, Value: <AXValue>`, so the token is set as BOTH label and value.
 enum AXTokens {
-    /// D21: skill names embedded in labels replace `.` with `-`.
+    /// Skill names embedded in labels replace `.` with `-`.
     static func skill(_ name: String) -> String {
         name.replacingOccurrences(of: ".", with: "-")
     }
@@ -29,7 +29,7 @@ enum AXTokens {
     }
 }
 
-/// An invisible leaf element that exposes a D21 token in the AX tree while
+/// An invisible leaf element that exposes an accessibility token in the AX tree while
 /// the visible sibling stays readable (see the note on `AXTokens`).
 struct AXToken: View {
     let token: String
@@ -40,7 +40,7 @@ struct AXToken: View {
     }
 }
 
-/// A `Form` / `List` section header: the D21 token carrier, the localized
+/// A `Form` / `List` section header: the accessibility token carrier, the localized
 /// title, and an optional trailing count (the count reads as a system-styled
 /// secondary number, the way Finder and Mail label group sizes).
 struct TokenSectionHeader: View {
@@ -66,9 +66,9 @@ struct TokenSectionHeader: View {
 }
 
 extension View {
-    /// Applies a D21 token to a button-style control: label for VoiceOver,
+    /// Applies an accessibility token to a button-style control: label for VoiceOver,
     /// value so the computer-use tree dump prints `button, Value: <token>`.
-    /// Disabled state appends `.disabled` (D21); pair with `.disabled(true)`
+    /// Disabled state appends `.disabled`; pair with `.disabled(true)`
     /// so AX enabled=false.
     func axButtonToken(_ token: String, disabled: Bool = false) -> some View {
         let full = disabled ? token + ".disabled" : token

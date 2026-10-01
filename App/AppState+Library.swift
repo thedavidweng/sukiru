@@ -15,7 +15,7 @@ extension AppState {
         "\(finding.ruleID)|\(finding.workspaceID)|\(finding.skillName ?? "-")|\(index)"
     }
 
-    /// Presents a folder picker and adds the chosen project root (D20).
+    /// Presents a folder picker and adds the chosen project root.
     func addProjectRootViaPanel() {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true

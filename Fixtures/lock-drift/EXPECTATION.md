@@ -1,4 +1,4 @@
-# lock-drift — expectation (VAL-SCAN-027)
+# lock-drift — expectation
 
 Contents: project scope (`proj/`) holds `drifted`, whose SKILL.md was edited
 out-of-band AFTER the v1 lock entry was written — the lock's computedHash is

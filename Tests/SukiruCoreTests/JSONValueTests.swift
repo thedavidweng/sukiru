@@ -4,7 +4,7 @@ import Testing
 @testable import SukiruCore
 
 /// The `JSONValue` tree backs unknown-field preservation in the lock readers
-/// (architecture §4.1): unknown keys must survive decoding and be surfaced,
+/// unknown keys must survive decoding and be surfaced,
 /// never dropped.
 @Suite("JSONValue tree")
 struct JSONValueTests {

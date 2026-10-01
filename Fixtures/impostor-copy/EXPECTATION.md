@@ -1,4 +1,4 @@
-# impostor-copy — expectation (VAL-SCAN-026)
+# impostor-copy — expectation
 
 Contents: `tool` exists in the canonical store (`.agents/skills/tool`, claimed
 by the global v3 lock) AND in the claude-code host dir — but

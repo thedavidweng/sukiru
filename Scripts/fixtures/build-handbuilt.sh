@@ -115,7 +115,7 @@ EOF
 # FIX-CLEAN — one minimal vercel-owned skill, single placement, zero findings.
 # The lock is the GLOBAL v3 lock (skillFolderHash = git tree SHA) so no
 # project-scope computedHash drift check applies (drift is project-only,
-# by design), keeping this the true zero-findings baseline (VAL-SCAN-041b, D3).
+# by design), keeping this the true zero-findings baseline.
 # =====================================================================
 d="$(reset_fixture FIX-CLEAN)"
 skill "$d/.agents/skills/greet" "greet" "Greet the user politely."
@@ -151,11 +151,11 @@ A correct scan MUST:
 - report ZERO findings (global scope has no drift check; single placement means
   no duplicates; a lock entry means no files-without-lock).
 
-Note (cross-milestone): the M3 health contract describes a richer FIX-CLEAN
+Note: the Health UI originally called for a richer FIX-CLEAN
 spanning all four ownership classes. Because github/ownerless skills always
-raise a `dangerous-removal-surface` advisory (VAL-SCAN-030), a genuinely
+raise a `dangerous-removal-surface` advisory, a genuinely
 zero-findings tree can contain vercel-owned skills only; this fixture honors
-the core-read VAL-SCAN-041b zero-findings requirement.
+the scan engine's zero-findings baseline.
 EOF
 
 # =====================================================================
@@ -215,8 +215,8 @@ A correct scan MUST:
 - inventory BOTH placements (internal skills are inventoried, never dropped);
 - flag the `hidden-helper` placement `internal: true` and `normal` `internal: false`.
 
-The M3 UI additionally hides internal skills from host-facing listings while
-still surfacing the internal marker (VAL-HEALTH-010); at seam A the requirement
+The app additionally hides internal skills from host-facing listings while
+still surfacing the internal marker; for the scan engine the requirement
 is only that both placements appear with correct internal flags.
 EOF
 
@@ -269,13 +269,13 @@ A correct scan MUST:
   with a missing-name reason, and NOT create a placement for `nameless`;
 - emit a `lock-version-unsupported` finding (found=4, supported=3) yet
   best-effort parse the lock (`healthy` still readable) and surface the unknown
-  keys (VAL-SCAN-022/031);
+  keys;
 - still inventory the `healthy` sibling.
 EOF
 
 # =====================================================================
 # skillmd-invalid-a..f — one malformed-frontmatter variant per tree, each with
-# a healthy sibling (VAL-SCAN-033). Names/semantics per validation-contract.md.
+# a healthy sibling.
 # =====================================================================
 mk_invalid_tree() {
     # mk_invalid_tree LETTER   (writes bad SKILL.md via stdin heredoc)
@@ -400,7 +400,7 @@ EOF
 # =====================================================================
 # skillmd-early-close — a multi-line YAML string containing a line beginning
 # `---` truncates the frontmatter early (upstream "first \n--- closes"), orphaning
-# the later required `name` field (VAL-SCAN-034).
+# the later required `name` field.
 # =====================================================================
 d="$(reset_fixture skillmd-early-close)"
 skill "$d/.agents/skills/healthy" "healthy" "A healthy control skill."
@@ -609,7 +609,7 @@ codex hosts detected via a config marker):
 - `div-demo` — two REAL dirs with DIFFERENT content -> cross-host-duplicate
   subtype=divergent, severity=warning, two distinct contentHashes.
 
-Scan MUST exit 0. Under the D23 refined ambiguity trigger, no ledger claims
+Scan MUST exit 0. Under the hash-based ambiguity trigger, no ledger claims
 any name here, so every copy is UNEXPLAINED: div-demo's unexplained copies
 hold 2 distinct content hashes and DO raise `ambiguous-name`
 (ownership=ownerless, attribution voided), while exact-demo's copies share ONE
@@ -699,15 +699,15 @@ lock entry claiming `dup`.
 A correct scan MUST exit 0, emit an `ambiguous-name` finding naming both
 colliding placement paths, resolve `dup` as ownership=ownerless with
 ambiguous=true (attribution voided, never guessed), and still surface the lock
-claim as data (not authoritative ownership). Per D1/D23 this is per-scope
+claim as data (not authoritative ownership). Ambiguity is judged per scope
 after alias collapse; these are two REAL dirs with DIVERGENT content, and
 neither is explained: the lock claims `dup` but there is NO canonical-store
-placement to hash-anchor them to (D23a), and neither carries gh frontmatter
-(D23b) — two unexplained copies, two distinct hashes, so the rule fires.
+placement to hash-anchor them to, and neither carries gh frontmatter
+— two unexplained copies, two distinct hashes, so the rule fires.
 EOF
 
 # =====================================================================
-# alias-link-mode — canonical dir + two host symlinks (the D1 negative case).
+# alias-link-mode — canonical dir + two host symlinks (the ambiguity negative case).
 # =====================================================================
 d="$(reset_fixture alias-link-mode)"
 mkdir -p "$d/.claude" "$d/.codex"; : >"$d/.claude/config.json"; : >"$d/.codex/config.json"
@@ -725,8 +725,8 @@ A correct scan MUST exit 0 and present `demo` as ONE logical skill with exactly
 3 placements: the canonical directory plus two kind=symlink placements, each
 recording its linkTarget and the SAME resolved canonicalPath. The group is an
 alias duplicate (cross-host-duplicate subtype=alias, info). It MUST produce
-ZERO `ambiguous-name` findings and report `demo` with ambiguous=false (D1
-negative: aliases collapse to one canonical path).
+ZERO `ambiguous-name` findings and report `demo` with ambiguous=false (the
+negative case: aliases collapse to one canonical path).
 EOF
 
 # =====================================================================
@@ -772,7 +772,7 @@ EOF
 
 # =====================================================================
 # scope-isolation — the same skill name in user scope and one project root,
-# plus one finding-generating defect per scope (VAL-SCAN-005/007).
+# plus one finding-generating defect per scope.
 # =====================================================================
 d="$(reset_pw_fixture scope-isolation)"
 skill "$d/.home/.agents/skills/shared-skill" "shared-skill" "User-scope copy of the shared name."
@@ -812,7 +812,7 @@ cat >"$d/proj/skills-lock.json" <<EOF
 }
 EOF
 note "$d" <<'EOF'
-# scope-isolation — expectation (VAL-SCAN-005 / VAL-SCAN-007)
+# scope-isolation — expectation
 
 Contents: the name `shared-skill` installed TWICE — user scope
 (`.home/.agents/skills/shared-skill`, claimed by the global v3 lock) and project
@@ -834,12 +834,12 @@ A correct scan MUST:
 - with `--scope user` report ONLY user-scope items, with `--scope project` ONLY
   project-scope items, and with `--scope all` exactly the union;
 - NOT flag `shared-skill` as ambiguous (one placement per scope; the ambiguity
-  rule is per-scope, D1).
+  rule is per-scope).
 EOF
 
 # =====================================================================
 # multi-host-inventory — several host global dirs + one project root, a
-# distinct skill in each (VAL-SCAN-006).
+# distinct skill in each.
 # =====================================================================
 d="$(reset_pw_fixture multi-host-inventory)"
 mkdir -p "$d/.home/.claude" "$d/.home/.codex"
@@ -850,7 +850,7 @@ skill "$d/.home/.codex/skills/codex-tool" "codex-tool" "Visible to codex only."
 skill "$d/proj/.agents/skills/proj-canon" "proj-canon" "Project canonical store skill."
 skill "$d/proj/.claude/skills/proj-claude" "proj-claude" "Project claude-code host skill."
 note "$d" <<'EOF'
-# multi-host-inventory — expectation (VAL-SCAN-006)
+# multi-host-inventory — expectation
 
 Contents (placement manifest — five distinct skills, one placement each):
 - user scope: `.home/.agents/skills/canon-tool` (canonical store),
@@ -871,7 +871,7 @@ EOF
 
 # =====================================================================
 # ignore-list — noise containers with valid-looking SKILL.md files inside must
-# never become placements (VAL-SCAN-011).
+# never become placements.
 # =====================================================================
 d="$(reset_fixture ignore-list)"
 skill "$d/.agents/skills/real-skill" "real-skill" "The one true skill amid the noise dirs."
@@ -886,7 +886,7 @@ echo "object file" >"$d/.agents/skills/build/app.o"
 # inner .git); the checked-in tree simply lacks it.
 skill "$d/.agents/skills/.git" "noise" "A valid-looking SKILL.md inside a .git dir."
 note "$d" <<'EOF'
-# ignore-list — expectation (VAL-SCAN-011)
+# ignore-list — expectation
 
 Contents: `.agents/skills/` holds ONE real skill (`real-skill`) plus noise
 containers that must never become placements: `node_modules/`, `__pycache__/`,
@@ -900,7 +900,7 @@ No ignored container may surface as a placement or skill.
 EOF
 
 # =====================================================================
-# own-vercel — lock entry, no gh frontmatter (VAL-SCAN-015/019). One skill per
+# own-vercel — lock entry, no gh frontmatter. One skill per
 # scope so both scope-correct hash keys are exercised.
 # =====================================================================
 d="$(reset_pw_fixture own-vercel)"
@@ -941,7 +941,7 @@ cat >"$d/proj/skills-lock.json" <<EOF
 }
 EOF
 note "$d" <<'EOF'
-# own-vercel — expectation (VAL-SCAN-015 / VAL-SCAN-019)
+# own-vercel — expectation
 
 Contents: two skills with lock entries and NO github frontmatter.
 `global-tool` (user scope, global v3 lock) and `proj-tool` (project scope,
@@ -961,7 +961,7 @@ EOF
 
 # =====================================================================
 # own-github — metadata.github-repo, no lock entry; one pinned + one unpinned
-# placement (VAL-SCAN-015/020).
+# placement.
 # =====================================================================
 d="$(reset_fixture own-github)"
 mkdir -p "$d/.claude"; : >"$d/.claude/config.json"
@@ -972,7 +972,7 @@ gh_skill "$d/.claude/skills/unpinned-tool" "unpinned-tool" "An unpinned gh-owned
     "https://github.com/thedavidweng/skills" "tools/unpinned-tool/SKILL.md" \
     "refs/heads/main" "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 note "$d" <<'EOF'
-# own-github — expectation (VAL-SCAN-015 / VAL-SCAN-020)
+# own-github — expectation
 
 Contents: two gh-owned skills in the claude-code host dir (detected via
 config.json), NO lock file anywhere. `pinned-tool` carries
@@ -989,12 +989,11 @@ A correct scan MUST:
   github-pinned key means unpinned, never pinned);
 - emit NO files-without-lock (gh provenance satisfies the ledger requirement)
   and NO vercel findings; a `dangerous-removal-surface` advisory per gh-owned
-  skill is expected (VAL-SCAN-030).
+  skill is expected.
 EOF
 
 # =====================================================================
-# own-double — lock entry AND metadata.github-repo on the same name
-# (VAL-SCAN-016).
+# own-double — lock entry AND metadata.github-repo on the same name.
 # =====================================================================
 d="$(reset_fixture own-double)"
 gh_skill "$d/.agents/skills/double-tool" "double-tool" "Claimed by both ledgers." \
@@ -1018,7 +1017,7 @@ cat >"$d/.agents/.skill-lock.json" <<'EOF'
 }
 EOF
 note "$d" <<'EOF'
-# own-double — expectation (VAL-SCAN-016)
+# own-double — expectation
 
 Contents: `double-tool` is present in the global v3 lock AND carries
 `metadata.github-repo` frontmatter — both ledgers claim the same name.
@@ -1031,7 +1030,7 @@ EOF
 
 # =====================================================================
 # prov-cross-ws — the same logical skill in two workspaces with byte-identical
-# provenance (VAL-SCAN-021).
+# provenance.
 # =====================================================================
 d="$(reset_pw_fixture prov-cross-ws)"
 mkdir -p "$d/.home/.claude"; : >"$d/.home/.claude/config.json"
@@ -1042,7 +1041,7 @@ gh_skill "$d/proj/.claude/skills/shared" "shared" "Same logical skill in two wor
     "https://github.com/thedavidweng/skills" "tools/shared/SKILL.md" \
     "refs/heads/main" "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" "pinned"
 note "$d" <<'EOF'
-# prov-cross-ws — expectation (VAL-SCAN-021)
+# prov-cross-ws — expectation
 
 Contents: the same logical skill `shared` installed by gh into TWO workspaces —
 the user-scope claude-code host dir (`.home/.claude/skills/shared`) and a
@@ -1060,7 +1059,7 @@ EOF
 
 # =====================================================================
 # lock-unknown-fields — extra unknown keys on entries and at top level must be
-# preserved and surfaced, never dropped (VAL-SCAN-022).
+# preserved and surfaced, never dropped.
 # =====================================================================
 d="$(reset_fixture lock-unknown-fields)"
 skill "$d/.agents/skills/known-tool" "known-tool" "Locked, with unknown keys around the entry."
@@ -1086,7 +1085,7 @@ cat >"$d/.agents/.skill-lock.json" <<'EOF'
 }
 EOF
 note "$d" <<'EOF'
-# lock-unknown-fields — expectation (VAL-SCAN-022)
+# lock-unknown-fields — expectation
 
 Contents: a SUPPORTED (v3) global lock whose `known-tool` entry carries extra
 unknown keys (`channel: "beta"`, `priority: 7`) and whose top level carries
@@ -1099,8 +1098,7 @@ EOF
 
 # =====================================================================
 # lock-drift — project lock computedHash stale after an out-of-band edit, plus
-# a global-scope control proving drift detection is project-only
-# (VAL-SCAN-027).
+# a global-scope control proving drift detection is project-only.
 # =====================================================================
 d="$(reset_pw_fixture lock-drift)"
 skill "$d/proj/.agents/skills/drifted" "drifted" "Original content, as installed."
@@ -1139,7 +1137,7 @@ cat >"$d/proj/skills-lock.json" <<EOF
 }
 EOF
 note "$d" <<'EOF'
-# lock-drift — expectation (VAL-SCAN-027)
+# lock-drift — expectation
 
 Contents: project scope (`proj/`) holds `drifted`, whose SKILL.md was edited
 out-of-band AFTER the v1 lock entry was written — the lock's computedHash is
@@ -1158,7 +1156,7 @@ EOF
 
 # =====================================================================
 # divergence-canonical — canonical vs host copy hash mismatch under one source
-# identity (collision-matrix scenario-3 shape, VAL-SCAN-029).
+# identity (collision-matrix scenario-3 shape).
 # =====================================================================
 d="$(reset_pw_fixture divergence-canonical)"
 skill "$d/proj/.agents/skills/web-tool" "web-tool" "Canonical copy, untouched since install."
@@ -1181,7 +1179,7 @@ cat >"$d/proj/skills-lock.json" <<EOF
 }
 EOF
 note "$d" <<'EOF'
-# divergence-canonical — expectation (VAL-SCAN-029)
+# divergence-canonical — expectation
 
 Contents: a copy-mode install in `proj/` — canonical `.agents/skills/web-tool`
 plus host copy `.claude/skills/web-tool`, both under ONE v1 lock source
@@ -1198,8 +1196,7 @@ also legitimate; the assertion targets canonical-host-divergence.)
 EOF
 
 # =====================================================================
-# lock-version-old — project lock version 0, below the supported v1
-# (VAL-SCAN-031).
+# lock-version-old — project lock version 0, below the supported v1.
 # =====================================================================
 d="$(reset_pw_fixture lock-version-old)"
 skill "$d/proj/.agents/skills/old-tool" "old-tool" "Claimed by a version-0 lock that must not be used."
@@ -1219,7 +1216,7 @@ cat >"$d/proj/skills-lock.json" <<'EOF'
 }
 EOF
 note "$d" <<'EOF'
-# lock-version-old — expectation (VAL-SCAN-031)
+# lock-version-old — expectation
 
 Contents: `proj/skills-lock.json` has `version: 0`, BELOW the supported
 project-lock v1, with an entry claiming the on-disk `old-tool`.
@@ -1233,14 +1230,13 @@ expected). Silent acceptance of the old lock is a fail.
 EOF
 
 # =====================================================================
-# lock-malformed — truncated/invalid lock JSON is an issue, never fatal
-# (VAL-SCAN-032).
+# lock-malformed — truncated/invalid lock JSON is an issue, never fatal.
 # =====================================================================
 d="$(reset_fixture lock-malformed)"
 skill "$d/.agents/skills/survivor" "survivor" "Healthy skill; its scope's lock is truncated JSON."
 printf '{ "version": 3, "skills": { "survivor": { "source":' >"$d/.agents/.skill-lock.json"
 note "$d" <<'EOF'
-# lock-malformed — expectation (VAL-SCAN-032)
+# lock-malformed — expectation
 
 Contents: `.agents/.skill-lock.json` is TRUNCATED, invalid JSON; one healthy
 skill `survivor` sits alongside.
@@ -1257,7 +1253,7 @@ EOF
 # =====================================================================
 # clean-copy-mode — stock npx copy-mode layout: canonical + physical host copy,
 # v1 project lock matching disk. Yields ONLY the warning-level exact-duplicate
-# finding (per D3 a stock copy-mode layout is NOT the zero-findings baseline).
+# finding (a stock copy-mode layout is NOT the zero-findings baseline).
 # =====================================================================
 d="$(reset_pw_fixture clean-copy-mode)"
 skill "$d/proj/.agents/skills/web-tool" "web-tool" "Installed by npx copy mode."
@@ -1279,7 +1275,7 @@ cat >"$d/proj/skills-lock.json" <<EOF
 }
 EOF
 note "$d" <<'EOF'
-# clean-copy-mode — expectation (VAL-SCAN-001 tree; D3 caveat)
+# clean-copy-mode — expectation
 
 Contents: the stock `npx skills add --copy` layout in `proj/` — canonical
 `.agents/skills/web-tool` plus a byte-identical physical copy at
@@ -1288,17 +1284,17 @@ disk.
 
 Scan with SUKIRU_HOME=<this>/.home, SUKIRU_ROOTS=<this>/proj.
 
-A correct scan MUST exit 0 with valid JSON (this is the VAL-SCAN-001
-well-formed tree), show ownership=vercel, surface the lock provenance fields,
+A correct scan MUST exit 0 with valid JSON (this is the well-formed
+baseline tree), show ownership=vercel, surface the lock provenance fields,
 and emit the warning-level exact-subtype cross-host-duplicate finding that a
-stock copy-mode layout legitimately produces (per D3 it is therefore NOT the
+stock copy-mode layout legitimately produces (so it is NOT the
 zero-findings baseline — that is FIX-CLEAN). NO drift, NO double-booked, NO
 files-without-lock findings.
 EOF
 
 # =====================================================================
 # impostor-copy — the managed layout implies a symlink into the canonical
-# store, but the host path is a physical copy (VAL-SCAN-026).
+# store, but the host path is a physical copy.
 # =====================================================================
 d="$(reset_fixture impostor-copy)"
 mkdir -p "$d/.claude"; : >"$d/.claude/config.json"
@@ -1322,7 +1318,7 @@ cat >"$d/.agents/.skill-lock.json" <<'EOF'
 }
 EOF
 note "$d" <<'EOF'
-# impostor-copy — expectation (VAL-SCAN-026)
+# impostor-copy — expectation
 
 Contents: `tool` exists in the canonical store (`.agents/skills/tool`, claimed
 by the global v3 lock) AND in the claude-code host dir — but
@@ -1398,7 +1394,7 @@ EOF
 
 # =====================================================================
 # own-per-project — the SAME name locked in one project root and
-# unprovenanced in another (VAL-SCAN-055). Two project roots, one scan.
+# unprovenanced in another. Two project roots, one scan.
 # Layout: .home (fake HOME, empty) + p1 + p2 (no `proj`, so the corpus smoke
 # test scans the tree as a plain home and finds nothing — by design).
 # =====================================================================
@@ -1425,7 +1421,7 @@ cat >"$d/p1/skills-lock.json" <<EOF
 }
 EOF
 note "$d" <<'EOF'
-# own-per-project — expectation (VAL-SCAN-055)
+# own-per-project — expectation
 
 Contents: the name `shared` in TWO project roots — locked by the project v1
 lock in `p1` (whose computedHash matches disk), present as a bare placement
@@ -1440,7 +1436,7 @@ ledger bleed (the p1 lock claiming p2's placement) is a fail.
 EOF
 
 # =====================================================================
-# Health-area fixtures (M3 health-ui contract legend). These are the trees the
+# Health-area fixtures. These are the trees the
 # app-level assertions drive: FIX-OWNERSHIP-QUAD, FIX-SCOPES, FIX-MULTI-HOST,
 # FIX-DRIFT, FIX-DOUBLE-BOOKED, FIX-SYMLINK, FIX-HOST-DIVERGENCE,
 # FIX-DIRTY-SUITE, FIX-MUTABLE.
@@ -1448,7 +1444,7 @@ EOF
 
 # =====================================================================
 # FIX-OWNERSHIP-QUAD — FIVE skills covering every ownership state the UI
-# asserts on (amended legend): one vercel (lock-derived source/ref), TWO
+# asserts on: one vercel (lock-derived source/ref), TWO
 # github (one pinned, one unpinned), one double-booked, one ownerless.
 # =====================================================================
 d="$(reset_fixture FIX-OWNERSHIP-QUAD)"
@@ -1492,7 +1488,7 @@ cat >"$d/.agents/.skill-lock.json" <<'EOF'
 }
 EOF
 note "$d" <<'EOF'
-# FIX-OWNERSHIP-QUAD — expectation (M3 health-area)
+# FIX-OWNERSHIP-QUAD — expectation
 
 Contents: FIVE user-scope skills, one per ownership state the UI asserts on:
 - `vercel-skill` — canonical `.agents/skills/vercel-skill` + global v3 lock
@@ -1511,13 +1507,13 @@ double-booked-skill=double-booked, ownerless-skill=ownerless. Expected
 findings: `double-booked` (both-ledger evidence), `dangerous-removal-surface`
 for gh-pinned, gh-unpinned, and ownerless-skill, and `files-without-lock` for
 ownerless-skill. This is deliberately NOT a clean tree — github/ownerless
-skills always raise the advisory, which is why FIX-CLEAN stays vercel-only
-(VAL-SCAN-041b); do not merge the two.
+skills always raise the advisory, which is why FIX-CLEAN stays vercel-only;
+do not merge the two.
 EOF
 
 # =====================================================================
 # FIX-SCOPES — user scope + one project root (via SUKIRU_ROOTS), including one
-# same-named skill in BOTH scopes (VAL-HEALTH-006 / VAL-CROSS-017 shape).
+# same-named skill in BOTH scopes.
 # All skills vercel-owned with matching hashes: zero findings, so scope
 # separation is the only signal under test.
 # =====================================================================
@@ -1576,7 +1572,7 @@ cat >"$d/proj/skills-lock.json" <<EOF
 }
 EOF
 note "$d" <<'EOF'
-# FIX-SCOPES — expectation (M3 health-area, VAL-HEALTH-006)
+# FIX-SCOPES — expectation
 
 Contents: user scope holds `shared-name` + `user-only` (global v3 lock);
 project root `proj/` holds `shared-name` + `proj-only` (project v1 lock whose
@@ -1588,17 +1584,17 @@ Scan with SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/proj.
 A correct scan MUST exit 0, report the user-scope skills under the `user`
 workspace and the project-scope skills under `project:<root>` workspaces, and
 show `shared-name` ONCE PER SCOPE (per-scope ownership resolution, never
-merged, never ambiguous — D1 per-scope rule). The app Library MUST render a
-`sukiru.library.section.user` section and a distinct
+merged, never ambiguous — ambiguity is judged per scope). The app Library
+MUST render a `sukiru.library.section.user` section and a distinct
 `sukiru.library.section.project.*` section, each skill under its true scope.
 EOF
 
 # =====================================================================
-# FIX-SCOPES-CROSS — multi-workspace ownership/findings split
-# (VAL-CROSS-017/018): the SAME skill name in both scopes with DIFFERENT
+# FIX-SCOPES-CROSS — multi-workspace ownership/findings split: the SAME
+# skill name in both scopes with DIFFERENT
 # ownership (vercel in user scope, ownerless in project scope) and findings
-# in BOTH scopes. This is the committed counterpart of the scenario health-ui
-# user-testing round 1 had to hand-edit onto a FIX-SCOPES copy; committed
+# in BOTH scopes. This is the committed counterpart of a scenario manual
+# testing once had to hand-edit onto a FIX-SCOPES copy; committed
 # FIX-SCOPES stays the all-vercel/zero-findings tree.
 # =====================================================================
 d="$(reset_pw_fixture FIX-SCOPES-CROSS)"
@@ -1639,7 +1635,7 @@ cat >"$d/proj/skills-lock.json" <<EOF
 }
 EOF
 note "$d" <<'EOF'
-# FIX-SCOPES-CROSS — expectation (VAL-CROSS-017 / VAL-CROSS-018)
+# FIX-SCOPES-CROSS — expectation
 
 Contents: the name `shared-tool` exists in BOTH scopes with DIFFERENT
 ownership — user scope (`.home/.agents/skills/shared-tool`) is vercel-owned
@@ -1658,8 +1654,8 @@ A correct scan MUST exit 0 and:
   `dangerous-removal-surface` advisories for those two names;
 - emit NO findings for `shared-tool` in user scope or `proj-locked`.
 
-VAL-CROSS-018 drives a repair batch against the PROJECT-scope ownerless
-`shared-tool` (direct file-op cleanup): the user scope's lock file,
+The cross-scope isolation test drives a repair batch against the
+PROJECT-scope ownerless `shared-tool` (direct file-op cleanup): the user scope's lock file,
 placements, and findings MUST stay byte-identical, and the snapshot manifest
 records only project-scope paths (plus the project lock probes).
 EOF
@@ -1667,11 +1663,11 @@ EOF
 # =====================================================================
 # FIX-ADOPT — one ownerless skill whose name MATCHES the real upstream
 # test repo's skill (thedavidweng/skills: maintenance/stale-docs-cleanup),
-# so the VAL-REPAIR-017 adopt shape (`gh skill install <repo> <path>
+# so the adopt shape (`gh skill install <repo> <path>
 # --force --dir <parent>`) re-anchors provenance onto THIS directory
 # instead of creating a differently-named sibling (probe-verified gh
 # semantics: --dir is the skills ROOT; the installed dir name comes from
-# the repo skill). This is the VAL-REPAIR-045 pre-state. It lives in the
+# the repo skill). This is the adopt end-to-end pre-state. It lives in the
 # PROJECT scope: probe-verified, gh install writes a vercel global lock
 # entry for USER-scope installs (→ double-booked), while project-scope
 # installs leave every vercel ledger untouched → clean github ownership.
@@ -1680,7 +1676,7 @@ d="$(reset_pw_fixture FIX-ADOPT)"
 skill "$d/proj/.agents/skills/stale-docs-cleanup" "stale-docs-cleanup" "Local un-owned copy of the upstream stale-docs-cleanup skill."
 : >"$d/.home/.gitkeep"
 note "$d" <<'EOF'
-# FIX-ADOPT — expectation (VAL-REPAIR-045)
+# FIX-ADOPT — expectation
 
 Contents: a two-part tree (`.home` + `proj`, scan with
 SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/proj) whose project scope
@@ -1708,7 +1704,7 @@ EOF
 
 # =====================================================================
 # FIX-MULTI-HOST — one canonical skill symlinked into THREE host global dirs,
-# plus one bare-`skills` residue host dir (VAL-HEALTH-005/009).
+# plus one bare-`skills` residue host dir.
 # =====================================================================
 d="$(reset_fixture FIX-MULTI-HOST)"
 mkdir -p "$d/.claude" "$d/.codex" "$d/.cursor"
@@ -1740,7 +1736,7 @@ cat >"$d/.agents/.skill-lock.json" <<'EOF'
 }
 EOF
 note "$d" <<'EOF'
-# FIX-MULTI-HOST — expectation (M3 health-area, VAL-HEALTH-005/009)
+# FIX-MULTI-HOST — expectation
 
 Contents: `web-api` lives in the canonical user store (`.agents/skills`,
 global v3 lock, ownership=vercel) and is SYMLINKED into three host global
@@ -1758,8 +1754,7 @@ host-presence region lists exactly claude-code, codex, and cursor.
 EOF
 
 # =====================================================================
-# FIX-DRIFT — project-scope vercel lock whose computedHash disagrees with disk
-# (VAL-HEALTH-014/038).
+# FIX-DRIFT — project-scope vercel lock whose computedHash disagrees with disk.
 # =====================================================================
 d="$(reset_pw_fixture FIX-DRIFT)"
 skill "$d/proj/.agents/skills/drifted" "drifted" "Original content, as installed."
@@ -1781,7 +1776,7 @@ cat >"$d/proj/skills-lock.json" <<EOF
 }
 EOF
 note "$d" <<'EOF'
-# FIX-DRIFT — expectation (M3 health-area, VAL-HEALTH-014/038)
+# FIX-DRIFT — expectation
 
 Contents: project root `proj/` holds `drifted`, whose SKILL.md was edited
 out-of-band after install — the v1 lock's computedHash (hash of the ORIGINAL
@@ -1798,7 +1793,7 @@ EOF
 
 # =====================================================================
 # FIX-DOUBLE-BOOKED — one name claimed by both the vercel lock and gh
-# frontmatter provenance (VAL-HEALTH-037 spot-check tree).
+# frontmatter provenance (spot-check tree).
 # =====================================================================
 d="$(reset_fixture FIX-DOUBLE-BOOKED)"
 gh_skill "$d/.agents/skills/double-tool" "double-tool" "Claimed by both ledgers." \
@@ -1822,7 +1817,7 @@ cat >"$d/.agents/.skill-lock.json" <<'EOF'
 }
 EOF
 note "$d" <<'EOF'
-# FIX-DOUBLE-BOOKED — expectation (M3 health-area, VAL-HEALTH-037)
+# FIX-DOUBLE-BOOKED — expectation
 
 Contents: `double-tool` in the user-scope canonical store, present in the
 global v3 lock AND carrying `metadata.github-repo` frontmatter — both ledgers
@@ -1831,12 +1826,12 @@ claim the same name.
 A correct scan MUST exit 0, resolve ownership=double-booked, and emit a
 `double-booked` finding (severity action) with two-sided evidence (lock path +
 entry key; SKILL.md path + github-repo value). Library and Health MUST show
-identical provenance for the skill (VAL-HEALTH-037).
+identical provenance for the skill.
 EOF
 
 # =====================================================================
 # FIX-SYMLINK — one dangling symlink + one double-copied impostor
-# (VAL-HEALTH-042 coverage tree for the symlink rules).
+# (coverage tree for the symlink rules).
 # =====================================================================
 d="$(reset_fixture FIX-SYMLINK)"
 mkdir -p "$d/.claude/skills"; : >"$d/.claude/config.json"
@@ -1863,7 +1858,7 @@ cat >"$d/.agents/.skill-lock.json" <<'EOF'
 }
 EOF
 note "$d" <<'EOF'
-# FIX-SYMLINK — expectation (M3 health-area)
+# FIX-SYMLINK — expectation
 
 Contents: in the claude-code host dir (detected via config.json), a DANGLING
 symlink `.claude/skills/rotted -> /nonexistent/rotted-target`; plus `tool` in
@@ -1885,7 +1880,7 @@ EOF
 
 # =====================================================================
 # FIX-HOST-DIVERGENCE — one name, same lock source identity, distinct hashes
-# across canonical store and a host copy (VAL-HEALTH-042 coverage tree).
+# across canonical store and a host copy.
 # =====================================================================
 d="$(reset_pw_fixture FIX-HOST-DIVERGENCE)"
 skill "$d/proj/.agents/skills/web-tool" "web-tool" "Canonical copy, untouched since install."
@@ -1908,7 +1903,7 @@ cat >"$d/proj/skills-lock.json" <<EOF
 }
 EOF
 note "$d" <<'EOF'
-# FIX-HOST-DIVERGENCE — expectation (M3 health-area)
+# FIX-HOST-DIVERGENCE — expectation
 
 Contents: a copy-mode install in `proj/` — canonical `.agents/skills/web-tool`
 plus host copy `.claude/skills/web-tool` under ONE v1 lock source identity.
@@ -1922,18 +1917,18 @@ A correct scan MUST exit 0 and emit a `canonical-host-divergence` finding
 and BOTH content hashes. The drifted host copy also legitimately raises
 `vercel-lock-drift` (its hash no longer matches the lock) and the pair is a
 divergent cross-host duplicate; `web-tool` stays ownership=vercel,
-ambiguous=false (the canonical placement hash-explains per D23).
+ambiguous=false (the lock hash explains the canonical placement).
 EOF
 
 # =====================================================================
 # FIX-DIRTY-SUITE — combined dirty tree with findings in BOTH scopes and at
-# least two severity levels (VAL-HEALTH-011…015/029/034/045).
+# least two severity levels.
 # =====================================================================
 d="$(reset_pw_fixture FIX-DIRTY-SUITE)"
 mkdir -p "$d/.home/.claude/skills"; : >"$d/.home/.claude/config.json"
 # CLI spray residue: `.qoder` contains ONLY a bare (empty) `skills/` entry —
 # a leftover (installed=false) workspace with ZERO findings, so the Health
-# workspace filter has a reachable empty-filter state (VAL-HEALTH-047).
+# workspace filter has a reachable empty-filter state.
 # (git cannot track the empty dir; `reset_pw_fixture` rebuilds it, and the
 # committed tree keeps it via the same convention as FIX-MULTI-HOST.)
 mkdir -p "$d/.home/.qoder/skills"
@@ -1965,7 +1960,7 @@ cat >"$d/proj/skills-lock.json" <<EOF
 }
 EOF
 note "$d" <<'EOF'
-# FIX-DIRTY-SUITE — expectation (M3 health-area workhorse)
+# FIX-DIRTY-SUITE — expectation
 
 One tree triggering several rules at once, with findings in BOTH scopes:
 
@@ -1978,14 +1973,13 @@ One tree triggering several rules at once, with findings in BOTH scopes:
   `proj-orphan` no ledger -> `files-without-lock` (info).
 - `.qoder/` contains ONLY an empty `skills/` entry: CLI spray residue, a
   leftover workspace (installed=false) with ZERO placements and ZERO
-  findings — the Health workspace filter's reachable empty state
-  (VAL-HEALTH-047).
+  findings — the Health workspace filter's reachable empty state.
 
 Scan with SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/proj.
 
 A correct scan MUST exit 0 with exactly these EIGHT findings: the five above
 PLUS a `dangerous-removal-surface` advisory for each ownerless name
-(`user-orphan`, `proj-orphan`, `rotted-link`) — VAL-SCAN-030 fires on
+(`user-orphan`, `proj-orphan`, `rotted-link`) — the advisory fires on
 gh-owned AND ownerless skills. Two severity levels render (action + info);
 the dangling link additionally surfaces as a `broken-symlink` ISSUE. Each
 finding carries its rule's concrete evidence. Ownership: gh-owned=github,
@@ -1996,7 +1990,7 @@ EOF
 
 # =====================================================================
 # FIX-MUTABLE — clean tree the validator mutates on disk mid-session
-# (VAL-HEALTH-035/036: no-watchers + explicit Refresh). Same zero-findings
+# (no file watchers; the app relies on explicit Refresh). Same zero-findings
 # shape as FIX-CLEAN; kept separate so mutation flows never touch FIX-CLEAN.
 # =====================================================================
 d="$(reset_fixture FIX-MUTABLE)"
@@ -2019,7 +2013,7 @@ cat >"$d/.agents/.skill-lock.json" <<'EOF'
 }
 EOF
 note "$d" <<'EOF'
-# FIX-MUTABLE — expectation (M3 health-area, VAL-HEALTH-035/036)
+# FIX-MUTABLE — expectation
 
 Contents: one vercel-owned user-scope skill `greet` (global v3 lock) — a
 zero-findings clean tree. Validators COPY this tree, launch the app against
@@ -2032,7 +2026,7 @@ ownership=vercel, zero findings, zero issues.
 EOF
 
 # =====================================================================
-# cap-* — PATH-stub capability environments (VAL-SCAN-002/037/038/039/040/057).
+# cap-* — PATH-stub capability environments.
 #
 # These are NOT scan fixtures: each tree holds ONLY a bin/ of stub executables
 # plus its EXPECTATION.md. Validators compose an environment by concatenating
@@ -2104,7 +2098,7 @@ empty_bin() {
 d="$(reset_fixture cap-gh-ok)"
 gh_stub "$d" "2.100.0" 0
 note "$d" <<'EOF'
-# cap-gh-ok — expectation (VAL-SCAN-002 / VAL-SCAN-037)
+# cap-gh-ok — expectation
 
 Contents: `bin/gh` — a stub reporting `gh version 2.100.0 (2026-01-15)` whose
 `gh skill --help` exits 0. No npx stub here (compose with `cap-npx-ok`).
@@ -2120,7 +2114,7 @@ EOF
 d="$(reset_fixture cap-gh-old)"
 gh_stub "$d" "2.80.0" 1
 note "$d" <<'EOF'
-# cap-gh-old — expectation (VAL-SCAN-038)
+# cap-gh-old — expectation
 
 Contents: `bin/gh` — a stub reporting `gh version 2.80.0 (2026-01-15)`, BELOW
 the 2.90.0 `gh skill` floor (its `skill --help` exits 1, but a correct
@@ -2132,7 +2126,7 @@ Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
 
 A correct capabilities report MUST exit 0 and report gh available=false,
 present=true, version="2.80.0", meetsMinimum=false, reason="too-old". Scans
-in this environment MUST be unaffected (D2): `sukiru-cli scan` over the
+in this environment MUST be unaffected: `sukiru-cli scan` over the
 `own-github` fixture still exits 0 and surfaces `metadata.github-*`
 provenance from disk.
 EOF
@@ -2140,24 +2134,24 @@ EOF
 d="$(reset_fixture cap-gh-probe-fail)"
 gh_stub "$d" "2.100.0" 1
 note "$d" <<'EOF'
-# cap-gh-probe-fail — expectation (VAL-SCAN-057)
+# cap-gh-probe-fail — expectation
 
 Contents: `bin/gh` — a stub reporting `gh version 2.100.0 (2026-01-15)`
 (meets the 2.90.0 floor) whose `gh skill --help` EXITS 1: the version is new
-enough but the skill surface does not work (D6 probe).
+enough but the skill surface does not work (the `gh skill --help` probe).
 
 Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
 
 A correct capabilities report MUST exit 0 and report gh available=false,
 present=true, version="2.100.0", meetsMinimum=true, reason="probe-failed".
-(This tree is not in the contract's six-name legend; it is the VAL-SCAN-057
-environment, named here for validators.)
+(This tree is the probe-failure environment exercised by
+`CapabilitiesFixtureTests`.)
 EOF
 
 d="$(reset_fixture cap-gh-absent)"
 empty_bin "$d"
 note "$d" <<'EOF'
-# cap-gh-absent — expectation (VAL-SCAN-038)
+# cap-gh-absent — expectation
 
 Contents: an EMPTY `bin/` (only a .gitkeep) — no gh on PATH. Compose with
 other cap-* bins as needed (e.g. `<this>/bin:<cap-npx-ok>/bin` for
@@ -2167,7 +2161,7 @@ Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
 
 A correct capabilities report MUST exit 0 and report gh available=false,
 present=false, meetsMinimum=false, no version, reason="absent". Scans in
-this environment MUST be unaffected (D2): `sukiru-cli scan` over the
+this environment MUST be unaffected: `sukiru-cli scan` over the
 `own-github` fixture still exits 0 and surfaces `metadata.github-*`
 provenance from disk.
 EOF
@@ -2175,7 +2169,7 @@ EOF
 d="$(reset_fixture cap-npx-ok)"
 npx_stub "$d" "1.5.26"
 note "$d" <<'EOF'
-# cap-npx-ok — expectation (VAL-SCAN-002 / VAL-SCAN-039)
+# cap-npx-ok — expectation
 
 Contents: `bin/npx` — a stub answering the capability probe
 (`npx -y skills@latest --version`) with `1.5.26`. No gh stub here (compose
@@ -2190,7 +2184,7 @@ EOF
 d="$(reset_fixture cap-npx-absent)"
 empty_bin "$d"
 note "$d" <<'EOF'
-# cap-npx-absent — expectation (VAL-SCAN-039)
+# cap-npx-absent — expectation
 
 Contents: an EMPTY `bin/` (only a .gitkeep) — no npx on PATH.
 
@@ -2198,17 +2192,17 @@ Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
 
 A correct capabilities report MUST exit 0 and report npx resolvable=false
 with no skillsVersion. Unresolvable npx NEVER blocks anything: exit stays 0
-and scans are unaffected (D2/§8).
+and scans are unaffected.
 EOF
 
 d="$(reset_fixture cap-neither)"
 empty_bin "$d"
 note "$d" <<'EOF'
-# cap-neither — expectation (VAL-SCAN-040)
+# cap-neither — expectation
 
 Contents: an EMPTY `bin/` (only a .gitkeep) — neither gh nor npx on PATH.
-Sukiru degrades to the full read-only diagnostician (§8): capability absence
-degrades repair features, never seam-A reading.
+Sukiru degrades to the full read-only diagnostician: capability absence
+degrades repair features, never scanning.
 
 Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli {capabilities,scan} ...`.
 
@@ -2216,7 +2210,7 @@ A correct capabilities report MUST exit 0 with gh reason="absent" and npx
 resolvable=false. A scan over a rich fixture (CM-3) in this environment MUST
 produce the COMPLETE report — full inventory, ownership from both on-disk
 ledgers, all findings — BYTE-IDENTICAL to the same fixture scanned under
-`cap-gh-ok` + `cap-npx-ok` (scan is subprocess-free, D2).
+`cap-gh-ok` + `cap-npx-ok` (scan is subprocess-free).
 EOF
 
 echo "Hand-built fixtures rebuilt under: $FIX"

@@ -1,8 +1,8 @@
 import Foundation
 
 /// Relationship between a lock file's schema version and the supported one
-/// (port-reference §6, trap #5: the archive silently accepted NEWER versions;
-/// Sukiru surfaces them).
+/// (the archived implementation silently accepted NEWER versions; Sukiru
+/// surfaces them).
 public enum LockVersionStatus: Equatable, Sendable {
     /// Version matches the supported schema.
     case supported
@@ -12,8 +12,7 @@ public enum LockVersionStatus: Equatable, Sendable {
     case newerThanSupported(found: Int, supported: Int)
 }
 
-/// One entry in a Vercel lock's `skills` map (architecture §4.1,
-/// port-reference §6 `SkillLockEntry`).
+/// One entry in a Vercel lock's `skills` map.
 ///
 /// All fields are optional and decoded tolerantly — a missing or mistyped
 /// known field reads as nil rather than failing the whole file. Keys outside
@@ -142,7 +141,7 @@ public struct LockReadResult: Equatable, Sendable {
     }
 }
 
-/// Reads Vercel `skills` lock files (architecture §4.1, port-reference §6).
+/// Reads Vercel `skills` lock files.
 ///
 /// Project lock (v1) probe order, first existing wins and files are NEVER
 /// merged: `skills-lock.json` → `.agents/.skill-lock.json` → `.skill-lock.json`.
@@ -160,7 +159,7 @@ public struct VercelLockReader: Sendable {
     public static let globalLockVersion = 3
     public static let projectLockVersion = 1
 
-    /// Project probe order (architecture §4.1). Space-listed to avoid a
+    /// Project probe order. Space-listed to avoid a
     /// multi-line collection literal (repo lint gates conflict on those).
     public static let projectProbeOrder: [String] =
         "skills-lock.json .agents/.skill-lock.json .skill-lock.json"

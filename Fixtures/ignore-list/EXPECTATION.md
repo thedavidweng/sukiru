@@ -1,4 +1,4 @@
-# ignore-list — expectation (VAL-SCAN-011)
+# ignore-list — expectation
 
 Contents: `.agents/skills/` holds ONE real skill (`real-skill`) plus noise
 containers that must never become placements: `node_modules/`, `__pycache__/`,

@@ -73,7 +73,7 @@ struct CLIParserTests {
         )
     }
 
-    // MARK: - batch execution flags (VAL-REPAIR-007 surface)
+    // MARK: - batch execution flags
 
     @Test("batch --execute --reviewed parses; timeout only with --execute")
     func batchExecuteFlags() {
@@ -122,7 +122,7 @@ struct CLIParserTests {
         #expect(badTimeout == .failure(.invalidValue(flag: "--command-timeout", value: "abc")))
     }
 
-    // MARK: - rollback (D9 one-click rollback surface)
+    // MARK: - rollback (one-click rollback surface)
 
     @Test("rollback --batch parses")
     func rollbackParses() {

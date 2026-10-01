@@ -1,4 +1,4 @@
-# own-github — expectation (VAL-SCAN-015 / VAL-SCAN-020)
+# own-github — expectation
 
 Contents: two gh-owned skills in the claude-code host dir (detected via
 config.json), NO lock file anywhere. `pinned-tool` carries
@@ -15,4 +15,4 @@ A correct scan MUST:
   github-pinned key means unpinned, never pinned);
 - emit NO files-without-lock (gh provenance satisfies the ledger requirement)
   and NO vercel findings; a `dangerous-removal-surface` advisory per gh-owned
-  skill is expected (VAL-SCAN-030).
+  skill is expected.

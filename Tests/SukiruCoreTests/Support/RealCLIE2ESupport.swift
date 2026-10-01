@@ -4,14 +4,14 @@ import Testing
 
 @testable import SukiruCore
 
-/// Support for the seam-B end-to-end suite: REAL `npx skills` / `gh skill`
+/// Support for the real-CLI end-to-end suite: REAL `npx skills` / `gh skill`
 /// invocations driven through the built `sukiru-cli` against COPIES of the
 /// committed fixtures under `$TMPDIR` (checked-in trees are never mutated).
 ///
 /// Gating: the whole suite is skipped unless `SUKIRU_E2E=1`; gh-networked
 /// scenarios additionally require `GH_TOKEN` in the test process env (the
 /// token is passed to the CLI child, whose executor injects it into gh
-/// commands only — VAL-REPAIR-054).
+/// commands only).
 ///
 /// Sandboxing proof (defense in depth):
 /// - the CLI child receives a FULLY explicit environment (nothing
@@ -22,7 +22,7 @@ import Testing
 ///   `HOME` was the sandbox;
 /// - a HomeCanary fingerprints the fixture skill names + global lock under
 ///   the REAL `$HOME` before/after and fails on any change.
-enum SeamBE2ESupport {
+enum RealCLIE2ESupport {
     static let enabled = ProcessInfo.processInfo.environment["SUKIRU_E2E"] == "1"
 
     static let gitHubToken: String? = {
@@ -231,7 +231,7 @@ enum SeamBE2ESupport {
         try TreeChecksum.manifest(root: home).filter { !$0.key.hasPrefix("Library") }
     }
 
-    /// VAL-CROSS-018 manifest confinement: payload/placement paths all
+    /// Cross-scope manifest confinement: payload/placement paths all
     /// inside the targeted project; ledgers inside the project plus the
     /// one global lock SnapshotPlan ALWAYS records (read-only rollback
     /// backup — `npx` can write the global lock even from a project cwd).

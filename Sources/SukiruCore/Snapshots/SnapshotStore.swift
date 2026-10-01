@@ -1,8 +1,8 @@
 import CryptoKit
 import Foundation
 
-/// Snapshot storage for the Command Batch safety model (architecture §4.1,
-/// D9): pre-execution capture of both ledger files byte-exact, a placement
+/// Snapshot storage for the Command Batch safety model: pre-execution capture
+/// of both ledger files byte-exact, a placement
 /// manifest, and full recursive payload copies of every skill dir the batch
 /// may touch (any ownership); path-traversal-safe load; retention pruning.
 ///
@@ -10,12 +10,12 @@ import Foundation
 /// `<home>/Library/Application Support/Sukiru/snapshots/<id>/` — with
 /// `SUKIRU_HOME` supplying `<home>` in sandboxes — never directly under
 /// `$TMPDIR`. Capture stages into a sibling `.staging-*` directory and
-/// renames it into place, so no listing ever observes a partial snapshot
-/// (VAL-REPAIR-026); `manifest.json` itself is written atomically.
+/// renames it into place, so no listing ever observes a partial snapshot;
+/// `manifest.json` itself is written atomically.
 ///
 /// Restore lives in SnapshotRestore.swift (extension, same module).
 public struct SnapshotStore: Sendable {
-    /// Retention: at most this many snapshots survive pruning (D9 default).
+    /// Retention: at most this many snapshots survive pruning.
     public static let defaultRetentionLimit = 10
 
     let environment: SukiruEnvironment
@@ -47,8 +47,8 @@ public struct SnapshotStore: Sendable {
     ///
     /// Throws — committing nothing visible — when any ledger or payload
     /// cannot be captured: a batch must never execute without a complete
-    /// snapshot (VAL-REPAIR-023's "snapshot before first command" is only
-    /// meaningful when capture is all-or-nothing).
+    /// snapshot ("snapshot before the first command" is only meaningful when
+    /// capture is all-or-nothing).
     @discardableResult
     public func capture(batch: CommandBatch, report: ScanReport) throws -> SnapshotManifest {
         let id = idProvider()
@@ -206,8 +206,8 @@ public struct SnapshotStore: Sendable {
         SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
     }
 
-    /// Deepest paths first (children before parents, architecture §4.1
-    /// Rollback), ties broken by ascending path for determinism.
+    /// Deepest paths first (children before parents), ties broken by
+    /// ascending path for determinism.
     static func descendingDepth(_ paths: [String]) -> [String] {
         paths.sorted { lhs, rhs in
             let lhsDepth = lhs.split(separator: "/").count

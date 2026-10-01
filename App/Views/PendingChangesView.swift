@@ -1,16 +1,16 @@
 import SukiruCore
 import SwiftUI
 
-/// The Pending Changes surface (architecture §4.3/§7): the Command Batch
+/// The Pending Changes surface: the Command Batch
 /// safety model made visible.
 ///
-/// - **Decision** — a Health "Fix…" deep-link (D16) opens the decision
+/// - **Decision** — a Health "Fix…" deep-link opens the decision
 ///   panel (`RepairDraftPanel`): ownership-routed repair options, with
-///   capability-blocked options rendered as hints (§8, VAL-REPAIR-049).
+///   capability-blocked options rendered as hints.
 /// - **Confirm** — the built batch opens `BatchConfirmSheet`, the single
-///   confirmation every batch needs before it runs (VAL-REPAIR-007).
+///   confirmation every batch needs before it runs.
 /// - **Result** — the terminal record banner (`PendingResultBanners`) while
-///   the D7 auto-refresh repopulates every other surface.
+///   the post-mutation auto-refresh repopulates every other surface.
 struct PendingChangesView: View {
     @EnvironmentObject private var state: AppState
 

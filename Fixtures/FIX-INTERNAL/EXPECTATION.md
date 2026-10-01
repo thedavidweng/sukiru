@@ -8,6 +8,6 @@ A correct scan MUST:
 - inventory BOTH placements (internal skills are inventoried, never dropped);
 - flag the `hidden-helper` placement `internal: true` and `normal` `internal: false`.
 
-The M3 UI additionally hides internal skills from host-facing listings while
-still surfacing the internal marker (VAL-HEALTH-010); at seam A the requirement
+The app additionally hides internal skills from host-facing listings while
+still surfacing the internal marker; for the scan engine the requirement
 is only that both placements appear with correct internal flags.

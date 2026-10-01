@@ -2,7 +2,7 @@ import CryptoKit
 import Foundation
 
 /// Recursive, deterministic checksum manifest of a directory tree, for the
-/// read-only guarantee (VAL-SCAN-051): paths + content hashes + symlink
+/// read-only guarantee: paths + content hashes + symlink
 /// targets. A scan must leave the manifest byte-identical.
 enum TreeChecksum {
     /// Maps each relative path to `"dir"`, `"file:<sha256>"`,

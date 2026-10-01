@@ -27,14 +27,15 @@ targets:
         type: file
     dependencies:
       # The SwiftUI layer consumes SukiruCore value types only; no logic lives
-      # in the app. Linking the local SwiftPM package here is the seam.
+      # in the app. Linking the local SwiftPM package here is the only link
+      # between the two.
       - package: SukiruCore
         product: SukiruCore
     settings:
       base:
         PRODUCT_NAME: Sukiru
         PRODUCT_BUNDLE_IDENTIFIER: app.sukiru
-        # Ad-hoc signing: no team, no provisioning profile (architecture §10).
+        # Ad-hoc signing: no team, no provisioning profile.
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "-"
         DEVELOPMENT_TEAM: ""

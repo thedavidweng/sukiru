@@ -1,16 +1,16 @@
 import SukiruCore
 import SwiftUI
 
-/// The Snapshots surface (architecture §4.3, D9): the batch history. Every
+/// The Snapshots surface: the batch history. Every
 /// executed batch appears as a row (`sukiru.snapshots.batch.<id>`) with its
 /// status, command count, and post-run diff size; every rollback appears as
 /// its own time-ordered event row (`sukiru.snapshots.event.rollback.<id>`),
-/// so batch → rollback → re-repair reads as three distinct entries in order
-/// (VAL-CROSS-023). Non-rolled-back batches carry a one-click rollback
-/// affordance (`sukiru.snapshots.rollback.<id>`, VAL-REPAIR-036/046), which
-/// is unavailable while any execution or rollback is in flight
-/// (VAL-REPAIR-055). The history is on-disk state — it survives relaunches
-/// (VAL-CROSS-012) and reloads after every app-initiated mutation (D7).
+/// so batch → rollback → re-repair reads as three distinct entries in order.
+/// Non-rolled-back batches carry a one-click rollback
+/// affordance (`sukiru.snapshots.rollback.<id>`), which
+/// is unavailable while any execution or rollback is in flight.
+/// The history is on-disk state — it survives relaunches
+/// and reloads after every app-initiated mutation.
 struct SnapshotsView: View {
     @EnvironmentObject private var state: AppState
 
@@ -103,8 +103,8 @@ struct SnapshotsView: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
                 Spacer()
-                // One-click rollback (D9) for every non-rolled-back batch;
-                // unavailable mid-mutation (VAL-REPAIR-055 — disabled with
+                // One-click rollback for every non-rolled-back batch;
+                // unavailable mid-mutation (disabled with
                 // the `.disabled` AX suffix, never silently inert).
                 if record.batchStatus == .succeeded || record.batchStatus == .failed {
                     Button {

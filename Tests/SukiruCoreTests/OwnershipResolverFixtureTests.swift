@@ -3,8 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// OwnershipResolver over the checked-in fixture corpus (VAL-SCAN-015…021,
-/// 055, 056).
+/// OwnershipResolver over the checked-in fixture corpus.
 @Suite("OwnershipResolver against checked-in fixtures")
 struct OwnershipResolverFixtureTests {
     @Test("own-vercel: both scopes resolve vercel, provenance byte-equal to the fixture locks")
@@ -103,7 +102,7 @@ struct OwnershipResolverFixtureTests {
         let dup = try #require(report.skills.first { $0.name == "dup" })
         #expect(dup.ownership == .ownerless)
         #expect(dup.ambiguous == true)
-        // The lock claim is surfaced as data (VAL-SCAN-018), not ownership.
+        // The lock claim is surfaced as data, not ownership.
         #expect(dup.provenance.vercel?.skillFolderHash == String(repeating: "6", count: 40))
 
         let finding = try #require(report.findings.first { $0.ruleID == "ambiguous-name" })
@@ -138,7 +137,7 @@ struct OwnershipResolverFixtureTests {
         #expect(demo.ambiguous == false)
         #expect(
             !report.findings.contains { $0.ruleID == "ambiguous-name" },
-            "D1 negative: alias placements are never ambiguous")
+            "Alias placements are never ambiguous")
         // No ledger claims in this tree: ownerless, and the ownerless listing
         // names all three placement paths.
         #expect(demo.ownership == .ownerless)
@@ -165,7 +164,7 @@ struct OwnershipResolverFixtureTests {
         #expect(userGitHub.treeSha == String(repeating: "e", count: 40))
     }
 
-    @Test("own-per-project: shared is vercel in p1 and ownerless in p2 (VAL-SCAN-055)")
+    @Test("own-per-project: shared is vercel in p1 and ownerless in p2")
     func ownPerProject() throws {
         let report = try OwnershipBuilders.scanSplitFixture("own-per-project", roots: ["p1", "p2"])
         let tree = FixturePaths.tree("own-per-project")
@@ -215,12 +214,12 @@ struct OwnershipResolverFixtureTests {
         #expect(projectFinding.workspaceID == "project:\(tree)/proj")
     }
 
-    @Test("FIX-DUPLICATES under D23: div-demo stays ambiguous, exact-demo does not")
+    @Test("FIX-DUPLICATES: div-demo stays ambiguous, exact-demo does not")
     func fixDuplicatesRefinedAmbiguity() throws {
         let report = try OwnershipBuilders.scan(fixture: "FIX-DUPLICATES")
 
         // Two DIVERGENT copies, no ledger story for either: unexplained with
-        // ≥2 distinct hashes ⇒ ambiguous (D23).
+        // ≥2 distinct hashes ⇒ ambiguous.
         let div = try #require(report.skills.first { $0.name == "div-demo" })
         #expect(div.ambiguous == true)
         #expect(div.ownership == .ownerless)
@@ -230,7 +229,7 @@ struct OwnershipResolverFixtureTests {
             })
 
         // Two BYTE-IDENTICAL copies with no ledger claim: unexplained but a
-        // single shared hash ⇒ NOT ambiguous (D23); plain ownerless with the
+        // single shared hash ⇒ NOT ambiguous; plain ownerless with the
         // inventory listing.
         let exact = try #require(report.skills.first { $0.name == "exact-demo" })
         #expect(exact.ambiguous == false)
@@ -252,7 +251,7 @@ struct OwnershipResolverFixtureTests {
         #expect(webTool.placements.count == 2)
         #expect(
             webTool.ambiguous == false,
-            "D23(a): the host copy is hash-identical to the lock-anchored canonical placement")
+            "The host copy is hash-identical to the lock-anchored canonical placement")
         #expect(webTool.ownership == .vercel)
         #expect(!report.findings.contains { $0.ruleID == "ambiguous-name" })
         let duplicate = try #require(

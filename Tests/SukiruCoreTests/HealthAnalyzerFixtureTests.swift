@@ -3,11 +3,10 @@ import Testing
 
 @testable import SukiruCore
 
-/// HealthAnalyzer detection rules against the checked-in fixture corpus
-/// (VAL-SCAN-023…030, plus the D3 severity sweep VAL-SCAN-052 and the
-/// zero-findings baselines VAL-SCAN-041).
+/// HealthAnalyzer detection rules against the checked-in fixture corpus,
+/// plus the zero-findings baselines.
 ///
-/// Origin boundaries (library/read-side-porting.md): `broken-symlink` comes
+/// Origin boundaries: `broken-symlink` comes
 /// from InventoryScanner; `ambiguous-name`, `double-booked`, and
 /// `files-without-lock` come from OwnershipResolver. HealthAnalyzer owns
 /// `cross-host-duplicate`, `symlink-authenticity`, `vercel-lock-drift`,
@@ -28,7 +27,7 @@ struct HealthAnalyzerFixtureTests {
             report.findings.first { $0.ruleID == ruleID && $0.skillName == skillName })
     }
 
-    // MARK: - VAL-SCAN-023: alias subtype
+    // MARK: - Alias subtype
 
     @Test("alias-link-mode: alias-subtype duplicate at info severity, shared canonical path")
     func aliasLinkMode() throws {
@@ -51,7 +50,7 @@ struct HealthAnalyzerFixtureTests {
             "an alias group must never be misclassified as exact")
     }
 
-    // MARK: - VAL-SCAN-024 / 025: exact and divergent subtypes
+    // MARK: - Exact and divergent subtypes
 
     @Test("FIX-DUPLICATES: exact-demo is an exact duplicate (warning, both paths, shared hash)")
     func duplicatesExact() throws {
@@ -90,7 +89,7 @@ struct HealthAnalyzerFixtureTests {
         #expect(details(alias, "subtype") == ["alias"])
     }
 
-    // MARK: - VAL-SCAN-026: symlink-authenticity impostor
+    // MARK: - symlink-authenticity impostor
 
     @Test("impostor-copy: the physical host copy is flagged with its canonical link target")
     func impostorCopy() throws {
@@ -134,7 +133,7 @@ struct HealthAnalyzerFixtureTests {
         #expect(!report.findings.contains { $0.ruleID == "lock-without-files" })
     }
 
-    // MARK: - VAL-SCAN-027: vercel-lock-drift
+    // MARK: - vercel-lock-drift
 
     @Test("lock-drift: project drift carries lock/entry/hash evidence; global scope stays silent")
     func lockDrift() throws {
@@ -168,7 +167,7 @@ struct HealthAnalyzerFixtureTests {
             })
     }
 
-    // MARK: - VAL-SCAN-028: lock-without-files
+    // MARK: - lock-without-files
 
     @Test("FIX-LOCK-NO-FILES: ghost is a lock-without-files finding and never a healthy placement")
     func lockWithoutFiles() throws {
@@ -183,7 +182,7 @@ struct HealthAnalyzerFixtureTests {
             "a ledger claim alone conjures no skill")
     }
 
-    // MARK: - VAL-SCAN-029: canonical-host-divergence
+    // MARK: - canonical-host-divergence
 
     @Test("divergence-canonical: one source identity, both paths, both content hashes")
     func canonicalHostDivergence() throws {
@@ -202,7 +201,7 @@ struct HealthAnalyzerFixtureTests {
         #expect(evidenceHashes == Set(skill.placements.compactMap(\.contentHash)))
     }
 
-    // MARK: - VAL-SCAN-030: dangerous-removal-surface
+    // MARK: - dangerous-removal-surface
 
     @Test("FIX-DANGER: advisories exactly on the gh-owned and ownerless skills, never vercel-owned")
     func dangerousRemovalSurface() throws {
@@ -253,7 +252,7 @@ struct HealthAnalyzerFixtureTests {
         #expect(issue.path == tree + "/proj/skills-lock.json")
     }
 
-    // MARK: - Zero-findings baselines (VAL-SCAN-041 shape)
+    // MARK: - Zero-findings baselines
 
     @Test("FIX-CLEAN and FIX-EMPTY produce zero findings", arguments: ["FIX-CLEAN", "FIX-EMPTY"])
     func cleanTreesZeroFindings(fixture: String) throws {

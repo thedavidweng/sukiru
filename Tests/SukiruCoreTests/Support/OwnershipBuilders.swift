@@ -6,7 +6,7 @@ import Foundation
 /// bodies, lock files, and the scan entry point over TempTree.
 enum OwnershipBuilders {
     /// A minimal valid SKILL.md with no provenance. `variant` makes two
-    /// copies of one name hash-DIVERGENT (the D23 ambiguity trigger needs
+    /// copies of one name hash-DIVERGENT (the ambiguity trigger needs
     /// distinct content hashes, not just distinct paths).
     static func skillMD(_ name: String, variant: String = "Body.") -> String {
         """

@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// Workspace root enumeration (architecture §4.1): user scope (canonical
+/// Workspace root enumeration: user scope (canonical
 /// `~/.agents/skills` + detected/leftover host global dirs) and project scope
 /// (canonical `.agents/skills` + per-host project dirs), with leftover roots
 /// flagged `installed = false` but still present. Fixture-driven: each test
@@ -26,7 +26,7 @@ struct WorkspaceEnumeratorTests {
         workspaces.map(\.id).joined(separator: " ")
     }
 
-    @Test("User scope: detected, leftover-but-present, and absent hosts (VAL-SCAN-012)")
+    @Test("User scope: detected, leftover-but-present, and absent hosts")
     func userScopeTriState() throws {
         let tree = try TempTree()
         let home = tree.path
@@ -44,7 +44,7 @@ struct WorkspaceEnumeratorTests {
         #expect(roots == "\(home)/.agents/skills \(home)/.claude/skills \(home)/.qoder/skills")
     }
 
-    @Test(".DS_Store and .localized never flip a leftover into installed (VAL-SCAN-013)")
+    @Test(".DS_Store and .localized never flip a leftover into installed")
     func dsStoreLeftover() throws {
         let tree = try TempTree()
         try tree.dir(".qoder/skills")
@@ -56,7 +56,7 @@ struct WorkspaceEnumeratorTests {
         #expect(qoder?.installed == false)
     }
 
-    @Test("Empty-marker hosts are absent despite unrelated $HOME content (VAL-SCAN-014)")
+    @Test("Empty-marker hosts are absent despite unrelated $HOME content")
     func emptyMarkerAbsent() throws {
         let tree = try TempTree()
         try tree.file("notes.txt", contents: "unrelated")

@@ -4,16 +4,15 @@ import Testing
 @testable import SukiruCore
 
 /// The CLIExecutor safety invariants, exercised against POSIX shims on an
-/// injected PATH (architecture §4.1/§10; VAL-REPAIR-007, 023, 027…031,
-/// 038…042, 053, 054, 058). Shims never touch the network or a real CLI, so
+/// injected PATH. Shims never touch the network or a real CLI, so
 /// no `SUKIRU_E2E` gate is needed; every test uses its own TempTree and an
 /// explicit `pathOverride`, keeping the suite parallel-safe.
-/// Seam-B execution suite: serialized per house rule (subprocess-heavy).
+/// Serialized because the suite is subprocess-heavy.
 @Suite("CLI executor", .serialized)
 struct CLIExecutorTests {
     private typealias Support = ExecutorTestSupport
 
-    // MARK: - VAL-REPAIR-007: execution requires prior review
+    // MARK: - Execution requires prior review
 
     @Test("A proposed batch is refused: no snapshot, no subprocess, no writes")
     func unreviewedBatchRefused() throws {
@@ -39,7 +38,7 @@ struct CLIExecutorTests {
         #expect(before == after, "a refused execution must leave the sandbox byte-identical")
     }
 
-    // MARK: - VAL-REPAIR-023: snapshot before the first command, always
+    // MARK: - Snapshot before the first command, always
 
     @Test("Snapshot + ledger checksums are committed even when command 1 fails immediately")
     func snapshotCommittedBeforeFailingFirstCommand() throws {
@@ -70,7 +69,7 @@ struct CLIExecutorTests {
         #expect(beforeLock == afterLock, "zero executed commands ⇒ ledgers byte-identical")
     }
 
-    // MARK: - VAL-REPAIR-027: strict serialization
+    // MARK: - Strict serialization
 
     @Test("Two commands run one at a time, in batch order, with non-overlapping intervals")
     func commandsExecuteSerialized() throws {
@@ -140,7 +139,7 @@ struct CLIExecutorTests {
         #expect(result.record.batchStatus == .succeeded)
     }
 
-    // MARK: - VAL-REPAIR-029: per-command record fields
+    // MARK: - Per-command record fields
 
     @Test("A successful command records exit code, duration, and complete captured files")
     func successPreservesOutputsAndTiming() throws {
@@ -172,7 +171,7 @@ struct CLIExecutorTests {
         #expect(FileManager.default.fileExists(atPath: recordJSON))
     }
 
-    // MARK: - VAL-REPAIR-030: the 65 536-byte pipe-truncation trap
+    // MARK: - The 65 536-byte pipe-truncation trap
 
     @Test("Output beyond 65 536 bytes is captured completely (files, never pipes)")
     func outputBeyondPipeLimitIsCapturedCompletely() throws {
@@ -194,7 +193,7 @@ struct CLIExecutorTests {
         #expect(text.hasSuffix("SUKIRU-END-MARKER\n"), "the tail must not be cut mid-token")
     }
 
-    // MARK: - VAL-REPAIR-031/053/054: environment contract + GH_TOKEN scoping
+    // MARK: - Environment contract + GH_TOKEN scoping
 
     @Test("Subprocess env: CI=1, SKILLS_TELEMETRY=0, HOME=sandbox, no TTY, cwd honored")
     func subprocessEnvironmentContract() throws {
@@ -250,7 +249,7 @@ struct CLIExecutorTests {
         #expect(!leaked, "the token value must never be persisted anywhere in the sandbox")
     }
 
-    // MARK: - VAL-REPAIR-058/006: executed argv byte-equals the reviewed batch
+    // MARK: - Executed argv byte-equals the reviewed batch
 
     @Test("Every executed record argv byte-equals the batch's reviewed argv")
     func executedArgvMatchesBatchExactly() throws {

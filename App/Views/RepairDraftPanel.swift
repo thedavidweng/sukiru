@@ -1,12 +1,12 @@
 import SukiruCore
 import SwiftUI
 
-/// The repair decision panel (D16 deep-link target, VAL-CROSS-006): the
+/// The repair decision panel (Health "Fix…" deep-link target): the
 /// ownership-routed repair options for one finding
 /// (`sukiru.pending.decision.<action>`). Options whose owning CLI is
 /// unavailable in this environment render as explicit hints
 /// (`sukiru.pending.hint.needsNode` / `sukiru.pending.hint.needsGH`), never
-/// as buttons that would build a doomed batch (§8, VAL-REPAIR-049).
+/// as buttons that would build a doomed batch.
 struct RepairDraftPanel: View {
     @EnvironmentObject private var state: AppState
     let draft: AppState.RepairDraft
@@ -65,7 +65,7 @@ extension DecisionAction {
     }
 }
 
-/// §8 degradation hint (VAL-REPAIR-049): a repair whose owning CLI is
+/// Capability degradation hint: a repair whose owning CLI is
 /// missing is refused UP FRONT with a clear, localized explanation — no
 /// batch is ever built. Renders both per-decision (in the draft panel) and
 /// as a banner when a menu shortcut hit a blocked decision.
@@ -107,7 +107,7 @@ struct RepairBlockedHint: View {
 /// (`sukiru.pending.buildError`), capability blocks (RepairBlockedHint), and
 /// the terminal execution result (`sukiru.pending.result.succeeded` /
 /// `.failed` — the latter naming the failed command's diagnostics so a
-/// missing CLI or non-zero exit is never silent, VAL-REPAIR-039…042).
+/// missing CLI or non-zero exit is never silent).
 struct PendingResultBanners: View {
     @EnvironmentObject private var state: AppState
 

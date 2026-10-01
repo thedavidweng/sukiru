@@ -2,7 +2,7 @@ import Foundation
 import Yams
 
 /// GitHub ledger provenance carried in `SKILL.md` frontmatter
-/// (`metadata.github-*`, architecture §4.1).
+/// (`metadata.github-*`).
 ///
 /// The archive has zero `gh skill` knowledge — this side is greenfield. gh
 /// writes: `github-repo` (URL without a `.git` suffix, preserved verbatim),
@@ -10,7 +10,7 @@ import Yams
 /// `refs/tags/vX`, never truncated), `github-pinned` (bool; an ABSENT key
 /// means unpinned), and `github-tree-sha`.
 ///
-/// Codable: this is also the D18 wire shape (`github: {repo, path, ref,
+/// Codable: this is also the wire shape (`github: {repo, path, ref,
 /// pinned, treeSha}`); nil optionals are omitted from the JSON.
 public struct GitHubProvenance: Codable, Equatable, Sendable {
     /// Repository URL exactly as stored (no `.git` rewriting).
@@ -35,8 +35,8 @@ public struct GitHubProvenance: Codable, Equatable, Sendable {
 
 /// Reads `metadata.github-*` from an already-parsed frontmatter mapping.
 ///
-/// Presence of a non-empty `github-repo` string IS the gh-ledger claim
-/// (architecture §6); without it the other `github-*` keys are ignored.
+/// Presence of a non-empty `github-repo` string IS the gh-ledger claim;
+/// without it the other `github-*` keys are ignored.
 public enum GitHubProvenanceReader {
     /// Extracts the provenance claim, or nil when `github-repo` is absent.
     public static func provenance(in frontmatter: Node.Mapping) -> GitHubProvenance? {

@@ -1,12 +1,12 @@
 import Foundation
 
-/// One entry of a post-run diff (architecture §4.1 Differ, D9).
+/// One entry of a post-run diff.
 ///
 /// The vocabulary mirrors what an independent before/after filesystem
 /// comparison can see: placements (skill-dir level), files (inside
 /// snapshotted payload trees and the ledger files themselves), and semantic
 /// lock-entry deltas. Every entry carries the absolute path it concerns, so
-/// the boundary guarantee (VAL-REPAIR-038) is auditable from the diff alone.
+/// the boundary guarantee is auditable from the diff alone.
 public struct DiffEntry: Codable, Equatable, Sendable {
     public enum Kind: String, Codable, Equatable, Sendable {
         case placementAdded = "placement-added"
@@ -35,8 +35,8 @@ public struct DiffEntry: Codable, Equatable, Sendable {
     }
 }
 
-/// The post-run diff attached to every executed batch's record
-/// (VAL-REPAIR-032/033): the measured changes of the batch, computed by
+/// The post-run diff attached to every executed batch's record:
+/// the measured changes of the batch, computed by
 /// rescanning the affected roots and comparing against the pre-run scan and
 /// the snapshot. The diff is ALWAYS present on the record — a batch that
 /// changed nothing yields an explicitly empty diff, never an omitted one.
@@ -60,7 +60,7 @@ public struct BatchDiff: Codable, Equatable, Sendable {
         self.summary = summary
     }
 
-    /// True when the batch changed nothing (VAL-REPAIR-033).
+    /// True when the batch changed nothing.
     public var isEmpty: Bool {
         entries.isEmpty
     }

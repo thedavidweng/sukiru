@@ -1,4 +1,4 @@
-# FIX-SYMLINK — expectation (M3 health-area)
+# FIX-SYMLINK — expectation
 
 Contents: in the claude-code host dir (detected via config.json), a DANGLING
 symlink `.claude/skills/rotted -> /nonexistent/rotted-target`; plus `tool` in

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Per-command dispatch, record construction, and the workspace-boundary
-/// preflight — the seam-B execution detail of `CLIExecutor`.
+/// preflight — the per-command execution detail of `CLIExecutor`.
 extension CLIExecutor {
     /// The captured output files for one command (`cmd-NN.stdout/.stderr`).
     struct OutputFiles {
@@ -123,9 +123,9 @@ extension CLIExecutor {
 
     // MARK: - record construction
 
-    /// Stamps a command record: argv byte-equals the reviewed batch's argv
-    /// (VAL-REPAIR-058), with captured-file paths and fractional-second
-    /// timing (VAL-REPAIR-029).
+    /// Stamps a command record: argv byte-equals the reviewed batch's argv,
+    /// with captured-file paths and fractional-second
+    /// timing.
     func finished(
         _ command: BatchCommand, index: Int, files: OutputFiles, started: Date,
         verdict: CommandVerdict
@@ -205,7 +205,7 @@ extension CLIExecutor {
         return files
     }
 
-    // MARK: - workspace boundary (VAL-REPAIR-038)
+    // MARK: - workspace boundary
 
     /// Validates every direct-file-operation command BEFORE anything runs:
     /// argv shape (a known `FileOperation`) and the workspace boundary for

@@ -30,15 +30,15 @@ struct SubprocessInvocation: Sendable {
     let stderrPath: String
 }
 
-/// posix_spawn-based subprocess runner for seam-B batch execution.
+/// posix_spawn-based subprocess runner for Command Batch execution.
 ///
 /// Why not `Foundation.Process`: batch children get their OWN process group
 /// (`POSIX_SPAWN_SETPGROUP`) so a timeout can SIGTERM, then SIGKILL, the whole
 /// group — `Process` cannot create process groups, and killing only the
-/// direct child would orphan grandchildren (VAL-REPAIR-040's "no orphan
-/// process survives"). stdin is `/dev/null` (no TTY) and stdout/stderr are
+/// direct child would orphan grandchildren (no orphan process may survive a
+/// timeout). stdin is `/dev/null` (no TTY) and stdout/stderr are
 /// FILES from the first byte, never pipes — the `npx skills --json` pipe
-/// truncation cliff at 65 536 bytes cannot be hit (VAL-REPAIR-030).
+/// truncation cliff at 65 536 bytes cannot be hit.
 enum Subprocess {
     /// Runs `invocation`, reaping the child within `timeout` seconds; on
     /// timeout the child's process group is SIGTERMed, then SIGKILLed after

@@ -31,8 +31,9 @@ public enum RollbackError: Error, Equatable, Sendable {
 
 /// The persisted outcome of a one-click rollback
 /// (`executions/<batchID>/rollback.json`). Every restored/deleted/failed
-/// item is itemized in exactly the three-category vocabulary of
-/// VAL-REPAIR-036 — there is no "compensated-via-CLI" category in v1 (D9).
+/// item is itemized in exactly three categories (restored, deleted,
+/// unrestorable-with-reason) — there is no "compensated-via-CLI" category in
+/// v1.
 public struct RollbackRecord: Codable, Equatable, Sendable {
     public static let currentSchemaVersion = 1
 
@@ -41,7 +42,7 @@ public struct RollbackRecord: Codable, Equatable, Sendable {
     public let snapshotID: String
     /// ISO-8601 fractional-second rollback timestamp.
     public let rolledBackAt: String
-    /// Always `rolledBack` (architecture §7).
+    /// Always `rolledBack`.
     public let batchStatus: BatchStatus
     /// Itemized outcome, sorted by path (SnapshotStore.restore).
     public let items: [RestoreItem]
@@ -68,11 +69,11 @@ public struct RollbackRecord: Codable, Equatable, Sendable {
     }
 }
 
-/// One-click rollback (architecture §4.1 + D9): restore the ledgers
+/// One-click rollback: restore the ledgers
 /// byte-exact, restore the payload trees, and delete whatever the batch
 /// added. Compensating CLI commands are NOT used in v1.
 ///
-/// Rollback works for `succeeded` AND `failed` batches (VAL-REPAIR-035). It
+/// Rollback works for `succeeded` AND `failed` batches. It
 /// reruns the affected-scope rescan first so placements the batch sprayed
 /// into previously-empty host directories — invisible to the snapshot's
 /// watched-directory sweep — are found and deleted too (the Differ's
@@ -118,7 +119,7 @@ public struct Rollback: Sendable {
         }
 
         // Serialize with executions: a batch mid-flight is never rolled
-        // back (VAL-REPAIR-055).
+        // back.
         let lock = ExecutionLock(path: HostPathResolver.join(appSupport, "execution.lock"))
         try lock.acquire()
         defer { lock.release() }
@@ -156,7 +157,7 @@ public struct Rollback: Sendable {
     }
 
     /// Flips the persisted batch transcript to its terminal `rolledBack`
-    /// state (succeeded/failed → rolledBack, architecture §7).
+    /// state (succeeded/failed → rolledBack).
     private func markRolledBack(_ record: ExecutionRecord, recordPath: String) throws {
         let updated = ExecutionRecord(
             schemaVersion: record.schemaVersion,

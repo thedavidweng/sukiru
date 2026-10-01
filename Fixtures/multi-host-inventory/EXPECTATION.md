@@ -1,4 +1,4 @@
-# multi-host-inventory — expectation (VAL-SCAN-006)
+# multi-host-inventory — expectation
 
 Contents (placement manifest — five distinct skills, one placement each):
 - user scope: `.home/.agents/skills/canon-tool` (canonical store),

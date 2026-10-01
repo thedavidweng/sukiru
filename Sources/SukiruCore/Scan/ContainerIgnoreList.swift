@@ -1,4 +1,4 @@
-/// The scanner's container ignore list (architecture §4.1, port-reference §3
+/// The scanner's container ignore list (upstream
 /// `is_ignored_container` / `is_known_agent_or_skill_container`).
 ///
 /// Unconditional entries are noise/build directories that are never skills.
@@ -22,7 +22,7 @@ public enum ContainerIgnoreList {
             .split(separator: " ").map(String.init)
     )
 
-    /// Curated sub-buckets inside a skills root (port-reference §3: these are
+    /// Curated sub-buckets inside a skills root (these are
     /// legitimate containers, not hosts, and exist in no host table row).
     public static let curatedBuckets: Set<String> = [".curated", ".experimental", ".system"]
 

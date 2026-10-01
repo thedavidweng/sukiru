@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// The install-plan builder (stories 22–24): search result + installer +
+/// The install-plan builder: search result + installer +
 /// target → a reviewable Command Batch whose command is exactly one
 /// official-CLI invocation (npx skills add / gh skill install), whose
 /// finding ref carries the target ownership bucket, and whose refusal

@@ -12,8 +12,8 @@ A correct scan MUST:
 - report ZERO findings (global scope has no drift check; single placement means
   no duplicates; a lock entry means no files-without-lock).
 
-Note (cross-milestone): the M3 health contract describes a richer FIX-CLEAN
+Note: the Health UI originally called for a richer FIX-CLEAN
 spanning all four ownership classes. Because github/ownerless skills always
-raise a `dangerous-removal-surface` advisory (VAL-SCAN-030), a genuinely
+raise a `dangerous-removal-surface` advisory, a genuinely
 zero-findings tree can contain vercel-owned skills only; this fixture honors
-the core-read VAL-SCAN-041b zero-findings requirement.
+the scan engine's zero-findings baseline.

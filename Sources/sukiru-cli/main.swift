@@ -24,11 +24,11 @@ struct BatchInvocation {
     let environment: SukiruEnvironment
 }
 
-/// The `batch` command (D12): validate the decisions file, rescan, build the
-/// batch, then render it (`--dry-run`, writes NOTHING — VAL-REPAIR-005) or
+/// The `batch` command: validate the decisions file, rescan, build the
+/// batch, then render it (`--dry-run`, writes NOTHING) or
 /// execute it through the snapshot/serialize/execute pipeline (`--execute`).
-/// Execution gates on the explicit `--reviewed` acknowledgement
-/// (VAL-REPAIR-007); it prints the execution record JSON and exits 0 only
+/// Execution gates on the explicit `--reviewed` acknowledgement;
+/// it prints the execution record JSON and exits 0 only
 /// when the batch succeeded.
 func runBatch(_ invocation: BatchInvocation) throws {
     let decisions = loadDecisions(from: invocation.decisionsFile)
@@ -137,7 +137,7 @@ func executeBatch(
     exit(1)
 }
 
-/// The `rollback` command (D9): restores the batch's pre-execution state
+/// The `rollback` command: restores the batch's pre-execution state
 /// and prints the itemized rollback record JSON. Exit 0 even when some
 /// items are unrestorable — the record reports them honestly and stderr
 /// surfaces each one; exit 1 is reserved for refusals (unknown batch,
@@ -180,7 +180,7 @@ case .success(let parsed):
 
 let environment = SukiruEnvironment(reader: ProcessEnvironmentReader())
 
-// Architecture D4: a set-but-nonexistent SUKIRU_HOME is the sole fatal
+// A set-but-nonexistent SUKIRU_HOME is the sole fatal
 // environment problem and maps to exit code 2 for every command.
 let fatalProblem = environment.fatalProblem(fileSystem: DefaultFileSystemProbe())
 if case .sukiruHomeMissing(let path) = fatalProblem {
@@ -196,7 +196,7 @@ do {
         emitJSON(try report.jsonData())
     case .capabilities:
         // The capabilities command is the ONLY surface allowed to spawn
-        // probe subprocesses (architecture D2); scan never does.
+        // probe subprocesses; scan never does.
         emitJSON(try CapabilityDetector(environment: environment).detect().jsonData())
     case .batch(
         let decisionsFile, let dryRun, let execute, let reviewed,

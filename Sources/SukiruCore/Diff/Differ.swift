@@ -1,8 +1,8 @@
 import Foundation
 
 /// The workspace coordinates a batch touched — what the post-run rescan and
-/// the rollback-time rescan cover (architecture §4.1 Differ: "rescan of
-/// affected roots"). Derived from the batch's finding refs and persisted on
+/// the rollback-time rescan cover (only the affected roots are rescanned).
+/// Derived from the batch's finding refs and persisted on
 /// the execution record so a later rollback process rescans exactly the
 /// same surface.
 public struct AffectedScope: Equatable, Sendable {
@@ -31,11 +31,11 @@ public struct AffectedScope: Equatable, Sendable {
     }
 }
 
-/// The post-run Differ (architecture §4.1 + D9): diffs a post-run rescan of
+/// The post-run Differ: diffs a post-run rescan of
 /// the affected roots against the pre-run scan and the snapshot, producing
 /// the human-readable change list attached to the batch record.
 ///
-/// Correspondence rule (VAL-REPAIR-032): added/removed placements are single
+/// Correspondence rule: added/removed placements are single
 /// entries (an independent recursive diff reports an added/vanished tree at
 /// its root); placements changed in place decompose into file-level entries
 /// via the snapshot's payload copies; ledger files report byte changes plus
@@ -256,8 +256,8 @@ public struct Differ: Sendable {
 
     // MARK: - summary
 
-    /// The human-readable rendering. An empty diff is explicit
-    /// (VAL-REPAIR-033): one line stating nothing changed, so UIs never
+    /// The human-readable rendering. An empty diff is explicit:
+    /// one line stating nothing changed, so UIs never
     /// have to guess whether the diff ran.
     static func summary(for entries: [DiffEntry]) -> [String] {
         if entries.isEmpty {

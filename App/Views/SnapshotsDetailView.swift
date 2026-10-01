@@ -2,14 +2,14 @@ import SukiruCore
 import SwiftUI
 
 /// The Snapshots detail column: selecting a batch row reveals its post-run
-/// diff (VAL-REPAIR-046), and selecting a rollback event row reveals the
+/// diff, and selecting a rollback event row reveals the
 /// itemized restore record in the exact three-category vocabulary
 /// (`restored-from-snapshot` / `deleted-batch-added` /
-/// `unrestorable-with-reason` — VAL-REPAIR-036, D9; unrestorable items are
+/// `unrestorable-with-reason`; unrestorable items are
 /// surfaced, never silently dropped).
 ///
-/// An EMPTY diff is an explicit state, never an omitted section
-/// (VAL-REPAIR-033): the pane renders `sukiru.snapshots.diff.empty` with a
+/// An EMPTY diff is an explicit state, never an omitted section:
+/// the pane renders `sukiru.snapshots.diff.empty` with a
 /// "No changes" line.
 struct SnapshotsDetailView: View {
     @EnvironmentObject private var state: AppState
@@ -92,7 +92,7 @@ struct SnapshotsDetailView: View {
         }
     }
 
-    /// The post-run diff (VAL-REPAIR-032/033): one localized row per entry,
+    /// The post-run diff: one localized row per entry,
     /// and an explicit "No changes" line when empty.
     @ViewBuilder
     private func diffSection(_ record: ExecutionRecord) -> some View {

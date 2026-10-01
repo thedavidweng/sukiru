@@ -3,13 +3,13 @@ import Testing
 
 @testable import SukiruCore
 
-/// VAL-SCAN-022: unknown lock fields captured by `VercelLockReader` into
+/// Unknown lock fields captured by `VercelLockReader` into
 /// `extras` must reach the wire — entry-level extras ride
 /// `Skill.provenance.vercel.extras`; top-level lock extras ride the report's
 /// `lockExtras`, keyed by the scope's ownership-bucket/canonical workspace id
-/// (`user` / `project:<root>`). Both are D18-additive: they appear only when
+/// (`user` / `project:<root>`). Both are additive wire keys: they appear only when
 /// a lock actually carries unknown keys, with original values, sorted keys.
-@Suite("Lock extras wire surfacing (VAL-SCAN-022)")
+@Suite("Lock extras wire surfacing")
 struct LockExtrasWireTests {
 
     @Test("lock-unknown-fields: entry extras surface on the skill's vercel provenance")
@@ -63,7 +63,7 @@ struct LockExtrasWireTests {
         #expect(extras["priority"] as? Int == 7)
     }
 
-    @Test("Clean locks add no extras keys (D18 additive, omit-when-empty)")
+    @Test("Clean locks add no extras keys (additive, omit-when-empty)")
     func cleanReportOmitsExtras() throws {
         let report = try OwnershipBuilders.scan(fixture: "FIX-CLEAN")
         #expect(report.lockExtras == nil)

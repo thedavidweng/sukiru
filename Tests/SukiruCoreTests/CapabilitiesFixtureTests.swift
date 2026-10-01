@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// End-to-end capability-detection contract tests (VAL-SCAN-037…040, 057)
+/// End-to-end capability-detection tests
 /// driving the REAL built `sukiru-cli` against the checked-in `cap-*`
 /// PATH-stub fixtures (see each fixture's EXPECTATION.md). Stubs report
 /// controlled versions/probe outcomes without any network, and log their
@@ -47,9 +47,9 @@ struct CapabilitiesFixtureTests {
             .split(separator: "\n").map { String($0) }
     }
 
-    // MARK: VAL-SCAN-037 — gh present and ≥ 2.90.0 detected with version
+    // MARK: gh present and ≥ 2.90.0 detected with version
 
-    @Test("VAL-SCAN-037: cap-gh-ok stub detected available with version and transcript")
+    @Test("cap-gh-ok stub detected available with version and transcript")
     func ghAvailableFixture() throws {
         let scratch = try TempTree()
         let transcript = scratch.path + "/transcript.log"
@@ -67,9 +67,9 @@ struct CapabilitiesFixtureTests {
         #expect(lines.contains("gh skill --help"))
     }
 
-    // MARK: VAL-SCAN-057 — gh ≥ 2.90.0 but the skill probe fails
+    // MARK: gh ≥ 2.90.0 but the skill probe fails
 
-    @Test("VAL-SCAN-057: cap-gh-probe-fail reports unavailable with probe-failed reason")
+    @Test("cap-gh-probe-fail reports unavailable with probe-failed reason")
     func ghProbeFailureFixture() throws {
         let scratch = try TempTree()
         let transcript = scratch.path + "/transcript.log"
@@ -87,9 +87,9 @@ struct CapabilitiesFixtureTests {
         #expect(lines.contains("gh skill --help"), "the probe really ran against the stub")
     }
 
-    // MARK: VAL-SCAN-038 — gh absent or too old; disk provenance still read
+    // MARK: gh absent or too old; disk provenance still read
 
-    @Test("VAL-SCAN-038: cap-gh-absent and cap-gh-old states; own-github provenance intact")
+    @Test("cap-gh-absent and cap-gh-old states; own-github provenance intact")
     func ghAbsentAndOldFixtures() throws {
         // Absent: no gh on PATH at all.
         let absent = try capabilities(path: path(["cap-gh-absent"]))
@@ -100,7 +100,7 @@ struct CapabilitiesFixtureTests {
         #expect(absentGitHub["version"] == nil)
         #expect(absentGitHub["reason"] as? String == "absent")
 
-        // Too old: gh answers with 2.80.0, below the 2.90.0 floor (D6).
+        // Too old: gh answers with 2.80.0, below the 2.90.0 floor.
         let scratch = try TempTree()
         let transcript = scratch.path + "/transcript.log"
         let old = try capabilities(path: path(["cap-gh-old"]), transcript: transcript)
@@ -152,9 +152,9 @@ struct CapabilitiesFixtureTests {
         #expect(unpinnedProvenance["pinned"] as? Bool == false)
     }
 
-    // MARK: VAL-SCAN-039 — npx skills resolvable vs unresolvable
+    // MARK: npx skills resolvable vs unresolvable
 
-    @Test("VAL-SCAN-039: cap-npx-ok reports resolvable with version; cap-npx-absent does not")
+    @Test("cap-npx-ok reports resolvable with version; cap-npx-absent does not")
     func npxFixtures() throws {
         let resolvable = try capabilities(path: path(["cap-npx-ok"]))
         #expect(resolvable.exitCode == 0)
@@ -171,10 +171,10 @@ struct CapabilitiesFixtureTests {
         #expect(absentNpx["skillsVersion"] == nil)
     }
 
-    // MARK: VAL-SCAN-040 — neither CLI: full read-only scan still completes
+    // MARK: Neither CLI: full read-only scan still completes
 
     @Test(
-        "VAL-SCAN-040: CM-3 scan under cap-neither is byte-identical to the full-capability scan",
+        "CM-3 scan under cap-neither is byte-identical to the full-capability scan",
         .disabled(
             if: !FileManager.default.fileExists(
                 atPath: FixturePaths.tree("CM-3") + "/EXPECTATION.md"),
@@ -196,7 +196,7 @@ struct CapabilitiesFixtureTests {
         )
         #expect(neither.exitCode == 0)
         #expect(full.exitCode == 0)
-        // D2: scan never spawns subprocesses, so capability availability can
+        // Scan never spawns subprocesses, so capability availability can
         // change NOTHING in the report — the outputs must be byte-identical.
         #expect(neither.stdout == full.stdout)
 

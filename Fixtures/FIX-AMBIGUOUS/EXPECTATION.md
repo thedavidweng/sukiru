@@ -7,8 +7,8 @@ lock entry claiming `dup`.
 A correct scan MUST exit 0, emit an `ambiguous-name` finding naming both
 colliding placement paths, resolve `dup` as ownership=ownerless with
 ambiguous=true (attribution voided, never guessed), and still surface the lock
-claim as data (not authoritative ownership). Per D1/D23 this is per-scope
+claim as data (not authoritative ownership). Ambiguity is judged per scope
 after alias collapse; these are two REAL dirs with DIVERGENT content, and
 neither is explained: the lock claims `dup` but there is NO canonical-store
-placement to hash-anchor them to (D23a), and neither carries gh frontmatter
-(D23b) — two unexplained copies, two distinct hashes, so the rule fires.
+placement to hash-anchor them to, and neither carries gh frontmatter
+— two unexplained copies, two distinct hashes, so the rule fires.

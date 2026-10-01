@@ -1,7 +1,7 @@
 import Foundation
 import SukiruCore
 
-/// The Search surface's lifecycle (M5): idle until the first query,
+/// The Search surface's lifecycle: idle until the first query,
 /// searching while a query is in flight, results when a search landed,
 /// failed with an explicit message (never a swallowed error).
 enum SearchPhase: Equatable {
@@ -11,16 +11,16 @@ enum SearchPhase: Equatable {
     case failed(String)
 }
 
-/// Search-surface state derivations and intents (M5, stories 22–24): the
-/// query → backend → results flow, per-result preview (story 24), the
-/// installer-choice sheet (story 23), and install-batch construction that
+/// Search-surface state derivations and intents: the
+/// query → backend → results flow, per-result preview, the
+/// installer-choice sheet, and install-batch construction that
 /// lands on the existing Pending Changes review → execute → rollback
-/// pipeline (the seam-B safety model, unchanged).
+/// pipeline (the repair safety model, unchanged).
 ///
 /// Views stay dumb: they render `searchPhase` / `searchPreview` /
 /// `pendingBatch` and dispatch these intents. All writes go through
-/// SukiruCore (zero ledger red line); the only network surface in the whole
-/// app is the read-only marketplace fetch (§8).
+/// SukiruCore (Sukiru keeps no ledger of its own); the only network surface in the whole
+/// app is the read-only marketplace fetch.
 @MainActor
 extension AppState {
     /// The live search results of the current phase (empty when not loaded).
@@ -38,7 +38,7 @@ extension AppState {
         searchResults.first { $0.id == selectedSearchResultID }
     }
 
-    /// Searches the selected backend (story 22). Runs off the main actor;
+    /// Searches the selected backend. Runs off the main actor;
     /// the phase swap happens on completion. A stale query competing against
     /// a newer one is dropped (same generation discipline as rescan).
     func performSearch() {
@@ -99,7 +99,7 @@ extension AppState {
         searchPhase = .failed(message)
     }
 
-    /// Loads the SKILL.md preview for the selected result (story 24),
+    /// Loads the SKILL.md preview for the selected result,
     /// read-only, off the main actor.
     func selectSearchResult(_ id: String) {
         guard let result = searchResults.first(where: { $0.id == id }) else { return }
@@ -135,7 +135,7 @@ extension AppState {
         }
     }
 
-    // MARK: - installer choice (story 23)
+    // MARK: - installer choice
 
     /// The common gh --agent targets offered by the install sheet. The
     /// canonical store host heads the list; the rest are the widely adopted
@@ -154,7 +154,7 @@ extension AppState {
     }
 
     /// Whether the selected installer is usable in this environment
-    /// (§8 degradation). The sheet offers the choice but renders it
+    /// (capability degradation). The sheet offers the choice but renders it
     /// blocked-with-hint when the owning CLI is missing.
     func installCapabilityAvailable(_ installer: InstallerChoice) -> Bool {
         switch installer.capabilityGate {
@@ -165,7 +165,7 @@ extension AppState {
         }
     }
 
-    /// The sheet's per-installer consequence copy (story 23: consequences
+    /// The sheet's per-installer consequence copy (consequences
     /// spelled out before any batch exists).
     func installConsequenceCopy(_ installer: InstallerChoice) -> String {
         switch installer {

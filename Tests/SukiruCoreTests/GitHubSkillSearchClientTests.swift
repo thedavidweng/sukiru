@@ -3,7 +3,7 @@ import Testing
 
 @testable import SukiruCore
 
-/// The `gh skill search` client (story 22, github backend): parses the
+/// The `gh skill search` client (github backend): parses the
 /// verified `--json description,namespace,path,repo,skillName,stars` array,
 /// normalizes to SkillSearchResult, and surfaces subprocess failures.
 /// Offline via the stub command runner (never shells out in unit tests).

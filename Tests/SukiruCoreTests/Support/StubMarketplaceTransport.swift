@@ -4,8 +4,8 @@ import Foundation
 
 /// Offline marketplace test transport: answers URL fetches from a fixed
 /// table keyed by absolute URL string, throwing for anything else. The
-/// Search milestone's network surface stays testable without the network
-/// (the seam-A/B offline-determinism contract).
+/// search network surface stays testable without the network (tests stay
+/// offline and deterministic).
 struct StubMarketplaceTransport: MarketplaceTransport {
     let responses: [String: Result<Data, MarketplaceError>]
 

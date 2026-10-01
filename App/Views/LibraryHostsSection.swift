@@ -1,7 +1,7 @@
 import SukiruCore
 import SwiftUI
 
-/// The host-presence section of the Library detail pane (VAL-HEALTH-009/010),
+/// The host-presence section of the Library detail pane,
 /// carrying `sukiru.library.detail.hosts` on its header and
 /// `sukiru.library.detail.host.<hostID>` on each row.
 struct LibraryHostsSection: View {

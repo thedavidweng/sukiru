@@ -1,7 +1,7 @@
 import Foundation
 
 /// A cross-process, mkdir-based mutual exclusion lock for batch execution
-/// (VAL-REPAIR-027: two batches never execute concurrently, across app and
+/// (two batches never execute concurrently, across app and
 /// CLI instances alike). The lock is a directory carrying a `pid` file; a
 /// lock whose holder process no longer exists is stale and broken.
 final class ExecutionLock: Sendable {

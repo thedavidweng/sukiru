@@ -4,7 +4,7 @@ import Foundation
 ///
 /// Lock files are decoded into this tree instead of a fixed `Codable` struct
 /// so that unknown keys — entry-level and top-level — survive a read and are
-/// surfaced rather than dropped (architecture §4.1, port-reference §6: the
+/// surfaced rather than dropped (the
 /// archive's `extra` flatten maps are load-bearing). Key order is NOT
 /// preserved; Sukiru never writes locks, so order is not load-bearing.
 public indirect enum JSONValue: Equatable, Sendable {

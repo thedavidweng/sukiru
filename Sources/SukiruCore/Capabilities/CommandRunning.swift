@@ -17,7 +17,7 @@ public struct ProcessOutcome: Equatable, Sendable {
 ///
 /// Injectable so capability detection is testable with stub outcomes and so
 /// validation can point the CLI at PATH shims. ONLY the capabilities surface
-/// uses this seam — `ScanEngine` never spawns subprocesses (architecture D2).
+/// uses this seam — `ScanEngine` never spawns subprocesses.
 public protocol CommandRunning: Sendable {
     /// Runs `executable` with `arguments`, returning nil when the executable
     /// cannot be located on PATH or spawned. A non-zero exit code is still a
@@ -64,7 +64,7 @@ private final class PipeDrain: @unchecked Sendable {
 /// `CI=1 SKILLS_TELEMETRY=0`, and `HOME` is the Sukiru-resolved home (i.e.
 /// `SUKIRU_HOME` when overridden) so probes stay hermetic under validation.
 /// Probe outputs are tiny (`--version`, `--help`), far below the 65 536-byte
-/// pipe-truncation cliff that forces seam-B CLI output into files.
+/// pipe-truncation cliff that forces batch CLI output into files.
 public struct SystemCommandRunner: CommandRunning {
     private let environment: SukiruEnvironment
     private let timeout: TimeInterval
