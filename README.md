@@ -118,4 +118,5 @@ scripts. It is reference-only; the Sukiru rebuild does not resurrect it.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Copyright © 2026 David Weng. Released under the Apache License 2.0. See
+[LICENSE](LICENSE).
