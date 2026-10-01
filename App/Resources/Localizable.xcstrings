@@ -4207,6 +4207,23 @@
         }
       }
     },
+    "node.installWithManager %@" : {
+      "comment" : "Settings > Installers: Node.js is missing but a version manager (mise, fnm, nvm, Volta…) is installed; the install command follows.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You use %@. Install Node.js with it, then click Check Again."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测到你在使用 %@。请用它安装 Node.js，然后点击“重新检查”。"
+          }
+        }
+      }
+    },
     "npx skills (Vercel)" : {
       "shouldTranslate" : false
     },

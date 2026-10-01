@@ -48,6 +48,8 @@ final class AppState: ObservableObject {
     @Published var installerInFlight: InstallerTool?
     /// The tail of a failed Homebrew run, per tool, shown under its row.
     @Published var installerFailures: [InstallerTool: String] = [:]
+    /// Node.js version managers found on this Mac, in display priority.
+    @Published var nodeManagers: [NodeVersionManager] = []
     /// The skills CLI's latest registry release, once the update check
     /// answers; nil when unknown (offline, or the CLI is not downloaded).
     @Published var skillsLatestVersion: String?
@@ -256,6 +258,7 @@ final class AppState: ObservableObject {
     func detectCapabilities() {
         let cache = capabilityCache
         Task.detached(priority: .utility) { [weak self] in
+            await self?.adoptUserToolPath()
             let report = cache.current()
             await MainActor.run { self?.applyCapabilities(report) }
         }
@@ -277,6 +280,7 @@ final class AppState: ObservableObject {
         capabilityCheckRunning = true
         let cache = capabilityCache
         Task.detached(priority: .userInitiated) { [weak self] in
+            await self?.adoptUserToolPath()
             let report = cache.refresh()
             await MainActor.run {
                 self?.applyCapabilities(report)

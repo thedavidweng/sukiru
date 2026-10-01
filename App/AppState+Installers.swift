@@ -64,6 +64,26 @@ extension AppState {
         setenv("PATH", entries.joined(separator: ":"), 1)
     }
 
+    /// Finds CLIs the way the user's terminal does: the login shell's PATH
+    /// first, then the version managers' own directories for shells that
+    /// fail or time out. Runs off the main actor; only the PATH swap and the
+    /// published managers land on it. Fixture sessions are left untouched.
+    nonisolated func adoptUserToolPath() async {
+        let environment = ProcessInfo.processInfo.environment
+        guard environment["SUKIRU_HOME"] == nil else { return }
+        let entries = { (path: String?) in (path ?? "").split(separator: ":").map(String.init) }
+        let toolchain = NodeToolchain(home: NSHomeDirectory())
+        let path = NodeToolchain.searchPath([
+            entries(LoginShell.path()), entries(environment["PATH"]),
+            toolchain.managerBinDirectories()
+        ])
+        let managers = toolchain.installedManagers(searchPath: path)
+        await MainActor.run {
+            setenv("PATH", path, 1)
+            self.nodeManagers = managers
+        }
+    }
+
     /// Where `tool` resolves on PATH, or nil when it is not installed.
     func installedPath(of tool: InstallerTool) -> String? {
         let path = ProcessInfo.processInfo.environment["PATH"] ?? ""

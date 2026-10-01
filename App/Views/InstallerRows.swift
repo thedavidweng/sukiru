@@ -132,6 +132,9 @@ struct InstallerRow: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
+                if let manager = versionManager {
+                    managerHint(manager)
+                }
                 if let failure = state.installerFailures[tool] {
                     Text(verbatim: failure)
                         .font(.caption.monospaced())
@@ -146,6 +149,27 @@ struct InstallerRow: View {
         .padding(.vertical, 2)
     }
 
+    /// A missing Node.js on a Mac with a version manager belongs to that
+    /// manager; a Homebrew install would shadow or duplicate it.
+    private var versionManager: NodeVersionManager? {
+        guard tool == .node, case .missing = status else { return nil }
+        return state.nodeManagers.first
+    }
+
+    @ViewBuilder private func managerHint(_ manager: NodeVersionManager) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("node.installWithManager \(manager.displayName)")
+            if let command = manager.installCommand {
+                Text(verbatim: command)
+                    .font(.caption.monospaced())
+                    .textSelection(.enabled)
+            }
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
     @ViewBuilder private var action: some View {
         if state.installerInFlight == tool {
             HStack(spacing: 6) {
@@ -157,6 +181,8 @@ struct InstallerRow: View {
         } else if let status {
             let busy = state.installerInFlight != nil
             switch status {
+            case .missing where versionManager != nil:
+                EmptyView()
             case .missing:
                 let title: LocalizedStringKey = AppState.brewURL == nil ? "Download…" : "Install"
                 Button(title) {

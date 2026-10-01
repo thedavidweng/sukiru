@@ -70,7 +70,7 @@ Sukiru 同时读取两份账本和磁盘上的实际情况，判断每个技能�
   - [Node.js](https://nodejs.org/en/download)，用于 `npx skills`。
   - [GitHub CLI](https://cli.github.com) 2.90.0 或更高版本，用于 `gh skill`。
 
-Sukiru 会在启动时检测这两个工具，缺少哪个工具，就只停用依赖它的操作。它从不自行下载或更新 `skills` CLI：如果本机还没有该 CLI，或者有新版本可用，「设置 › 安装器」会给出提示，并提供「下载」或「更新」按钮，由你决定。
+Sukiru 会在启动时检测这两个工具，缺少哪个工具，就只停用依赖它的操作。它和终端一样通过登录 shell 的 PATH 查找工具，所以无论 Node.js 来自 Homebrew 还是版本管理器（mise、fnm、nvm、Volta、asdf、nodenv），都无需额外设置。如果你在用版本管理器但还没装 Node.js，「设置 › 安装器」会提示你用它安装，而不是推荐 Homebrew。它从不自行下载或更新 `skills` CLI：如果本机还没有该 CLI，或者有新版本可用，「设置 › 安装器」会给出提示，并提供「下载」或「更新」按钮，由你决定。
 
 ### 通过 Homebrew 安装（推荐）
 

@@ -12,6 +12,11 @@ your Mac to build its health report. Scanning happens only at launch and when
 you click Refresh; there are no background watchers, and Sukiru does not check
 for updates to itself or to your skills.
 
+To find `gh` and Node.js, Sukiru starts your login shell once per installer
+check and reads its PATH, so your shell startup files run as they do in a new
+terminal window. Sukiru sets `SUKIRU_RESOLVING_ENVIRONMENT=1` for that shell;
+your startup files can check it to skip slow work.
+
 ## When Sukiru uses the network
 
 Sukiru makes these network requests, and no others:
