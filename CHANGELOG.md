@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/thedavidweng/sukiru/compare/v1.0.0...v1.1.0) (2026-10-01)
+
+
+### ✨ Features
+
+* **health:** flag and remove leftover folders of uninstalled agents ([bbf8591](https://github.com/thedavidweng/sukiru/commit/bbf8591c4cb6b6dc6a304601e51d806d40d65b34))
+* **health:** flag locked skills missing their shared copy ([93bcc02](https://github.com/thedavidweng/sukiru/commit/93bcc029fe6bfdbb7291f6be8a41cb522cc6ebe9))
+
+
+### 🐛 Bug Fixes
+
+* **app:** keep surface headers at the top and show full problem explanations ([c01d397](https://github.com/thedavidweng/sukiru/commit/c01d397f46afc57236afc4a0977e013772b3288d))
+* **health:** filter findings by scope instead of host folder ([909bd46](https://github.com/thedavidweng/sukiru/commit/909bd46f30c6190d9dfa6576da4d79a2ba0dacc1))
+
 ## [1.0.0](https://github.com/thedavidweng/sukiru/compare/v1.0.0...v1.0.0) (2026-10-01)
 
 
