@@ -20,45 +20,61 @@ struct LibraryHostsSection: View {
 
     var body: some View {
         let entries = hostEntries()
-        VStack(alignment: .leading, spacing: 12) {
-            TokenSectionHeader(
-                token: "sukiru.library.detail.hosts", title: "Hosts",
-                count: entries.isEmpty ? nil : entries.count
-            )
-            .font(.headline)
+        let installed = entries.filter(\.installed)
+        let leftovers = entries.filter { !$0.installed }
+        Section {
             if skill.placements.contains(where: \.internal) {
                 Text("Internal skill — hidden from host-facing listings.")
-                    .font(.callout)
                     .foregroundStyle(.secondary)
             }
             if entries.isEmpty {
                 Text("No host sees this skill.")
-                    .font(.callout)
                     .foregroundStyle(.secondary)
-            } else {
-                ForEach(entries, id: \.workspaceID) { entry in
-                    row(entry)
+            }
+            if !installed.isEmpty {
+                grid(installed)
+            }
+            // Leftover folders are spray residue, not installs; folding them
+            // away keeps the agents that really read the skill in front.
+            if !leftovers.isEmpty {
+                DisclosureGroup {
+                    grid(leftovers)
+                } label: {
+                    Text("Leftover (spray residue — not an install)")
+                        .foregroundStyle(.secondary)
+                        .badge(leftovers.count)
                 }
             }
+        } header: {
+            TokenSectionHeader(
+                token: "sukiru.library.detail.hosts", title: "Hosts",
+                count: installed.isEmpty ? nil : installed.count
+            )
         }
     }
 
-    private func row(_ entry: HostEntry) -> some View {
-        HStack(spacing: 10) {
-            AgentLogo(hostID: entry.hostID)
+    private func grid(_ entries: [HostEntry]) -> some View {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 150), spacing: 12, alignment: .leading)],
+            alignment: .leading, spacing: 10
+        ) {
+            ForEach(entries, id: \.workspaceID) { entry in
+                cell(entry)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func cell(_ entry: HostEntry) -> some View {
+        HStack(spacing: 8) {
+            Color.clear
+                .frame(width: 16, height: 16)
+                .overlay { AgentLogo(hostID: entry.hostID, size: 16) }
             HStack(spacing: 0) {
                 AXToken(token: "sukiru.library.detail.host.\(entry.hostID)")
                 Text(entry.displayName)
-            }
-            Spacer(minLength: 12)
-            if entry.installed {
-                Text("Installed")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("Leftover (spray residue — not an install)")
-                    .font(.callout)
-                    .foregroundStyle(.orange)
+                    .lineLimit(1)
+                    .foregroundStyle(entry.installed ? .primary : .secondary)
             }
         }
         .accessibilityElement(children: .contain)

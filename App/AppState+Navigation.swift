@@ -15,4 +15,9 @@ extension AppState {
         case user
         case project(String)
     }
+
+    var isProjectScopeSelected: Bool {
+        if case .project = libraryScope { return true }
+        return false
+    }
 }

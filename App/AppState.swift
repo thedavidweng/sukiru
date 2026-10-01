@@ -38,13 +38,16 @@ final class AppState: ObservableObject {
     @Published var skillDescriptions: [String: String] = [:]
     /// nil while the (async, background) capability probes are in flight.
     @Published private(set) var capabilities: CapabilityReport?
-    /// Runtime project-roots list (D20). Seeded from `SUKIRU_ROOTS`; add and
-    /// remove in Settings, then Refresh updates every surface.
+    /// Runtime project-roots list (D20). `SUKIRU_ROOTS` wins when set (the
+    /// CLI-identical fixture path); otherwise the list the user built in
+    /// Settings is restored from user defaults.
     @Published private(set) var projectRoots: [String]
-    /// Selected row in the Settings project-roots list, driving the
-    /// keyboard remove command (⌘⌫) — the per-row Remove buttons are not
-    /// Tab stops with Full Keyboard Access off.
-    @Published var selectedProjectRoot: String?
+    /// True while a user-requested capability re-probe runs.
+    @Published var capabilityCheckRunning = false
+    /// The installer CLI currently being installed or updated via Homebrew.
+    @Published var installerInFlight: InstallerTool?
+    /// The tail of a failed Homebrew run, per tool, shown under its row.
+    @Published var installerFailures: [InstallerTool: String] = [:]
     /// Selected skill in Library (identity via `Self.skillID`), survives surface switches.
     @Published var selectedSkillID: String?
     /// Expanded finding rows in Health, surviving surface switches.
@@ -139,25 +142,18 @@ final class AppState: ObservableObject {
     /// `projectRoots`.
     let environment: SukiruEnvironment
     private let capabilityCache: CapabilityCache
+    static let projectRootsDefaultsKey = "projectRoots"
 
     init() {
+        Self.includeHomebrewInPath()
         let environment = SukiruEnvironment(reader: ProcessEnvironmentReader())
         self.environment = environment
-        self.projectRoots = environment.projectRoots
+        self.projectRoots =
+            environment.projectRoots.isEmpty
+            ? UserDefaults.standard.stringArray(forKey: Self.projectRootsDefaultsKey) ?? []
+            : environment.projectRoots
         self.capabilityCache = CapabilityCache(
             detector: CapabilityDetector(environment: environment))
-    }
-
-    /// Stable identity for a skill row: scope + name + first placement path
-    /// (a name can legitimately appear once per scope and per project root).
-    nonisolated static func skillID(_ skill: Skill) -> String {
-        let anchor = skill.placements.first?.path ?? "-"
-        return "\(skill.scope.rawValue)|\(skill.name)|\(anchor)"
-    }
-
-    /// Stable identity for a finding row within one report.
-    nonisolated static func findingID(_ finding: Finding, index: Int) -> String {
-        "\(finding.ruleID)|\(finding.workspaceID)|\(finding.skillName ?? "-")|\(index)"
     }
 
     /// Kicks off the launch sequence: fatal-environment pre-check (D4, cheap
@@ -259,23 +255,34 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Re-probes both CLIs, bypassing the launch-time cache.
+    func recheckCapabilities() {
+        guard !capabilityCheckRunning else { return }
+        capabilityCheckRunning = true
+        let cache = capabilityCache
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let report = cache.refresh()
+            await MainActor.run {
+                self?.capabilities = report
+                self?.capabilityCheckRunning = false
+            }
+        }
+    }
+
     /// Adds a project root (D20) and rescans so every surface updates.
     func addProjectRoot(_ path: String) {
         guard !path.isEmpty, !projectRoots.contains(path) else { return }
         projectRoots.append(path)
         projectRoots.sort()
+        saveProjectRoots()
         rescan()
     }
 
-    /// Presents a folder picker and adds the chosen project root (D20).
-    func addProjectRootViaPanel() {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.allowsMultipleSelection = false
-        panel.prompt = String(localized: "Add")
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        addProjectRoot(url.path)
+    /// An explicit `SUKIRU_ROOTS` session is a fixture or CLI-parity run, so
+    /// its edits never overwrite the user's saved folders.
+    private func saveProjectRoots() {
+        guard environment.projectRoots.isEmpty else { return }
+        UserDefaults.standard.set(projectRoots, forKey: Self.projectRootsDefaultsKey)
     }
 
     /// Removes a project root (D20) and rescans.
@@ -285,9 +292,7 @@ final class AppState: ObservableObject {
             libraryScope = .all
             selectedSkillID = nil
         }
-        if selectedProjectRoot == path {
-            selectedProjectRoot = nil
-        }
+        saveProjectRoots()
         rescan()
     }
 

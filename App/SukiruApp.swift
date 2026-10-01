@@ -16,6 +16,11 @@ struct SukiruApp: App {
         }
         .windowResizability(.contentMinSize)
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About Sukiru") {
+                    NSApp.orderFrontStandardAboutPanel(options: [.credits: Self.aboutCredits])
+                }
+            }
             SidebarCommands()
             // Sidebar switching shortcuts (VAL-CROSS-003). Visible in the View
             // menu, so the shortcuts are discoverable in-app.
@@ -81,21 +86,18 @@ struct SukiruApp: App {
                 .keyboardShortcut(.leftArrow, modifiers: [.command, .option])
                 .disabled(!state.canCycleWorkspaceFilter)
                 Divider()
-                // Project-root management without a mouse: the Settings
-                // Add/Remove buttons are not Tab stops either. Add opens the
-                // folder picker (⌘⇧A); Remove acts on the Settings list
-                // selection (⌘⌫).
+                // Project-root management from the menu bar. Remove has no
+                // ⌘⌫ shortcut: it would beat the search field's own ⌘⌫.
                 Button("Add Project Root…") {
                     state.addProjectRootViaPanel()
                 }
                 .keyboardShortcut("a", modifiers: [.command, .shift])
                 Button("Remove Selected Project Root") {
-                    if let root = state.selectedProjectRoot {
+                    if case .project(let root) = state.libraryScope {
                         state.removeProjectRoot(root)
                     }
                 }
-                .keyboardShortcut(.delete, modifiers: .command)
-                .disabled(state.selectedProjectRoot == nil)
+                .disabled(!state.isProjectScopeSelected)
                 Divider()
                 Button("Refresh") {
                     state.rescan()
@@ -183,6 +185,20 @@ struct SukiruApp: App {
         }
         .keyboardShortcut(key, modifiers: [.command, .option])
         .disabled(!state.repairActionAvailable(action))
+    }
+
+    /// The standard About panel takes name, icon, version, and copyright from
+    /// Info.plist; the credits add only the project homepage.
+    private static var aboutCredits: NSAttributedString {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        return NSAttributedString(
+            string: "github.com/thedavidweng/sukiru",
+            attributes: [
+                .link: "https://github.com/thedavidweng/sukiru",
+                .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
+                .paragraphStyle: paragraph
+            ])
     }
 
     private func sidebarCommand(

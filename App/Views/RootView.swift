@@ -15,58 +15,28 @@ struct RootView: View {
         } content: {
             content
                 .navigationSplitViewColumnWidth(min: 380, ideal: 460)
+                .toolbar(content: refreshToolbar)
         } detail: {
             detail
         }
-        .toolbar(content: toolbar)
     }
 
-    /// The window toolbar: the global Refresh action (Finder-style; the
-    /// no-watchers model means external changes appear only after it) and
-    /// the Library-contextual Quick Look. On macOS 26+ the two groups are
-    /// separated by a fixed `ToolbarSpacer`, which the system renders as a
-    /// Liquid Glass divider between the grouped buttons (the same
-    /// availability-gated pattern as any standard SwiftUI app).
+    /// Finder-style Refresh, shared by every surface: the no-watchers model
+    /// means external changes appear only after it.
     @ToolbarContentBuilder
-    private func toolbar() -> some ToolbarContent {
-        if #available(macOS 26.0, *) {
-            ToolbarItemGroup {
-                refreshToolbarButton
+    private func refreshToolbar() -> some ToolbarContent {
+        ToolbarItem {
+            Button {
+                state.rescan()
+            } label: {
+                Label("Refresh", systemImage: "arrow.clockwise")
             }
-            ToolbarSpacer(.fixed)
-            ToolbarItem(placement: .automatic) {
-                quickLookToolbarButton
-            }
-        } else {
-            ToolbarItemGroup {
-                refreshToolbarButton
-                quickLookToolbarButton
-            }
+            .axButtonToken("sukiru.toolbar.refresh", disabled: state.healthCheckRunning)
+            .disabled(state.healthCheckRunning)
+            .help(
+                "Re-reads the library from disk (⌘R). External changes appear only after Refresh."
+            )
         }
-    }
-
-    private var refreshToolbarButton: some View {
-        Button {
-            state.rescan()
-        } label: {
-            Label("Refresh", systemImage: "arrow.clockwise")
-        }
-        .axButtonToken("sukiru.toolbar.refresh", disabled: state.healthCheckRunning)
-        .disabled(state.healthCheckRunning)
-        .help("Re-reads the library from disk (⌘R). External changes appear only after Refresh.")
-    }
-
-    private var quickLookToolbarButton: some View {
-        Button {
-            state.quickLookSelectedSkill()
-        } label: {
-            Label("Quick Look", systemImage: "eye")
-        }
-        .axButtonToken(
-            "sukiru.toolbar.quicklook", disabled: !state.canQuickLookSelectedSkill()
-        )
-        .disabled(!state.canQuickLookSelectedSkill())
-        .help("Quick Look the selected skill's SKILL.md (⌘Y).")
     }
 
     @ViewBuilder
@@ -76,12 +46,16 @@ struct RootView: View {
             LibraryView()
         case .health:
             HealthView()
+                .navigationTitle("Health")
         case .pending:
             PendingChangesView()
+                .navigationTitle("Pending Changes")
         case .snapshots:
             SnapshotsView()
+                .navigationTitle("Snapshots")
         case .search:
             SearchView()
+                .navigationTitle("Search")
         }
     }
 

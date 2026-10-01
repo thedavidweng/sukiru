@@ -1,3 +1,4 @@
+import SukiruCore
 import SwiftUI
 
 /// The system sidebar presents library scopes like folders, with the other
@@ -42,29 +43,32 @@ struct SidebarView: View {
     }
 
     var body: some View {
+        let counts = SkillCounts(state: state)
         List(selection: selection) {
-            Section("Workspaces") {
-                row("Library", surface: .library, icon: "books.vertical")
+            Section("Library") {
+                row("All Skills", surface: .library, icon: "square.stack")
+                    .badge(counts.all)
                     .tag(Destination.surface(.library))
                 HStack(spacing: 0) {
                     AXToken(token: "sukiru.sidebar.userLibrary")
-                    Label("User Library", systemImage: "person.crop.square")
+                    Label("User Library", systemImage: "person.crop.circle")
                 }
+                .badge(counts.user)
                 .help("Show user-scope skills")
                 .tag(Destination.userLibrary)
-                ForEach(state.projectRoots.sorted(), id: \.self) { root in
-                    HStack(spacing: 0) {
-                        AXToken(token: "sukiru.sidebar.project.\(AXTokens.path(root))")
-                        Label(URL(fileURLWithPath: root).lastPathComponent, systemImage: "folder")
+            }
+            if !state.projectRoots.isEmpty {
+                Section("Projects") {
+                    ForEach(state.projectRoots.sorted(), id: \.self) { root in
+                        projectRow(root)
+                            .badge(counts.projects[root, default: 0])
+                            .tag(Destination.project(root))
                     }
-                    .lineLimit(1)
-                    .help(root)
-                    .tag(Destination.project(root))
                 }
             }
             Section("Tools") {
                 row("Health", surface: .health, icon: "stethoscope")
-                    .badge(state.report?.findings.count ?? 0)
+                    .badge(state.attentionFindingCount)
                     .tag(Destination.surface(.health))
                 row("Pending Changes", surface: .pending, icon: "list.bullet.rectangle")
                     .badge(state.pendingBatch?.commands.count ?? 0)
@@ -76,6 +80,18 @@ struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Button {
+                state.addProjectRootViaPanel()
+            } label: {
+                Label("Add Project…", systemImage: "plus.circle")
+            }
+            .buttonStyle(.borderless)
+            .help("Add a project folder whose skills Sukiru should read")
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+        }
     }
 
     private func row(
@@ -84,6 +100,45 @@ struct SidebarView: View {
         HStack(spacing: 0) {
             AXToken(token: "sukiru.sidebar.\(surface.rawValue)")
             Label(title, systemImage: icon)
+        }
+    }
+
+    private func projectRow(_ root: String) -> some View {
+        HStack(spacing: 0) {
+            AXToken(token: "sukiru.sidebar.project.\(AXTokens.path(root))")
+            Label(URL(fileURLWithPath: root).lastPathComponent, systemImage: "folder")
+        }
+        .lineLimit(1)
+        .help(root)
+        .contextMenu {
+            Button("Show in Finder") {
+                state.revealInFinder([root])
+            }
+            Divider()
+            Button("Remove Project", role: .destructive) {
+                state.removeProjectRoot(root)
+            }
+        }
+    }
+}
+
+/// Skill totals per sidebar scope, counted the same way the Library list
+/// groups them so a badge always matches the rows it leads to.
+private struct SkillCounts {
+    var all = 0
+    var user = 0
+    var projects: [String: Int] = [:]
+
+    @MainActor
+    init(state: AppState) {
+        for skill in state.report?.skills ?? [] {
+            if skill.scope == .user {
+                user += 1
+                all += 1
+            } else if skill.scope == .project, let root = state.projectRoot(of: skill) {
+                projects[root, default: 0] += 1
+                all += 1
+            }
         }
     }
 }

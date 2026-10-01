@@ -52,8 +52,10 @@ struct PendingChangesView: View {
 
     private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
-            header
-            Divider()
+            if state.batchMutationInFlight {
+                progressHeader
+                Divider()
+            }
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     PendingResultBanners()
@@ -68,25 +70,21 @@ struct PendingChangesView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+        .overlay(alignment: .topLeading) {
+            AXToken(token: "sukiru.pending.title")
+        }
     }
 
-    private var header: some View {
-        HStack(spacing: 12) {
-            AXToken(token: "sukiru.pending.title")
-            Text("Pending Changes")
-                .font(.headline)
-            if state.batchMutationInFlight {
-                HStack(spacing: 6) {
-                    ProgressView()
-                        .controlSize(.small)
-                    AXToken(token: "sukiru.pending.executing")
-                    Text("Working…")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            Spacer()
+    private var progressHeader: some View {
+        HStack(spacing: 6) {
+            ProgressView()
+                .controlSize(.small)
+            AXToken(token: "sukiru.pending.executing")
+            Text("Working…")
+                .font(.callout)
+                .foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
     }

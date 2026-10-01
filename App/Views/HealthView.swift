@@ -103,8 +103,6 @@ struct HealthView: View {
     private var header: some View {
         HStack(spacing: 12) {
             AXToken(token: "sukiru.health.title")
-            Text("Health")
-                .font(.headline)
             HStack(spacing: 0) {
                 AXToken(token: "sukiru.health.summary")
                 Text(summaryText)

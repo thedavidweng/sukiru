@@ -29,6 +29,17 @@
         }
       }
     },
+    "About Sukiru": {
+      "comment": "App menu command that opens the standard About panel.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关于 Sukiru"
+          }
+        }
+      }
+    },
     "Add": {
       "comment": "Folder-picker confirm button for adding a project root.",
       "localizations": {
@@ -40,13 +51,35 @@
         }
       }
     },
-    "Add Folder…": {
-      "comment": "Settings: button that adds a project root via a folder picker.",
+    "Add a project folder whose skills Sukiru should read": {
+      "comment": "Help tag for the sidebar Add Project button.",
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加文件夹…"
+            "value": "添加一个项目文件夹，让 Sukiru 读取其中的技能"
+          }
+        }
+      }
+    },
+    "Add Project…": {
+      "comment": "Sidebar button that opens a folder picker to add a project root.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加项目…"
+          }
+        }
+      }
+    },
+    "All Skills": {
+      "comment": "Sidebar row and Library filter option: every skill in every scope.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部技能"
           }
         }
       }
@@ -62,22 +95,35 @@
         }
       }
     },
-    "Capabilities": {
+    "Any Installer": {
+      "comment": "Library filter option: do not filter by installer.",
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "能力"
+            "value": "任意安装器"
           }
         }
       }
     },
-    "Capability probes match `sukiru-cli capabilities` for this environment.": {
+    "Available": {
+      "comment": "Settings > Installers: accessibility label for a ready CLI.",
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "能力探测结果与该环境下的 `sukiru-cli capabilities` 一致。"
+            "value": "可用"
+          }
+        }
+      }
+    },
+    "Check Again": {
+      "comment": "Settings > Installers: re-run the CLI capability probes.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新检查"
           }
         }
       }
@@ -104,6 +150,28 @@
         }
       }
     },
+    "Clear Filters": {
+      "comment": "Button that resets the Library filters.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清除筛选条件"
+          }
+        }
+      }
+    },
+    "Command-Line Tools": {
+      "comment": "Settings > Installers: section header.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "命令行工具"
+          }
+        }
+      }
+    },
     "Double-booked": {
       "comment": "Library ownership badge: both installers claim the skill.",
       "localizations": {
@@ -115,13 +183,13 @@
         }
       }
     },
-    "Environment": {
-      "comment": "Settings section title: environment paths.",
+    "Download…": {
+      "comment": "Settings > Installers: opens the vendor download page.",
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "环境"
+            "value": "下载…"
           }
         }
       }
@@ -144,6 +212,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "每个命令批次运行前都会捕获快照；历史记录将显示于此。"
+          }
+        }
+      }
+    },
+    "Filter skills by status or installer": {
+      "comment": "Help tag for the Library filter menu.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按状态或安装器筛选技能"
           }
         }
       }
@@ -172,6 +251,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "GitHub"
+          }
+        }
+      }
+    },
+    "GitHub CLI": {
+      "comment": "Settings > Installers: gh row title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub CLI"
           }
         }
       }
@@ -220,13 +310,13 @@
         }
       }
     },
-    "Installed": {
-      "comment": "Library detail host row: the host genuinely installed (sees) the skill.",
+    "Install": {
+      "comment": "Settings > Installers: install the CLI with Homebrew.",
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已安装"
+            "value": "安装"
           }
         }
       }
@@ -319,6 +409,94 @@
         }
       }
     },
+    "Installers": {
+      "comment": "Settings tab: status of the official installer CLIs (gh, npx skills).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装器"
+          }
+        }
+      }
+    },
+    "More actions for this project": {
+      "comment": "Settings > Projects: tooltip for the row's actions menu.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此项目的更多操作"
+          }
+        }
+      }
+    },
+    "Needs Attention": {
+      "comment": "Library filter option: only skills with action or warning findings.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要关注"
+          }
+        }
+      }
+    },
+    "No Matching Skills": {
+      "comment": "Library empty state when the active filters hide every skill.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有匹配的技能"
+          }
+        }
+      }
+    },
+    "No projects yet. Add a folder to include its project-scope skills.": {
+      "comment": "Settings > Projects: empty state.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没有项目。添加文件夹以纳入其中的项目级技能。"
+          }
+        }
+      }
+    },
+    "Node.js (npx skills)": {
+      "comment": "Settings > Installers: Node.js / npx skills row title.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Node.js（npx skills）"
+          }
+        }
+      }
+    },
+    "Not installed": {
+      "comment": "Settings > Installers: accessibility label for a missing CLI.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未安装"
+          }
+        }
+      }
+    },
+    "Owner": {
+      "comment": "Skill detail row: which ledger owns the skill.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "归属"
+          }
+        }
+      }
+    },
     "Pin ref (optional: tag or SHA)": {
       "comment": "Install sheet: gh --pin field placeholder.",
       "localizations": {
@@ -330,6 +508,61 @@
         }
       }
     },
+    "Project Folders": {
+      "comment": "Settings > Projects: section header.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "项目文件夹"
+          }
+        }
+      }
+    },
+    "Projects": {
+      "comment": "Sidebar section listing project roots.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "项目"
+          }
+        }
+      }
+    },
+    "Reinstall": {
+      "comment": "Settings > Installers: reinstall the CLI with Homebrew.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新安装"
+          }
+        }
+      }
+    },
+    "Remove Project": {
+      "comment": "Sidebar context-menu command that removes a project root.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移除项目"
+          }
+        }
+      }
+    },
+    "Review the evidence and plan a repair in Health (⌘⇧F)": {
+      "comment": "Help tag for the Show in Health button.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在健康中查看证据并规划修复（⌘⇧F）"
+          }
+        }
+      }
+    },
     "Run Search": {
       "comment": "Search menu: keyboard command (⌘K).",
       "localizations": {
@@ -337,6 +570,105 @@
           "stringUnit": {
             "state": "translated",
             "value": "运行搜索"
+          }
+        }
+      }
+    },
+    "Scope": {
+      "comment": "Skill detail row: user library or project root.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "范围"
+          }
+        }
+      }
+    },
+    "Show": {
+      "comment": "Library filter menu section title (status).",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示"
+          }
+        }
+      }
+    },
+    "Show in Finder": {
+      "comment": "Reveal a skill folder or project root in Finder.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在访达中显示"
+          }
+        }
+      }
+    },
+    "Show in Health": {
+      "comment": "Skill detail button that opens Health focused on this skill.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在健康中显示"
+          }
+        }
+      }
+    },
+    "Show the selected skill's folder in Finder": {
+      "comment": "Help tag for the toolbar Show in Finder button.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在访达中显示所选技能的文件夹"
+          }
+        }
+      }
+    },
+    "Sukiru hands installs and repairs to these tools. Install and Update run Homebrew.": {
+      "comment": "Settings > Installers: footer with Homebrew.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sukiru 通过这些工具执行安装和修复。“安装”和“更新”会通过 Homebrew 运行。"
+          }
+        }
+      }
+    },
+    "Sukiru hands installs and repairs to these tools. Install opens the download page because Homebrew isn't installed.": {
+      "comment": "Settings > Installers: footer without Homebrew.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sukiru 通过这些工具执行安装和修复。由于未安装 Homebrew，“安装”会打开下载页面。"
+          }
+        }
+      }
+    },
+    "Sukiru reads the skills in each project's agent folders.": {
+      "comment": "Settings > Projects: footer.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sukiru 会读取每个项目的智能体文件夹中的技能。"
+          }
+        }
+      }
+    },
+    "SUKIRU_ROOTS is set, so changes here last until Sukiru quits.": {
+      "comment": "Settings > Projects: footer when the SUKIRU_ROOTS environment variable overrides saved projects.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已设置 SUKIRU_ROOTS，此处的更改仅在 Sukiru 退出前有效。"
           }
         }
       }
@@ -370,6 +702,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "当前环境缺少所需的 CLI；该安装器无法构建批次。"
+          }
+        }
+      }
+    },
+    "Update": {
+      "comment": "Settings > Installers: upgrade the CLI with Homebrew.",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更新"
           }
         }
       }
@@ -458,17 +801,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "资源库"
-          }
-        }
-      }
-    },
-    "Library root": {
-      "comment": "Settings environment field label.",
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "资源库根目录"
           }
         }
       }
@@ -572,17 +904,6 @@
         }
       }
     },
-    "No project roots. Add a folder to scan project-scope skills.": {
-      "comment": "Settings: empty project-roots list explanation.",
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "没有项目根目录。添加文件夹以扫描项目范围的技能。"
-          }
-        }
-      }
-    },
     "No skills found": {
       "comment": "Library empty state title.",
       "localizations": {
@@ -660,28 +981,6 @@
         }
       }
     },
-    "Placements": {
-      "comment": "Detail section title: where the skill is placed.",
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "放置位置"
-          }
-        }
-      }
-    },
-    "Project roots": {
-      "comment": "Settings section title for the project-roots list (D20).",
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "项目根目录"
-          }
-        }
-      }
-    },
     "Project scope": {
       "comment": "Library detail subtitle for a project-scope skill whose root is unknown.",
       "localizations": {
@@ -744,17 +1043,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "查看所选技能的发现"
-          }
-        }
-      }
-    },
-    "Remove": {
-      "comment": "Settings: removes one project root.",
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "移除"
           }
         }
       }
@@ -946,17 +1234,6 @@
         }
       }
     },
-    "These paths come from SUKIRU_HOME/SUKIRU_ROOTS, identical to the CLI. Relaunch to change them.": {
-      "comment": "Settings environment footnote.",
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "这些路径来自 SUKIRU_HOME/SUKIRU_ROOTS，与 CLI 完全一致。重新启动以更改。"
-          }
-        }
-      }
-    },
     "This library has no skill installations. Install skills with the official CLIs, or add a project root in Settings.": {
       "comment": "Library empty state explanation.",
       "localizations": {
@@ -1130,16 +1407,6 @@
         }
       }
     },
-    "gh CLI": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "gh CLI"
-          }
-        }
-      }
-    },
     "info": {
       "comment": "Finding severity tag (D3 vocabulary).",
       "localizations": {
@@ -1147,16 +1414,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "信息"
-          }
-        }
-      }
-    },
-    "npx skills": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "npx skills"
           }
         }
       }
@@ -2454,22 +2711,30 @@
       }
     },
     "%lld skills": {
-      "comment": "Library toolbar subtitle: skill count in the selected workspace.",
+      "comment": "Skill count: Library toolbar subtitle and Settings project rows.",
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld 个技能"
           }
-        }
-      }
-    },
-    "Content": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "内容"
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld skill"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld skills"
+                }
+              }
+            }
           }
         }
       }
@@ -2514,16 +2779,6 @@
         }
       }
     },
-    "Overview": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "概览"
-          }
-        }
-      }
-    },
     "SKILL.md is unavailable": {
       "localizations": {
         "zh-Hans": {
@@ -2541,16 +2796,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "显示用户范围内的技能"
-          }
-        }
-      }
-    },
-    "Skill detail": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "技能详情"
           }
         }
       }
@@ -2587,33 +2832,12 @@
         }
       }
     },
-    "Workspaces": {
-      "comment": "Sidebar section for the all-skills, user, and project library scopes.",
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "工作区"
-          }
-        }
-      }
-    },
     "Filter skills": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "筛选技能"
-          }
-        }
-      }
-    },
-    "All skills": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "全部技能"
           }
         }
       }
@@ -2628,47 +2852,7 @@
         }
       }
     },
-    "No skills need attention": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "没有需要关注的技能"
-          }
-        }
-      }
-    },
-    "Review the evidence and installer record before planning a repair.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "规划修复前，先检查证据和安装器记录。"
-          }
-        }
-      }
-    },
     "Inspect findings": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "查看发现"
-          }
-        }
-      }
-    },
-    "Preview": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "预览"
-          }
-        }
-      }
-    },
-    "View findings": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {

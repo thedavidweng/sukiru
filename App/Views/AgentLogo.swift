@@ -36,25 +36,24 @@ struct AgentLogo: View {
 
 struct AgentIconStrip: View {
     let hosts: [LibraryHostsSection.HostEntry]
+    private let limit = 3
 
     private var illustratedHosts: [LibraryHostsSection.HostEntry] {
         hosts.filter { AgentLogo.assetName(for: $0.hostID) != nil }
     }
 
     var body: some View {
-        HStack(spacing: 4) {
-            if !illustratedHosts.isEmpty {
-                ForEach(illustratedHosts.prefix(2), id: \.workspaceID) { host in
-                    AgentLogo(hostID: host.hostID)
-                }
-                if hosts.count > min(illustratedHosts.count, 2) {
-                    Text("+\(hosts.count - min(illustratedHosts.count, 2))")
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
+        let shown = illustratedHosts.prefix(limit)
+        HStack(spacing: 5) {
+            ForEach(shown, id: \.workspaceID) { host in
+                AgentLogo(hostID: host.hostID, size: 13)
+            }
+            if hosts.count > shown.count {
+                Text(verbatim: "+\(hosts.count - shown.count)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
             }
         }
-        .frame(width: 74, alignment: .trailing)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(hosts.map(\.displayName).joined(separator: ", "))
         .help(hosts.map(\.displayName).joined(separator: ", "))

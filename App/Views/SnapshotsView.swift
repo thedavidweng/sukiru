@@ -58,8 +58,6 @@ struct SnapshotsView: View {
     private var header: some View {
         HStack(spacing: 12) {
             AXToken(token: "sukiru.snapshots.title")
-            Text("Snapshots")
-                .font(.headline)
             if state.batchMutationInFlight {
                 HStack(spacing: 6) {
                     ProgressView()
