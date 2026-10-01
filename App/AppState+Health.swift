@@ -78,9 +78,10 @@ extension AppState {
     // MARK: - Workspace filter
 
     /// Finding entries after applying the skill focus AND the workspace
-    /// filter. The workspace filter matches a finding's workspace id exactly
-    /// (per-workspace filtering; the sum of per-workspace counts equals the
-    /// total).
+    /// filter. The filter is scope-level (`user` / `project:<root>`): most
+    /// rules attribute findings to the scope, not a host workspace, so a
+    /// per-host filter would show every host as clean. The sum of the
+    /// per-scope counts equals the total.
     func visibleHealthEntries() -> [FindingEntry] {
         healthModel.visible
     }
@@ -91,12 +92,17 @@ extension AppState {
         healthModel.focused
     }
 
-    /// The workspaces the filter offers, in report order, each with its
-    /// (focus-aware) finding count so a zero-finding workspace is visible
-    /// and selectable.
+    /// The scopes the filter offers (the user scope, then each project), in
+    /// report order, each with its (focus-aware) finding count so a
+    /// zero-finding scope is visible and selectable.
     func workspaceFilterOptions() -> [(workspace: Workspace, count: Int)] {
-        let counts = healthModel.countsByWorkspace
-        return (report?.workspaces ?? []).map { ($0, counts[$0.id, default: 0]) }
+        let counts = healthModel.countsByScope
+        return scopeWorkspaces.map { ($0, counts[$0.id, default: 0]) }
+    }
+
+    /// The canonical workspace of each scope; its id is the scope group.
+    private var scopeWorkspaces: [Workspace] {
+        (report?.workspaces ?? []).filter { Self.scopeGroup(ofWorkspaceID: $0.id) == $0.id }
     }
 
     /// Visible findings grouped by problem kind, most actionable first;
@@ -118,7 +124,7 @@ extension AppState {
         let focused = healthFocus == nil ? entries : entries.filter { isFocused($0.finding) }
         let visible =
             healthWorkspaceFilter.map { filter in
-                focused.filter { $0.finding.workspaceID == filter }
+                focused.filter { Self.scopeGroup(ofWorkspaceID: $0.finding.workspaceID) == filter }
             } ?? focused
         let byKind = Dictionary(grouping: visible) { ProblemKind.of($0.finding) }
         let model = HealthModel(
@@ -128,8 +134,8 @@ extension AppState {
             groups: ProblemKind.allCases.compactMap { kind in
                 byKind[kind].map { ProblemGroup(kind: kind, entries: $0) }
             },
-            countsByWorkspace: focused.reduce(into: [:]) {
-                $0[$1.finding.workspaceID, default: 0] += 1
+            countsByScope: focused.reduce(into: [:]) {
+                $0[Self.scopeGroup(ofWorkspaceID: $1.finding.workspaceID), default: 0] += 1
             },
             issues: computeVisibleIssues())
         derived.health = model
@@ -140,11 +146,8 @@ extension AppState {
     /// in report order — the keyboard path to the filter-bar option buttons,
     /// which are not Tab stops with Full Keyboard Access off.
     func cycleWorkspaceFilter(step: Int) {
-        guard canCycleWorkspaceFilter, let report else { return }
-        var ids: [String?] = [nil]
-        for workspace in report.workspaces {
-            ids.append(workspace.id)
-        }
+        guard canCycleWorkspaceFilter else { return }
+        let ids: [String?] = [nil] + scopeWorkspaces.map(\.id)
         let current = ids.firstIndex(of: healthWorkspaceFilter) ?? 0
         let next = (current + step + ids.count) % ids.count
         healthWorkspaceFilter = ids[next]
@@ -176,7 +179,7 @@ extension AppState {
         }
         guard let filter = healthWorkspaceFilter else { return issues }
         return issues.filter { issue in
-            attributedWorkspaceID(of: issue, in: report) == filter
+            Self.scopeGroup(ofWorkspaceID: attributedWorkspaceID(of: issue, in: report)) == filter
         }
     }
 

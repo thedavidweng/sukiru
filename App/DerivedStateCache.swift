@@ -25,7 +25,7 @@ struct HealthModel {
     let focused: [AppState.FindingEntry]
     let visible: [AppState.FindingEntry]
     let groups: [AppState.ProblemGroup]
-    let countsByWorkspace: [String: Int]
+    let countsByScope: [String: Int]
     let issues: [Issue]
 }
 

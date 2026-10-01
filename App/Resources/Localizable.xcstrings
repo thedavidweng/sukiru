@@ -4162,17 +4162,6 @@
       },
       "comment" : "Install sheet note. The argument is the agent id."
     },
-    "leftover" : {
-      "comment" : "Marks a leftover (CLI spray residue) workspace in the Health filter.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "残留"
-          }
-        }
-      }
-    },
     "library.agentManaged %@" : {
       "comment" : "Library provenance for an agent-managed skill; the argument is the agent id.",
       "localizations" : {

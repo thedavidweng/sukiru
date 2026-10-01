@@ -1,9 +1,9 @@
 import SukiruCore
 import SwiftUI
 
-/// The Health workspace filter bar: one option per
-/// report workspace (plus "All"), each showing its finding count so a
-/// zero-finding workspace is visible and selectable. The bar carries the
+/// The Health workspace filter bar: one option per scope (user scope and
+/// each project, plus "All"), each showing its finding count so a
+/// zero-finding scope is visible and selectable. The bar carries the
 /// `sukiru.health.filter.workspace` token; each option button carries
 /// `sukiru.health.filter.workspace.<sanitized-id>`.
 struct HealthFilterBar: View {
@@ -62,20 +62,11 @@ struct HealthFilterBar: View {
         }
     }
 
-    /// Human-readable option names: the user scope, hosts by display name
-    /// (leftover spray residue marked, never presented as installed), and
-    /// project roots by directory name.
+    /// Human-readable option names: the user scope, and project roots by
+    /// directory name.
     private func title(for workspace: Workspace) -> String {
         if workspace.id == "user" {
             return String(localized: "User scope")
-        }
-        if workspace.id.hasPrefix("host:") {
-            let hostID = String(workspace.id.dropFirst("host:".count))
-            let name = HostTable.host(id: hostID)?.displayName ?? hostID
-            if workspace.installed {
-                return name
-            }
-            return "\(name) (\(String(localized: "leftover")))"
         }
         if workspace.id.hasPrefix("project:") {
             let root = String(workspace.id.dropFirst("project:".count))
