@@ -50,7 +50,10 @@ enum Subprocess {
         let start = Date()
         let reaped = DispatchSemaphore(value: 0)
         let statusBox = WaitStatusBox()
-        DispatchQueue.global().async {
+        // A dedicated thread, not a global queue: on a busy machine the
+        // width-limited global queue can delay the reap past `timeout`, so a
+        // finished child would be reported (and killed) as timed out.
+        Thread.detachNewThread {
             var status: Int32 = 0
             while waitpid(pid, &status, 0) == -1 && errno == EINTR {}
             statusBox.status = status
