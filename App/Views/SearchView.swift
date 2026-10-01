@@ -17,16 +17,21 @@ struct SearchView: View {
         VStack(alignment: .leading, spacing: 0) {
             searchBar
             Divider()
-            switch state.searchPhase {
-            case .idle:
-                idleState
-            case .searching:
-                searchingState
-            case .failed(let message):
-                failureState(message)
-            case .results:
-                resultsContent
+            Group {
+                switch state.searchPhase {
+                case .idle:
+                    idleState
+                case .searching:
+                    searchingState
+                case .failed(let message):
+                    failureState(message)
+                case .results:
+                    resultsContent
+                }
             }
+            // ContentUnavailableView only takes its intrinsic height; without
+            // this the VStack is centered and the search bar sinks.
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .sheet(isPresented: $state.showingInstallSheet) {

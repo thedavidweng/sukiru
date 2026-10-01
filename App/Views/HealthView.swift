@@ -169,7 +169,10 @@ struct HealthView: View {
         let entries = state.visibleHealthEntries()
         let issues = state.visibleIssues()
         if entries.isEmpty && issues.isEmpty {
+            // ContentUnavailableView only takes its intrinsic height; without
+            // this the VStack is centered and the header sinks.
             emptyState
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             List(selection: $state.selectedFindingID) {
                 ForEach(state.problemGroups()) { group in
@@ -260,6 +263,13 @@ private struct ProblemSection: View {
 
     var body: some View {
         Section(isExpanded: isExpanded) {
+            // A row, not part of the header: macOS clips section headers to
+            // one line, which truncated the explanation with no way to read it.
+            Text(group.kind.explanation)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .selectionDisabled()
             ForEach(rows) { row in
                 FindingRow(row: row)
                     .tag(row.entry.id)
@@ -270,32 +280,24 @@ private struct ProblemSection: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                AXToken(token: "sukiru.health.group.\(group.kind.rawValue)")
-                Label(group.kind.title, systemImage: group.kind.symbol)
-                    .font(.headline)
-                Text("\(group.entries.count)")
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-                Spacer()
-                let fixable = state.fixableEntries(group.entries)
-                if fixable.count > 1 {
-                    Button {
-                        state.fix(fixable)
-                    } label: {
-                        Text("Fix \(fixable.count)")
-                    }
-                    .controlSize(.small)
-                    .disabled(state.batchMutationInFlight)
-                    .axButtonToken("sukiru.health.group.\(group.kind.rawValue).fix")
+        HStack(spacing: 8) {
+            AXToken(token: "sukiru.health.group.\(group.kind.rawValue)")
+            Label(group.kind.title, systemImage: group.kind.symbol)
+                .font(.headline)
+            Text("\(group.entries.count)")
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+            Spacer()
+            let fixable = state.fixableEntries(group.entries)
+            if fixable.count > 1 {
+                Button {
+                    state.fix(fixable)
+                } label: {
+                    Text("Fix \(fixable.count)")
                 }
-            }
-            if isExpanded.wrappedValue {
-                Text(group.kind.explanation)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                .controlSize(.small)
+                .disabled(state.batchMutationInFlight)
+                .axButtonToken("sukiru.health.group.\(group.kind.rawValue).fix")
             }
         }
         .textCase(nil)
