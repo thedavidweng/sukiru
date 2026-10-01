@@ -72,9 +72,10 @@ public struct OwnershipResolver: Sendable {
             // Members are path-sorted, so the first placement carrying a gh
             // claim is a deterministic choice when several carry one.
             let ghPlacement = group.members.first { $0.githubProvenance != nil }
+            let managingAgent = group.managingAgent
             let ownership = Self.ownership(
                 ambiguous: group.ambiguous, vercelClaim: entry != nil,
-                githubClaim: ghPlacement != nil)
+                githubClaim: ghPlacement != nil, agentClaim: managingAgent != nil)
             let provenance = SkillProvenance(
                 vercel: entry.map {
                     VercelProvenance(entry: $0, scope: claim?.lock.scope ?? .global)
@@ -88,7 +89,8 @@ public struct OwnershipResolver: Sendable {
                     ownership: ownership,
                     ambiguous: group.ambiguous,
                     provenance: provenance,
-                    placements: group.members.map(\.placement)
+                    placements: group.members.map(\.placement),
+                    managingAgent: ownership == .agent ? managingAgent : nil
                 ))
             findings.append(
                 contentsOf: groupFindings(
@@ -98,8 +100,11 @@ public struct OwnershipResolver: Sendable {
     }
 
     /// The §6 truth table. Ambiguity voids attribution first (D1): an
-    /// ambiguous name is treated as ownerless, never guessed.
-    static func ownership(ambiguous: Bool, vercelClaim: Bool, githubClaim: Bool) -> Ownership {
+    /// ambiguous name is treated as ownerless, never guessed. An agent's own
+    /// ledger only applies when neither installer ledger claims the name.
+    static func ownership(
+        ambiguous: Bool, vercelClaim: Bool, githubClaim: Bool, agentClaim: Bool = false
+    ) -> Ownership {
         if ambiguous {
             return .ownerless
         }
@@ -111,7 +116,7 @@ public struct OwnershipResolver: Sendable {
         case (false, true):
             return .github
         case (false, false):
-            return .ownerless
+            return agentClaim ? .agent : .ownerless
         }
     }
 

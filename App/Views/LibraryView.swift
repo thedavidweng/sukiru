@@ -59,6 +59,7 @@ struct LibraryView: View {
                 Text("GitHub").tag(Ownership?.some(.github))
                 Text("Double-booked").tag(Ownership?.some(.doubleBooked))
                 Text("Ownerless").tag(Ownership?.some(.ownerless))
+                Text("Agent-managed").tag(Ownership?.some(.agent))
             }
             .pickerStyle(.inline)
         } label: {

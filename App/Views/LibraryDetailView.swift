@@ -71,6 +71,9 @@ private struct SkillDetailForm: View {
             } header: {
                 header
             }
+            if state.orphanFinding(for: skill) != nil {
+                orphanSection
+            }
             if !findings.isEmpty {
                 findingsSection(findings)
             }
@@ -117,6 +120,30 @@ private struct SkillDetailForm: View {
                 .help(root)
         } else {
             Text("Project scope")
+        }
+    }
+
+    /// No installer recorded this skill, so nothing can update it: offer to
+    /// hand it to `npx skills` from a known source, or to delete it.
+    private var orphanSection: some View {
+        Section {
+            Text("problem.orphan.explanation")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack {
+                Spacer()
+                Button("Delete…", role: .destructive) {
+                    state.deleteOrphan(skill)
+                }
+                .axButtonToken("sukiru.library.detail.orphan.delete")
+                Button("Find Source…") {
+                    state.findSource(for: skill)
+                }
+                .axButtonToken("sukiru.library.detail.orphan.findSource")
+            }
+            .disabled(state.batchMutationInFlight)
+        } header: {
+            Text("No Known Source")
         }
     }
 

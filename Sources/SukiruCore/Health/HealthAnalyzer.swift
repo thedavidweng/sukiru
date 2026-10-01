@@ -88,30 +88,13 @@ public struct HealthAnalyzer: Sendable {
     /// Duplicate classes for one name within one ownership bucket. Broken
     /// symlinks never participate (no canonical path, no content); classes
     /// are not mutually exclusive (archive parity, port-reference §4).
+    /// Agent-managed copies are the agent's own and never count as
+    /// duplicates of an installer's copy.
     private func duplicateFindings(for group: SkillGroup) -> [Finding] {
-        let members = group.members.filter { $0.placement.kind != .brokenSymlink }
-        var findings: [Finding] = []
-
-        // alias: >1 placement resolving to ONE canonical path, ≥1 via symlink.
-        var byCanonical: [String: [DiscoveredPlacement]] = [:]
-        for member in members {
-            if let canonical = member.placement.canonicalPath {
-                byCanonical[canonical, default: []].append(member)
-            }
+        let members = group.members.filter {
+            $0.placement.kind != .brokenSymlink && $0.placement.managingAgent == nil
         }
-        for canonical in byCanonical.keys.sorted() {
-            let cluster = byCanonical[canonical] ?? []
-            guard cluster.count > 1,
-                cluster.contains(where: { $0.placement.kind == .symlink })
-            else { continue }
-            var evidence = [Evidence(kind: "subtype", detail: "alias")]
-            evidence.append(Evidence(kind: "canonicalPath", detail: canonical))
-            evidence += cluster.map { Evidence(kind: "memberPath", detail: $0.placement.path) }
-            findings.append(
-                Finding(
-                    ruleID: "cross-host-duplicate", severity: .info, skillName: group.name,
-                    workspaceID: group.scopeGroup, evidence: evidence))
-        }
+        var findings = aliasFindings(for: group, members: members)
 
         // exact: >1 distinct physical directory sharing ONE content hash. A
         // nil canonical path falls back to the raw path as physical identity
@@ -149,6 +132,33 @@ public struct HealthAnalyzer: Sendable {
         return findings
     }
 
+    /// alias: >1 placement resolving to ONE canonical path, ≥1 via symlink.
+    private func aliasFindings(
+        for group: SkillGroup, members: [DiscoveredPlacement]
+    ) -> [Finding] {
+        var findings: [Finding] = []
+        var byCanonical: [String: [DiscoveredPlacement]] = [:]
+        for member in members {
+            if let canonical = member.placement.canonicalPath {
+                byCanonical[canonical, default: []].append(member)
+            }
+        }
+        for canonical in byCanonical.keys.sorted() {
+            let cluster = byCanonical[canonical] ?? []
+            guard cluster.count > 1,
+                cluster.contains(where: { $0.placement.kind == .symlink })
+            else { continue }
+            var evidence = [Evidence(kind: "subtype", detail: "alias")]
+            evidence.append(Evidence(kind: "canonicalPath", detail: canonical))
+            evidence += cluster.map { Evidence(kind: "memberPath", detail: $0.placement.path) }
+            findings.append(
+                Finding(
+                    ruleID: "cross-host-duplicate", severity: .info, skillName: group.name,
+                    workspaceID: group.scopeGroup, evidence: evidence))
+        }
+        return findings
+    }
+
     private func physicalIdentities(_ members: [DiscoveredPlacement]) -> Set<String> {
         Set(members.map { $0.placement.canonicalPath ?? $0.placement.path })
     }
@@ -166,7 +176,10 @@ public struct HealthAnalyzer: Sendable {
             })
         else { return [] }
         return group.members
-            .filter { $0.workspaceID != group.scopeGroup && $0.placement.kind == .directory }
+            .filter {
+                $0.workspaceID != group.scopeGroup && $0.placement.kind == .directory
+                    && $0.placement.managingAgent == nil
+            }
             .map { impostor in
                 var evidence = [Evidence(kind: "impostorPath", detail: impostor.placement.path)]
                 evidence.append(
@@ -266,6 +279,7 @@ public struct HealthAnalyzer: Sendable {
         guard let entry = claim?.lock.entries[group.name], entry.isManaged else { return nil }
         let hashed = group.members.filter {
             $0.placement.kind != .brokenSymlink && $0.placement.contentHash != nil
+                && $0.placement.managingAgent == nil
         }
         let distinctHashes = Set(hashed.compactMap(\.placement.contentHash)).sorted()
         guard distinctHashes.count > 1 else { return nil }
@@ -297,7 +311,8 @@ public struct HealthAnalyzer: Sendable {
         let ownership = OwnershipResolver.ownership(
             ambiguous: group.ambiguous,
             vercelClaim: false,
-            githubClaim: group.members.contains { $0.githubProvenance != nil })
+            githubClaim: group.members.contains { $0.githubProvenance != nil },
+            agentClaim: group.managingAgent != nil)
         var evidence = [Evidence(kind: "skillName", detail: group.name)]
         evidence += group.members
             .filter { $0.placement.kind != .brokenSymlink }

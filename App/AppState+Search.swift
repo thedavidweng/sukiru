@@ -60,7 +60,7 @@ extension AppState {
                     await self?.applySearchResults(results, generation: generation)
                 } catch {
                     await self?.applySearchFailure(
-                        (error as? MarketplaceError)?.message ?? String(describing: error),
+                        UserFacingError.message(for: error),
                         generation: generation)
                 }
             }
@@ -76,7 +76,7 @@ extension AppState {
                     await self?.applySearchResults(results, generation: generation)
                 } catch {
                     await self?.applySearchFailure(
-                        (error as? MarketplaceError)?.message ?? String(describing: error),
+                        UserFacingError.message(for: error),
                         generation: generation)
                 }
             }
@@ -122,20 +122,13 @@ extension AppState {
                     self.searchPreview = preview
                     self.searchPreviewLoading = false
                 }
-            } catch let error as MarketplaceError {
-                await MainActor.run {
-                    guard let self,
-                        self.selectedSearchResultID == result.id
-                    else { return }
-                    self.searchPreviewError = error.message
-                    self.searchPreviewLoading = false
-                }
             } catch {
+                let message = UserFacingError.message(for: error)
                 await MainActor.run {
                     guard let self,
                         self.selectedSearchResultID == result.id
                     else { return }
-                    self.searchPreviewError = String(describing: error)
+                    self.searchPreviewError = message
                     self.searchPreviewLoading = false
                 }
             }
@@ -185,9 +178,17 @@ extension AppState {
         }
     }
 
+    /// The Settings key for installing new Vercel skills as copies instead
+    /// of links into the shared skills folder.
+    static let installAsCopiesDefaultsKey = "installAsCopies"
+
+    var installAsCopies: Bool {
+        UserDefaults.standard.bool(forKey: Self.installAsCopiesDefaultsKey)
+    }
+
     /// Builds the install batch from the sheet's current selections and
-    /// lands it on Pending Changes for the standard review → execute →
-    /// rollback flow. Refusals (malformed source, missing agent) surface
+    /// opens the batch confirmation (confirm → execute → rollback).
+    /// Refusals (malformed source, missing agent) surface
     /// inline; capability gating is enforced here as defense in depth
     /// (the sheet's proceed control is already disabled).
     func confirmInstall() {
@@ -216,19 +217,18 @@ extension AppState {
                 installer: installInstaller,
                 target: installTarget,
                 ghAgent: installInstaller == .github ? ghInstallAgent : nil,
-                ghPinRef: installInstaller == .github ? ghPinRef : nil)
+                ghPinRef: installInstaller == .github ? ghPinRef : nil,
+                copy: installAsCopies)
             showingInstallSheet = false
             pendingBatch = batch
-            reviewedCommands = []
-            selectedCommandIndex = batch.commands.indices.first
             repairDraft = nil
             repairError = nil
             repairBlockNotice = nil
-            surface = .pending
-        } catch let error as InstallPlanError {
-            installError = error.message
+            lastExecutionRecord = nil
+            lastExecutionFailure = nil
+            showingBatchConfirm = true
         } catch {
-            installError = String(describing: error)
+            installError = UserFacingError.message(for: error)
         }
     }
 }

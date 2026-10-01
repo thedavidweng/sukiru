@@ -54,19 +54,22 @@ extension CLIExecutor {
         }
     }
 
-    /// The ownerless-cleanup exception: a flagged direct deletion, always
-    /// preflight-bounds-checked (see `preflightFileOperations`).
+    /// A flagged direct file operation (ADR-0007), always preflight-checked
+    /// for shape and bounds (see `preflightFileOperations`).
     func runFileOperation(
         _ command: BatchCommand, index: Int, recordDir: String
     ) -> CommandExecution {
         let files = createOutputFiles(index: index, recordDir: recordDir)
         let started = Date()
         do {
-            try FileManager.default.removeItem(atPath: command.argv[2])
+            guard let operation = FileOperation(argv: command.argv) else {
+                throw FileOperationError("unsupported file operation")
+            }
+            try operation.perform()
         } catch {
             let failure = CommandVerdict(
                 status: .failed, exitCode: 1, failureKind: .fileOperationFailed,
-                diagnostics: "delete-directory failed: \(error.localizedDescription)")
+                diagnostics: "\(command.argv[1]) failed: \(error.localizedDescription)")
             return finished(
                 command, index: index, files: files, started: started, verdict: failure)
         }
@@ -205,19 +208,18 @@ extension CLIExecutor {
     // MARK: - workspace boundary (VAL-REPAIR-038)
 
     /// Validates every direct-file-operation command BEFORE anything runs:
-    /// argv shape (`sukiru-fileop delete-directory <path>`) and the
-    /// workspace boundary. Violators are failed without executing.
+    /// argv shape (a known `FileOperation`) and the workspace boundary for
+    /// every path it touches. Violators are failed without executing.
     func preflightFileOperations(
         _ commands: [BatchCommand], bounds: [String]
     ) -> [Int: CommandFailureKind] {
         var violations: [Int: CommandFailureKind] = [:]
         for (index, command) in commands.enumerated() where command.owningCLI == .file {
-            let wellFormed =
-                command.argv.count == 3 && command.argv[0] == "sukiru-fileop"
-                && command.argv[1] == "delete-directory"
-            if !wellFormed {
+            guard let operation = FileOperation(argv: command.argv) else {
                 violations[index] = .fileOperationFailed
-            } else if !isInBounds(command.argv[2], bounds: bounds) {
+                continue
+            }
+            if !operation.paths.allSatisfy({ isInBounds($0, bounds: bounds) }) {
                 violations[index] = .outOfBounds
             }
         }

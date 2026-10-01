@@ -24,14 +24,10 @@ struct ArbitrationSheet: View {
             }
             .accessibilityElement(children: .contain)
             if let draft = state.repairDraft {
-                Text(
-                    String(
-                        format: String(localized: "arbitration.explainer %@"),
-                        draft.finding.skillName ?? "-")
-                )
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+                Text("arbitration.explainer \(draft.finding.skillName ?? "-")")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             keepVercelChoice
             keepGitHubChoice

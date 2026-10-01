@@ -84,6 +84,12 @@ Scripts/run-app.sh
 (`SUKIRU_HOME`, `SUKIRU_ROOTS`, …) are inherited. Do not launch a freshly
 built debug app with `open -F`.
 
+After changing UI text, run `Scripts/sync-strings.sh` (after a build). It
+syncs `App/Resources/Localizable.xcstrings` with the strings the compiler
+extracted, the way Xcode does, and fails on stale or untranslated strings.
+Pass `-AppleLanguages '(zh-Hans)'` to `Scripts/run-app.sh` to preview a
+language; users pick one in Settings › General.
+
 ### Environment
 
 - **`SUKIRU_HOME`** — replaces `$HOME` for all path resolution. Use it for

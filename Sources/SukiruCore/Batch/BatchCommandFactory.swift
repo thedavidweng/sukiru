@@ -3,9 +3,10 @@ import Foundation
 /// Constructors for every command shape a batch may contain
 /// (architecture §4.1 repair side, D10/D11/D13/D22).
 ///
-/// Only official CLI invocations are produced here — `npx skills …` (vercel
-/// ledger) and `gh skill …` (github ledger) — plus the single permitted
-/// exception: flagged direct file operations on ownerless skills.
+/// Ledger writes are only official CLI invocations — `npx skills …` (vercel
+/// ledger) and `gh skill …` (github ledger). Flagged direct file operations
+/// cover what no CLI can (ownerless payloads here; placement fixes in
+/// BatchCommandFactory+FileOps.swift).
 enum BatchCommandFactory {
     // MARK: - npx skills (vercel ledger)
 
@@ -48,7 +49,7 @@ enum BatchCommandFactory {
         agents: [String] = [],
         copy: Bool = false,
         intent: String,
-        consequence: String,
+        consequence: CommandConsequence,
         workingDirectory: String? = nil
     ) -> BatchCommand {
         var argv = ["npx", "skills", "add", source, "--skill", name]
@@ -84,7 +85,7 @@ enum BatchCommandFactory {
         finding: Finding,
         atRisk: [AtRiskSkill],
         intent: String,
-        consequence: String? = nil,
+        consequence: CommandConsequence? = nil,
         workingDirectory: String? = nil
     ) -> BatchCommand {
         var argv = ["npx", "skills", "remove", name]
@@ -148,7 +149,7 @@ enum BatchCommandFactory {
         path: String,
         dir: String,
         intent: String,
-        consequence: String
+        consequence: CommandConsequence
     ) -> BatchCommand {
         let argv = ["gh", "skill", "install", repo, path, "--force", "--dir", dir]
         return BatchCommand(
@@ -162,7 +163,7 @@ enum BatchCommandFactory {
         )
     }
 
-    // MARK: - ownerless direct file operations (the ONLY permitted kind)
+    // MARK: - ownerless direct file operations
 
     /// Flagged direct deletion of an ownerless skill's directory placements
     /// (VAL-REPAIR-018): no CLI owns the skill, so cleanup is a file
@@ -172,7 +173,7 @@ enum BatchCommandFactory {
         name: String, paths: [String], finding: Finding
     ) -> [BatchCommand] {
         paths.map { path in
-            let argv = ["sukiru-fileop", "delete-directory", path]
+            let argv = FileOperation.deleteDirectory(path).argv
             return BatchCommand(
                 argv: argv,
                 displayString: "delete directory "
@@ -191,7 +192,7 @@ enum BatchCommandFactory {
 
     // MARK: - new installs (stories 22–24)
 
-    /// `npx skills add <owner/repo> -s <name> (-g|-p) -y` — the verified
+    /// `npx skills add <owner/repo> -s <name> [--copy] (-g|-p) -y` — the verified
     /// non-interactive NEW-install shape (probe-verified 2026-09-18 against
     /// skills@1.5.x: `-y` runs with zero prompts; `-g`/`-p` pin the scope
     /// explicitly, never relying on cwd auto-detection). Project scope
@@ -199,9 +200,13 @@ enum BatchCommandFactory {
     static func vercelAdd(
         repo: String,
         skill: String,
-        target: InstallTarget
+        target: InstallTarget,
+        copy: Bool = false
     ) -> BatchCommand {
         var argv = ["npx", "skills", "add", repo, "-s", skill]
+        if copy {
+            argv.append("--copy")
+        }
         let projectRoot: String?
         switch target {
         case .user:
@@ -220,10 +225,7 @@ enum BatchCommandFactory {
                 + " (installer choice: npx skills add).",
             dangerFlags: [],
             warning: nil,
-            consequence:
-                "Installing with npx skills enters the skill into the Vercel lockfile"
-                + " ledger: the canonical copy lands in .agents/skills and host "
-                + "placements follow the CLI's default agent coverage.",
+            consequence: .entersVercelLedger,
             workingDirectory: projectRoot
         )
     }
@@ -266,11 +268,7 @@ enum BatchCommandFactory {
                 + " (installer choice: gh skill install, agent \(agent)).",
             dangerFlags: [],
             warning: nil,
-            consequence:
-                "Installing with gh writes GitHub provenance into the skill's "
-                + "frontmatter (metadata.github-*): GitHub-only sources, installed "
-                + "for agent \(agent)."
-                + (pinRef.flatMap { !$0.isEmpty ? " Pinned to \($0)." : nil } ?? ""),
+            consequence: .writesGitHubProvenance(agent: agent, pinRef: pinRef),
             workingDirectory: projectRoot
         )
     }

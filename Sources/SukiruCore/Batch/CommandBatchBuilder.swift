@@ -11,6 +11,14 @@ public struct BatchBuildError: Error, Equatable, Sendable {
     }
 }
 
+/// How a skill's host-folder placements hold it.
+public enum PlacementMode: String, Codable, Equatable, Sendable, CaseIterable {
+    /// Links into the scope's shared skills folder.
+    case link
+    /// Standalone copies.
+    case copy
+}
+
 /// A single inapplicable decision (aggregated into `BatchBuildError`).
 struct DecisionProblem: Error, Equatable, Sendable {
     let message: String
@@ -58,49 +66,122 @@ public struct CommandBatchBuilder: Sendable {
     public func build(
         report: ScanReport, decisions: [DecisionEntry]
     ) throws -> CommandBatch? {
+        let planned = plan(report: report, decisions: decisions)
+        guard planned.problems.isEmpty else {
+            throw BatchBuildError(problems: planned.problems)
+        }
+        return batch(from: planned)
+    }
+
+    /// Builds one batch from every decision that applies, skipping the rest
+    /// (Fix All: one inapplicable repair must not block the others).
+    ///
+    /// - Returns: the batch (nil when nothing applies) and the problem of
+    ///   every skipped decision.
+    public func buildApplicable(
+        report: ScanReport, decisions: [DecisionEntry]
+    ) -> (batch: CommandBatch?, skipped: [String]) {
+        let planned = plan(report: report, decisions: decisions)
+        return (batch(from: planned), planned.problems)
+    }
+
+    /// Switches every placement of one skill to links into the shared
+    /// skills folder or to standalone copies (Library mode switch). Not a
+    /// finding fix, so like a new install it carries a synthetic finding
+    /// ref for the snapshot and affected-scope derivation.
+    public func buildModeSwitch(
+        skill: Skill, to mode: PlacementMode, report: ScanReport
+    ) throws -> CommandBatch {
+        guard let bucket = Self.bucket(of: skill, report: report) else {
+            throw BatchBuildError(problems: ["no scanned scope holds '\(skill.name)'"])
+        }
+        let commands: [BatchCommand]
+        do {
+            switch mode {
+            case .link:
+                commands = try Self.relinkPlan(
+                    skill: skill, bucket: bucket, report: report, reason: "switch to links")
+            case .copy:
+                commands = try Self.materializePlan(skill: skill, bucket: bucket, report: report)
+            }
+        } catch let problem as DecisionProblem {
+            throw BatchBuildError(problems: [problem.message])
+        }
+        let id = idProvider()
+        return CommandBatch(
+            id: id,
+            createdAt: ISO8601DateFormatter().string(from: dateProvider()),
+            findingRefs: [
+                FindingRef(
+                    findingID: id, ruleID: "placement-mode", skillName: skill.name,
+                    workspaceID: bucket)
+            ],
+            decisions: [],
+            commands: commands,
+            snapshotID: nil,
+            status: .proposed)
+    }
+
+    // MARK: - planning
+
+    struct PlannedDecisions {
+        var commands: [BatchCommand] = []
+        var refs: [FindingRef] = []
+        var records: [BatchDecision] = []
+        var problems: [String] = []
+    }
+
+    func plan(report: ScanReport, decisions: [DecisionEntry]) -> PlannedDecisions {
         let findingsByID = Dictionary(
             uniqueKeysWithValues: FindingID.assignments(for: report.findings).map {
                 ($0.id, $0.finding)
             })
-        var problems: [String] = []
-        var commands: [BatchCommand] = []
-        var refs: [FindingRef] = []
-        var records: [BatchDecision] = []
+        var planned = PlannedDecisions()
         for entry in decisions.sorted(by: { $0.findingID < $1.findingID }) {
             guard let finding = findingsByID[entry.findingID] else {
-                problems.append(
+                planned.problems.append(
                     "unknown or stale finding ID '\(entry.findingID)': no such finding "
                         + "in the current scan")
                 continue
             }
             do {
-                commands += try plan(entry: entry, finding: finding, report: report)
-            } catch let problem as DecisionProblem {
-                problems.append(problem.message)
+                // Several findings can name one repair (a skill's duplicate
+                // and impostor findings both relink the same copy); each
+                // command runs once.
+                for command in try plan(entry: entry, finding: finding, report: report)
+                where !planned.commands.contains(where: { $0.argv == command.argv }) {
+                    planned.commands.append(command)
+                }
+            } catch {
+                planned.problems.append((error as? DecisionProblem)?.message ?? "\(error)")
                 continue
             }
-            refs.append(
+            // Refs carry the ownership bucket: snapshot, bounds, and rescan
+            // derive from it, and a dead link's finding names its host
+            // workspace.
+            planned.refs.append(
                 FindingRef(
                     findingID: entry.findingID,
                     ruleID: finding.ruleID,
                     skillName: finding.skillName,
-                    workspaceID: finding.workspaceID))
-            records.append(
+                    workspaceID: Self.bucket(of: finding.workspaceID)))
+            planned.records.append(
                 BatchDecision(
                     findingID: entry.findingID, action: entry.action, choice: entry.choice))
         }
-        guard problems.isEmpty else {
-            throw BatchBuildError(problems: problems)
-        }
-        guard !commands.isEmpty else {
+        return planned
+    }
+
+    private func batch(from planned: PlannedDecisions) -> CommandBatch? {
+        guard !planned.commands.isEmpty else {
             return nil
         }
         return CommandBatch(
             id: idProvider(),
             createdAt: ISO8601DateFormatter().string(from: dateProvider()),
-            findingRefs: refs,
-            decisions: records,
-            commands: commands,
+            findingRefs: planned.refs,
+            decisions: planned.records,
+            commands: planned.commands,
             snapshotID: nil,
             status: .proposed
         )
@@ -125,6 +206,9 @@ public struct CommandBatchBuilder: Sendable {
             return try arbitrateCommands(entry: entry, finding: finding, report: report)
         case .adopt:
             return try adoptCommands(entry: entry, finding: finding, report: report)
+        case .relink:
+            try requireNoChoice(entry: entry)
+            return try relinkCommands(entry: entry, finding: finding, report: report)
         }
     }
 

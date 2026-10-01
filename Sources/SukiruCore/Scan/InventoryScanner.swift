@@ -261,7 +261,10 @@ public struct InventoryScanner: Sendable {
                     linkTarget: linkTarget,
                     canonicalPath: canonicalPath,
                     contentHash: contentHash,
-                    internal: metadata.internal
+                    internal: metadata.internal,
+                    managingAgent: linkTarget == nil
+                        ? AgentManagedDirectories(fileSystem: fileSystem).managingAgent(
+                            ofDirectory: path, in: workspace) : nil
                 ),
                 workspaceID: workspace.workspace.id,
                 scopeGroup: workspace.scopeGroup,
@@ -291,7 +294,8 @@ public struct InventoryScanner: Sendable {
                     linkTarget: target,
                     canonicalPath: nil,
                     contentHash: nil,
-                    internal: false
+                    internal: false,
+                    managingAgent: nil
                 ),
                 workspaceID: workspace.workspace.id,
                 scopeGroup: workspace.scopeGroup,

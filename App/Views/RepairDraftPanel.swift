@@ -30,7 +30,7 @@ struct RepairDraftPanel: View {
                     Button {
                         state.chooseRepair(option.action)
                     } label: {
-                        Text(optionTitle(option.action))
+                        Text(option.action.title)
                     }
                     .axButtonToken("sukiru.pending.decision.\(option.action.rawValue)")
                 }
@@ -50,18 +50,17 @@ struct RepairDraftPanel: View {
         return "\(finding.ruleID) — \(name) — \(finding.workspaceID)"
     }
 
-    private func optionTitle(_ action: DecisionAction) -> LocalizedStringKey {
-        LocalizedStringKey(Self.optionTitleKey(action))
-    }
+}
 
-    /// The catalog key (English source text) for a decision's title.
-    static func optionTitleKey(_ action: DecisionAction) -> String {
-        switch action {
-        case .update: return "Update via Owning CLI"
-        case .cleanup: return "Clean Up"
-        case .adopt: return "Adopt into GitHub Ledger…"
-        case .arbitrate: return "Choose Surviving Ledger…"
-        case .leave: return "Leave As-Is"
+extension DecisionAction {
+    var title: LocalizedStringResource {
+        switch self {
+        case .update: "Update via Owning CLI"
+        case .cleanup: "Clean Up"
+        case .relink: "Link to Shared Copy"
+        case .adopt: "Adopt into GitHub Ledger…"
+        case .arbitrate: "Choose Surviving Ledger…"
+        case .leave: "Leave As-Is"
         }
     }
 }
@@ -90,14 +89,12 @@ struct RepairBlockedHint: View {
     }
 
     private var text: String {
-        let actionName = action.map {
-            String(localized: String.LocalizationValue(RepairDraftPanel.optionTitleKey($0)))
-        }
+        let actionName = action.map { String(localized: $0.title) }
         switch (block, actionName) {
         case (.needsNode, .some(let name)):
-            return String(format: String(localized: "pending.hint.needsNode %@"), name)
+            return String(localized: "pending.hint.needsNode \(name)")
         case (.needsGitHub, .some(let name)):
-            return String(format: String(localized: "pending.hint.needsGH %@"), name)
+            return String(localized: "pending.hint.needsGH \(name)")
         case (.needsNode, .none):
             return String(localized: "pending.hint.needsNodeGeneric")
         case (.needsGitHub, .none):
@@ -157,13 +154,11 @@ struct PendingResultBanners: View {
     private func failedSummary(_ record: ExecutionRecord) -> String {
         let failed = record.commands.filter { $0.status != .succeeded }
         guard let first = failed.first else {
-            return String(
-                format: String(localized: "pending.result.failed %@"), record.batchStatus.rawValue)
+            let status = String(localized: record.batchStatus.title)
+            return String(localized: "pending.result.failed \(status)")
         }
-        let detail = first.diagnostics ?? first.status.rawValue
-        return String(
-            format: String(localized: "pending.result.failedCommand %lld %@"),
-            first.index + 1, detail)
+        let detail = first.diagnostics ?? String(localized: first.status.title)
+        return String(localized: "pending.result.failedCommand \(first.index + 1) \(detail)")
     }
 
     private func banner(

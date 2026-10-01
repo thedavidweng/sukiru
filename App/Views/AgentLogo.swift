@@ -55,7 +55,7 @@ struct AgentIconStrip: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(hosts.map(\.displayName).joined(separator: ", "))
-        .help(hosts.map(\.displayName).joined(separator: ", "))
+        .accessibilityLabel(hosts.map(\.displayName).formatted(.list(type: .and)))
+        .help(hosts.map(\.displayName).formatted(.list(type: .and)))
     }
 }

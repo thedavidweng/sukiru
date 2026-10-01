@@ -51,8 +51,9 @@ public enum DecisionsFileError: Error, Equatable, Sendable {
                 return "arbitrate on finding '\(findingID)' requires an explicit choice: "
                     + "'keep-vercel' or 'keep-github' (exactly two options, no default)"
             case .adopt:
-                return "adopt on finding '\(findingID)' requires a choice object with 'repo' "
-                    + "(owner/repo) and 'path' (repo-relative skill path)"
+                return "adopt on finding '\(findingID)' requires a choice object with "
+                    + "'source' (Vercel install source), or 'repo' (owner/repo) and 'path' "
+                    + "(repo-relative skill path)"
             default:
                 return "action '\(action.rawValue)' on finding '\(findingID)' requires a choice"
             }
@@ -66,7 +67,7 @@ public enum DecisionsFileError: Error, Equatable, Sendable {
 }
 
 /// Parses and validates the D12 decisions file:
-/// `{"<findingID>": {"action": "update|adopt|cleanup|leave|arbitrate",
+/// `{"<findingID>": {"action": "update|adopt|cleanup|leave|arbitrate|relink",
 /// "choice": …}}`.
 ///
 /// Validation here is shape-only (vocabulary, choice types); applicability to
@@ -122,7 +123,7 @@ public enum DecisionsFile {
         }
         let choice = entry["choice"]
         switch action {
-        case .update, .cleanup, .leave:
+        case .update, .cleanup, .leave, .relink:
             if choice != nil {
                 return .failure(.unexpectedChoice(findingID: findingID, action: action))
             }
@@ -170,7 +171,19 @@ public enum DecisionsFile {
             return .failure(
                 .invalidChoice(
                     findingID: findingID, action: .adopt,
-                    detail: "expected an object with 'repo' (owner/repo) and 'path'"))
+                    detail: "expected an object with 'source', or 'repo' (owner/repo) and "
+                        + "'path'"))
+        }
+        if let source = object["source"] {
+            guard object.count == 1, let value = source.stringValue, !value.isEmpty else {
+                return .failure(
+                    .invalidChoice(
+                        findingID: findingID, action: .adopt,
+                        detail: "'source' must be a non-empty string and the only key"))
+            }
+            return .success(
+                DecisionEntry(
+                    findingID: findingID, action: .adopt, choice: .adoptVercel(source: value)))
         }
         for key in object.keys where key != "repo" && key != "path" {
             return .failure(

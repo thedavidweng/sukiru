@@ -125,7 +125,7 @@ struct SukiruApp: App {
             // The M4 repair flow, fully keyboard-operable (VAL-CROSS-019).
             // Full Keyboard Access off means the Pending/Snapshots buttons
             // are not Tab stops, so every step — fix deep-link, decision,
-            // per-command review, execute, discard, rollback — has a menu
+            // batch confirmation, execute, discard, rollback — has a menu
             // command here.
             CommandMenu("Repair") {
                 Button("Fix Selected Finding…") {
@@ -143,18 +143,13 @@ struct SukiruApp: App {
                 decisionCommand("Choose Surviving Ledger…", action: .arbitrate, key: "t")
                 decisionCommand("Leave As-Is", action: .leave, key: "l")
                 Divider()
-                Button("Toggle Review of Selected Command") {
-                    state.toggleSelectedCommandReview()
-                }
-                .keyboardShortcut("r", modifiers: [.command, .option])
-                .disabled(state.pendingBatch == nil || state.selectedCommandIndex == nil)
                 Button("Execute Batch") {
                     state.executePendingBatch()
                 }
                 .keyboardShortcut("e", modifiers: [.command, .option])
                 .disabled(!state.canExecutePendingBatch)
                 Button("Discard Batch") {
-                    state.discardPendingBatch()
+                    state.dismissBatchConfirm()
                 }
                 .keyboardShortcut("x", modifiers: [.command, .option])
                 .disabled(state.pendingBatch == nil || state.batchMutationInFlight)

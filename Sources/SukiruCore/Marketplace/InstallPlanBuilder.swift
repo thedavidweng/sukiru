@@ -99,7 +99,7 @@ public enum InstallPlanError: Error, Equatable, Sendable {
 ///
 /// Command shapes are probe-verified against the pinned CLIs
 /// (skills@1.5.9+ and gh 2.90+):
-/// - vercel user scope:  `npx skills add <owner/repo> -s <name> -g -y`
+/// - vercel user scope:  `npx skills add <owner/repo> -s <name> [--copy] -g -y`
 /// - vercel project:     `npx skills add <owner/repo> -s <name> -p -y`
 ///   (cwd = project root)
 /// - github user scope:  `gh skill install <owner/repo> <name> --agent <agent>
@@ -110,13 +110,16 @@ public struct InstallPlanBuilder: Sendable {
 
     /// Builds the proposed batch (status `proposed`, no snapshot) from the
     /// search result + installer + target. Throws `InstallPlanError` for
-    /// sources/choices from which no honest batch can be derived.
+    /// sources/choices from which no honest batch can be derived. `copy`
+    /// installs Vercel skills as standalone copies instead of links into the
+    /// shared skills folder.
     public func build(
         result: SkillSearchResult,
         installer: InstallerChoice,
         target: InstallTarget,
         ghAgent: String? = nil,
-        ghPinRef: String? = nil
+        ghPinRef: String? = nil,
+        copy: Bool = false
     ) throws -> CommandBatch {
         guard !result.name.isEmpty else {
             throw InstallPlanError.emptySkillName
@@ -133,7 +136,8 @@ public struct InstallPlanBuilder: Sendable {
             command = BatchCommandFactory.vercelAdd(
                 repo: repo,
                 skill: result.name,
-                target: target)
+                target: target,
+                copy: copy)
         case .github:
             guard let agent = ghAgent, !agent.isEmpty else {
                 throw InstallPlanError.missingGHAgent

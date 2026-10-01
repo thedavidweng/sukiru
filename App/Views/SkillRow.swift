@@ -78,12 +78,13 @@ struct SkillRow: View {
 }
 
 extension Ownership {
-    var title: LocalizedStringKey {
+    var title: LocalizedStringResource {
         switch self {
         case .vercel: "Vercel"
         case .github: "GitHub"
         case .doubleBooked: "Double-booked"
         case .ownerless: "Ownerless"
+        case .agent: "Agent-managed"
         }
     }
 }

@@ -9,11 +9,14 @@ struct SettingsView: View {
     var body: some View {
         if #available(macOS 15.0, *) {
             TabView {
+                Tab("General", systemImage: "gearshape") { GeneralSettingsPane() }
                 Tab("Projects", systemImage: "folder") { ProjectsSettingsPane() }
                 Tab("Installers", systemImage: "shippingbox") { InstallersSettingsPane() }
             }
         } else {
             TabView {
+                GeneralSettingsPane()
+                    .tabItem { Label("General", systemImage: "gearshape") }
                 ProjectsSettingsPane()
                     .tabItem { Label("Projects", systemImage: "folder") }
                 InstallersSettingsPane()
@@ -131,6 +134,7 @@ private struct ProjectsSettingsPane: View {
 
 private struct InstallersSettingsPane: View {
     @EnvironmentObject private var state: AppState
+    @AppStorage(AppState.installAsCopiesDefaultsKey) private var installAsCopies = false
 
     var body: some View {
         Form {
@@ -167,6 +171,14 @@ private struct InstallersSettingsPane: View {
                     .disabled(state.capabilityCheckRunning || state.installerInFlight != nil)
                 }
             }
+            Section {
+                Toggle("Install new skills as copies", isOn: $installAsCopies)
+            } footer: {
+                Text("settings.installAsCopies.footer")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if neitherCLI {
                 // §8: with neither CLI, Sukiru is the full read-only
                 // diagnostician; the notice is explicit (VAL-HEALTH-026).
@@ -190,7 +202,7 @@ private struct InstallersSettingsPane: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 560, height: 340)
+        .frame(width: 560, height: 420)
     }
 
     // swiftlint:disable line_length
@@ -207,8 +219,7 @@ private struct InstallersSettingsPane: View {
 
     private func githubStatus(_ github: CapabilityReport.GitHubCapability) -> InstallerRow.Status {
         if github.available {
-            return .ready(
-                String(format: String(localized: "capability.available %@"), github.version ?? "?"))
+            return .ready(String(localized: "capability.available \(github.version ?? "?")"))
         }
         let reason: String
         switch github.reason {
@@ -220,23 +231,18 @@ private struct InstallersSettingsPane: View {
         // A present-but-too-old gh shows BOTH the detected version and the
         // unsupported state (VAL-HEALTH-027); absence shows the bare reason.
         if let version = github.version {
-            return .outdated(
-                String(format: String(localized: "capability.unavailableAt %@ %@"), version, reason)
-            )
+            return .outdated(String(localized: "capability.unavailableAt \(version) \(reason)"))
         }
-        let summary = String(format: String(localized: "capability.unavailable %@"), reason)
+        let summary = String(localized: "capability.unavailable \(reason)")
         return github.present ? .outdated(summary) : .missing(summary)
     }
 
     private func npxStatus(_ npx: CapabilityReport.NpxCapability) -> InstallerRow.Status {
         if npx.resolvable {
-            return .ready(
-                String(
-                    format: String(localized: "capability.available %@"), npx.skillsVersion ?? "?"))
+            return .ready(String(localized: "capability.available \(npx.skillsVersion ?? "?")"))
         }
-        let summary = String(
-            format: String(localized: "capability.unavailable %@"),
-            String(localized: "capability.reason.unresolvable"))
+        let reason = String(localized: "capability.reason.unresolvable")
+        let summary = String(localized: "capability.unavailable \(reason)")
         return state.installedPath(of: .node) == nil ? .missing(summary) : .outdated(summary)
     }
 }

@@ -19,7 +19,8 @@ struct LibraryProvenanceSection: View {
                 if let ref = vercel.ref { field("Ref", ref) }
                 field(
                     "Version",
-                    vercel.updatedAt ?? vercel.installedAt ?? String(localized: "unknown"))
+                    (vercel.updatedAt ?? vercel.installedAt).map(RecordTimestamp.display)
+                        ?? String(localized: "unknown"))
             }
             if let github = skill.provenance.github {
                 field("Installer", String(localized: "GitHub gh skill (frontmatter)"))
@@ -31,7 +32,10 @@ struct LibraryProvenanceSection: View {
                     github.pinned
                         ? String(localized: "Pinned") : String(localized: "Unpinned"))
             }
-            if skill.provenance.vercel == nil && skill.provenance.github == nil {
+            if let agent = skill.managingAgent {
+                Text("library.agentManaged \(agent)")
+                    .foregroundStyle(.secondary)
+            } else if skill.provenance.vercel == nil && skill.provenance.github == nil {
                 Text("No ledger claims this skill (ownerless).")
                     .foregroundStyle(.secondary)
             }

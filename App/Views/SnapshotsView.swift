@@ -121,7 +121,7 @@ struct SnapshotsView: View {
                 }
             }
             HStack(spacing: 8) {
-                Text(record.startedAt)
+                Text(RecordTimestamp.display(record.startedAt))
                     .font(.caption.monospaced())
                     .foregroundStyle(.tertiary)
                 Text(diffSummary(record.diff))
@@ -142,15 +142,11 @@ struct SnapshotsView: View {
                 .foregroundStyle(unrestorable > 0 ? .orange : .purple)
             Text("Rolled back")
                 .font(.callout.weight(.medium))
-            Text(
-                String(
-                    format: String(localized: "snapshots.rollbackCounts %lld %lld %lld"),
-                    restored, deleted, unrestorable)
-            )
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            Text("snapshots.rollbackCounts \(restored) \(deleted) \(unrestorable)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             Spacer()
-            Text(record.rolledBackAt)
+            Text(RecordTimestamp.display(record.rolledBackAt))
                 .font(.caption.monospaced())
                 .foregroundStyle(.tertiary)
         }
@@ -158,15 +154,6 @@ struct SnapshotsView: View {
     }
 
     private func statusBadge(_ status: BatchStatus) -> some View {
-        let label: LocalizedStringKey =
-            switch status {
-            case .proposed: "Proposed"
-            case .reviewed: "Reviewed"
-            case .executing: "Executing"
-            case .succeeded: "Succeeded"
-            case .failed: "Failed"
-            case .rolledBack: "Rolled Back"
-            }
         let color: Color =
             switch status {
             case .succeeded: .green
@@ -174,7 +161,7 @@ struct SnapshotsView: View {
             case .rolledBack: .purple
             case .proposed, .reviewed, .executing: .blue
             }
-        return Text(label)
+        return Text(status.title)
             .font(.caption.weight(.medium))
             .padding(.horizontal, 6)
             .padding(.vertical, 1)
@@ -183,14 +170,13 @@ struct SnapshotsView: View {
     }
 
     private func commandsSummary(_ record: ExecutionRecord) -> String {
-        String(
-            format: String(localized: "snapshots.commandCount %lld"), record.commands.count)
+        String(localized: "snapshots.commandCount \(record.commands.count)")
     }
 
     private func diffSummary(_ diff: BatchDiff) -> String {
         if diff.isEmpty {
             return String(localized: "snapshots.diffSummary.empty")
         }
-        return String(format: String(localized: "snapshots.diffSummary %lld"), diff.entries.count)
+        return String(localized: "snapshots.diffSummary \(diff.entries.count)")
     }
 }

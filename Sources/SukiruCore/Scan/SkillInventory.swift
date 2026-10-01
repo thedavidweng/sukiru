@@ -36,6 +36,17 @@ public struct SkillGroup: Equatable, Sendable {
         self.ambiguous = ambiguous
         self.members = members
     }
+
+    /// The host managing every real placement of this group, when one host
+    /// does (`AgentManagedDirectories`); nil when any real placement is not
+    /// agent-managed or the group has none.
+    public var managingAgent: String? {
+        let real = members.filter { $0.placement.kind != .brokenSymlink }
+        guard let agent = real.first?.placement.managingAgent,
+            real.allSatisfy({ $0.placement.managingAgent == agent })
+        else { return nil }
+        return agent
+    }
 }
 
 /// Collapses discovered placements into logical skill groups.

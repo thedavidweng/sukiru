@@ -134,7 +134,7 @@ extension CommandBatchBuilder {
                         intent: "Repair vercel-lock-drift on '\(skill.name)': re-install from "
                             + "the Vercel lock's recorded source (npx skills update reports "
                             + "'already up to date' and never rewrites drifted copies).",
-                        consequence: "Content resets to upstream; local edits are lost.",
+                        consequence: .resetsToUpstream,
                         workingDirectory: projectRoot(of: finding))
                 ]
             }
@@ -157,6 +157,8 @@ extension CommandBatchBuilder {
                 message: "skill '\(skill.name)' (finding '\(entry.findingID)'): no ledger "
                     + "owns this skill — 'update' is not available; choose adopt, cleanup, "
                     + "or leave")
+        case .agent:
+            throw Self.agentManaged(skill: skill)
         }
     }
 
@@ -185,14 +187,13 @@ extension CommandBatchBuilder {
                     agents: targets.agents, copy: targets.copy,
                     intent: "Arbitrate '\(skill.name)' keeping the Vercel ledger (finding "
                         + "\(finding.ruleID)): re-install from the lock's recorded source.",
-                    consequence: "Content resets to upstream; local edits are lost. The "
-                        + "re-install erases the GitHub frontmatter provenance.",
+                    consequence: .resetsToUpstreamErasingGitHubProvenance,
                     workingDirectory: projectRoot(of: finding))
             ]
         case .keepGitHub:
             return try keepGitHubCommands(
                 skill: skill, entry: entry, finding: finding, report: report)
-        case .adoptSource:
+        case .adoptSource, .adoptVercel:
             throw DecisionProblem(
                 message: "action 'arbitrate' on finding '\(entry.findingID)' requires "
                     + "choice 'keep-vercel' or 'keep-github', not an adopt source")
@@ -232,7 +233,7 @@ extension CommandBatchBuilder {
             dir: dir,
             intent: "Re-install '\(skill.name)' from its recorded GitHub provenance "
                 + "(\(provenance.repo)), re-anchoring the GitHub ledger.",
-            consequence: "Content resets to the gh-recorded ref; local edits are lost.")
+            consequence: .resetsToGitHubRef)
         return [remove, install]
     }
 
@@ -264,17 +265,26 @@ extension CommandBatchBuilder {
         entry: DecisionEntry, finding: Finding, report: ScanReport
     ) throws -> [BatchCommand] {
         let skill = try resolveSkill(entry: entry, finding: finding, report: report)
-        guard case .adoptSource(let repo, let path) = entry.choice else {
+        switch entry.choice {
+        case .adoptSource(let repo, let path):
+            try requireOwnerless(skill: skill, entry: entry)
+            return try githubAdoptCommands(
+                skill: skill, repo: repo, path: path, entry: entry, finding: finding)
+        case .adoptVercel(let source):
+            try requireOwnerless(skill: skill, entry: entry)
+            return try vercelAdoptCommands(
+                skill: skill, source: source, finding: finding, report: report)
+        default:
             throw DecisionProblem(
                 message: "adopt on finding '\(entry.findingID)' requires a choice object "
-                    + "with 'repo' (owner/repo) and 'path' (repo-relative skill path)")
+                    + "with 'source' (Vercel install source), or 'repo' (owner/repo) and "
+                    + "'path' (repo-relative skill path) for GitHub")
         }
-        guard skill.ownership == .ownerless else {
-            throw DecisionProblem(
-                message: "skill '\(skill.name)' (finding '\(entry.findingID)') is already "
-                    + "owned by the \(skill.ownership.rawValue) ledger; 'adopt' applies "
-                    + "only to ownerless skills")
-        }
+    }
+
+    private func githubAdoptCommands(
+        skill: Skill, repo: String, path: String, entry: DecisionEntry, finding: Finding
+    ) throws -> [BatchCommand] {
         let dirs = placementDirs(skill)
         guard !dirs.isEmpty else {
             throw noDirectoryPlacements(skill: skill, entry: entry)
@@ -287,9 +297,7 @@ extension CommandBatchBuilder {
                 intent: "Adopt ownerless skill '\(skill.name)' into the GitHub ledger "
                     + "(finding \(finding.ruleID)): install from \(repo) path \(path), "
                     + "re-anchoring provenance onto the existing directory.",
-                consequence: "If upstream content differs from the on-disk payload, "
-                    + "merge-overwrite keeps extra local files but overwrites colliding "
-                    + "ones.")
+                consequence: .mergeOverwritesCollidingFiles)
         }
     }
 
@@ -298,7 +306,18 @@ extension CommandBatchBuilder {
     func cleanupCommands(
         entry: DecisionEntry, finding: Finding, report: ScanReport
     ) throws -> [BatchCommand] {
+        switch finding.ruleID {
+        case "lock-without-files":
+            return try staleLockCommands(entry: entry, finding: finding)
+        case "broken-symlink":
+            return try deadLinkCommands(entry: entry, finding: finding)
+        default:
+            break
+        }
         let skill = try resolveSkill(entry: entry, finding: finding, report: report)
+        if skill.ownership == .agent {
+            throw Self.agentManaged(skill: skill)
+        }
         if skill.ownership == .ownerless {
             // Ambiguous names land here too (attribution voided → ownerless
             // routing, VAL-REPAIR-057).
@@ -306,8 +325,16 @@ extension CommandBatchBuilder {
             guard !paths.isEmpty else {
                 throw noDirectoryPlacements(skill: skill, entry: entry)
             }
-            return BatchCommandFactory.ownerlessCleanups(
-                name: skill.name, paths: paths, finding: finding)
+            // Links into the deleted payload would be left dangling.
+            let links = skill.placements.filter { $0.kind != .directory }.map { link in
+                BatchCommandFactory.deleteLink(
+                    name: skill.name, path: link.path,
+                    intent: "Delete the link '\(link.path)' to ownerless skill "
+                        + "'\(skill.name)' (finding \(finding.ruleID)).")
+            }
+            return links
+                + BatchCommandFactory.ownerlessCleanups(
+                    name: skill.name, paths: paths, finding: finding)
         }
         // Ledger-owned skills remove through the vercel CLI (gh has no remove
         // command); cross-ledger names are named as at-risk (VAL-REPAIR-021).
@@ -332,6 +359,12 @@ extension CommandBatchBuilder {
                     + "lock entry has no recorded source; cannot re-install")
         }
         return source
+    }
+
+    static func agentManaged(skill: Skill) -> DecisionProblem {
+        DecisionProblem(
+            message: "skill '\(skill.name)' is managed by \(skill.managingAgent ?? "its agent") "
+                + "through the agent's own ledger; manage it in that agent")
     }
 
     func needsArbitration(skill: Skill, entry: DecisionEntry) -> DecisionProblem {

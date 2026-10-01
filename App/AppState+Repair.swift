@@ -4,8 +4,8 @@ import SukiruCore
 /// Repair-surface state derivations and intents (M4, seam B): the Health →
 /// Pending Changes deep-link (D16, VAL-CROSS-006), the per-ownership decision
 /// set with capability gating (§8, VAL-REPAIR-049), batch construction via
-/// `CommandBatchBuilder`, per-command review acknowledgement
-/// (VAL-REPAIR-007), serialized in-app execution through `CLIExecutor`,
+/// `CommandBatchBuilder`, the single batch confirmation (VAL-REPAIR-007),
+/// serialized in-app execution through `CLIExecutor`,
 /// one-click rollback through `Rollback`, and the on-disk batch history that
 /// backs the Snapshots surface.
 ///
@@ -103,12 +103,13 @@ extension AppState {
         switch skill.ownership {
         case .vercel:
             // Update AND removal both go through `npx skills` (gh has no
-            // remove command), so both need Node.
-            return [
-                option(.update, needsNode),
-                option(.cleanup, needsNode),
-                option(.leave, nil)
-            ]
+            // remove command), so both need Node. Relinking host copies is
+            // a snapshot-protected file operation needing no CLI.
+            var options = [option(.update, needsNode)]
+            if ProblemKind.oneClickFix(for: finding) == .relink {
+                options.append(option(.relink, nil))
+            }
+            return options + [option(.cleanup, needsNode), option(.leave, nil)]
         case .github:
             return [
                 option(.update, needsGitHub),
@@ -130,6 +131,9 @@ extension AppState {
                 option(.cleanup, nil),
                 option(.leave, nil)
             ]
+        case .agent:
+            // The agent's own ledger manages these; Sukiru only reports.
+            return [option(.leave, nil)]
         }
     }
 
@@ -182,7 +186,7 @@ extension AppState {
             adoptRepo = ""
             adoptPath = ""
             showingAdoptSheet = true
-        case .update, .cleanup:
+        case .update, .cleanup, .relink:
             buildPendingBatch(action: action, choice: nil)
         }
     }
@@ -230,49 +234,26 @@ extension AppState {
         do {
             if let batch = try CommandBatchBuilder().build(report: report, decisions: [entry]) {
                 pendingBatch = batch
-                reviewedCommands = []
-                selectedCommandIndex = batch.commands.indices.first
                 repairDraft = nil
                 repairError = nil
                 repairBlockNotice = nil
+                fixSkipped = []
+                showingBatchConfirm = true
             } else {
                 // All-leave decisions produce no batch (VAL-REPAIR-019).
                 repairDraft = nil
             }
-        } catch let error as BatchBuildError {
-            repairError = error.problems.joined(separator: "\n")
         } catch {
-            repairError = String(describing: error)
+            repairError = UserFacingError.message(for: error)
         }
     }
 
-    // MARK: - review + execute (VAL-REPAIR-007)
+    // MARK: - confirm + execute (VAL-REPAIR-007)
 
-    /// Acknowledges (or un-acknowledges) one command's review.
-    func toggleCommandReview(_ index: Int) {
-        guard let batch = pendingBatch, batch.commands.indices.contains(index) else { return }
-        if reviewedCommands.contains(index) {
-            reviewedCommands.remove(index)
-        } else {
-            reviewedCommands.insert(index)
-        }
-    }
-
-    /// Keyboard path (Repair menu): toggles review on the selected command.
-    func toggleSelectedCommandReview() {
-        guard let selectedCommandIndex else { return }
-        toggleCommandReview(selectedCommandIndex)
-    }
-
-    /// Execute stays gated until EVERY command is reviewed
-    /// (VAL-REPAIR-007's UI half) and no mutation is in flight.
-    var allCommandsReviewed: Bool {
-        guard let batch = pendingBatch else { return false }
-        return batch.commands.indices.allSatisfy(reviewedCommands.contains)
-    }
-
+    /// A batch runs only from the batch confirmation, once per batch, and
+    /// never while another mutation is in flight.
     var canExecutePendingBatch: Bool {
-        allCommandsReviewed && !batchMutationInFlight
+        pendingBatch != nil && !batchMutationInFlight
     }
 
     /// Executes the reviewed batch through the serialized CLIExecutor:
@@ -292,12 +273,9 @@ extension AppState {
                 let executor = CLIExecutor(environment: environment, ghToken: token)
                 let result = try executor.execute(batch: reviewed, report: report)
                 await self?.finishExecution(record: result.record, failure: nil)
-            } catch let error as ExecutionError {
-                await self?.finishExecution(record: nil, failure: error.message)
-            } catch let error as BatchTransitionError {
-                await self?.finishExecution(record: nil, failure: error.message)
             } catch {
-                await self?.finishExecution(record: nil, failure: String(describing: error))
+                await self?.finishExecution(
+                    record: nil, failure: UserFacingError.message(for: error))
             }
         }
     }
@@ -305,22 +283,10 @@ extension AppState {
     private func finishExecution(record: ExecutionRecord?, failure: String?) {
         batchMutationInFlight = false
         pendingBatch = nil
-        reviewedCommands = []
-        selectedCommandIndex = nil
         lastExecutionRecord = record
         lastExecutionFailure = failure
         loadHistory()
         rescan()
-    }
-
-    /// Discards the proposed batch without executing anything (no snapshot,
-    /// no writes — the batch was never more than a value in memory).
-    func discardPendingBatch() {
-        pendingBatch = nil
-        reviewedCommands = []
-        selectedCommandIndex = nil
-        repairError = nil
-        repairBlockNotice = nil
     }
 
     // MARK: - rollback (D9, VAL-REPAIR-034/055)
@@ -359,12 +325,8 @@ extension AppState {
             do {
                 _ = try Rollback(environment: environment).rollback(batchID: batchID)
                 await self?.finishRollback(failure: nil)
-            } catch let error as RollbackError {
-                await self?.finishRollback(failure: error.message)
-            } catch let error as ExecutionError {
-                await self?.finishRollback(failure: error.message)
             } catch {
-                await self?.finishRollback(failure: String(describing: error))
+                await self?.finishRollback(failure: UserFacingError.message(for: error))
             }
         }
     }

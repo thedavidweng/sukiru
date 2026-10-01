@@ -46,5 +46,17 @@ _Avoid_: 导入
 两本账本同时认领同一技能的状态；修复必须由用户裁决保留哪本，没有客观正确答案。
 
 **Command Batch（命令批次）**:
-待执行官方 CLI 命令的序列及其预期效果；执行前须审查，伴随快照，可回滚。UI 沿用 "Pending Changes" 叫法。
+待执行命令（官方 CLI 命令，以及 CLI 无法完成的链接管理文件操作）的序列及其预期效果；执行前整批确认一次，伴随快照，可回滚（ADR-0007）。UI 沿用 "Pending Changes" 叫法。
 _Avoid_: 文件操作计划（已退役的旧语义）
+
+**Agent-managed Skill（宿主自管技能）**:
+放在宿主自有记录管理的目录里的技能（Hermes 的 `.bundled_manifest` / `.hub/lock.json`、Codex 的 `.system/`）。归属为 `agent`，只展示不修复。
+_Avoid_: 内置技能
+
+**Problem（问题）**:
+一条或多条检测发现归并成的、用户能理解的问题种类（如失效链接、副本代替链接），带说明与默认一键修复（ADR-0007）。健康布局与常驻提示是"备注"，不算问题。
+_Avoid_: 发现（Finding 是规则层的原始输出）
+
+**Shared Copy（共享副本）**:
+作用域共享技能目录（`~/.agents/skills` 或项目 `.agents/skills`）里的那份实体目录；各宿主目录里应是指向它的链接。
+_Avoid_: canonical、store

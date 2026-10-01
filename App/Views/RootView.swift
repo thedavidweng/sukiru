@@ -19,6 +19,20 @@ struct RootView: View {
         } detail: {
             detail
         }
+        .sheet(isPresented: $state.showingBatchConfirm, onDismiss: state.dismissBatchConfirm) {
+            BatchConfirmSheet()
+        }
+        .sheet(isPresented: showingSourceSheet) {
+            if let skill = state.sourceSheetSkill {
+                OrphanSourceSheet(skill: skill)
+            }
+        }
+    }
+
+    private var showingSourceSheet: Binding<Bool> {
+        Binding(
+            get: { state.sourceSheetSkill != nil },
+            set: { if !$0 { state.sourceSheetSkill = nil } })
     }
 
     /// Finder-style Refresh, shared by every surface: the no-watchers model
@@ -64,13 +78,10 @@ struct RootView: View {
         switch state.surface {
         case .library:
             LibraryDetailView()
-        case .pending:
-            // Per-command inspection view (VAL-REPAIR-006/047).
-            PendingCommandDetailView()
         case .snapshots:
             // Post-run diff / itemized rollback record (VAL-REPAIR-046).
             SnapshotsDetailView()
-        case .health, .search:
+        case .health, .pending, .search:
             DetailPlaceholderView()
         }
     }

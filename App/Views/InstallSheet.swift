@@ -136,7 +136,7 @@ struct InstallSheet: View {
             .pickerStyle(.radioGroup)
             .labelsHidden()
             if case .project(let root) = state.installTarget {
-                Text(String(format: String(localized: "Installs into %@ at project scope."), root))
+                Text("Installs into \(root) at project scope.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -163,18 +163,9 @@ struct InstallSheet: View {
                 }
             }
             .labelsHidden()
-            // swiftlint:disable line_length
-            Text(
-                String(
-                    format: String(
-                        localized:
-                            "gh skill install --agent %@: the skill's GitHub provenance is written into its frontmatter."
-                    ),
-                    state.ghInstallAgent)
-            )
-            // swiftlint:enable line_length
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            Text("install.gh.agentNote \(state.ghInstallAgent)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             HStack(spacing: 8) {
                 AXToken(token: "sukiru.search.install.pin")
                 TextField("Pin ref (optional: tag or SHA)", text: $state.ghPinRef)

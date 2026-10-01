@@ -84,6 +84,9 @@ public enum Ownership: String, Codable, Equatable, Sendable {
     case github
     case doubleBooked = "double-booked"
     case ownerless
+    /// Neither installer ledger claims the skill, but the agent host that
+    /// holds it manages it through its own ledger (`managingAgent`).
+    case agent
 }
 
 /// One logical skill, collapsing alias placements (D18).
@@ -98,6 +101,8 @@ public struct Skill: Codable, Equatable, Sendable {
     public let ambiguous: Bool
     public let provenance: SkillProvenance
     public let placements: [Placement]
+    /// The host id behind `Ownership.agent`; omitted from the wire otherwise.
+    public let managingAgent: String?
 }
 
 /// A physical placement of a skill on disk (D18).
@@ -114,6 +119,9 @@ public struct Placement: Codable, Equatable, Sendable {
     public let canonicalPath: String?
     public let contentHash: String?
     public let `internal`: Bool
+    /// The host that manages this physical directory through its own
+    /// ledger (`AgentManagedDirectories`); omitted from the wire otherwise.
+    public let managingAgent: String?
 }
 
 /// Detection-rule severities (architecture D3).

@@ -91,14 +91,26 @@ struct HealthFocusBanner: View {
     @EnvironmentObject private var state: AppState
     let focus: AppState.HealthFocus
 
+    /// `user` or `project:<root>`, shown as "User scope" or the project
+    /// folder.
+    private var scopeLabel: String {
+        guard focus.scopeGroup.hasPrefix("project:") else {
+            return String(localized: "User scope")
+        }
+        let root = String(focus.scopeGroup.dropFirst("project:".count))
+        return (root as NSString).abbreviatingWithTildeInPath
+    }
+
     var body: some View {
         HStack(spacing: 8) {
             AXToken(token: "sukiru.health.focus")
             Text("Findings for \(focus.skillName)")
                 .font(.callout.weight(.medium))
-            Text(focus.scopeGroup)
-                .font(.caption.monospaced())
+            Text(verbatim: scopeLabel)
+                .font(.caption)
                 .foregroundStyle(.tertiary)
+                .lineLimit(1)
+                .truncationMode(.middle)
             Spacer()
             Button {
                 state.clearHealthFocus()

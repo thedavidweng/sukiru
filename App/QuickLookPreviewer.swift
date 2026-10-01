@@ -44,8 +44,7 @@ final class QuickLookPreviewer: NSObject, QLPreviewPanelDataSource, QLPreviewPan
         // VAL-HEALTH-023 reads the window list). Demote to normal level once
         // open so the panel is enumerable like any other window.
         panel.level = .normal
-        panel.title = String(
-            format: String(localized: "quicklook.title %@"), url.lastPathComponent)
+        panel.title = String(localized: "quicklook.title \(url.lastPathComponent)")
     }
 
     /// The installed Escape key monitor (kept for the app's lifetime; inert

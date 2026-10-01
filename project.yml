@@ -48,6 +48,10 @@ targets:
         ENABLE_HARDENED_RUNTIME: NO
         COMBINE_HIDPI_IMAGES: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: SukiruIcon
+        # Extract localizable strings on every build so
+        # Scripts/sync-strings.sh can sync the String Catalogs.
+        SWIFT_EMIT_LOC_STRINGS: YES
+        LOCALIZATION_PREFERS_STRING_CATALOGS: YES
       configs:
         Release:
           # Size-optimized release builds (AGENTS.md): -Osize plus the

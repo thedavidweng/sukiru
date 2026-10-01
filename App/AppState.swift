@@ -70,15 +70,16 @@ final class AppState: ObservableObject {
     /// The finding a repair is being chosen for (Health "Fix…" deep-link,
     /// D16/VAL-CROSS-006); non-nil while the decision panel is up.
     @Published var repairDraft: RepairDraft?
-    /// The proposed batch under review in Pending Changes; nil whenever no
-    /// batch is on the table (before a decision, after execute/discard).
+    /// The proposed batch awaiting confirmation; nil when none is on the table.
     @Published var pendingBatch: CommandBatch?
-    /// Indices of `pendingBatch.commands` the user has acknowledged
-    /// (VAL-REPAIR-007: Execute stays gated until each command is reviewed).
-    @Published var reviewedCommands: Set<Int> = []
-    /// Selected command row in Pending Changes (drives the detail pane and
-    /// the keyboard review menu command).
-    @Published var selectedCommandIndex: Int?
+    /// The single confirmation every batch needs to run (ADR-0007) is up.
+    @Published var showingBatchConfirm = false
+    /// Repairs a Fix All could not include, with the reason for each.
+    @Published var fixSkipped: [String] = []
+    /// The orphan whose source is being chosen, and the skills.sh listings
+    /// suggested for it (nil while loading).
+    @Published var sourceSheetSkill: Skill?
+    @Published var sourceSuggestions: [SkillSearchResult]?
     /// Batch-construction refusal text (stale finding, ownership rule) —
     /// rendered inline, never swallowed. (Core diagnostic text, English by
     /// design, like CLI stderr.)
@@ -234,7 +235,7 @@ final class AppState: ObservableObject {
                     self.scanPhase = .homeMissing(path)
                 }
             } else {
-                self.scanPhase = .failed(String(describing: error))
+                self.scanPhase = .failed(UserFacingError.message(for: error))
             }
         }
         let elapsed = startedAt.duration(to: .now)

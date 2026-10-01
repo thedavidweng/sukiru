@@ -3,11 +3,13 @@ import SwiftUI
 
 /// The Health surface (§4.3): one-click health check (`sukiru.health.checkNow`,
 /// non-reentrant while running — `sukiru.health.loading` + `.disabled` suffix,
-/// VAL-HEALTH-046), a summary line (`sukiru.health.summary`) whose count always
-/// equals the rendered finding rows (VAL-HEALTH-034), a per-workspace filter
+/// VAL-HEALTH-046), a summary line (`sukiru.health.summary`) counting
+/// problems and how many Fix All (`sukiru.health.fixAll`) repairs in one
+/// confirmed batch, a per-workspace filter
 /// (`sukiru.health.filter.workspace`, VAL-HEALTH-015) with an explicit
-/// empty-filter state (VAL-HEALTH-047), findings grouped by rule
-/// (`sukiru.health.group.<ruleID>`, VAL-HEALTH-012) with per-finding disclosure
+/// empty-filter state (VAL-HEALTH-047), findings grouped by plain-language
+/// problem (`sukiru.health.group.<problem>`, `ProblemKind`; notes collapsed)
+/// with per-finding disclosure
 /// rows (`sukiru.health.finding.<ruleID>.*`) whose evidence expands to the
 /// concrete paths, lock entries, and hashes the scan emitted
 /// (VAL-HEALTH-014/042), and a separate issues section for malformed data
@@ -127,21 +129,37 @@ struct HealthView: View {
                 "sukiru.health.checkNow", disabled: state.healthCheckRunning
             )
             .disabled(state.healthCheckRunning)
+            let fixable = state.fixableEntries(problemEntries)
+            Button {
+                state.fix(fixable)
+            } label: {
+                Text("Fix All (\(fixable.count))")
+            }
+            .buttonStyle(.borderedProminent)
+            .axButtonToken(
+                "sukiru.health.fixAll", disabled: fixable.isEmpty || state.batchMutationInFlight
+            )
+            .disabled(fixable.isEmpty || state.batchMutationInFlight)
+            .help("Repair every problem that needs no choice, in one confirmed batch")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
     }
 
-    /// The summary count is the number of finding rows actually rendered —
-    /// after the skill focus and the workspace filter — so it always equals
-    /// the row count (VAL-HEALTH-034) and shows 0 on an empty filter
-    /// (VAL-HEALTH-047).
+    /// Findings that are problems (notes excluded), after focus and filter.
+    private var problemEntries: [AppState.FindingEntry] {
+        state.visibleHealthEntries().filter { ProblemKind.of($0.finding).isProblem }
+    }
+
+    /// Counts problems, not notes; the full row count (notes included)
+    /// still equals the rendered rows (VAL-HEALTH-034).
     private var summaryText: String {
-        let count = state.visibleHealthEntries().count
-        if count == 0 {
-            return String(localized: "0 findings")
+        let problems = problemEntries.count
+        let fixable = state.fixableEntries(problemEntries).count
+        if problems == 0 {
+            return String(localized: "No problems")
         }
-        return String(localized: "\(count) findings")
+        return String(localized: "\(problems) problems, \(fixable) fixable in one click")
     }
 
     // MARK: - findings
@@ -154,19 +172,8 @@ struct HealthView: View {
             emptyState
         } else {
             List(selection: $state.selectedFindingID) {
-                ForEach(groups(entries)) { group in
-                    Section {
-                        ForEach(group.rows) { row in
-                            FindingRow(row: row)
-                                .tag(row.entry.id)
-                        }
-                    } header: {
-                        HStack(spacing: 0) {
-                            AXToken(token: "sukiru.health.group.\(group.ruleID)")
-                            Text("\(group.ruleID) (\(group.rows.count))")
-                        }
-                        .accessibilityElement(children: .contain)
-                    }
+                ForEach(state.problemGroups()) { group in
+                    ProblemSection(group: group, rows: rows(group.entries))
                 }
                 if !issues.isEmpty {
                     Section {
@@ -220,34 +227,79 @@ struct HealthView: View {
         var id: String { entry.id }
     }
 
-    struct FindingGroup: Identifiable {
-        let ruleID: String
-        let rows: [FindingRowItem]
-
-        var id: String { ruleID }
-    }
-
-    /// Groups findings by rule, preserving the report's deterministic order
-    /// (VAL-HEALTH-012). Tokens are `sukiru.health.finding.<ruleID>.<skill>`;
-    /// the rare same-rule same-skill repeat (a name flagged in two scopes)
-    /// gets a `-2`/`-3` suffix so every row keeps a unique label.
-    private func groups(_ entries: [AppState.FindingEntry]) -> [FindingGroup] {
-        var order: [String] = []
-        var byRule: [String: [FindingRowItem]] = [:]
+    /// Row items in report order. Tokens are
+    /// `sukiru.health.finding.<ruleID>.<skill>`; the rare same-rule
+    /// same-skill repeat (a name flagged in two scopes) gets a `-2`/`-3`
+    /// suffix so every row keeps a unique label.
+    private func rows(_ entries: [AppState.FindingEntry]) -> [FindingRowItem] {
         var tokenCounts: [String: Int] = [:]
-        for entry in entries {
+        return entries.map { entry in
             let finding = entry.finding
             let subject = finding.skillName.map(AXTokens.skill) ?? "general"
             let base = "sukiru.health.finding.\(finding.ruleID).\(subject)"
             let seen = tokenCounts[base, default: 0]
             tokenCounts[base] = seen + 1
-            let token = seen == 0 ? base : "\(base)-\(seen + 1)"
-            if byRule[finding.ruleID] == nil {
-                order.append(finding.ruleID)
-            }
-            byRule[finding.ruleID, default: []].append(
-                FindingRowItem(entry: entry, token: token))
+            return FindingRowItem(entry: entry, token: seen == 0 ? base : "\(base)-\(seen + 1)")
         }
-        return order.map { FindingGroup(ruleID: $0, rows: byRule[$0] ?? []) }
+    }
+}
+
+/// One problem kind: a plain-language explanation, a Fix button for every
+/// one-click repair in the section, and its rows. Notes start collapsed.
+private struct ProblemSection: View {
+    @EnvironmentObject private var state: AppState
+    let group: AppState.ProblemGroup
+    let rows: [HealthView.FindingRowItem]
+    @State private var expanded: Bool?
+
+    private var isExpanded: Binding<Bool> {
+        Binding(
+            get: { expanded ?? group.kind.isProblem },
+            set: { expanded = $0 })
+    }
+
+    var body: some View {
+        Section(isExpanded: isExpanded) {
+            ForEach(rows) { row in
+                FindingRow(row: row)
+                    .tag(row.entry.id)
+            }
+        } header: {
+            header
+        }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                AXToken(token: "sukiru.health.group.\(group.kind.rawValue)")
+                Label(group.kind.title, systemImage: group.kind.symbol)
+                    .font(.headline)
+                Text("\(group.entries.count)")
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                Spacer()
+                let fixable = state.fixableEntries(group.entries)
+                if fixable.count > 1 {
+                    Button {
+                        state.fix(fixable)
+                    } label: {
+                        Text("Fix \(fixable.count)")
+                    }
+                    .controlSize(.small)
+                    .disabled(state.batchMutationInFlight)
+                    .axButtonToken("sukiru.health.group.\(group.kind.rawValue).fix")
+                }
+            }
+            if isExpanded.wrappedValue {
+                Text(group.kind.explanation)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .textCase(nil)
+        .accessibilityElement(children: .contain)
+        .padding(.vertical, 4)
     }
 }

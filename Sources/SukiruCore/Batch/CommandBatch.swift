@@ -3,9 +3,10 @@ import Foundation
 /// The seam-B Command Batch model (architecture §7, decisions D8–D14).
 ///
 /// A batch maps findings + user decisions to an ordered list of commands.
-/// Commands are ONLY official CLI invocations (`npx skills …`, `gh skill …`);
-/// the single permitted exception is a direct file operation on an
-/// **ownerless** skill, always flagged as such (red line §2, VAL-REPAIR-018).
+/// Ledger writes are ONLY official CLI invocations (`npx skills …`,
+/// `gh skill …`); direct file operations never touch a ledger and are limited
+/// to ownerless payloads and host-folder placements (dead links, link ↔ copy
+/// mode), always flagged as such (red line §2, VAL-REPAIR-018, ADR-0007).
 
 /// Repair actions in the D12 decisions vocabulary.
 public enum DecisionAction: String, Codable, Equatable, Sendable, CaseIterable {
@@ -14,23 +15,28 @@ public enum DecisionAction: String, Codable, Equatable, Sendable, CaseIterable {
     case cleanup
     case leave
     case arbitrate
+    /// Replace host-folder copies with links into the shared skills store.
+    case relink
 }
 
 /// The explicit user choice accompanying an action.
 ///
 /// Arbitration choices encode as the strings `"keep-vercel"` / `"keep-github"`
-/// (D10); adoption carries the user-supplied source as
-/// `{"repo": "owner/repo", "path": "repo-relative/skill/path"}` (D11).
+/// (D10); GitHub adoption carries the user-supplied source as
+/// `{"repo": "owner/repo", "path": "repo-relative/skill/path"}` (D11); Vercel
+/// adoption carries `{"source": "owner/repo"}` (the skill keeps its name).
 public enum DecisionChoice: Equatable, Sendable {
     case keepVercel
     case keepGitHub
     case adoptSource(repo: String, path: String)
+    case adoptVercel(source: String)
 }
 
 extension DecisionChoice: Codable {
     private enum CodingKeys: String, CodingKey {
         case repo
         case path
+        case source
     }
 
     public init(from decoder: Decoder) throws {
@@ -48,6 +54,10 @@ extension DecisionChoice: Codable {
             return
         }
         let object = try decoder.container(keyedBy: CodingKeys.self)
+        if let source = try object.decodeIfPresent(String.self, forKey: .source) {
+            self = .adoptVercel(source: source)
+            return
+        }
         self = .adoptSource(
             repo: try object.decode(String.self, forKey: .repo),
             path: try object.decode(String.self, forKey: .path))
@@ -65,14 +75,17 @@ extension DecisionChoice: Codable {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(repo, forKey: .repo)
             try container.encode(path, forKey: .path)
+        case .adoptVercel(let source):
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(source, forKey: .source)
         }
     }
 }
 
 /// Which official CLI a batch command belongs to (VAL-REPAIR-002).
 ///
-/// `.file` marks the single permitted non-CLI command class: a direct file
-/// operation on an ownerless skill (always danger-flagged, VAL-REPAIR-018).
+/// `.file` marks the non-CLI command class: a direct file operation that
+/// writes no ledger (always danger-flagged, VAL-REPAIR-018, ADR-0007).
 public enum OwningCLI: String, Codable, Equatable, Sendable {
     case vercel
     case github
@@ -86,9 +99,11 @@ public enum DangerFlag: String, Codable, Equatable, Sendable {
     case dangerousDeletion = "dangerous-deletion"
     /// The command mutates files directly instead of through an official CLI.
     case directFileOperation = "direct-file-operation"
-    /// The direct file operation targets an ownerless skill (the only
-    /// permitted class of direct file operation in any batch).
+    /// The direct file operation targets an ownerless skill's payload.
     case ownerlessCleanup = "ownerless-cleanup"
+    /// The direct file operation replaces content that differs from what
+    /// replaces it (a diverged host copy relinked to the shared store).
+    case discardsLocalChanges = "discards-local-changes"
 }
 
 /// A skill endangered by a name-based `npx skills remove`, with the ledger
@@ -118,8 +133,11 @@ public struct BatchCommand: Codable, Equatable, Sendable {
     /// Cross-ledger skills endangered by a name-based removal, when
     /// detectable from the scan (VAL-REPAIR-021).
     public let atRiskSkills: [AtRiskSkill]
-    /// Consequence text for destructive-by-design commands (D10/D11/D22).
+    /// Consequence text for destructive-by-design commands (D10/D11/D22):
+    /// the English rendering of `consequenceKind`.
     public let consequence: String?
+    /// The structured consequence, for presentation layers that localize.
+    public let consequenceKind: CommandConsequence?
     /// The working directory the command must run in: the project root for
     /// project-scope `npx` commands (the CLI resolves `-p` literally from
     /// cwd — research/cli-surface-npx.md); nil elsewhere.
@@ -133,7 +151,7 @@ public struct BatchCommand: Codable, Equatable, Sendable {
         dangerFlags: [DangerFlag],
         warning: String?,
         atRiskSkills: [AtRiskSkill] = [],
-        consequence: String? = nil,
+        consequence: CommandConsequence? = nil,
         workingDirectory: String? = nil
     ) {
         self.argv = argv
@@ -143,8 +161,14 @@ public struct BatchCommand: Codable, Equatable, Sendable {
         self.dangerFlags = dangerFlags
         self.warning = warning
         self.atRiskSkills = atRiskSkills
-        self.consequence = consequence
+        self.consequence = consequence?.text
+        self.consequenceKind = consequence
         self.workingDirectory = workingDirectory
+    }
+
+    /// The direct file operation this command performs, if it is one.
+    public var fileOperation: FileOperation? {
+        FileOperation(argv: argv)
     }
 
     /// Shell-style rendering of an argv: arguments containing anything

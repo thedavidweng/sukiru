@@ -47,13 +47,11 @@ struct SnapshotsDetailView: View {
                 .font(.caption.monospaced())
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
-            Text(
-                String(
-                    format: String(localized: "snapshots.batchMeta %@ %@"),
-                    record.startedAt, record.batchStatus.rawValue)
-            )
-            .font(.caption)
-            .foregroundStyle(.tertiary)
+            let startedAt = RecordTimestamp.display(record.startedAt)
+            let status = String(localized: record.batchStatus.title)
+            Text("snapshots.batchMeta \(startedAt) \(status)")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
         } header: {
             TokenSectionHeader(token: nil, title: "Batch")
         }
@@ -63,12 +61,15 @@ struct SnapshotsDetailView: View {
         Section {
             ForEach(record.commands, id: \.index) { command in
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(command.displayString)
-                        .font(.caption.monospaced())
-                        .textSelection(.enabled)
-                        .fixedSize(horizontal: false, vertical: true)
+                    Text(
+                        verbatim: FileOperation(argv: command.argv)?.localizedSummary
+                            ?? command.displayString
+                    )
+                    .font(.caption.monospaced())
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: 6) {
-                        Text(command.status.rawValue)
+                        Text(command.status.title)
                             .font(.caption.weight(.medium))
                             .foregroundStyle(command.status == .succeeded ? .green : .red)
                         if let exitCode = command.exitCode {
@@ -91,9 +92,8 @@ struct SnapshotsDetailView: View {
         }
     }
 
-    /// The post-run diff (VAL-REPAIR-032/033). The engine's `summary` is the
-    /// human-readable rendering — one line per entry, and exactly one
-    /// explicit "No changes…" line when empty — so it is rendered verbatim.
+    /// The post-run diff (VAL-REPAIR-032/033): one localized row per entry,
+    /// and an explicit "No changes" line when empty.
     @ViewBuilder
     private func diffSection(_ record: ExecutionRecord) -> some View {
         if record.diff.isEmpty {
@@ -112,18 +112,39 @@ struct SnapshotsDetailView: View {
             }
         } else {
             Section {
-                ForEach(Array(record.diff.summary.enumerated()), id: \.offset) { pair in
-                    Text(pair.element)
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
-                        .fixedSize(horizontal: false, vertical: true)
+                ForEach(Array(record.diff.entries.enumerated()), id: \.offset) { pair in
+                    diffRow(pair.element)
                 }
             } header: {
                 TokenSectionHeader(
                     token: "sukiru.snapshots.diff.\(record.batchID)", title: "Post-run diff",
-                    count: record.diff.summary.count)
+                    count: record.diff.entries.count)
             }
+        }
+    }
+
+    /// One diff entry: the localized change, its path, and the engine's
+    /// technical detail (hashes, link targets, lock fields) verbatim.
+    private func diffRow(_ entry: DiffEntry) -> some View {
+        Label {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.kind.title)
+                    .font(.caption.weight(.medium))
+                Text(verbatim: entry.path)
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+                if !entry.detail.isEmpty {
+                    Text(verbatim: entry.detail)
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.tertiary)
+                        .textSelection(.enabled)
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        } icon: {
+            Image(systemName: entry.kind.symbol)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -132,7 +153,7 @@ struct SnapshotsDetailView: View {
     private func rollbackDetail(_ record: RollbackRecord) -> some View {
         Form {
             Section {
-                Text(record.rolledBackAt)
+                Text(RecordTimestamp.display(record.rolledBackAt))
                     .font(.caption.monospaced())
                     .foregroundStyle(.tertiary)
                 ForEach(Array(record.items.enumerated()), id: \.offset) { pair in
@@ -142,7 +163,7 @@ struct SnapshotsDetailView: View {
                             .foregroundStyle(color(for: item.category))
                             .frame(width: 16)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(item.category.rawValue)
+                            Text(item.category.title)
                                 .font(.caption.weight(.medium))
                                 .foregroundStyle(color(for: item.category))
                             Text(item.path)
