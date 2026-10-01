@@ -34,7 +34,14 @@ final class AppState: ObservableObject {
     @Published var surface: Surface = .library
     @Published var libraryScope: LibraryScope = .all
     @Published private(set) var scanPhase: ScanPhase = .loading
-    @Published private(set) var report: ScanReport?
+    @Published private(set) var report: ScanReport? {
+        didSet { reportRevision &+= 1 }
+    }
+    /// Bumps on every report change; keys the derived-state caches.
+    private(set) var reportRevision = 0
+    /// Health and lookup derivations, rebuilt only when their inputs change
+    /// rather than on every render.
+    let derived = DerivedStateCache()
     @Published var skillDescriptions: [String: String] = [:]
     /// nil while the (async, background) capability probes are in flight.
     @Published private(set) var capabilities: CapabilityReport?
@@ -50,6 +57,8 @@ final class AppState: ObservableObject {
     @Published var installerFailures: [InstallerTool: String] = [:]
     /// Node.js version managers found on this Mac, in display priority.
     @Published var nodeManagers: [NodeVersionManager] = []
+    /// Where each installer CLI resolves on PATH, as of the last check.
+    @Published var installedPaths: [InstallerTool: String] = [:]
     /// The skills CLI's latest registry release, once the update check
     /// answers; nil when unknown (offline, or the CLI is not downloaded).
     @Published var skillsLatestVersion: String?
@@ -314,12 +323,6 @@ final class AppState: ObservableObject {
         }
         saveProjectRoots()
         rescan()
-    }
-
-    /// The currently selected skill, if it still exists in the report.
-    func selectedSkill() -> Skill? {
-        guard let report, let selectedSkillID else { return nil }
-        return report.skills.first { Self.skillID($0) == selectedSkillID }
     }
 
     // The Health-surface derivations (skill focus, workspace filter, issue

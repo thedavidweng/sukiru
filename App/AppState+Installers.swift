@@ -66,30 +66,37 @@ extension AppState {
 
     /// Finds CLIs the way the user's terminal does: the login shell's PATH
     /// first, then the version managers' own directories for shells that
-    /// fail or time out. Runs off the main actor; only the PATH swap and the
-    /// published managers land on it. Fixture sessions are left untouched.
+    /// fail or time out. Runs off the main actor; only the results land on
+    /// it. Fixture sessions keep their PATH so their shims stay authoritative.
     nonisolated func adoptUserToolPath() async {
         let environment = ProcessInfo.processInfo.environment
-        guard environment["SUKIRU_HOME"] == nil else { return }
-        let entries = { (path: String?) in (path ?? "").split(separator: ":").map(String.init) }
         let toolchain = NodeToolchain(home: NSHomeDirectory())
-        let path = NodeToolchain.searchPath([
-            entries(LoginShell.path()), entries(environment["PATH"]),
-            toolchain.managerBinDirectories()
-        ])
-        let managers = toolchain.installedManagers(searchPath: path)
+        let entries = { (path: String?) in (path ?? "").split(separator: ":").map(String.init) }
+        let isFixture = environment["SUKIRU_HOME"] != nil
+        let path =
+            isFixture
+            ? environment["PATH"] ?? ""
+            : NodeToolchain.searchPath([
+                entries(LoginShell.path()), entries(environment["PATH"]),
+                toolchain.managerBinDirectories()
+            ])
+        let managers = isFixture ? [] : toolchain.installedManagers(searchPath: path)
+        var locations: [InstallerTool: String] = [:]
+        for tool in InstallerTool.allCases {
+            locations[tool] = entries(path).map { "\($0)/\(tool.executable)" }
+                .first { FileManager.default.isExecutableFile(atPath: $0) }
+        }
         await MainActor.run {
-            setenv("PATH", path, 1)
+            if !isFixture { setenv("PATH", path, 1) }
             self.nodeManagers = managers
+            self.installedPaths = locations
         }
     }
 
-    /// Where `tool` resolves on PATH, or nil when it is not installed.
+    /// Where `tool` resolves on PATH, or nil when it is not installed, as of
+    /// the last installer check.
     func installedPath(of tool: InstallerTool) -> String? {
-        let path = ProcessInfo.processInfo.environment["PATH"] ?? ""
-        return path.split(separator: ":")
-            .map { "\($0)/\(tool.executable)" }
-            .first { FileManager.default.isExecutableFile(atPath: $0) }
+        installedPaths[tool]
     }
 
     /// Homebrew can only update the copies it installed.

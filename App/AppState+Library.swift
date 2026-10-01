@@ -87,8 +87,20 @@ extension AppState {
     /// The previewable `SKILL.md` for a skill: the first placement (the
     /// report's canonical-first ordering) whose SKILL.md is actually on
     /// disk. Broken-symlink placements whose file vanished are skipped —
-    /// Quick Look of a missing file would show an empty panel.
+    /// Quick Look of a missing file would show an empty panel. Resolved once
+    /// per report: views and menu validation ask on every render.
     func skillMarkdownURL(for skill: Skill) -> URL? {
+        if derived.markdownURLs?.reportRevision != reportRevision {
+            derived.markdownURLs = (reportRevision, [:])
+        }
+        let id = Self.skillID(skill)
+        if let cached = derived.markdownURLs?.urls[id] { return cached }
+        let url = Self.locateMarkdown(of: skill)
+        derived.markdownURLs?.urls[id] = .some(url)
+        return url
+    }
+
+    private static func locateMarkdown(of skill: Skill) -> URL? {
         for placement in skill.placements {
             let url = URL(fileURLWithPath: placement.path)
                 .appendingPathComponent("SKILL.md", isDirectory: false)
@@ -113,5 +125,18 @@ extension AppState {
     /// selected skill with a previewable SKILL.md on disk).
     func canQuickLookSelectedSkill() -> Bool {
         selectedSkill().flatMap { skillMarkdownURL(for: $0) } != nil
+    }
+
+    /// The currently selected skill, if it still exists in the report.
+    func selectedSkill() -> Skill? {
+        guard let selectedSkillID else { return nil }
+        if derived.skillsByID?.reportRevision != reportRevision {
+            let skills = report?.skills ?? []
+            derived.skillsByID = (
+                reportRevision,
+                Dictionary(skills.map { (Self.skillID($0), $0) }) { first, _ in first }
+            )
+        }
+        return derived.skillsByID?.skills[selectedSkillID]
     }
 }

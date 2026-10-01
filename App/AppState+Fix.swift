@@ -15,15 +15,6 @@ extension AppState {
         var id: String { kind.rawValue }
     }
 
-    /// Visible findings grouped by problem kind, most actionable first;
-    /// notes come last.
-    func problemGroups() -> [ProblemGroup] {
-        let byKind = Dictionary(grouping: visibleHealthEntries()) { ProblemKind.of($0.finding) }
-        return ProblemKind.allCases.compactMap { kind in
-            byKind[kind].map { ProblemGroup(kind: kind, entries: $0) }
-        }
-    }
-
     /// The fix one click applies to a finding here: nil when the repair
     /// needs a choice, or needs `npx skills` and Node is missing.
     func oneClickFix(for finding: Finding) -> DecisionAction? {
@@ -45,10 +36,13 @@ extension AppState {
     /// confirmation instead of blocking the rest.
     func fix(_ entries: [FindingEntry]) {
         guard let report else { return }
-        let ids = FindingID.assignments(for: report.findings)
+        let ids = Dictionary(grouping: FindingID.assignments(for: report.findings)) {
+            FindingID.baseID(for: $0.finding)
+        }
         let decisions = entries.compactMap { entry -> DecisionEntry? in
             guard let action = oneClickFix(for: entry.finding),
-                let id = ids.first(where: { $0.finding == entry.finding })?.id
+                let id = ids[FindingID.baseID(for: entry.finding)]?
+                    .first(where: { $0.finding == entry.finding })?.id
             else { return nil }
             return DecisionEntry(findingID: id, action: action)
         }

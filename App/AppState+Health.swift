@@ -62,57 +62,78 @@ extension AppState {
     /// skill in its scope. A finding's workspace id is either the scope group
     /// itself or a host workspace nested under it.
     func focusedFindings(_ findings: [Finding]) -> [Finding] {
-        guard let focus = healthFocus else { return findings }
-        return findings.filter { finding in
-            guard finding.skillName == focus.skillName else { return false }
-            let workspaceID = finding.workspaceID
-            if workspaceID == focus.scopeGroup { return true }
-            if focus.scopeGroup == "user" && workspaceID.hasPrefix("host:") { return true }
-            return workspaceID.hasPrefix(focus.scopeGroup + "#")
-        }
+        guard healthFocus != nil else { return findings }
+        return findings.filter(isFocused)
+    }
+
+    private func isFocused(_ finding: Finding) -> Bool {
+        guard let focus = healthFocus else { return true }
+        guard finding.skillName == focus.skillName else { return false }
+        let workspaceID = finding.workspaceID
+        if workspaceID == focus.scopeGroup { return true }
+        if focus.scopeGroup == "user" && workspaceID.hasPrefix("host:") { return true }
+        return workspaceID.hasPrefix(focus.scopeGroup + "#")
     }
 
     // MARK: - Workspace filter
-
-    /// All findings with their report-wide indices, in report order.
-    func healthEntries() -> [FindingEntry] {
-        (report?.findings ?? []).enumerated().map {
-            FindingEntry(reportIndex: $0.offset, finding: $0.element)
-        }
-    }
 
     /// Finding entries after applying the skill focus AND the workspace
     /// filter. The workspace filter matches a finding's workspace id exactly
     /// (per-workspace filtering; the sum of per-workspace counts equals the
     /// total).
     func visibleHealthEntries() -> [FindingEntry] {
-        var entries = visibleHealthEntriesIgnoringWorkspaceFilter()
-        if let filter = healthWorkspaceFilter {
-            entries = entries.filter { $0.finding.workspaceID == filter }
-        }
-        return entries
+        healthModel.visible
     }
 
     /// Finding entries with only the skill focus applied — the "All"
     /// workspace filter option's count.
     func visibleHealthEntriesIgnoringWorkspaceFilter() -> [FindingEntry] {
-        let entries = healthEntries()
-        guard healthFocus != nil else { return entries }
-        return entries.filter { entry in
-            focusedFindings([entry.finding]).isEmpty == false
-        }
+        healthModel.focused
     }
 
     /// The workspaces the filter offers, in report order, each with its
     /// (focus-aware) finding count so a zero-finding workspace is visible
     /// and selectable.
     func workspaceFilterOptions() -> [(workspace: Workspace, count: Int)] {
-        guard let report else { return [] }
-        let focused = focusedFindings(report.findings)
-        return report.workspaces.map { workspace in
-            let count = focused.filter { $0.workspaceID == workspace.id }.count
-            return (workspace, count)
+        let counts = healthModel.countsByWorkspace
+        return (report?.workspaces ?? []).map { ($0, counts[$0.id, default: 0]) }
+    }
+
+    /// Visible findings grouped by problem kind, most actionable first;
+    /// notes come last.
+    func problemGroups() -> [ProblemGroup] {
+        healthModel.groups
+    }
+
+    /// The Health derivations for the current inputs, computed in one pass
+    /// and reused until the report, focus, filter, or project roots change.
+    private var healthModel: HealthModel {
+        let key = HealthModel.Key(
+            reportRevision: reportRevision, focus: healthFocus,
+            workspaceFilter: healthWorkspaceFilter, projectRoots: projectRoots)
+        if let cached = derived.health, cached.key == key { return cached }
+        let entries = (report?.findings ?? []).enumerated().map {
+            FindingEntry(reportIndex: $0.offset, finding: $0.element)
         }
+        let focused = healthFocus == nil ? entries : entries.filter { isFocused($0.finding) }
+        let visible =
+            healthWorkspaceFilter.map { filter in
+                focused.filter { $0.finding.workspaceID == filter }
+            } ?? focused
+        let byKind = Dictionary(grouping: visible) { ProblemKind.of($0.finding) }
+        let model = HealthModel(
+            key: key,
+            focused: focused,
+            visible: visible,
+            groups: ProblemKind.allCases.compactMap { kind in
+                byKind[kind].map { ProblemGroup(kind: kind, entries: $0) }
+            },
+            countsByWorkspace: focused.reduce(into: [:]) {
+                $0[$1.finding.workspaceID, default: 0] += 1
+            },
+            issues: computeVisibleIssues())
+        derived.health = model
+        return model
     }
 
     /// Cycles the workspace filter across "All" (nil) plus every workspace
@@ -144,6 +165,10 @@ extension AppState {
     /// focused skill show — an unrelated issue must never read as a stale
     /// finding for the focused skill.
     func visibleIssues() -> [Issue] {
+        healthModel.issues
+    }
+
+    private func computeVisibleIssues() -> [Issue] {
         guard let report else { return [] }
         var issues = report.issues
         if let focus = healthFocus {
@@ -178,9 +203,23 @@ extension AppState {
     /// finding's workspace, so a same-named skill in another workspace is
     /// never selected by mistake.
     func skill(matching finding: Finding) -> Skill? {
-        guard let report, let name = finding.skillName else { return nil }
+        guard let name = finding.skillName else { return nil }
         let group = Self.scopeGroup(ofWorkspaceID: finding.workspaceID)
-        return report.skills.first { $0.name == name && scopeGroup(for: $0) == group }
+        return skillIndex[SkillIndex.key(name: name, scopeGroup: group)]
+    }
+
+    /// Skills by name and scope group (first in report order wins), rebuilt
+    /// only when the report or project roots change.
+    private var skillIndex: [String: Skill] {
+        let key = SkillIndex.Key(reportRevision: reportRevision, projectRoots: projectRoots)
+        if let cached = derived.skills, cached.key == key { return cached.skills }
+        var skills: [String: Skill] = [:]
+        for skill in report?.skills ?? [] {
+            let indexKey = SkillIndex.key(name: skill.name, scopeGroup: scopeGroup(for: skill))
+            if skills[indexKey] == nil { skills[indexKey] = skill }
+        }
+        derived.skills = SkillIndex(key: key, skills: skills)
+        return skills
     }
 
     /// Maps a finding's workspace id to its ownership-bucket scope group
