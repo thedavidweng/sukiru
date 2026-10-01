@@ -67,15 +67,16 @@ extension AppState {
         }
     }
 
-    /// Info-level findings (for example a skill shared by several hosts)
-    /// describe the library rather than ask for a fix, so they never flag a
-    /// skill or count toward the Health badge.
+    /// Notes (a skill shared by several hosts, the name-based removal
+    /// advisory) describe the library rather than ask for a fix, so they
+    /// never flag a skill or count toward the Health badge — the same
+    /// problem definition Health counts by.
     func needsAttention(_ skill: Skill) -> Bool {
-        findings(for: skill).contains { $0.severity != .info }
+        findings(for: skill).contains { ProblemKind.of($0).isProblem }
     }
 
     var attentionFindingCount: Int {
-        report?.findings.filter { $0.severity != .info }.count ?? 0
+        report?.findings.filter { ProblemKind.of($0).isProblem }.count ?? 0
     }
 
     func revealInFinder(_ paths: [String]) {

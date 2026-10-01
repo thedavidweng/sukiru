@@ -93,6 +93,10 @@ extension CommandConsequence {
             return String(localized: "consequence.replacesCopiesWithSharedLinks")
         case .removesOnlyStaleLockEntry(let skill):
             return String(localized: "consequence.removesOnlyStaleLockEntry \(skill)")
+        case .restoresSharedCopy(let paths):
+            return String(localized: "consequence.restoresSharedCopy \(Self.list(paths))")
+        case .removesLockedSkill(let skill, let paths):
+            return String(localized: "consequence.removesLockedSkill \(skill) \(Self.list(paths))")
         case .entersVercelLedger:
             return String(localized: "consequence.entersVercelLedger")
         case .writesGitHubProvenance(let agent, let pinRef):
@@ -102,5 +106,9 @@ extension CommandConsequence {
             }
             return String(localized: "consequence.writesGitHubProvenance \(agent)")
         }
+    }
+
+    private static func list(_ paths: [String]) -> String {
+        paths.map { ($0 as NSString).abbreviatingWithTildeInPath }.formatted(.list(type: .and))
     }
 }

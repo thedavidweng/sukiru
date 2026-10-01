@@ -80,8 +80,9 @@ struct SearchView: View {
         HStack(spacing: 6) {
             AXToken(token: "sukiru.search.backend")
             Picker("Backend", selection: $state.searchBackend) {
-                Text("skills.sh").tag(SkillSearchResult.Backend.skillsDotSh)
-                Text("gh skill").tag(SkillSearchResult.Backend.github)
+                ForEach(SkillSearchResult.Backend.allCases, id: \.self) { backend in
+                    Text(backend.title).tag(backend)
+                }
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -194,7 +195,7 @@ struct SearchView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Text(result.backend.rawValue)
+                Text(result.backend.title)
                     .font(.caption.weight(.medium))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 1)
@@ -294,5 +295,15 @@ struct SearchResultRow: View {
             }
         }
         .padding(.vertical, 2)
+    }
+}
+
+extension SkillSearchResult.Backend {
+    /// The picker label, reused as the result's source badge.
+    var title: LocalizedStringKey {
+        switch self {
+        case .skillsDotSh: "skills.sh"
+        case .github: "gh skill"
+        }
     }
 }

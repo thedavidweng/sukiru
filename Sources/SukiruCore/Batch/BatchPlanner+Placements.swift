@@ -169,6 +169,12 @@ extension CommandBatchBuilder {
 
     // MARK: - Vercel adoption
 
+    func noDirectoryPlacements(skill: Skill, entry: DecisionEntry) -> DecisionProblem {
+        DecisionProblem(
+            message: "skill '\(skill.name)' (finding '\(entry.findingID)') has no "
+                + "directory placements to act on")
+    }
+
     func requireOwnerless(skill: Skill, entry: DecisionEntry) throws {
         guard skill.ownership == .ownerless else {
             throw DecisionProblem(
@@ -204,6 +210,71 @@ extension CommandBatchBuilder {
                 consequence: .replacesCopiesWithSharedLinks,
                 workingDirectory: projectRoot(of: finding))
         ]
+    }
+
+    // MARK: - missing shared copy
+
+    /// Restores a locked skill's shared copy from the lock's source. The
+    /// re-install targets the agents still holding the skill, so their
+    /// copies and foreign links become links to the restored copy, as the
+    /// lock describes.
+    func restoreSharedCopy(
+        _ skill: Skill, entry: DecisionEntry, finding: Finding, report: ScanReport
+    ) throws -> [BatchCommand] {
+        let source = try recordedVercelSource(skill: skill, entry: entry)
+        let reachable = Self.cliReachable(skill: skill, report: report)
+        guard !reachable.isEmpty else {
+            throw DecisionProblem(
+                message: "cannot reinstall '\(skill.name)': no placement lies directly in a "
+                    + "skills folder the CLI installs into")
+        }
+        let agents = Set(reachable.map { Self.host(of: $0.workspace) })
+        return [
+            BatchCommandFactory.vercelReinstall(
+                name: skill.name, source: source, scope: skill.scope, agents: agents.sorted(),
+                intent: "Restore the shared copy of '\(skill.name)' (finding "
+                    + "\(finding.ruleID)): re-install it from the lock's recorded source.",
+                consequence: .restoresSharedCopy(replacing: reachable.map(\.path)),
+                workingDirectory: projectRoot(of: finding))
+        ]
+    }
+
+    /// Removes a locked skill whose shared copy is gone: the lock entry and
+    /// every placement the CLI reaches, agent-made copies included.
+    func removeLockedSkill(
+        entry: DecisionEntry, finding: Finding, report: ScanReport
+    ) throws -> [BatchCommand] {
+        let skill = try resolveSkill(entry: entry, finding: finding, report: report)
+        guard skill.ownership == .vercel, !skill.ambiguous else {
+            throw DecisionProblem(
+                message: "skill '\(skill.name)' (finding '\(entry.findingID)') is not owned "
+                    + "by the Vercel ledger alone; choose leave")
+        }
+        let paths = Self.cliReachable(skill: skill, report: report).map(\.path)
+        return [
+            BatchCommandFactory.vercelRemove(
+                name: skill.name, scope: skill.scope, finding: finding, atRisk: [],
+                intent: "Remove '\(skill.name)' (finding \(finding.ruleID)): its shared copy "
+                    + "is gone; drop the lock entry and the copies agents still hold.",
+                consequence: .removesLockedSkill(skill: skill.name, deleting: paths),
+                workingDirectory: projectRoot(of: finding))
+        ]
+    }
+
+    /// The skill's live placements `npx skills` acts on: those directly in a
+    /// scanned skills folder. A copy an agent files deeper (Hermes's
+    /// `<root>/<category>/<name>`) is outside `<root>/<name>` and untouched.
+    private static func cliReachable(
+        skill: Skill, report: ScanReport
+    ) -> [(path: String, workspace: Workspace)] {
+        skill.placements.compactMap { placement in
+            guard placement.kind != .brokenSymlink,
+                let workspace = report.workspaces.first(where: {
+                    $0.root == parentDir(placement.path)
+                })
+            else { return nil }
+            return (placement.path, workspace)
+        }
     }
 
     /// The host id lending a workspace its id; the scope's shared store

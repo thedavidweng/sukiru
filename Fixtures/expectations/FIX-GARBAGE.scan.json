@@ -19,42 +19,6 @@
     {
       "evidence" : [
         {
-          "detail" : "inner",
-          "kind" : "skillName"
-        },
-        {
-          "detail" : "<FIXTURE>/.agents/skills/locked-dir/inner",
-          "kind" : "placementPath"
-        },
-        {
-          "detail" : "ownerless",
-          "kind" : "ownership"
-        }
-      ],
-      "ruleID" : "dangerous-removal-surface",
-      "severity" : "action",
-      "skillName" : "inner",
-      "workspaceID" : "user"
-    },
-    {
-      "evidence" : [
-        {
-          "detail" : "rotted",
-          "kind" : "skillName"
-        },
-        {
-          "detail" : "ownerless",
-          "kind" : "ownership"
-        }
-      ],
-      "ruleID" : "dangerous-removal-surface",
-      "severity" : "action",
-      "skillName" : "rotted",
-      "workspaceID" : "user"
-    },
-    {
-      "evidence" : [
-        {
           "detail" : "survivor",
           "kind" : "skillName"
         },

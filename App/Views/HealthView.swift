@@ -89,12 +89,14 @@ struct HealthView: View {
     private var loadedState: some View {
         VStack(spacing: 0) {
             header
-            if let focus = state.healthFocus {
-                Divider()
-                HealthFocusBanner(focus: focus)
-            }
             Divider()
-            HealthFilterBar()
+            // A focused skill lives in one scope, so the workspace filter
+            // would only repeat the banner's count.
+            if let focus = state.healthFocus {
+                HealthFocusBanner(focus: focus)
+            } else {
+                HealthFilterBar()
+            }
             Divider()
             findingsList
         }
@@ -248,7 +250,9 @@ struct HealthView: View {
 }
 
 /// One problem kind: a plain-language explanation, a Fix button for every
-/// one-click repair in the section, and its rows. Notes start collapsed.
+/// one-click repair in the section, and its rows. Notes start collapsed,
+/// except while focused on one skill, where every finding is what was asked
+/// for.
 private struct ProblemSection: View {
     @EnvironmentObject private var state: AppState
     let group: AppState.ProblemGroup
@@ -257,7 +261,7 @@ private struct ProblemSection: View {
 
     private var isExpanded: Binding<Bool> {
         Binding(
-            get: { expanded ?? group.kind.isProblem },
+            get: { expanded ?? (group.kind.isProblem || state.healthFocus != nil) },
             set: { expanded = $0 })
     }
 

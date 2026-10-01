@@ -33,10 +33,13 @@ struct FindingRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(verbatim: subject)
                         .font(.callout.weight(.medium))
+                    Text(verbatim: finding.title)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     if let location {
                         Text(verbatim: location)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.tertiary)
                             .lineLimit(1)
                             .truncationMode(.middle)
                             .help(location)
@@ -47,11 +50,19 @@ struct FindingRow: View {
                     Button {
                         state.fix([row.entry])
                     } label: {
-                        Text(fix.fixLabel)
+                        Text(fix.title)
                     }
                     .controlSize(.small)
                     .disabled(state.batchMutationInFlight)
                     .axButtonToken("\(row.token).oneClickFix")
+                }
+                if ProblemKind.of(finding) == .missingSharedCopy {
+                    Button("Choose Repair…") {
+                        state.beginRepair(for: finding)
+                    }
+                    .controlSize(.small)
+                    .disabled(state.batchMutationInFlight)
+                    .axButtonToken("\(row.token).chooseRepair")
                 }
                 if let orphan {
                     Button("Find Source…") {
@@ -67,13 +78,18 @@ struct FindingRow: View {
                             state.revealInLibrary(for: finding)
                         }
                         .axButtonToken("\(row.token).reveal")
-                        Button("Other Repairs…") {
-                            // Repair entry point: deep-links into
-                            // Pending Changes with this finding's decision
-                            // panel open.
-                            state.beginRepair(for: finding)
+                        // Hidden when Leave As-Is is the only choice (an
+                        // agent-managed skill): the panel would offer nothing.
+                        if state.repairOptions(for: finding).contains(where: { $0.action != .leave }
+                        ) {
+                            Button("Other Repairs…") {
+                                // Repair entry point: deep-links into
+                                // Pending Changes with this finding's decision
+                                // panel open.
+                                state.beginRepair(for: finding)
+                            }
+                            .axButtonToken("\(row.token).fix")
                         }
-                        .axButtonToken("\(row.token).fix")
                         if let orphan {
                             Divider()
                             Button("Delete Skill…", role: .destructive) {
@@ -110,19 +126,21 @@ struct FindingRow: View {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         severityTag
-                        Text(verbatim: "\(finding.ruleID) · \(finding.workspaceID)")
+                        Text(verbatim: finding.ruleID)
                             .font(.caption.monospaced())
                             .foregroundStyle(.tertiary)
+                            .help("Rule identifier")
                     }
-                    if finding.ruleID == "dangerous-removal-surface" {
-                        Text(dangerAdvisory)
+                    if let caution = finding.removalCaution {
+                        Text(verbatim: caution)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .textSelection(.enabled)
                     }
                     ForEach(Array(finding.evidence.enumerated()), id: \.offset) { pair in
                         let label = EvidencePresentation.label(forKind: pair.element.kind)
-                        Text("evidence.line \(label) \(pair.element.detail)")
+                        let detail = EvidencePresentation.detail(of: pair.element)
+                        Text("evidence.line \(label) \(detail)")
                             .font(.caption.monospaced())
                             .foregroundStyle(.secondary)
                             .textSelection(.enabled)
@@ -170,19 +188,8 @@ struct FindingRow: View {
         return (path as NSString).abbreviatingWithTildeInPath
     }
 
-    /// The Finding model has no message field, so the
-    /// dangerous-removal-surface blast radius is spelled out at the view
-    /// layer — naming the at-risk skill and stating that
-    /// `npx skills remove <name>` would delete it by name across ownership.
-    /// The scan's own evidence lines (skillName/placementPath/ownership)
-    /// render unchanged below it.
-    private var dangerAdvisory: String {
-        let name = finding.skillName ?? finding.ruleID
-        return String(localized: "danger.removal.advisory \(name) \(name)")
-    }
-
     private var severityTag: some View {
-        Text(finding.severity.title)
+        Text(finding.displaySeverity.title)
             .font(.caption.weight(.medium))
             .padding(.horizontal, 6)
             .padding(.vertical, 1)
@@ -191,7 +198,7 @@ struct FindingRow: View {
     }
 
     private var severityColor: Color {
-        switch finding.severity {
+        switch finding.displaySeverity {
         case .action: .red
         case .warning: .orange
         case .info: .blue

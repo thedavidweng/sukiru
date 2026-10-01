@@ -2,6 +2,7 @@
   "sourceLanguage" : "en",
   "strings" : {
     "%@ (%@)" : {
+      "comment" : "A skill and its owner, e.g. \"pdf (GitHub)\".",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -9,8 +10,7 @@
             "value" : "%1$@（%2$@）"
           }
         }
-      },
-      "comment" : "A skill and its owner, e.g. \"pdf (GitHub)\"."
+      }
     },
     "%@ (%lld)" : {
       "shouldTranslate" : false
@@ -137,6 +137,7 @@
       }
     },
     "Action Needed" : {
+      "comment" : "Finding severity tag.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -144,10 +145,10 @@
             "value" : "需处理"
           }
         }
-      },
-      "comment" : "Finding severity tag."
+      }
     },
     "Actual hash" : {
+      "comment" : "Finding evidence label.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -155,8 +156,7 @@
             "value" : "实际哈希"
           }
         }
-      },
-      "comment" : "Finding evidence label."
+      }
     },
     "Add" : {
       "comment" : "Folder-picker confirm button for adding a project root.",
@@ -255,6 +255,7 @@
       }
     },
     "Agent folder" : {
+      "comment" : "Finding evidence label.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -262,8 +263,7 @@
             "value" : "智能体文件夹"
           }
         }
-      },
-      "comment" : "Finding evidence label."
+      }
     },
     "Agent target" : {
       "comment" : "Install sheet: gh --agent field label.",
@@ -422,6 +422,7 @@
       }
     },
     "Broken link" : {
+      "comment" : "Scan issue title.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -429,8 +430,7 @@
             "value" : "失效链接"
           }
         }
-      },
-      "comment" : "Scan issue title."
+      }
     },
     "Broken symbolic link" : {
       "localizations" : {
@@ -448,6 +448,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
+          }
+        }
+      }
+    },
+    "Changed since it was installed" : {
+      "comment" : "Health finding title: a project skill whose content no longer matches its lock hash.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装后内容已变化"
           }
         }
       }
@@ -495,12 +506,13 @@
         }
       }
     },
-    "Choose Surviving Ledger…" : {
+    "Choose Repair…" : {
+      "comment" : "Health finding button: opens the repair choices for this finding.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "选择保留的账本…"
+            "value" : "选择修复方式…"
           }
         }
       }
@@ -515,12 +527,13 @@
         }
       }
     },
-    "Clean Up" : {
+    "Claimed by two installers" : {
+      "comment" : "Health finding title: both the Vercel lock and GitHub frontmatter claim this skill.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "清理"
+            "value" : "被两个安装器同时认领"
           }
         }
       }
@@ -558,6 +571,7 @@
       }
     },
     "Conflicting copy" : {
+      "comment" : "Finding evidence label: a copy that conflicts with the linked skill.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -565,8 +579,7 @@
             "value" : "冲突副本"
           }
         }
-      },
-      "comment" : "Finding evidence label: a copy that conflicts with the linked skill."
+      }
     },
     "Conflicting owners" : {
       "localizations" : {
@@ -579,6 +592,7 @@
       }
     },
     "Content hash" : {
+      "comment" : "Finding evidence label.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -586,8 +600,29 @@
             "value" : "内容哈希"
           }
         }
-      },
-      "comment" : "Finding evidence label."
+      }
+    },
+    "Copies differ from the shared copy" : {
+      "comment" : "Health finding title: agent copies whose content differs from the lock's shared copy.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "副本与共享副本不一致"
+          }
+        }
+      }
+    },
+    "Copies disagree" : {
+      "comment" : "Health finding title: several agents hold copies whose content differs.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "副本内容不一致"
+          }
+        }
+      }
     },
     "Copies instead of links" : {
       "localizations" : {
@@ -610,6 +645,7 @@
       }
     },
     "Copy" : {
+      "comment" : "Finding evidence label: one copy of the skill (noun).",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -617,8 +653,18 @@
             "value" : "副本"
           }
         }
-      },
-      "comment" : "Finding evidence label: one copy of the skill (noun)."
+      }
+    },
+    "Copy where a link belongs" : {
+      "comment" : "Health finding title: a physical copy where a link into the shared store belongs.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "应为链接却是副本"
+          }
+        }
+      }
     },
     "Could not read SKILL.md" : {
       "localizations" : {
@@ -637,6 +683,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法恢复"
+          }
+        }
+      }
+    },
+    "Dead link" : {
+      "comment" : "Health finding title: a symlink whose target is gone.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "失效链接"
           }
         }
       }
@@ -662,6 +719,7 @@
       }
     },
     "Delete the folder %@" : {
+      "comment" : "Direct file operation in a batch: the folder path.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -669,10 +727,10 @@
             "value" : "删除文件夹 %@"
           }
         }
-      },
-      "comment" : "Direct file operation in a batch: the folder path."
+      }
     },
     "Delete the link %@" : {
+      "comment" : "Direct file operation in a batch: the link path.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -680,8 +738,7 @@
             "value" : "删除链接 %@"
           }
         }
-      },
-      "comment" : "Direct file operation in a batch: the link path."
+      }
     },
     "Delete…" : {
       "localizations" : {
@@ -689,6 +746,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除…"
+          }
+        }
+      }
+    },
+    "Different skills share this name" : {
+      "comment" : "Health finding title: distinct copies of one name disagree, so ownership is ambiguous.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不同技能使用了同一名称"
           }
         }
       }
@@ -810,6 +878,7 @@
       }
     },
     "Expected hash" : {
+      "comment" : "Finding evidence label.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -817,8 +886,7 @@
             "value" : "预期哈希"
           }
         }
-      },
-      "comment" : "Finding evidence label."
+      }
     },
     "Failed" : {
       "localizations" : {
@@ -831,6 +899,7 @@
       }
     },
     "File added" : {
+      "comment" : "Post-run diff entry.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -838,10 +907,10 @@
             "value" : "已添加文件"
           }
         }
-      },
-      "comment" : "Post-run diff entry."
+      }
     },
     "File changed" : {
+      "comment" : "Post-run diff entry.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -849,10 +918,10 @@
             "value" : "已更改文件"
           }
         }
-      },
-      "comment" : "Post-run diff entry."
+      }
     },
     "File removed" : {
+      "comment" : "Post-run diff entry.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -860,8 +929,7 @@
             "value" : "已移除文件"
           }
         }
-      },
-      "comment" : "Post-run diff entry."
+      }
     },
     "Filter skills" : {
       "localizations" : {
@@ -962,6 +1030,7 @@
       }
     },
     "Found version" : {
+      "comment" : "Finding evidence label.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -969,8 +1038,7 @@
             "value" : "检测到的版本"
           }
         }
-      },
-      "comment" : "Finding evidence label."
+      }
     },
     "General" : {
       "comment" : "Settings tab for app-wide preferences.",
@@ -1017,6 +1085,7 @@
       }
     },
     "GitHub repository" : {
+      "comment" : "Finding evidence label.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1024,8 +1093,7 @@
             "value" : "GitHub 仓库"
           }
         }
-      },
-      "comment" : "Finding evidence label."
+      }
     },
     "Health" : {
       "comment" : "Sidebar surface and menu title.",
@@ -1060,7 +1128,19 @@
         }
       }
     },
+    "Identical copies instead of links" : {
+      "comment" : "Health finding title: several agents hold identical copies instead of links.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "相同副本而非链接"
+          }
+        }
+      }
+    },
     "Info" : {
+      "comment" : "Finding severity tag.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1068,8 +1148,7 @@
             "value" : "信息"
           }
         }
-      },
-      "comment" : "Finding severity tag."
+      }
     },
     "Install" : {
       "comment" : "Settings > Installers: install the CLI with Homebrew.",
@@ -1181,6 +1260,7 @@
       }
     },
     "Invalid SKILL.md" : {
+      "comment" : "Scan issue title.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1188,8 +1268,7 @@
             "value" : "无效的 SKILL.md"
           }
         }
-      },
-      "comment" : "Scan issue title."
+      }
     },
     "Issues (%lld)" : {
       "comment" : "Health issues section header with count.",
@@ -1223,6 +1302,7 @@
       }
     },
     "Kind" : {
+      "comment" : "Finding evidence label.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1230,8 +1310,7 @@
             "value" : "类型"
           }
         }
-      },
-      "comment" : "Finding evidence label."
+      }
     },
     "Language" : {
       "comment" : "Settings picker that chooses the app's display language.",
@@ -1261,6 +1340,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "残留（喷洒残留，并非安装）"
+          }
+        }
+      }
+    },
+    "Leftover folder of an uninstalled agent" : {
+      "comment" : "Health finding title: a skills folder left for an agent that is not installed.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未安装智能体的残留文件夹"
           }
         }
       }
@@ -1299,6 +1389,7 @@
       }
     },
     "Link" : {
+      "comment" : "Finding evidence label (noun).",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1306,8 +1397,7 @@
             "value" : "链接"
           }
         }
-      },
-      "comment" : "Finding evidence label (noun)."
+      }
     },
     "Link %@ to %@" : {
       "comment" : "Direct file operation: the first path becomes a link to the second.",
@@ -1320,7 +1410,19 @@
         }
       }
     },
+    "Link into a versioned folder" : {
+      "comment" : "Health finding title: a link whose target path contains a version folder that an update may remove.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "链接指向带版本号的文件夹"
+          }
+        }
+      }
+    },
     "Link target" : {
+      "comment" : "Finding evidence label.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1328,8 +1430,7 @@
             "value" : "链接目标"
           }
         }
-      },
-      "comment" : "Finding evidence label."
+      }
     },
     "Link to Shared Copy" : {
       "localizations" : {
@@ -1385,6 +1486,7 @@
       }
     },
     "Location" : {
+      "comment" : "Finding evidence label.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1392,8 +1494,7 @@
             "value" : "位置"
           }
         }
-      },
-      "comment" : "Finding evidence label."
+      }
     },
     "Locations" : {
       "localizations" : {
@@ -1406,6 +1507,7 @@
       }
     },
     "Lock entry" : {
+      "comment" : "Finding evidence label.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1413,10 +1515,10 @@
             "value" : "锁文件条目"
           }
         }
-      },
-      "comment" : "Finding evidence label."
+      }
     },
     "Lock entry added" : {
+      "comment" : "Post-run diff entry.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1424,10 +1526,10 @@
             "value" : "已添加锁文件条目"
           }
         }
-      },
-      "comment" : "Post-run diff entry."
+      }
     },
     "Lock entry changed" : {
+      "comment" : "Post-run diff entry.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1435,10 +1537,10 @@
             "value" : "已更改锁文件条目"
           }
         }
-      },
-      "comment" : "Post-run diff entry."
+      }
     },
     "Lock entry removed" : {
+      "comment" : "Post-run diff entry.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1446,10 +1548,21 @@
             "value" : "已移除锁文件条目"
           }
         }
-      },
-      "comment" : "Post-run diff entry."
+      }
+    },
+    "Lock entry without a skill folder" : {
+      "comment" : "Health finding title: a lock entry whose skill folder is gone.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "锁文件条目没有对应的技能文件夹"
+          }
+        }
+      }
     },
     "Lock file" : {
+      "comment" : "Finding evidence label.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1457,8 +1570,7 @@
             "value" : "锁文件"
           }
         }
-      },
-      "comment" : "Finding evidence label."
+      }
     },
     "Lock from a newer installer" : {
       "localizations" : {
@@ -1593,6 +1705,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有任何宿主能看到此技能。"
+          }
+        }
+      }
+    },
+    "No known source" : {
+      "comment" : "Health finding title: no installer ledger records this skill.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "来源未知"
           }
         }
       }
@@ -2065,6 +2188,17 @@
         }
       }
     },
+    "Removable by name" : {
+      "comment" : "Health finding title (note): `npx skills remove <name>` would delete this skill although the Vercel CLI did not install it.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可被按名称删除"
+          }
+        }
+      }
+    },
     "Remove" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2161,6 +2295,7 @@
       }
     },
     "Replace the link %@ with a copy" : {
+      "comment" : "Direct file operation in a batch: the link path.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2168,8 +2303,7 @@
             "value" : "将链接 %@ 替换为副本"
           }
         }
-      },
-      "comment" : "Direct file operation in a batch: the link path."
+      }
     },
     "Replace the links with standalone copies" : {
       "localizations" : {
@@ -2213,6 +2347,7 @@
       }
     },
     "Resolved path" : {
+      "comment" : "Finding evidence label.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2220,8 +2355,7 @@
             "value" : "解析后路径"
           }
         }
-      },
-      "comment" : "Finding evidence label."
+      }
     },
     "Restored from snapshot" : {
       "comment" : "Rollback result: the path was restored from the batch's snapshot.",
@@ -2333,6 +2467,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已回滚"
+          }
+        }
+      }
+    },
+    "Rule identifier" : {
+      "comment" : "Tooltip on the technical rule id shown in an expanded Health finding.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规则标识符"
           }
         }
       }
@@ -2489,6 +2634,39 @@
         }
       }
     },
+    "Shared by several agents" : {
+      "comment" : "Health finding title (note): several agents link to one copy — the expected layout.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "由多个智能体共用"
+          }
+        }
+      }
+    },
+    "Shared copies are missing" : {
+      "comment" : "Health problem section title.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "共享副本缺失"
+          }
+        }
+      }
+    },
+    "Shared copy is missing" : {
+      "comment" : "Health finding title: the lock tracks a skill whose copy in the shared skills folder is gone, while agents still hold copies or links.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "共享副本缺失"
+          }
+        }
+      }
+    },
     "Show" : {
       "comment" : "Library filter menu section title (status).",
       "localizations" : {
@@ -2610,6 +2788,7 @@
       }
     },
     "Skill" : {
+      "comment" : "Finding evidence label.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2617,10 +2796,10 @@
             "value" : "技能"
           }
         }
-      },
-      "comment" : "Finding evidence label."
+      }
     },
     "Skill folder added" : {
+      "comment" : "Post-run diff entry.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2628,10 +2807,10 @@
             "value" : "已添加技能文件夹"
           }
         }
-      },
-      "comment" : "Post-run diff entry."
+      }
     },
     "Skill folder changed" : {
+      "comment" : "Post-run diff entry.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2639,10 +2818,10 @@
             "value" : "已更改技能文件夹"
           }
         }
-      },
-      "comment" : "Post-run diff entry."
+      }
     },
     "Skill folder removed" : {
+      "comment" : "Post-run diff entry.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2650,8 +2829,7 @@
             "value" : "已移除技能文件夹"
           }
         }
-      },
-      "comment" : "Post-run diff entry."
+      }
     },
     "Skills folder" : {
       "comment" : "Evidence label: a host's skills folder.",
@@ -2762,6 +2940,7 @@
       }
     },
     "Supported version" : {
+      "comment" : "Finding evidence label.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2769,8 +2948,7 @@
             "value" : "支持的版本"
           }
         }
-      },
-      "comment" : "Finding evidence label."
+      }
     },
     "Symbolic link" : {
       "localizations" : {
@@ -2903,6 +3081,7 @@
       }
     },
     "Unreadable SKILL.md" : {
+      "comment" : "Scan issue title.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2910,10 +3089,10 @@
             "value" : "无法读取的 SKILL.md"
           }
         }
-      },
-      "comment" : "Scan issue title."
+      }
     },
     "Unreadable folder" : {
+      "comment" : "Scan issue title.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2921,10 +3100,10 @@
             "value" : "无法读取的文件夹"
           }
         }
-      },
-      "comment" : "Scan issue title."
+      }
     },
     "Unreadable lock file" : {
+      "comment" : "Scan issue title.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2932,10 +3111,10 @@
             "value" : "无法读取的锁文件"
           }
         }
-      },
-      "comment" : "Scan issue title."
+      }
     },
     "Unreadable skill content" : {
+      "comment" : "Scan issue title.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2943,10 +3122,10 @@
             "value" : "无法读取的技能内容"
           }
         }
-      },
-      "comment" : "Scan issue title."
+      }
     },
     "Unresolvable path" : {
+      "comment" : "Scan issue title.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2954,10 +3133,10 @@
             "value" : "无法解析的路径"
           }
         }
-      },
-      "comment" : "Scan issue title."
+      }
     },
     "Unsupported lock file version" : {
+      "comment" : "Scan issue title.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2965,8 +3144,7 @@
             "value" : "不支持的锁文件版本"
           }
         }
-      },
-      "comment" : "Scan issue title."
+      }
     },
     "Update" : {
       "comment" : "Settings > Installers: update a CLI (Homebrew for gh/Node.js, npx for the skills CLI).",
@@ -2986,16 +3164,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用 npx 将 skills CLI 更新到最新版本"
-          }
-        }
-      }
-    },
-    "Update via Owning CLI" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "通过所属 CLI 更新"
           }
         }
       }
@@ -3097,6 +3265,7 @@
       }
     },
     "Warning" : {
+      "comment" : "Finding severity tag.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -3104,8 +3273,7 @@
             "value" : "警告"
           }
         }
-      },
-      "comment" : "Finding severity tag."
+      }
     },
     "Working…" : {
       "localizations" : {
@@ -3124,17 +3292,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "工作区"
-          }
-        }
-      }
-    },
-    "action" : {
-      "comment" : "Finding severity tag (D3 vocabulary).",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "需处理"
           }
         }
       }
@@ -3434,6 +3591,7 @@
       }
     },
     "command.warning.deleteLink" : {
+      "comment" : "Batch review note for a direct link deletion.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3447,10 +3605,10 @@
             "value" : "Sukiru 将直接移除此链接，快照会保留它。"
           }
         }
-      },
-      "comment" : "Batch review note for a direct link deletion."
+      }
     },
     "command.warning.deleteOwnerless" : {
+      "comment" : "Batch review note for a direct folder deletion.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3464,10 +3622,10 @@
             "value" : "没有安装器管理此技能，因此 Sukiru 将直接删除其文件夹。删除前快照会保留完整副本。"
           }
         }
-      },
-      "comment" : "Batch review note for a direct folder deletion."
+      }
     },
     "command.warning.materialize" : {
+      "comment" : "Batch review note.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3481,10 +3639,10 @@
             "value" : "此链接将变为独立副本，之后对共享副本的更新不会再同步到它。"
           }
         }
-      },
-      "comment" : "Batch review note."
+      }
     },
     "command.warning.relink" : {
+      "comment" : "Batch review note.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3498,10 +3656,10 @@
             "value" : "此副本将变为指向共享副本的链接。"
           }
         }
-      },
-      "comment" : "Batch review note."
+      }
     },
     "command.warning.relinkDiverged" : {
+      "comment" : "Batch review note.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3515,10 +3673,10 @@
             "value" : "此副本将变为指向共享副本的链接。由于它与共享副本不同，其改动只会保留在快照中。"
           }
         }
-      },
-      "comment" : "Batch review note."
+      }
     },
     "command.warning.removeByName %@" : {
+      "comment" : "Batch review note. The argument is the skill name.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3532,10 +3690,10 @@
             "value" : "危险删除：npx skills remove 会删除此范围内所有名为“%@”的技能，无论由哪个安装器管理。此处未发现其他同名技能。"
           }
         }
-      },
-      "comment" : "Batch review note. The argument is the skill name."
+      }
     },
     "command.warning.removeByNameAtRisk %@" : {
+      "comment" : "Batch review note. The argument is the skill name.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3549,8 +3707,7 @@
             "value" : "危险删除：npx skills remove 会删除此范围内所有名为“%@”的技能，无论由哪个安装器管理，包括下方列出的技能。"
           }
         }
-      },
-      "comment" : "Batch review note. The argument is the skill name."
+      }
     },
     "command.warning.removeLeftover" : {
       "comment" : "Batch review note for removing a leftover agent folder.",
@@ -3587,6 +3744,7 @@
       }
     },
     "confirm.skipped.explanation" : {
+      "comment" : "Lead line above technical planner messages in the batch review sheet.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3600,8 +3758,7 @@
             "value" : "Sukiru 无法为以下项目规划安全的更改："
           }
         }
-      },
-      "comment" : "Lead line above technical planner messages in the batch review sheet."
+      }
     },
     "confirm.snapshot" : {
       "comment" : "Batch confirmation sheet.",
@@ -3621,6 +3778,7 @@
       }
     },
     "consequence.entersVercelLedger" : {
+      "comment" : "Batch review note for a new npx install.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3634,10 +3792,10 @@
             "value" : "npx skills 会将技能登记到 Vercel 锁文件中：主副本放在 .agents/skills，各智能体文件夹按 CLI 默认的智能体范围放置。"
           }
         }
-      },
-      "comment" : "Batch review note for a new npx install."
+      }
     },
     "consequence.mergeOverwritesCollidingFiles" : {
+      "comment" : "Batch review note.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3651,10 +3809,27 @@
             "value" : "如果上游内容与磁盘上的不同，多出的本地文件会保留，但同名文件会被覆盖。"
           }
         }
-      },
-      "comment" : "Batch review note."
+      }
+    },
+    "consequence.removesLockedSkill %@ %@" : {
+      "comment" : "Batch review note. The first argument is the skill name, the second a list of paths.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The lock entry for “%1$@” is removed and these are deleted, including copies an agent made itself: %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会移除“%1$@”的锁文件条目，并删除以下位置，包括智能体自己创建的副本：%2$@。"
+          }
+        }
+      }
     },
     "consequence.removesOnlyStaleLockEntry %@" : {
+      "comment" : "Batch review note. The argument is the skill name.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3668,10 +3843,10 @@
             "value" : "只会移除名为“%@”的锁文件条目和失效链接；此范围内不存在该名称的技能文件。"
           }
         }
-      },
-      "comment" : "Batch review note. The argument is the skill name."
+      }
     },
     "consequence.replacesCopiesWithSharedLinks" : {
+      "comment" : "Batch review note.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3685,10 +3860,10 @@
             "value" : "本地副本将被替换为指向共享技能文件夹中来源版本的链接，本地修改只会保留在快照中。"
           }
         }
-      },
-      "comment" : "Batch review note."
+      }
     },
     "consequence.resetsToGitHubRef" : {
+      "comment" : "Batch review note.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3702,10 +3877,10 @@
             "value" : "内容将重置为 gh 记录的版本，本地修改会丢失。"
           }
         }
-      },
-      "comment" : "Batch review note."
+      }
     },
     "consequence.resetsToUpstream" : {
+      "comment" : "Batch review note.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3719,10 +3894,10 @@
             "value" : "内容将重置为上游版本，本地修改会丢失。"
           }
         }
-      },
-      "comment" : "Batch review note."
+      }
     },
     "consequence.resetsToUpstreamErasingGitHubProvenance" : {
+      "comment" : "Batch review note.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3736,10 +3911,27 @@
             "value" : "内容将重置为上游版本，本地修改会丢失。重新安装还会移除 frontmatter 中的 GitHub 溯源信息。"
           }
         }
-      },
-      "comment" : "Batch review note."
+      }
+    },
+    "consequence.restoresSharedCopy %@" : {
+      "comment" : "Batch review note. The argument is a list of paths.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The shared copy is reinstalled from the lock's recorded source, and these become links to it (their current content survives only in the snapshot): %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会从锁文件记录的来源重新安装共享副本，以下位置将变成指向它的链接（它们现在的内容只保留在快照中）：%@。"
+          }
+        }
+      }
     },
     "consequence.writesGitHubProvenance %@" : {
+      "comment" : "Batch review note for a new gh install. The argument is the agent id.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3753,10 +3945,10 @@
             "value" : "gh 会将 GitHub 溯源信息写入技能的 frontmatter（metadata.github-*）。安装给智能体 %@；仅支持 GitHub 来源。"
           }
         }
-      },
-      "comment" : "Batch review note for a new gh install. The argument is the agent id."
+      }
     },
     "consequence.writesGitHubProvenancePinned %@ %@" : {
+      "comment" : "Batch review note for a pinned gh install: agent id, then the pinned ref.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3770,27 +3962,27 @@
             "value" : "gh 会将 GitHub 溯源信息写入技能的 frontmatter（metadata.github-*）。安装给智能体 %1$@，固定在 %2$@；仅支持 GitHub 来源。"
           }
         }
-      },
-      "comment" : "Batch review note for a pinned gh install: agent id, then the pinned ref."
+      }
     },
     "danger.removal.advisory %@ %@" : {
-      "comment" : "Health finding advisory for dangerous-removal-surface: at-risk skill name, repeated inside the removal command.",
+      "comment" : "Health/Library caution for a skill `npx skills remove` would delete by name: the skill name, repeated inside the command and as its object.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Danger: `npx skills remove %1$@` would delete %2$@ by name across ownership — the Vercel skills CLI removes every skill with this name, even ones it does not manage."
+            "value" : "Running `npx skills remove %1$@` would delete the folders listed below by name, although the Vercel skills CLI did not install %2$@. Remove it through its own installer instead."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "危险：`npx skills remove %1$@` 会按名称跨归属删除 %2$@ —— Vercel skills CLI 会移除所有同名技能，即使它并不管理该技能。"
+            "value" : "运行 `npx skills remove %1$@` 会按名称删除下面列出的文件夹，尽管 %2$@ 并不是 Vercel skills CLI 安装的。请改用它自己的安装方式来移除。"
           }
         }
       }
     },
     "error.batch.buildFailed" : {
+      "comment" : "Lead line above technical planner messages.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3804,10 +3996,10 @@
             "value" : "Sukiru 无法准备此更改："
           }
         }
-      },
-      "comment" : "Lead line above technical planner messages."
+      }
     },
     "error.batch.illegalTransition %@ %@" : {
+      "comment" : "Batch status names: current, then requested.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3821,8 +4013,7 @@
             "value" : "状态为“%1$@”的批次无法变为“%2$@”。"
           }
         }
-      },
-      "comment" : "Batch status names: current, then requested."
+      }
     },
     "error.execution.busy" : {
       "localizations" : {
@@ -3873,6 +4064,7 @@
       }
     },
     "error.install.malformedRepo %@" : {
+      "comment" : "The argument is the source the search result named.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3886,8 +4078,7 @@
             "value" : "“%@”不是 GitHub 的 owner/repo 格式，两个安装器都无法安装它。"
           }
         }
-      },
-      "comment" : "The argument is the source the search result named."
+      }
     },
     "error.install.missingGHAgent" : {
       "localizations" : {
@@ -3922,6 +4113,7 @@
       }
     },
     "error.marketplace.malformed %@" : {
+      "comment" : "The argument is a technical detail.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3935,10 +4127,10 @@
             "value" : "技能目录返回了 Sukiru 无法读取的响应。（%@）"
           }
         }
-      },
-      "comment" : "The argument is a technical detail."
+      }
     },
     "error.marketplace.transport %@" : {
+      "comment" : "The argument is a technical detail.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3952,8 +4144,7 @@
             "value" : "无法连接技能目录。（%@）"
           }
         }
-      },
-      "comment" : "The argument is a technical detail."
+      }
     },
     "error.rollback.alreadyRolledBack" : {
       "localizations" : {
@@ -4004,6 +4195,7 @@
       }
     },
     "error.snapshot.captureFailed %@" : {
+      "comment" : "The argument is a technical detail.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4017,8 +4209,7 @@
             "value" : "Sukiru 无法创建快照，因此未做任何更改。（%@）"
           }
         }
-      },
-      "comment" : "The argument is a technical detail."
+      }
     },
     "error.snapshot.unreadable" : {
       "localizations" : {
@@ -4037,6 +4228,7 @@
       }
     },
     "error.unexpected %@" : {
+      "comment" : "The argument is a technical description of the error.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4050,10 +4242,10 @@
             "value" : "出现问题。（%@）"
           }
         }
-      },
-      "comment" : "The argument is a technical description of the error."
+      }
     },
     "evidence.line %@ %@" : {
+      "comment" : "Finding evidence line: label, then the value (a path, hash, or name).",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4067,8 +4259,7 @@
             "value" : "%1$@：%2$@"
           }
         }
-      },
-      "comment" : "Finding evidence line: label, then the value (a path, hash, or name)."
+      }
     },
     "exit %d" : {
       "comment" : "Command exit code in a batch record; the number is the process exit status.",
@@ -4134,17 +4325,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "修复此项需要 skills CLI。请在“设置 > 安装器”中获取。"
-          }
-        }
-      }
-    },
-    "info" : {
-      "comment" : "Finding severity tag (D3 vocabulary).",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "信息"
           }
         }
       }
@@ -4218,6 +4398,7 @@
       }
     },
     "install.gh.agentNote %@" : {
+      "comment" : "Install sheet note. The argument is the agent id.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4231,8 +4412,7 @@
             "value" : "gh skill install --agent %@：技能的 GitHub 溯源会写入其 frontmatter。"
           }
         }
-      },
-      "comment" : "Install sheet note. The argument is the agent id."
+      }
     },
     "library.agentManaged %@" : {
       "comment" : "Library provenance for an agent-managed skill; the argument is the agent id.",
@@ -4467,19 +4647,36 @@
         }
       }
     },
+    "problem.missingSharedCopy.explanation" : {
+      "comment" : "Health problem explanation.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The lock file still tracks these skills, but the shared skills folder no longer holds them. Only an agent's own copy or a link into another folder is left, so updates no longer reach them. Reinstall restores the shared copy from the lock's recorded source and turns those copies into links to it; Remove deletes the lock entry along with those copies and links. Both take a snapshot first, so you can undo them."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "锁文件仍记录着这些技能，但共享技能文件夹里已没有它们的副本，只剩智能体自己的副本或指向别处的链接，所以更新不会再作用到它们。“重新安装”会从锁文件记录的来源恢复共享副本，并把这些副本换成指向它的链接；“移除”会删除锁文件条目以及这些副本和链接。两种操作执行前都会先拍快照，可以撤销。"
+          }
+        }
+      }
+    },
     "problem.note.explanation" : {
       "comment" : "Health problem explanation.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Expected layouts and standing advisories. Nothing here needs fixing."
+            "value" : "Expected layouts and things worth knowing before you remove a skill. Nothing here needs fixing."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "预期的目录布局与常规提示，无需修复。"
+            "value" : "预期的目录布局，以及删除技能前值得了解的情况。这里的内容无需修复。"
           }
         }
       }
@@ -4991,17 +5188,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未知"
-          }
-        }
-      }
-    },
-    "warning" : {
-      "comment" : "Finding severity tag (D3 vocabulary).",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "警告"
           }
         }
       }

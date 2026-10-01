@@ -473,7 +473,8 @@ Planted defects:
 - `.agents/skills/no-skill-md/` — dir without SKILL.md -> not a placement.
 - `.agents/skills/locked-dir/` — see prepare-runtime.sh: chmodded 000 at runtime
   to exercise the unreadable-dir path (issue naming the path). Its inner skill
-  survives once readable.
+  survives once readable; nested a level down, it is out of `npx skills
+  remove` reach and raises no `dangerous-removal-surface` advisory.
 
 Runtime note: git cannot store a chmod-000 directory; run
 `Scripts/fixtures/prepare-runtime.sh <FIXTURES_DIR>` before validators exercise
@@ -1869,8 +1870,9 @@ double-copied impostor.
 A correct scan MUST exit 0 and report:
 - a brokenSymlink placement `rotted` (null canonical path/hash) AND a
   `broken-symlink` finding (severity action) naming the link path and its
-  unreadable target — the link also surfaces as a `broken-symlink` ISSUE and,
-  being ownerless, a `dangerous-removal-surface` advisory;
+  unreadable target — the link also surfaces as a `broken-symlink` ISSUE (no
+  `dangerous-removal-surface` advisory: `npx skills remove` cannot match a
+  link without SKILL.md);
 - a `symlink-authenticity` finding (severity warning) naming the impostor path
   (`.claude/skills/tool`) and the canonical path it should link to;
 - an exact-subtype `cross-host-duplicate` (warning) for the two identical
@@ -1977,10 +1979,11 @@ One tree triggering several rules at once, with findings in BOTH scopes:
 
 Scan with SUKIRU_HOME=<this>/.home SUKIRU_ROOTS=<this>/proj.
 
-A correct scan MUST exit 0 with exactly these EIGHT findings: the five above
+A correct scan MUST exit 0 with exactly these SEVEN findings: the five above
 PLUS a `dangerous-removal-surface` advisory for each ownerless name
-(`user-orphan`, `proj-orphan`, `rotted-link`) — the advisory fires on
-gh-owned AND ownerless skills. Two severity levels render (action + info);
+(`user-orphan`, `proj-orphan`) — the advisory fires on gh-owned AND
+ownerless skills, but not on `rotted-link`: a dangling link holds no
+SKILL.md, so `npx skills remove` cannot match it. Two severity levels render (action + info);
 the dangling link additionally surfaces as a `broken-symlink` ISSUE. Each
 finding carries its rule's concrete evidence. Ownership: gh-owned=github,
 drifted=vercel, the two orphans and rotted-link=ownerless. The app drives

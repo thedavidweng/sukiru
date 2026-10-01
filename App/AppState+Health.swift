@@ -45,11 +45,13 @@ extension AppState {
     // MARK: - Deep-link: Library skill → Health findings
 
     /// Navigates to Health showing only the findings that implicate `skill`
-    /// (the "show findings" action). The workspace filter is cleared so the
-    /// focused list is never additionally narrowed by a stale selection.
+    /// (the "show findings" action), each with its evidence open. The
+    /// workspace filter is cleared so the focused list is never additionally
+    /// narrowed by a stale selection.
     func showFindings(for skill: Skill) {
         healthFocus = HealthFocus(skillName: skill.name, scopeGroup: scopeGroup(for: skill))
         healthWorkspaceFilter = nil
+        expandedFindings.formUnion(findingEntries(for: skill).map(\.id))
         surface = .health
     }
 

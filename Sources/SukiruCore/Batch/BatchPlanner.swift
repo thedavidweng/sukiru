@@ -123,6 +123,8 @@ extension CommandBatchBuilder {
                     + "choose adopt, cleanup, or leave")
         }
         switch skill.ownership {
+        case .vercel where finding.ruleID == MissingSharedCopyRule.ruleID:
+            return try restoreSharedCopy(skill, entry: entry, finding: finding, report: report)
         case .vercel:
             if finding.ruleID == "vercel-lock-drift" {
                 let source = try recordedVercelSource(skill: skill, entry: entry)
@@ -313,6 +315,8 @@ extension CommandBatchBuilder {
             return try deadLinkCommands(entry: entry, finding: finding)
         case LeftoverHostRule.ruleID:
             return try leftoverHostCommands(entry: entry, finding: finding)
+        case MissingSharedCopyRule.ruleID:
+            return try removeLockedSkill(entry: entry, finding: finding, report: report)
         default:
             break
         }
@@ -388,11 +392,5 @@ extension CommandBatchBuilder {
             message: "skill '\(skill.name)' (finding '\(entry.findingID)') is not "
                 + "double-booked (ownership: \(skill.ownership.rawValue)); 'arbitrate' "
                 + "applies only to double-booked skills")
-    }
-
-    func noDirectoryPlacements(skill: Skill, entry: DecisionEntry) -> DecisionProblem {
-        DecisionProblem(
-            message: "skill '\(skill.name)' (finding '\(entry.findingID)') has no "
-                + "directory placements to act on")
     }
 }

@@ -150,10 +150,30 @@ private struct SkillDetailForm: View {
     private func findingsSection(_ findings: [AppState.FindingEntry]) -> some View {
         Section {
             ForEach(findings, id: \.id) { entry in
-                Label {
-                    Text(verbatim: entry.finding.ruleID)
-                } icon: {
-                    SeverityIcon(severity: entry.finding.severity)
+                HStack {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(verbatim: entry.finding.title)
+                            if let caution = entry.finding.removalCaution {
+                                Text(verbatim: caution)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    } icon: {
+                        SeverityIcon(severity: entry.finding.displaySeverity)
+                    }
+                    Spacer()
+                    if let fix = state.oneClickFix(for: entry.finding) {
+                        Button {
+                            state.fix([entry])
+                        } label: {
+                            Text(fix.title)
+                        }
+                        .controlSize(.small)
+                        .disabled(state.batchMutationInFlight)
+                    }
                 }
             }
             HStack {
@@ -178,15 +198,15 @@ private struct SeverityIcon: View {
         case .action:
             Image(systemName: "exclamationmark.triangle.fill")
                 .symbolRenderingMode(.multicolor)
-                .accessibilityLabel("action")
+                .accessibilityLabel(Text(severity.title))
         case .warning:
             Image(systemName: "exclamationmark.circle.fill")
                 .foregroundStyle(.orange)
-                .accessibilityLabel("warning")
+                .accessibilityLabel(Text(severity.title))
         case .info:
             Image(systemName: "info.circle")
                 .foregroundStyle(.secondary)
-                .accessibilityLabel("info")
+                .accessibilityLabel(Text(severity.title))
         }
     }
 }

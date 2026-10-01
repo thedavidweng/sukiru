@@ -43,22 +43,6 @@
     {
       "evidence" : [
         {
-          "detail" : "rotted",
-          "kind" : "skillName"
-        },
-        {
-          "detail" : "ownerless",
-          "kind" : "ownership"
-        }
-      ],
-      "ruleID" : "dangerous-removal-surface",
-      "severity" : "action",
-      "skillName" : "rotted",
-      "workspaceID" : "user"
-    },
-    {
-      "evidence" : [
-        {
           "detail" : "<FIXTURE>/.claude/skills/tool",
           "kind" : "impostorPath"
         },

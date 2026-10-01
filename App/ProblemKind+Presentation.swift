@@ -7,6 +7,7 @@ extension ProblemKind {
     var title: LocalizedStringKey {
         switch self {
         case .staleLockEntry: "Lock lists skills that are gone"
+        case .missingSharedCopy: "Shared copies are missing"
         case .deadLink: "Dead links"
         case .copyInsteadOfLink: "Copies instead of links"
         case .outOfSync: "Copies out of sync"
@@ -22,6 +23,8 @@ extension ProblemKind {
         switch self {
         case .staleLockEntry:
             "problem.staleLockEntry.explanation"
+        case .missingSharedCopy:
+            "problem.missingSharedCopy.explanation"
         case .deadLink:
             "problem.deadLink.explanation"
         case .copyInsteadOfLink:
@@ -44,6 +47,7 @@ extension ProblemKind {
     var symbol: String {
         switch self {
         case .staleLockEntry: "list.bullet.rectangle"
+        case .missingSharedCopy: "externaldrive.badge.questionmark"
         case .deadLink: "link"
         case .copyInsteadOfLink: "doc.on.doc"
         case .outOfSync: "arrow.triangle.2.circlepath"
@@ -57,13 +61,14 @@ extension ProblemKind {
 }
 
 extension DecisionAction {
-    /// The label of a one-click fix button.
-    var fixLabel: LocalizedStringKey {
+    /// The one name a repair goes by everywhere: the Health fix button, the
+    /// Pending Changes decision panel, and the Repair menu.
+    var title: LocalizedStringResource {
         switch self {
         case .cleanup: "Remove"
         case .relink: "Link to Shared Copy"
         case .update: "Reinstall"
-        case .adopt: "Find Source…"
+        case .adopt: "Adopt into GitHub Ledger…"
         case .arbitrate: "Choose Owner…"
         case .leave: "Leave As-Is"
         }

@@ -19,6 +19,12 @@ public enum CommandConsequence: Codable, Equatable, Sendable {
     case replacesCopiesWithSharedLinks
     /// `npx skills remove` of a stale lock entry touches no skill files.
     case removesOnlyStaleLockEntry(skill: String)
+    /// A re-install restores a locked skill's missing shared copy; the
+    /// listed placements become links to it.
+    case restoresSharedCopy(replacing: [String])
+    /// `npx skills remove` drops the lock entry and deletes every listed
+    /// placement, agent-made copies included.
+    case removesLockedSkill(skill: String, deleting: [String])
     /// A new install enters the Vercel lockfile ledger.
     case entersVercelLedger
     /// A new install writes gh provenance into the frontmatter.
@@ -45,6 +51,13 @@ public enum CommandConsequence: Codable, Equatable, Sendable {
         case .removesOnlyStaleLockEntry(let skill):
             return "Only the lock entry and dead links named '\(skill)' are removed; "
                 + "no skill files of that name exist in this scope."
+        case .restoresSharedCopy(let paths):
+            return "The shared copy is re-installed from the lock's source, and these "
+                + "become links to it (their current content survives only in the batch "
+                + "snapshot): \(paths.joined(separator: ", "))."
+        case .removesLockedSkill(let skill, let paths):
+            return "The lock entry for '\(skill)' is removed and these are deleted, "
+                + "including copies an agent made itself: \(paths.joined(separator: ", "))."
         case .entersVercelLedger:
             return "Installing with npx skills enters the skill into the Vercel lockfile"
                 + " ledger: the canonical copy lands in .agents/skills and host "

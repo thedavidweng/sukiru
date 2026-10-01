@@ -10,6 +10,8 @@ public struct DiscoveredPlacement: Equatable, Sendable {
     public let placement: Placement
     /// The workspace this placement was found in.
     public let workspaceID: String
+    /// That workspace's skills root.
+    public let workspaceRoot: String
     /// The ownership/ambiguity bucket: `user` or `project:<root>`. Ownership
     /// is resolved per bucket, never across scopes.
     public let scopeGroup: String
@@ -28,6 +30,7 @@ public struct DiscoveredPlacement: Equatable, Sendable {
         name: String,
         placement: Placement,
         workspaceID: String,
+        workspaceRoot: String,
         scopeGroup: String,
         candidateHosts: [String],
         skillFilePath: String,
@@ -36,6 +39,7 @@ public struct DiscoveredPlacement: Equatable, Sendable {
         self.name = name
         self.placement = placement
         self.workspaceID = workspaceID
+        self.workspaceRoot = workspaceRoot
         self.scopeGroup = scopeGroup
         self.candidateHosts = candidateHosts
         self.skillFilePath = skillFilePath
@@ -273,6 +277,7 @@ public struct InventoryScanner: Sendable {
                             ofDirectory: path, in: workspace) : nil
                 ),
                 workspaceID: workspace.workspace.id,
+                workspaceRoot: workspace.workspace.root,
                 scopeGroup: workspace.scopeGroup,
                 candidateHosts: workspace.candidateHosts,
                 skillFilePath: skillFile,
@@ -303,6 +308,7 @@ public struct InventoryScanner: Sendable {
                     managingAgent: nil
                 ),
                 workspaceID: workspace.workspace.id,
+                workspaceRoot: workspace.workspace.root,
                 scopeGroup: workspace.scopeGroup,
                 candidateHosts: workspace.candidateHosts,
                 skillFilePath: HostPathResolver.join(path, "SKILL.md"),

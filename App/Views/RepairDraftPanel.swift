@@ -19,8 +19,8 @@ struct RepairDraftPanel: View {
                     .font(.headline)
             }
             .accessibilityElement(children: .contain)
-            Text(draftSummary)
-                .font(.callout.monospaced())
+            Text(verbatim: draftSummary)
+                .font(.callout)
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
             ForEach(state.repairOptions(for: draft.finding)) { option in
@@ -46,23 +46,10 @@ struct RepairDraftPanel: View {
 
     private var draftSummary: String {
         let finding = draft.finding
-        let name = finding.skillName ?? "-"
-        return "\(finding.ruleID) — \(name) — \(finding.workspaceID)"
+        guard let name = finding.skillName else { return finding.title }
+        return "\(name) · \(finding.title)"
     }
 
-}
-
-extension DecisionAction {
-    var title: LocalizedStringResource {
-        switch self {
-        case .update: "Update via Owning CLI"
-        case .cleanup: "Clean Up"
-        case .relink: "Link to Shared Copy"
-        case .adopt: "Adopt into GitHub Ledger…"
-        case .arbitrate: "Choose Surviving Ledger…"
-        case .leave: "Leave As-Is"
-        }
-    }
 }
 
 /// Capability degradation hint: a repair whose owning CLI is

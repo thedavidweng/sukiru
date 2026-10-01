@@ -52,6 +52,7 @@ enum EvidencePresentation {
         "placementPath": "Location",
         "skillName": "Skill",
         "ownership": "Owner",
+        "source": "Source",
         "sourceIdentity": "Source",
         "subtype": "Kind"
     ]
@@ -59,6 +60,14 @@ enum EvidencePresentation {
     /// Unknown kinds (and `skillMdPath`, a file name) show as-is.
     static func label(forKind kind: String) -> String {
         labels[kind].map { String(localized: $0) } ?? (kind == "skillMdPath" ? "SKILL.md" : kind)
+    }
+
+    /// Ownership verdicts are wire tokens and show as their Library label;
+    /// every other detail (paths, hashes, names) shows as-is.
+    static func detail(of evidence: Evidence) -> String {
+        guard evidence.kind == "ownership", let ownership = Ownership(rawValue: evidence.detail)
+        else { return evidence.detail }
+        return String(localized: ownership.title)
     }
 }
 

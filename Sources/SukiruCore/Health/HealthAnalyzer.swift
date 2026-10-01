@@ -36,9 +36,13 @@ import Foundation
 /// - `dangerous-removal-surface` (action) — advisory for every name the vercel
 ///   ledger does NOT claim (github-owned, ownerless, ambiguous-without-claim):
 ///   `npx skills remove <name>` deletes by name across ownership
-///   (collision-matrix scenario 6). A locked name's removal is
+///   (collision-matrix scenario 6), but only `<skills root>/<name>`, so a
+///   name with no placement directly under a root is out of reach and not
+///   advised. A locked name's removal is
 ///   ledger-consistent and never advised, even when ambiguity voids
 ///   attribution.
+/// - `missing-shared-copy` (action) and `versioned-link-target` (info) —
+///   see `MissingSharedCopyRule` and `VersionedLinkRule`.
 /// - `lock-version-unsupported` (warning) — the environment anomaly: a lock
 ///   NEWER than supported is surfaced as a finding with
 ///   lockPath/foundVersion/supportedVersion evidence (FIX-MALFORMED); the lock
@@ -75,6 +79,12 @@ public struct HealthAnalyzer: Sendable {
                 findings.append(finding)
             }
             if let finding = removalSurfaceFinding(for: group, claim: claim) {
+                findings.append(finding)
+            }
+            if let finding = MissingSharedCopyRule.finding(for: group, claim: claim) {
+                findings.append(finding)
+            }
+            if let finding = VersionedLinkRule.finding(for: group) {
                 findings.append(finding)
             }
         }
@@ -303,24 +313,35 @@ public struct HealthAnalyzer: Sendable {
     /// remove <name>` deletes by name across ownership (collision-matrix
     /// scenario 6), so github-owned and ownerless skills are in its blast
     /// radius. Ownership detail mirrors the resolver's verdict (ambiguity
-    /// voids to ownerless). placementPath evidence lists real placements
-    /// only — a broken-symlink member is covered by its own finding and is
-    /// filtered here like every other rule does.
+    /// voids to ownerless). placementPath evidence lists only placements the
+    /// command can reach: it deletes `<skills root>/<name>` and nothing
+    /// deeper, so a skill an agent files under a category folder (Hermes's
+    /// `<root>/<category>/<name>`) is out of reach and raises no advisory. A
+    /// broken-symlink member is covered by its own finding and is filtered
+    /// here like every other rule does.
     private func removalSurfaceFinding(for group: SkillGroup, claim: ScopeLockClaim?) -> Finding? {
         guard claim?.lock.entries[group.name] == nil else { return nil }
+        let reachable = group.members.filter {
+            $0.placement.kind != .brokenSymlink
+                && Self.isDirectChild($0.placement.path, of: $0.workspaceRoot)
+        }
+        guard !reachable.isEmpty else { return nil }
         let ownership = OwnershipResolver.ownership(
             ambiguous: group.ambiguous,
             vercelClaim: false,
             githubClaim: group.members.contains { $0.githubProvenance != nil },
             agentClaim: group.managingAgent != nil)
         var evidence = [Evidence(kind: "skillName", detail: group.name)]
-        evidence += group.members
-            .filter { $0.placement.kind != .brokenSymlink }
-            .map { Evidence(kind: "placementPath", detail: $0.placement.path) }
+        evidence += reachable.map { Evidence(kind: "placementPath", detail: $0.placement.path) }
         evidence.append(Evidence(kind: "ownership", detail: ownership.rawValue))
         return Finding(
             ruleID: "dangerous-removal-surface", severity: .action, skillName: group.name,
             workspaceID: group.scopeGroup, evidence: evidence)
+    }
+
+    private static func isDirectChild(_ path: String, of root: String) -> Bool {
+        let name = (path as NSString).lastPathComponent
+        return HostPathResolver.join(root, name) == path
     }
 
     // MARK: - lock-version-unsupported (environment anomaly)

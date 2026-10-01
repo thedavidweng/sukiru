@@ -9,8 +9,9 @@ double-copied impostor.
 A correct scan MUST exit 0 and report:
 - a brokenSymlink placement `rotted` (null canonical path/hash) AND a
   `broken-symlink` finding (severity action) naming the link path and its
-  unreadable target — the link also surfaces as a `broken-symlink` ISSUE and,
-  being ownerless, a `dangerous-removal-surface` advisory;
+  unreadable target — the link also surfaces as a `broken-symlink` ISSUE (no
+  `dangerous-removal-surface` advisory: `npx skills remove` cannot match a
+  link without SKILL.md);
 - a `symlink-authenticity` finding (severity warning) naming the impostor path
   (`.claude/skills/tool`) and the canonical path it should link to;
 - an exact-subtype `cross-host-duplicate` (warning) for the two identical

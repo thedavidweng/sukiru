@@ -59,22 +59,6 @@
     {
       "evidence" : [
         {
-          "detail" : "rotted-link",
-          "kind" : "skillName"
-        },
-        {
-          "detail" : "ownerless",
-          "kind" : "ownership"
-        }
-      ],
-      "ruleID" : "dangerous-removal-surface",
-      "severity" : "action",
-      "skillName" : "rotted-link",
-      "workspaceID" : "user"
-    },
-    {
-      "evidence" : [
-        {
           "detail" : "user-orphan",
           "kind" : "skillName"
         },

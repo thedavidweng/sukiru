@@ -49,6 +49,95 @@ struct PlacementRepairTests {
         #expect(!report.findings.contains { ProblemKind.of($0).isProblem })
     }
 
+    @Test("Only skills `npx skills remove` can reach carry the removal advisory")
+    func removalAdvisoryReach() throws {
+        let home = try TempTree()
+        try home.file(".hermes/skills/.bundled_manifest", contents: "")
+        try home.file(".hermes/skills/flat/SKILL.md", contents: OwnershipBuilders.skillMD("flat"))
+        try home.file(
+            ".hermes/skills/mlops/axolotl/SKILL.md",
+            contents: OwnershipBuilders.skillMD("axolotl"))
+        let report = try OwnershipBuilders.scan(home: home)
+        let advised = report.findings.filter { $0.ruleID == "dangerous-removal-surface" }
+        #expect(advised.map(\.skillName) == ["flat"])
+    }
+
+    // MARK: - missing shared copy
+
+    /// A locked `kept` whose shared copy is gone: Hermes holds its own copy
+    /// and Claude Code links into another manager's folder. `copied` is a
+    /// copy-mode install (installer copies only), which is a stock layout.
+    private static func missingSharedCopyHome() throws -> TempTree {
+        let home = try TempTree()
+        try home.file(".claude/settings.json", contents: "{}")
+        try home.file(".hermes/skills/.bundled_manifest", contents: "")
+        try home.file(
+            ".agents/.skill-lock.json", contents: OwnershipBuilders.globalLock(["kept", "copied"]))
+        try home.file(".hermes/skills/kept/SKILL.md", contents: OwnershipBuilders.skillMD("kept"))
+        try home.file(".other-store/kept/SKILL.md", contents: OwnershipBuilders.skillMD("kept"))
+        try home.symlink(".claude/skills/kept", to: home.path + "/.other-store/kept")
+        try home.file(
+            ".claude/skills/copied/SKILL.md", contents: OwnershipBuilders.skillMD("copied"))
+        return home
+    }
+
+    @Test("A locked skill held only by agent copies and foreign links is missing its shared copy")
+    func missingSharedCopy() throws {
+        let home = try Self.missingSharedCopyHome()
+        let report = try OwnershipBuilders.scan(home: home)
+        let findings = report.findings.filter { $0.ruleID == MissingSharedCopyRule.ruleID }
+        let finding = try #require(findings.only)
+        #expect(finding.skillName == "kept")
+        #expect(
+            finding.evidence.filter { $0.kind == "placementPath" }.map(\.detail) == [
+                home.path + "/.claude/skills/kept", home.path + "/.hermes/skills/kept"
+            ])
+        #expect(ProblemKind.of(finding) == .missingSharedCopy)
+        #expect(ProblemKind.oneClickFix(for: finding) == nil)
+    }
+
+    @Test("Reinstall restores the shared copy; Remove names every copy it deletes")
+    func missingSharedCopyRepairs() throws {
+        let home = try Self.missingSharedCopyHome()
+        let report = try OwnershipBuilders.scan(home: home)
+        let findingID = try Support.findingID(report, MissingSharedCopyRule.ruleID, "kept")
+        let paths = [home.path + "/.claude/skills/kept", home.path + "/.hermes/skills/kept"]
+        let reinstall = try #require(
+            try Support.build(report, [Support.decide(findingID, .update)]).commands.only)
+        #expect(
+            reinstall.argv == [
+                "npx", "skills", "add", "thedavidweng/skills", "--skill", "kept",
+                "-a", "claude-code", "-a", "hermes-agent", "-g", "-y"
+            ])
+        #expect(reinstall.consequenceKind == .restoresSharedCopy(replacing: paths))
+        let remove = try #require(
+            try Support.build(report, [Support.decide(findingID, .cleanup)]).commands.only)
+        #expect(remove.argv == ["npx", "skills", "remove", "kept", "-g", "-y"])
+        #expect(remove.dangerFlags.contains(.dangerousDeletion))
+        #expect(remove.consequenceKind == .removesLockedSkill(skill: "kept", deleting: paths))
+    }
+
+    // MARK: - versioned link targets
+
+    @Test("Only a link whose own target names a version folder is noted")
+    func versionedLinkTarget() throws {
+        let home = try TempTree()
+        try home.file(".claude/settings.json", contents: "{}")
+        try home.file(
+            "App/Versions/1.2.3/pinned/SKILL.md", contents: OwnershipBuilders.skillMD("pinned"))
+        try home.symlink(".claude/skills/pinned", to: home.path + "/App/Versions/1.2.3/pinned")
+        try home.file(
+            "App/Versions/2.0/stable/SKILL.md", contents: OwnershipBuilders.skillMD("stable"))
+        try home.symlink("current", to: home.path + "/App/Versions/2.0")
+        try home.symlink(".claude/skills/stable", to: home.path + "/current/stable")
+        let report = try OwnershipBuilders.scan(home: home)
+        let noted = report.findings.filter { $0.ruleID == VersionedLinkRule.ruleID }
+        #expect(noted.map(\.skillName) == ["pinned"])
+        #expect(noted.allSatisfy { ProblemKind.of($0) == .note })
+        #expect(VersionedLinkRule.versionComponent(of: "/x/v20.11.0/y") == "v20.11.0")
+        #expect(VersionedLinkRule.versionComponent(of: "/x/2026/skills") == nil)
+    }
+
     // MARK: - problem catalog
 
     @Test("Findings map to plain problems with one-click fixes")

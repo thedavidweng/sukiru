@@ -82,6 +82,7 @@ extension DiscoveredPlacement {
                 internal: placement.internal,
                 managingAgent: placement.managingAgent),
             workspaceID: workspaceID,
+            workspaceRoot: workspaceRoot,
             scopeGroup: scopeGroup,
             candidateHosts: candidateHosts,
             skillFilePath: skillFilePath,

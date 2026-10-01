@@ -12,7 +12,8 @@ Planted defects:
 - `.agents/skills/no-skill-md/` — dir without SKILL.md -> not a placement.
 - `.agents/skills/locked-dir/` — see prepare-runtime.sh: chmodded 000 at runtime
   to exercise the unreadable-dir path (issue naming the path). Its inner skill
-  survives once readable.
+  survives once readable; nested a level down, it is out of `npx skills
+  remove` reach and raises no `dangerous-removal-surface` advisory.
 
 Runtime note: git cannot store a chmod-000 directory; run
 `Scripts/fixtures/prepare-runtime.sh <FIXTURES_DIR>` before validators exercise

@@ -137,11 +137,11 @@ struct SukiruApp: App {
                 .disabled(
                     state.selectedFinding().flatMap { state.skill(matching: $0) } == nil)
                 Divider()
-                decisionCommand("Update via Owning CLI", action: .update, key: "u")
-                decisionCommand("Clean Up", action: .cleanup, key: "d")
-                decisionCommand("Adopt into GitHub Ledger…", action: .adopt, key: "a")
-                decisionCommand("Choose Surviving Ledger…", action: .arbitrate, key: "t")
-                decisionCommand("Leave As-Is", action: .leave, key: "l")
+                decisionCommand(.update, key: "u")
+                decisionCommand(.cleanup, key: "d")
+                decisionCommand(.adopt, key: "a")
+                decisionCommand(.arbitrate, key: "t")
+                decisionCommand(.leave, key: "l")
                 Divider()
                 Button("Execute Batch") {
                     state.executePendingBatch()
@@ -172,11 +172,11 @@ struct SukiruApp: App {
     /// A repair-decision menu command: enabled only while a draft is open
     /// AND the decision is available (never capability-blocked — a blocked
     /// decision shows its hint in Pending Changes instead).
-    private func decisionCommand(
-        _ title: LocalizedStringKey, action: DecisionAction, key: KeyEquivalent
-    ) -> some View {
-        Button(title) {
+    private func decisionCommand(_ action: DecisionAction, key: KeyEquivalent) -> some View {
+        Button {
             state.chooseRepair(action)
+        } label: {
+            Text(action.title)
         }
         .keyboardShortcut(key, modifiers: [.command, .option])
         .disabled(!state.repairActionAvailable(action))

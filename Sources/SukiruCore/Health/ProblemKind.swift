@@ -12,6 +12,9 @@
 public enum ProblemKind: String, CaseIterable, Codable, Equatable, Sendable {
     /// A Vercel lock entry whose skill folder no longer exists.
     case staleLockEntry = "stale-lock-entry"
+    /// A locked skill whose shared copy is gone while agents still hold
+    /// their own copies or links to it.
+    case missingSharedCopy = "missing-shared-copy"
     /// A symlink in a skills folder whose target is gone.
     case deadLink = "dead-link"
     /// A physical copy where a link into the shared store belongs.
@@ -46,6 +49,7 @@ public enum ProblemKind: String, CaseIterable, Codable, Equatable, Sendable {
 
     private static let byRule: [String: ProblemKind] = [
         "lock-without-files": .staleLockEntry,
+        MissingSharedCopyRule.ruleID: .missingSharedCopy,
         "broken-symlink": .deadLink,
         "symlink-authenticity": .copyInsteadOfLink,
         "canonical-host-divergence": .outOfSync,
@@ -76,6 +80,10 @@ public enum ProblemKind: String, CaseIterable, Codable, Equatable, Sendable {
             // source; every other disagreement relinks host copies to the
             // shared store's copy.
             return finding.ruleID == "vercel-lock-drift" ? .update : .relink
+        case .missingSharedCopy:
+            // Reinstall and removal both rewrite or delete agent copies; the
+            // user picks one.
+            return nil
         case .orphan, .ownerConflict, .unsupportedLock, .note:
             return nil
         }
