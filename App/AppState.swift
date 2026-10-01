@@ -48,6 +48,13 @@ final class AppState: ObservableObject {
     @Published var installerInFlight: InstallerTool?
     /// The tail of a failed Homebrew run, per tool, shown under its row.
     @Published var installerFailures: [InstallerTool: String] = [:]
+    /// The skills CLI's latest registry release, once the update check
+    /// answers; nil when unknown (offline, or the CLI is not downloaded).
+    @Published var skillsLatestVersion: String?
+    /// True while the user-requested skills CLI download/update runs.
+    @Published var skillsFetchInFlight = false
+    /// The tail of a failed skills CLI download, shown under its row.
+    @Published var skillsFetchFailure: String?
     /// Selected skill in Library (identity via `Self.skillID`), survives surface switches.
     @Published var selectedSkillID: String?
     /// Expanded finding rows in Health, surviving surface switches.
@@ -250,7 +257,17 @@ final class AppState: ObservableObject {
         let cache = capabilityCache
         Task.detached(priority: .utility) { [weak self] in
             let report = cache.current()
-            await MainActor.run { self?.capabilities = report }
+            await MainActor.run { self?.applyCapabilities(report) }
+        }
+    }
+
+    /// Publishes a probe result, then asks the registry whether a newer
+    /// skills CLI exists (a hint only; updating stays the user's call).
+    private func applyCapabilities(_ report: CapabilityReport) {
+        capabilities = report
+        skillsLatestVersion = nil
+        if report.npx.resolvable {
+            checkForSkillsUpdate()
         }
     }
 
@@ -262,7 +279,7 @@ final class AppState: ObservableObject {
         Task.detached(priority: .userInitiated) { [weak self] in
             let report = cache.refresh()
             await MainActor.run {
-                self?.capabilities = report
+                self?.applyCapabilities(report)
                 self?.capabilityCheckRunning = false
             }
         }
@@ -299,37 +316,6 @@ final class AppState: ObservableObject {
     func selectedSkill() -> Skill? {
         guard let report, let selectedSkillID else { return nil }
         return report.skills.first { Self.skillID($0) == selectedSkillID }
-    }
-
-    /// The previewable `SKILL.md` for a skill: the first placement (the
-    /// report's canonical-first ordering) whose SKILL.md is actually on
-    /// disk. Broken-symlink placements whose file vanished are skipped —
-    /// Quick Look of a missing file would show an empty panel.
-    func skillMarkdownURL(for skill: Skill) -> URL? {
-        for placement in skill.placements {
-            let url = URL(fileURLWithPath: placement.path)
-                .appendingPathComponent("SKILL.md", isDirectory: false)
-            if FileManager.default.fileExists(atPath: url.path) {
-                return url
-            }
-        }
-        return nil
-    }
-
-    /// Opens Quick Look on the selected skill's SKILL.md, in place.
-    /// Called from the detail-pane button
-    /// (`sukiru.library.quicklook`) and the View-menu shortcut (⌘Y).
-    func quickLookSelectedSkill() {
-        guard let skill = selectedSkill(), let url = skillMarkdownURL(for: skill) else {
-            return
-        }
-        QuickLookPreviewer.shared.preview(fileAt: url)
-    }
-
-    /// Whether the Quick Look affordances should be enabled right now (a
-    /// selected skill with a previewable SKILL.md on disk).
-    func canQuickLookSelectedSkill() -> Bool {
-        selectedSkill().flatMap { skillMarkdownURL(for: $0) } != nil
     }
 
     // The Health-surface derivations (skill focus, workspace filter, issue

@@ -6,7 +6,7 @@ import Testing
 /// Capability detection with an injectable command
 /// runner — no real subprocesses in unit tests. gh is `available` iff present
 /// AND ≥ 2.90.0 AND `gh skill --help` exits 0; npx skills is `resolvable`
-/// with its version when `npx -y skills@latest --version` succeeds.
+/// with its version when `npx --offline skills --version` succeeds.
 @Suite("Capability detection")
 struct CapabilityDetectorTests {
     /// Answers subprocess invocations from a fixed table keyed by
@@ -113,10 +113,11 @@ struct CapabilityDetectorTests {
     @Test("npx skills resolvable → resolvable with trimmed version")
     func npxResolvable() {
         let report = detect([
-            "npx -y skills@latest --version": outcome(0, "1.5.26\n")
+            "npx --offline skills --version": outcome(0, "1.5.26\n")
         ])
         #expect(report.npx.resolvable)
         #expect(report.npx.skillsVersion == "1.5.26")
+        #expect(report.npx.reason == nil)
     }
 
     @Test("npx absent → unresolvable, no version, still a valid report")
@@ -124,20 +125,23 @@ struct CapabilityDetectorTests {
         let report = detect([:])
         #expect(!report.npx.resolvable)
         #expect(report.npx.skillsVersion == nil)
+        #expect(report.npx.reason == .absent)
         #expect(report.schemaVersion == CapabilityReport.currentSchemaVersion)
     }
 
-    @Test("npx fails or prints nothing → unresolvable")
+    @Test("npx fails or prints nothing → skills CLI not downloaded")
     func npxFailureModes() {
         let failing = detect([
-            "npx -y skills@latest --version": outcome(1, "npm error")
+            "npx --offline skills --version": outcome(1, "npm error")
         ])
         #expect(!failing.npx.resolvable)
+        #expect(failing.npx.reason == .notDownloaded)
 
         let empty = detect([
-            "npx -y skills@latest --version": outcome(0, "  \n")
+            "npx --offline skills --version": outcome(0, "  \n")
         ])
         #expect(!empty.npx.resolvable)
+        #expect(empty.npx.reason == .notDownloaded)
     }
 
     @Test("Version parsing: first semver token of the first line")

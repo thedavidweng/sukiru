@@ -5,7 +5,8 @@ import Foundation
 /// gh has two states only: `available` (present AND ≥ 2.90.0 AND
 /// `gh skill --help` exits 0) or `unavailable` — `present` / `version` /
 /// `meetsMinimum` record WHY. npx skills is reported as resolvable with its
-/// version when `npx -y skills@latest --version` succeeds. Detection results
+/// version when `npx --offline skills --version` succeeds; the probe never
+/// downloads or updates the CLI (see `SkillsCLI`). Detection results
 /// never feed ScanReport; only `sukiru-cli capabilities` and the app's
 /// capability panel consume them.
 public struct CapabilityDetector: Sendable {
@@ -59,13 +60,18 @@ public struct CapabilityDetector: Sendable {
     }
 
     private func detectNpx() -> CapabilityReport.NpxCapability {
-        guard let outcome = runner.run("npx", ["-y", "skills@latest", "--version"]),
-            outcome.exitCode == 0,
+        guard let outcome = runner.run("npx", SkillsCLI.probeArguments) else {
+            return CapabilityReport.NpxCapability(
+                resolvable: false, skillsVersion: nil, reason: .absent)
+        }
+        guard outcome.exitCode == 0,
             let version = Self.firstLine(of: outcome.stdout), !version.isEmpty
         else {
-            return CapabilityReport.NpxCapability(resolvable: false, skillsVersion: nil)
+            return CapabilityReport.NpxCapability(
+                resolvable: false, skillsVersion: nil, reason: .notDownloaded)
         }
-        return CapabilityReport.NpxCapability(resolvable: true, skillsVersion: version)
+        return CapabilityReport.NpxCapability(
+            resolvable: true, skillsVersion: version, reason: nil)
     }
 
     /// The first `major.minor[.patch]` token on the first line of output

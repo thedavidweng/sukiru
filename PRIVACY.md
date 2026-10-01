@@ -18,8 +18,15 @@ Sukiru makes these network requests, and no others:
 
 - **Installer detection**: at launch and when you click Check Again in
   Settings, Sukiru runs `gh --version` and, if Node.js is installed,
-  `npx -y skills@latest --version`. The `npx` command asks the npm registry for
-  the current `skills` package.
+  `npx --offline skills --version`. The `--offline` flag keeps `npx` from
+  contacting the npm registry, so detection never downloads or updates the
+  `skills` CLI.
+- **skills CLI update check**: when the `skills` CLI is present, Sukiru reads
+  `https://registry.npmjs.org/skills/latest` to learn the latest version
+  number. This only shows a hint in Settings; nothing is installed.
+- **skills CLI download**: only when you click Download or Update in Settings,
+  Sukiru runs `npx --yes --prefer-online skills --version`, which fetches the
+  latest `skills` package from the npm registry.
 - **Search**: your query is sent to the skills.sh search API
   (`https://skills.sh/api/search`) and to `gh skill search`, which runs the
   GitHub CLI with your existing `gh` login.
@@ -28,7 +35,9 @@ Sukiru makes these network requests, and no others:
 - **Commands you confirm**: installs, updates, and repairs run `npx skills` or
   `gh skill`, which may contact npm, GitHub, or a skill's source repository.
   Those tools follow their own privacy policies. Sukiru runs them with
-  `SKILLS_TELEMETRY=0` to opt out of the `skills` CLI's telemetry.
+  `SKILLS_TELEMETRY=0` to opt out of the `skills` CLI's telemetry, and with
+  `npm_config_prefer_offline=true` so `npx` uses the `skills` CLI already on
+  your Mac instead of updating it.
 
 ## Credentials
 

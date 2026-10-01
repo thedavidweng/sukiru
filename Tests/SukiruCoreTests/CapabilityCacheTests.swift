@@ -25,7 +25,7 @@ struct CapabilityCacheTests {
                 return ProcessOutcome(exitCode: 0, stdout: "gh version 2.100.0\n", stderr: "")
             case ("gh", "skill"):
                 return ProcessOutcome(exitCode: 0, stdout: "Work with agent skills\n", stderr: "")
-            case ("npx", "-y"):
+            case ("npx", "--offline"):
                 return ProcessOutcome(exitCode: 0, stdout: "1.5.26\n", stderr: "")
             default:
                 return nil
@@ -40,7 +40,7 @@ struct CapabilityCacheTests {
     }
 
     /// One healthy detection probes three commands: `gh --version`,
-    /// `gh skill --help`, `npx -y skills@latest --version`.
+    /// `gh skill --help`, `npx --offline skills --version`.
     private let probesPerDetection = 3
 
     @Test("Repeated current() runs detection exactly once")

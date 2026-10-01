@@ -52,7 +52,7 @@ struct LibraryProvenanceSection: View {
     private var readOnlyNotice: some View {
         // swiftlint:disable line_length
         let hint: LocalizedStringKey =
-            "Read-only — repairing or updating this skill needs Node.js (npx skills), which is not available. Everything else still works."
+            "Read-only — repairing or updating this skill needs the skills CLI, which is not set up. Get it in Settings > Installers. Everything else still works."
         // swiftlint:enable line_length
         return HStack(spacing: 0) {
             AXToken(token: "sukiru.library.detail.readonly.\(AXTokens.skill(skill.name))")

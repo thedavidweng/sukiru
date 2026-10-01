@@ -130,6 +130,7 @@ enum ExecutorTestSupport {
           echo "HOME=$HOME"
           echo "CI=$CI"
           echo "SKILLS_TELEMETRY=$SKILLS_TELEMETRY"
+          echo "npm_config_prefer_offline=${npm_config_prefer_offline:-}"
           if [ -n "${GH_TOKEN:-}" ]; then echo "GH_TOKEN=present"; else echo "GH_TOKEN=absent"; fi
           if [ -t 0 ]; then echo "STDIN_TTY=yes"; else echo "STDIN_TTY=no"; fi
           if [ -t 1 ]; then echo "STDOUT_TTY=yes"; else echo "STDOUT_TTY=no"; fi

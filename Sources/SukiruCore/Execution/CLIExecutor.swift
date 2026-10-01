@@ -47,7 +47,9 @@ public struct ExecutionResult: Equatable, Sendable {
 /// - **Environment contract**: `CI=1`, `SKILLS_TELEMETRY=0`, `HOME` is
 ///   always the Sukiru-resolved home (= `SUKIRU_HOME` in sandboxes);
 ///   `GH_TOKEN` is stripped from every child and injected
-///   only into gh (github-ledger) commands, never persisted.
+///   only into gh (github-ledger) commands, never persisted;
+///   `npm_config_prefer_offline=true` so `npx skills` runs the CLI already
+///   on this Mac instead of silently updating it (see `SkillsCLI`).
 /// - **Stop-on-first-failure** with per-command status, exit code, captured
 ///   output files, and duration.
 /// - **Per-command timeout** terminating the child's whole process group.
@@ -225,6 +227,7 @@ public struct CLIExecutor: Sendable {
         environment["GH_TOKEN"] = nil
         environment["CI"] = "1"
         environment["SKILLS_TELEMETRY"] = "0"
+        environment["npm_config_prefer_offline"] = "true"
         if !self.environment.home.isEmpty {
             environment["HOME"] = self.environment.home
         }

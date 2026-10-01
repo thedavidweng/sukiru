@@ -55,7 +55,7 @@ Sukiru 同时读取两份账本和磁盘上的实际情况，判断每个技能�
 
 - **零账本**：Sukiru 从不写入安装器的记录，账本的变更只通过官方 CLI 完成。只有在没有 CLI 提供的链接管理操作上（删除失效链接、用链接替换副本、把链接转成副本），Sukiru 才直接操作文件，而且总在快照保护之下。
 - **按归属路由修复**：没有全局的「后端」设置。归属 `npx skills` 的技能用 `npx skills` 修复，归属 `gh skill` 的技能用 `gh skill` 修复。
-- **无后台活动**：不监听文件系统，也不远程检查更新。应用只在启动时和你点击「刷新」时展示状态。
+- **无后台活动**：不监听文件系统，未经你同意不会下载或更新任何东西。应用只在启动时和你点击「刷新」时展示状态。
 - **结果确定**：同样的磁盘状态总是产生同样的报告。
 - **数据格式有误只会被报告为问题，绝不会导致崩溃。**
 
@@ -70,7 +70,7 @@ Sukiru 同时读取两份账本和磁盘上的实际情况，判断每个技能�
   - [Node.js](https://nodejs.org/en/download)，用于 `npx skills`。
   - [GitHub CLI](https://cli.github.com) 2.90.0 或更高版本，用于 `gh skill`。
 
-Sukiru 会在启动时检测这两个工具，缺少哪个工具，就只停用依赖它的操作。
+Sukiru 会在启动时检测这两个工具，缺少哪个工具，就只停用依赖它的操作。它从不自行下载或更新 `skills` CLI：如果本机还没有该 CLI，或者有新版本可用，「设置 › 安装器」会给出提示，并提供「下载」或「更新」按钮，由你决定。
 
 ### 通过 Homebrew 安装（推荐）
 
@@ -133,7 +133,7 @@ Homebrew cask 会自动移除隔离标记，首次启动不会被 Gatekeeper 拦
 
 ## 🛡️ 隐私与系统权限
 
-Sukiru 没有账户、分析或遥测。它读取本地文件，并在你的 Mac 上运行官方 CLI。只有在启动时通过 `npx` 检测 `skills` 的版本、在你搜索（skills.sh 搜索 API 和 `gh skill search`）、从 GitHub 预览技能的 `SKILL.md`，或运行需要联网的 CLI 命令时，它才会访问网络。快照和执行记录保存在 `~/Library/Application Support/Sukiru`。
+Sukiru 没有账户、分析或遥测。它读取本地文件，并在你的 Mac 上运行官方 CLI。只有在向 npm registry 查询 `skills` CLI 的最新版本号、在你搜索（skills.sh 搜索 API 和 `gh skill search`）、从 GitHub 预览技能的 `SKILL.md`，或运行需要联网的 CLI 命令时，它才会访问网络。快照和执行记录保存在 `~/Library/Application Support/Sukiru`。
 
 详细说明参见 [PRIVACY.md](PRIVACY.md)。
 

@@ -2065,7 +2065,7 @@ EOF
 }
 
 # npx_stub DIR VERSION -> bin/npx answering ONLY the capability probe
-# (`npx -y skills@latest --version`) with VERSION; no network.
+# (`npx --offline skills --version`) with VERSION; no network.
 npx_stub() {
     local dir="$1" version="$2"
     mkdir -p "$dir/bin"
@@ -2077,7 +2077,7 @@ if [ -n "${SUKIRU_STUB_TRANSCRIPT:-}" ]; then
     printf 'npx %s\n' "$*" >>"$SUKIRU_STUB_TRANSCRIPT"
 fi
 case "$*" in
-    *skills@*--version*)
+    *--offline*skills*--version*)
         echo "@VERSION@"
         exit 0
         ;;
@@ -2172,7 +2172,7 @@ note "$d" <<'EOF'
 # cap-npx-ok — expectation
 
 Contents: `bin/npx` — a stub answering the capability probe
-(`npx -y skills@latest --version`) with `1.5.26`. No gh stub here (compose
+(`npx --offline skills --version`) with `1.5.26`. No gh stub here (compose
 with `cap-gh-ok`).
 
 Use: `PATH="<this>/bin[:<cap-gh-ok>/bin]:/usr/bin:/bin" sukiru-cli capabilities --format json`.

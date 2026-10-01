@@ -169,6 +169,8 @@ struct CapabilitiesFixtureTests {
         let absentNpx = try #require(absentObject["npx"] as? [String: Any])
         #expect(absentNpx["resolvable"] as? Bool == false)
         #expect(absentNpx["skillsVersion"] == nil)
+        #expect(absentNpx["reason"] as? String == "absent")
+        #expect(okNpx["reason"] == nil)
     }
 
     // MARK: Neither CLI: full read-only scan still completes

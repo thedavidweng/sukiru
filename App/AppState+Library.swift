@@ -83,4 +83,35 @@ extension AppState {
         guard !urls.isEmpty else { return }
         NSWorkspace.shared.activateFileViewerSelecting(urls)
     }
+
+    /// The previewable `SKILL.md` for a skill: the first placement (the
+    /// report's canonical-first ordering) whose SKILL.md is actually on
+    /// disk. Broken-symlink placements whose file vanished are skipped —
+    /// Quick Look of a missing file would show an empty panel.
+    func skillMarkdownURL(for skill: Skill) -> URL? {
+        for placement in skill.placements {
+            let url = URL(fileURLWithPath: placement.path)
+                .appendingPathComponent("SKILL.md", isDirectory: false)
+            if FileManager.default.fileExists(atPath: url.path) {
+                return url
+            }
+        }
+        return nil
+    }
+
+    /// Opens Quick Look on the selected skill's SKILL.md, in place.
+    /// Called from the detail-pane button
+    /// (`sukiru.library.quicklook`) and the View-menu shortcut (⌘Y).
+    func quickLookSelectedSkill() {
+        guard let skill = selectedSkill(), let url = skillMarkdownURL(for: skill) else {
+            return
+        }
+        QuickLookPreviewer.shared.preview(fileAt: url)
+    }
+
+    /// Whether the Quick Look affordances should be enabled right now (a
+    /// selected skill with a previewable SKILL.md on disk).
+    func canQuickLookSelectedSkill() -> Bool {
+        selectedSkill().flatMap { skillMarkdownURL(for: $0) } != nil
+    }
 }

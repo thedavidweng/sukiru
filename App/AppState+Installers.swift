@@ -99,6 +99,34 @@ extension AppState {
         }
     }
 
+    /// Looks up the registry's latest skills CLI release. Failures leave the
+    /// hint off; nothing is downloaded.
+    func checkForSkillsUpdate() {
+        Task { [weak self] in
+            let latest = try? await SkillsCLI.latestVersion(
+                transport: URLSessionMarketplaceTransport())
+            self?.skillsLatestVersion = latest
+        }
+    }
+
+    /// Downloads the skills CLI, or updates it to the latest release, only
+    /// when the user asks; then re-probes so Settings shows the result.
+    func fetchSkillsCLI() {
+        guard !skillsFetchInFlight else { return }
+        skillsFetchInFlight = true
+        skillsFetchFailure = nil
+        let environment = self.environment
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let failure = SkillsCLI.fetch(environment: environment)
+            await MainActor.run {
+                guard let self else { return }
+                self.skillsFetchInFlight = false
+                self.skillsFetchFailure = failure
+                self.recheckCapabilities()
+            }
+        }
+    }
+
     /// Returns nil on success, otherwise the last lines Homebrew printed.
     nonisolated private static func runBrew(_ brew: URL, arguments: [String]) -> String? {
         let process = Process()

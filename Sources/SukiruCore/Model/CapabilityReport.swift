@@ -11,6 +11,15 @@ public enum GitHubUnavailableReason: String, Codable, Equatable, Sendable {
     case probeFailed = "probe-failed"
 }
 
+/// Why `npx skills` is not resolvable. Nil on the report iff `resolvable`.
+public enum NpxUnavailableReason: String, Codable, Equatable, Sendable {
+    /// No npx on PATH (Node.js is not installed).
+    case absent
+    /// npx works, but the skills CLI has not been downloaded to this Mac yet.
+    /// Sukiru never downloads it on its own; the user does, from Settings.
+    case notDownloaded = "not-downloaded"
+}
+
 /// Launch-time capability detection output, produced
 /// by `CapabilityDetector`. NEVER part of ScanReport: capabilities are
 /// the sole command allowed to spawn probe subprocesses.
@@ -29,6 +38,8 @@ public struct CapabilityReport: Codable, Equatable, Sendable {
     public struct NpxCapability: Codable, Equatable, Sendable {
         public let resolvable: Bool
         public let skillsVersion: String?
+        /// Why npx skills is not resolvable; omitted from the JSON when it is.
+        public let reason: NpxUnavailableReason?
     }
 
     public let schemaVersion: Int
@@ -44,7 +55,7 @@ public struct CapabilityReport: Codable, Equatable, Sendable {
             github: GitHubCapability(
                 available: false, present: false, version: nil, meetsMinimum: false,
                 reason: .absent),
-            npx: NpxCapability(resolvable: false, skillsVersion: nil)
+            npx: NpxCapability(resolvable: false, skillsVersion: nil, reason: .absent)
         )
     }
 

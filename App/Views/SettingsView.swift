@@ -145,9 +145,9 @@ private struct InstallersSettingsPane: View {
                     tool: .github, title: "GitHub CLI", token: "sukiru.settings.capability.gh",
                     status: state.capabilities.map { githubStatus($0.github) })
                 InstallerRow(
-                    tool: .node, title: "Node.js (npx skills)",
-                    token: "sukiru.settings.capability.npx",
-                    status: state.capabilities.map { npxStatus($0.npx) })
+                    tool: .node, title: "Node.js", token: "sukiru.settings.capability.node",
+                    status: state.capabilities.map { nodeStatus($0.npx) })
+                SkillsCLIRow(status: state.capabilities.map { skillsStatus($0.npx) })
             } header: {
                 Text("Command-Line Tools")
             } footer: {
@@ -168,7 +168,9 @@ private struct InstallersSettingsPane: View {
                     Button("Check Again") {
                         state.recheckCapabilities()
                     }
-                    .disabled(state.capabilityCheckRunning || state.installerInFlight != nil)
+                    .disabled(
+                        state.capabilityCheckRunning || state.installerInFlight != nil
+                            || state.skillsFetchInFlight)
                 }
             }
             Section {
@@ -187,7 +189,7 @@ private struct InstallersSettingsPane: View {
                         AXToken(token: "sukiru.settings.readonlyNotice")
                         // swiftlint:disable line_length
                         let notice: LocalizedStringKey =
-                            "Read-only diagnostic mode: neither gh nor Node.js (npx) is available. Sukiru inspects and reports your library, but repairs and installs are unavailable."
+                            "Read-only diagnostic mode: neither gh nor the skills CLI is available. Sukiru inspects and reports your library, but repairs and installs are unavailable."
                         // swiftlint:enable line_length
                         Label {
                             Text(notice)
@@ -217,7 +219,7 @@ private struct InstallersSettingsPane: View {
         state.capabilities.map { !$0.github.available && !$0.npx.resolvable } ?? false
     }
 
-    private func githubStatus(_ github: CapabilityReport.GitHubCapability) -> InstallerRow.Status {
+    private func githubStatus(_ github: CapabilityReport.GitHubCapability) -> InstallerStatus {
         if github.available {
             return .ready(String(localized: "capability.available \(github.version ?? "?")"))
         }
@@ -237,127 +239,25 @@ private struct InstallersSettingsPane: View {
         return github.present ? .outdated(summary) : .missing(summary)
     }
 
-    private func npxStatus(_ npx: CapabilityReport.NpxCapability) -> InstallerRow.Status {
-        if npx.resolvable {
-            return .ready(String(localized: "capability.available \(npx.skillsVersion ?? "?")"))
+    private func nodeStatus(_ npx: CapabilityReport.NpxCapability) -> InstallerStatus {
+        guard npx.reason == .absent else {
+            return .ready(String(localized: "capability.installed"))
         }
-        let reason = String(localized: "capability.reason.unresolvable")
-        let summary = String(localized: "capability.unavailable \(reason)")
-        return state.installedPath(of: .node) == nil ? .missing(summary) : .outdated(summary)
-    }
-}
-
-/// One CLI: a status symbol, its probe summary and location, and the action
-/// that fits its state (Install, Update/Reinstall, or Show in Finder).
-private struct InstallerRow: View {
-    enum Status {
-        case ready(String)
-        case outdated(String)
-        case missing(String)
-
-        var summary: String {
-            switch self {
-            case .ready(let text), .outdated(let text), .missing(let text): text
-            }
-        }
+        let reason = String(localized: "capability.reason.absent")
+        return .missing(String(localized: "capability.unavailable \(reason)"))
     }
 
-    @EnvironmentObject private var state: AppState
-    let tool: InstallerTool
-    let title: LocalizedStringKey
-    let token: String
-    let status: Status?
-
-    var body: some View {
-        HStack(spacing: 10) {
-            statusSymbol
-                .font(.title2)
-                .frame(width: 24)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                HStack(spacing: 0) {
-                    AXToken(token: token)
-                    Text(status?.summary ?? String(localized: "capability.checking"))
-                        .textSelection(.enabled)
-                }
-                .accessibilityElement(children: .contain)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                if let path = state.installedPath(of: tool) {
-                    Text(verbatim: path)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                }
-                if let failure = state.installerFailures[tool] {
-                    Text(verbatim: failure)
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.red)
-                        .textSelection(.enabled)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            Spacer()
-            action
+    private func skillsStatus(_ npx: CapabilityReport.NpxCapability) -> InstallerStatus {
+        guard npx.resolvable, let installed = npx.skillsVersion else {
+            let reason =
+                npx.reason == .absent
+                ? String(localized: "capability.reason.needsNode")
+                : String(localized: "capability.reason.notDownloaded")
+            return .missing(String(localized: "capability.unavailable \(reason)"))
         }
-        .padding(.vertical, 2)
-    }
-
-    @ViewBuilder private var statusSymbol: some View {
-        switch status {
-        case .ready:
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-                .accessibilityLabel("Available")
-        case .outdated:
-            Image(systemName: "exclamationmark.triangle.fill")
-                .symbolRenderingMode(.multicolor)
-                .accessibilityLabel("Needs attention")
-        case .missing:
-            Image(systemName: "xmark.circle.fill")
-                .foregroundStyle(.secondary)
-                .accessibilityLabel("Not installed")
-        case nil:
-            ProgressView()
-                .controlSize(.small)
+        if let latest = state.skillsLatestVersion, SkillsCLI.isUpdate(latest, over: installed) {
+            return .outdated(String(localized: "capability.updateAvailable \(installed) \(latest)"))
         }
-    }
-
-    @ViewBuilder private var action: some View {
-        if state.installerInFlight == tool {
-            HStack(spacing: 6) {
-                ProgressView()
-                    .controlSize(.small)
-                Text("Working…")
-                    .foregroundStyle(.secondary)
-            }
-        } else if let status {
-            let busy = state.installerInFlight != nil
-            switch status {
-            case .missing:
-                let title: LocalizedStringKey = AppState.brewURL == nil ? "Download…" : "Install"
-                Button(title) {
-                    state.runInstaller(tool, action: .install)
-                }
-                .disabled(busy)
-            case .ready, .outdated:
-                if state.isManagedByHomebrew(tool) {
-                    Menu("Update") {
-                        Button("Reinstall") {
-                            state.runInstaller(tool, action: .reinstall)
-                        }
-                    } primaryAction: {
-                        state.runInstaller(tool, action: .upgrade)
-                    }
-                    .fixedSize()
-                    .disabled(busy)
-                } else if let path = state.installedPath(of: tool) {
-                    Button("Show in Finder") {
-                        state.revealInFinder([path])
-                    }
-                }
-            }
-        }
+        return .ready(String(localized: "capability.available \(installed)"))
     }
 }

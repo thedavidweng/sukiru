@@ -723,6 +723,28 @@
         }
       }
     },
+    "Download" : {
+      "comment" : "Settings > Installers: download the skills CLI with npx (user-initiated).",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下载"
+          }
+        }
+      }
+    },
+    "Download the skills CLI with npx" : {
+      "comment" : "Settings > Installers: tooltip of the skills CLI Download button.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 npx 下载 skills CLI"
+          }
+        }
+      }
+    },
     "Download…" : {
       "comment" : "Settings > Installers: opens the vendor download page.",
       "localizations" : {
@@ -1617,13 +1639,13 @@
         }
       }
     },
-    "Node.js (npx skills)" : {
-      "comment" : "Settings > Installers: Node.js / npx skills row title.",
+    "Node.js" : {
+      "comment" : "Settings > Installers: Node.js row title.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Node.js（npx skills）"
+            "value" : "Node.js"
           }
         }
       }
@@ -1934,24 +1956,24 @@
         }
       }
     },
-    "Read-only diagnostic mode: neither gh nor Node.js (npx) is available. Sukiru inspects and reports your library, but repairs and installs are unavailable." : {
+    "Read-only diagnostic mode: neither gh nor the skills CLI is available. Sukiru inspects and reports your library, but repairs and installs are unavailable." : {
       "comment" : "Settings notice when neither CLI is available.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "只读诊断模式：gh 和 Node.js（npx）均不可用。Sukiru 可检查并报告技能库，但无法执行修复和安装。"
+            "value" : "只读诊断模式：gh 和 skills CLI 均不可用。Sukiru 可检查并报告技能库，但无法执行修复和安装。"
           }
         }
       }
     },
-    "Read-only — repairing or updating this skill needs Node.js (npx skills), which is not available. Everything else still works." : {
-      "comment" : "Library detail hint: vercel-ledger skill read-only without Node.",
+    "Read-only — repairing or updating this skill needs the skills CLI, which is not set up. Get it in Settings > Installers. Everything else still works." : {
+      "comment" : "Library detail hint: vercel-ledger skill read-only without the skills CLI.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "只读 — 修复或更新此技能需要 Node.js（npx skills），但当前不可用。其他功能不受影响。"
+            "value" : "只读 — 修复或更新此技能需要 skills CLI，但尚未配置。请在“设置 > 安装器”中获取。其他功能不受影响。"
           }
         }
       }
@@ -2892,12 +2914,23 @@
       "comment" : "Scan issue title."
     },
     "Update" : {
-      "comment" : "Settings > Installers: upgrade the CLI with Homebrew.",
+      "comment" : "Settings > Installers: update a CLI (Homebrew for gh/Node.js, npx for the skills CLI).",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "更新"
+          }
+        }
+      }
+    },
+    "Update the skills CLI to the latest release with npx" : {
+      "comment" : "Settings > Installers: tooltip of the skills CLI Update button.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 npx 将 skills CLI 更新到最新版本"
           }
         }
       }
@@ -3180,6 +3213,23 @@
         }
       }
     },
+    "capability.installed" : {
+      "comment" : "Settings > Installers: Node.js is on PATH.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "installed"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已安装"
+          }
+        }
+      }
+    },
     "capability.reason.absent" : {
       "localizations" : {
         "en" : {
@@ -3192,6 +3242,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未安装"
+          }
+        }
+      }
+    },
+    "capability.reason.needsNode" : {
+      "comment" : "Settings > Installers: skills CLI unavailable because npx is missing.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "needs Node.js"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要 Node.js"
+          }
+        }
+      }
+    },
+    "capability.reason.notDownloaded" : {
+      "comment" : "Settings > Installers: npx works but the skills CLI is not on this Mac yet.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "not downloaded"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未下载"
           }
         }
       }
@@ -3228,22 +3312,6 @@
         }
       }
     },
-    "capability.reason.unresolvable" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "not resolvable"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法解析"
-          }
-        }
-      }
-    },
     "capability.unavailable %@" : {
       "localizations" : {
         "en" : {
@@ -3273,6 +3341,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ — 不可用（%2$@）"
+          }
+        }
+      }
+    },
+    "capability.updateAvailable %@ %@" : {
+      "comment" : "Settings > Installers: installed skills CLI version, newer registry version.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@ available"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — 可更新到 %2$@"
           }
         }
       }
@@ -3970,13 +4055,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Repairing this needs Node.js — npx skills is unavailable."
+            "value" : "Repairing this needs the skills CLI. Get it in Settings > Installers."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "修复此项需要 Node.js——npx skills 不可用。"
+            "value" : "修复此项需要 skills CLI。请在“设置 > 安装器”中获取。"
           }
         }
       }
@@ -4049,13 +4134,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Node.js (npx) is unavailable in this environment; the Vercel installer cannot build a batch."
+            "value" : "The skills CLI is not set up, so the Vercel installer cannot build a batch. Get it in Settings > Installers."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "当前环境没有可用的 Node.js（npx）；Vercel 安装器无法构建批处理。"
+            "value" : "尚未配置 skills CLI，Vercel 安装器无法构建批处理。请在“设置 > 安装器”中获取。"
           }
         }
       }
@@ -4194,13 +4279,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ needs Node.js — npx skills is not resolvable in this environment."
+            "value" : "%@ needs the skills CLI. Get it in Settings > Installers."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ 需要 Node.js——此环境中无法解析 npx skills。"
+            "value" : "%@ 需要 skills CLI。请在“设置 > 安装器”中获取。"
           }
         }
       }
@@ -4210,13 +4295,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Repairing this needs Node.js — npx skills is not resolvable in this environment."
+            "value" : "Repairing this needs the skills CLI. Get it in Settings > Installers."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "修复此项需要 Node.js——此环境中无法解析 npx skills。"
+            "value" : "修复此项需要 skills CLI。请在“设置 > 安装器”中获取。"
           }
         }
       }

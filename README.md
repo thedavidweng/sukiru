@@ -85,8 +85,9 @@ Website: <https://thedavidweng.github.io/sukiru/>
 - **Ownership routes repairs.** There is no global "backend" setting. A skill
   owned by `npx skills` is repaired with `npx skills`, and the same goes for
   `gh skill`.
-- **No background activity.** No filesystem watchers and no remote update
-  checks. The app shows state at launch and when you click Refresh.
+- **No background activity.** No filesystem watchers, and nothing is
+  downloaded or updated unless you ask. The app shows state at launch and
+  when you click Refresh.
 - **Deterministic.** The same disk state always produces the same report.
 - **Malformed data is a reported problem, never a crash.**
 
@@ -102,7 +103,9 @@ Website: <https://thedavidweng.github.io/sukiru/>
   - [GitHub CLI](https://cli.github.com) 2.90.0 or later for `gh skill`.
 
 Sukiru detects both tools at launch and disables only the actions that need a
-missing tool.
+missing tool. It never downloads or updates the `skills` CLI on its own: if the
+CLI is missing or a newer release exists, Settings › Installers says so and
+offers a Download or Update button.
 
 ### Homebrew (Recommended)
 
@@ -173,7 +176,7 @@ menus.
 
 Sukiru has no accounts, analytics, or telemetry. It reads local files and
 runs the official CLIs on your machine. It connects to the network only to
-detect the installed `skills` version through `npx` at launch, when you
+look up the latest `skills` CLI version on the npm registry, when you
 search (the skills.sh search API and `gh skill search`), preview a skill's
 `SKILL.md` from GitHub, or run a CLI command that needs the network.
 Snapshots and execution records stay in

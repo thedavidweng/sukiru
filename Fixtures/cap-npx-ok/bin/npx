@@ -5,7 +5,7 @@ if [ -n "${SUKIRU_STUB_TRANSCRIPT:-}" ]; then
     printf 'npx %s\n' "$*" >>"$SUKIRU_STUB_TRANSCRIPT"
 fi
 case "$*" in
-    *skills@*--version*)
+    *--offline*skills*--version*)
         echo "1.5.26"
         exit 0
         ;;
