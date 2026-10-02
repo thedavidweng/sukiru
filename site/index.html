@@ -8,6 +8,7 @@
 <meta name="color-scheme" content="light dark" />
 <link rel="icon" type="image/png" href="assets/favicon.png" />
 <link rel="stylesheet" href="assets/site.css" />
+<script>document.documentElement.classList.add("js");</script>
 <link rel="canonical" href="https://thedavidweng.github.io/sukiru/" />
 <link rel="alternate" hreflang="en" href="https://thedavidweng.github.io/sukiru/" />
 <link rel="alternate" hreflang="zh-Hans" href="https://thedavidweng.github.io/sukiru/zh/" />
@@ -58,8 +59,15 @@
 
 <!-- Hero -->
 <section class="hero" id="overview">
-  <img class="hero-shot" src="assets/screenshot.webp" onerror="this.remove()" width="2370" height="1572" fetchpriority="high"
-       alt="Sukiru main window with the sidebar on the left and the skill library on the right" />
+  <div class="hero-stage-wrap">
+    <div class="hero-camera">
+      <div class="hero-stage" data-problems="Broken link|Diverged copy|Stale record|Claimed twice" data-fixed="✓ Fixed">
+        <img class="hero-shot" src="assets/screenshot.webp" onerror="this.remove()" width="2370" height="1572" fetchpriority="high"
+             alt="Sukiru main window with the sidebar on the left and the skill library on the right" />
+        <div class="hero-sheen" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
   <div class="hero-meta">
     <img class="hero-icon" src="assets/icon.webp" width="128" height="128" alt="Sukiru app icon" />
     <p class="hero-name">Sukiru</p>
@@ -71,6 +79,7 @@
     </div>
     <p class="fine-print muted">Free and open source · Requires macOS 14 Sonoma or later on Apple silicon</p>
   </div>
+  <button class="hero-replay" type="button" hidden aria-label="Replay animation" title="Replay animation"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.46-3.54M13 2.5v2.5h-2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 </section>
 
 <!-- Health -->
