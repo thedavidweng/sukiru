@@ -300,6 +300,7 @@ private struct ProblemSection: View {
     let group: AppState.ProblemGroup
     let rows: [HealthView.FindingRowItem]
     @State private var expanded: Bool?
+    @State private var showingExplanation = false
 
     private var isExpanded: Binding<Bool> {
         Binding(
@@ -309,6 +310,14 @@ private struct ProblemSection: View {
 
     var body: some View {
         Section(isExpanded: isExpanded) {
+            if showingExplanation {
+                // Untagged, so the list never selects it.
+                Text(group.kind.explanation)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.vertical, 4)
+            }
             ForEach(rows) { row in
                 FindingRow(row: row)
                     .tag(row.entry.id)
@@ -326,7 +335,7 @@ private struct ProblemSection: View {
             Text("\(group.entries.count)")
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
-            ProblemInfoButton(kind: group.kind)
+            infoButton
             Spacer()
             let fixable = state.fixableEntries(group.entries)
                 .filter { state.cartItem(for: $0.finding) == nil }
@@ -350,6 +359,23 @@ private struct ProblemSection: View {
         .padding(.vertical, 4)
     }
 
+    /// Shows the problem's explanation as the section's first row. A popover
+    /// would inherit the section header's one-line, bold styling.
+    private var infoButton: some View {
+        Button {
+            showingExplanation.toggle()
+            if showingExplanation {
+                expanded = true
+            }
+        } label: {
+            Image(systemName: showingExplanation ? "info.circle.fill" : "info.circle")
+        }
+        .buttonStyle(.borderless)
+        .foregroundStyle(.secondary)
+        .help("About This Problem")
+        .accessibilityLabel("About This Problem")
+    }
+
     /// Looks up every orphan on skills.sh and queues the verified matches.
     @ViewBuilder private var findSourcesButton: some View {
         if state.sourceMatchingInFlight {
@@ -363,36 +389,6 @@ private struct ProblemSection: View {
             .disabled(state.batchMutationInFlight)
             .axButtonToken("sukiru.health.group.orphan.findSources")
             .help("Match each skill to a skills.sh listing and queue adoption of confirmed matches")
-        }
-    }
-}
-
-/// Opens a problem's explanation on click, the macOS convention for
-/// supplementary help; hover-only tooltips are too slow and hidden from
-/// keyboard users for multi-sentence copy.
-private struct ProblemInfoButton: View {
-    let kind: ProblemKind
-    @State private var isPresented = false
-
-    var body: some View {
-        Button {
-            isPresented.toggle()
-        } label: {
-            Image(systemName: "info.circle")
-        }
-        .buttonStyle(.borderless)
-        .foregroundStyle(.secondary)
-        .help("About This Problem")
-        .accessibilityLabel("About This Problem")
-        .popover(isPresented: $isPresented, arrowEdge: .bottom) {
-            // The popover inherits the section header's environment, which
-            // limits text to one bold line.
-            Text(kind.explanation)
-                .font(.body)
-                .lineLimit(nil)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(width: 320, alignment: .leading)
-                .padding()
         }
     }
 }
