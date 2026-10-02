@@ -2,9 +2,9 @@ import SukiruCore
 import SwiftUI
 
 /// One skill row, laid out like a Mail message: name and the agents that read
-/// it on the first line, description and installer on the second. The leading
-/// gutter carries the only alarm color, and only for findings that ask for a
-/// fix.
+/// it on the first line, description and installer on the second. A trailing
+/// marker after the agents carries the only alarm color, and only for findings
+/// that ask for a fix.
 struct SkillRow: View {
     @EnvironmentObject private var state: AppState
     let skill: Skill
@@ -17,7 +17,6 @@ struct SkillRow: View {
         .hostEntries().filter(\.installed)
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             AXToken(token: "sukiru.library.skillRow.\(AXTokens.skill(skill.name))")
-            attentionMarker
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .center, spacing: 8) {
                     Text(skill.name)
@@ -25,6 +24,7 @@ struct SkillRow: View {
                         .lineLimit(1)
                     Spacer(minLength: 0)
                     AgentIconStrip(hosts: hosts)
+                    attentionMarker
                 }
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(state.skillDescriptions[skill.selfID] ?? "")
@@ -43,18 +43,12 @@ struct SkillRow: View {
 
     @ViewBuilder
     private var attentionMarker: some View {
-        let symbol = Image(systemName: "exclamationmark.triangle.fill")
-            .imageScale(.small)
-            .frame(width: 14)
         if state.needsAttention(skill) {
-            symbol
+            Image(systemName: "exclamationmark.triangle.fill")
+                .imageScale(.small)
                 .symbolRenderingMode(.multicolor)
                 .help("Needs attention")
                 .accessibilityLabel("Needs attention")
-        } else {
-            symbol
-                .hidden()
-                .accessibilityHidden(true)
         }
     }
 
