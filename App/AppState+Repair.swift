@@ -276,6 +276,9 @@ extension AppState {
 
     private func finishExecution(record: ExecutionRecord?, failure: String?) {
         batchMutationInFlight = false
+        if let pendingBatch {
+            dequeueLifecycle(completedBy: pendingBatch, status: record?.batchStatus)
+        }
         pendingBatch = nil
         lastExecutionRecord = record
         lastExecutionFailure = failure

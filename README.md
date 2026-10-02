@@ -64,7 +64,9 @@ Website: <https://thedavidweng.github.io/sukiru/>
   and can be rolled back after you confirm. The last 10 snapshots are kept,
   and you can delete any of them.
 - 📚 **Library**: See each skill's owner, provenance, pinned ref, and where it
-  is placed across agents. Switch a skill between link and copy mode.
+  is placed across agents. Switch a skill between link and copy mode, and
+  update or uninstall it (or update everything at once) through the installer
+  that owns it.
 - 🔍 **Search and install**: Search skills.sh and `gh skill search`, preview
   `SKILL.md`, then install with the installer you choose, through the same
   confirm → snapshot → rollback pipeline.

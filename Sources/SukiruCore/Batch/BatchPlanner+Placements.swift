@@ -46,7 +46,7 @@ extension CommandBatchBuilder {
         return [
             BatchCommandFactory.vercelRemove(
                 name: name, scope: finding.workspaceID == "user" ? .user : .project,
-                finding: finding, atRisk: [],
+                atRisk: [],
                 intent: "Remove the stale lock entry for '\(name)' (finding \(finding.ruleID)): "
                     + "the lock lists it, but its files are gone.",
                 consequence: .removesOnlyStaleLockEntry(skill: name),
@@ -253,7 +253,7 @@ extension CommandBatchBuilder {
         let paths = Self.cliReachable(skill: skill, report: report).map(\.path)
         return [
             BatchCommandFactory.vercelRemove(
-                name: skill.name, scope: skill.scope, finding: finding, atRisk: [],
+                name: skill.name, scope: skill.scope, atRisk: [],
                 intent: "Remove '\(skill.name)' (finding \(finding.ruleID)): its shared copy "
                     + "is gone; drop the lock entry and the copies agents still hold.",
                 consequence: .removesLockedSkill(skill: skill.name, deleting: paths),

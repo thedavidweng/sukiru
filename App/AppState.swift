@@ -96,6 +96,9 @@ final class AppState: ObservableObject {
     @Published var fixSkipped: [String] = []
     /// Repairs queued from Health, checked out together as one batch.
     @Published var cart: [CartItem] = []
+    /// Updates and uninstalls queued from the Library, checked out with the
+    /// cart.
+    @Published var lifecycleQueue: [LifecycleRequest] = []
     /// The orphan whose source is being chosen, and each orphan's source
     /// lookup (by `skillID`), shared by its Health row and the source sheet.
     @Published var sourceSheetSkill: Skill?

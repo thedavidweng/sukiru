@@ -152,7 +152,7 @@ struct HealthView: View {
             )
             .disabled(state.healthCheckRunning)
             let fixable = state.fixableEntries(problemEntries)
-            if state.cart.isEmpty {
+            if state.queuedChangeCount == 0 {
                 fixAllButton(fixable)
                     .buttonStyle(.borderedProminent)
             } else {
@@ -160,13 +160,13 @@ struct HealthView: View {
                 Button {
                     state.checkout()
                 } label: {
-                    Text("Review \(state.cart.count) Changes")
+                    Text("Review \(state.queuedChangeCount) Changes")
                         .contentTransition(.numericText())
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(state.batchMutationInFlight)
                 .axButtonToken("sukiru.health.review", disabled: state.batchMutationInFlight)
-                .help("Apply every queued repair in one batch, with one snapshot")
+                .help("Apply every queued change in one batch, with one snapshot")
             }
         }
         .padding(.horizontal, 16)

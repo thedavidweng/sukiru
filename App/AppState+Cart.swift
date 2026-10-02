@@ -48,13 +48,19 @@ extension AppState {
 
     func clearCart() {
         cart = []
+        lifecycleQueue = []
     }
 
-    /// Builds every queued repair into one batch and opens the confirmation.
-    /// Repairs that no longer apply are listed there instead of blocking
-    /// the rest.
+    /// Queued repairs plus queued Library changes.
+    var queuedChangeCount: Int {
+        cart.count + lifecycleQueue.count
+    }
+
+    /// Builds every queued repair and Library change into one batch and
+    /// opens the confirmation. Changes that no longer apply are listed there
+    /// instead of blocking the rest.
     func checkout() {
-        guard let report, !cart.isEmpty else { return }
+        guard let report, queuedChangeCount > 0 else { return }
         let ids = FindingID.assignments(for: report.findings)
         let decisions = cart.compactMap { item -> DecisionEntry? in
             guard let id = ids.first(where: { $0.finding == item.finding })?.id else {
@@ -62,20 +68,28 @@ extension AppState {
             }
             return DecisionEntry(findingID: id, action: item.action, choice: item.choice)
         }
-        let built = CommandBatchBuilder().buildApplicable(report: report, decisions: decisions)
+        let built = CommandBatchBuilder().buildApplicable(
+            report: report, decisions: decisions, lifecycle: lifecycleQueue)
         propose(built.batch, skipped: built.skipped)
     }
 
     /// Keeps queued repairs attached to the same findings after a rescan,
     /// and drops the ones whose problem is gone. This is also how a checkout
     /// empties the cart: its post-run rescan drops every repair that worked,
-    /// and the ones that failed stay queued for another try.
+    /// and the ones that failed stay queued for another try. Library changes
+    /// follow their skill into the new scan and leave with it; an update,
+    /// whose skill stays, leaves when its batch succeeds.
     func pruneCart(using report: ScanReport) {
         cart = cart.compactMap { item in
             let base = FindingID.baseID(for: item.finding)
             let candidates = report.findings.filter { FindingID.baseID(for: $0) == base }
             let fresh = candidates.first { $0 == item.finding } ?? candidates.first
             return fresh.map { CartItem(finding: $0, action: item.action, choice: item.choice) }
+        }
+        lifecycleQueue = lifecycleQueue.compactMap { request in
+            let id = Self.skillID(request.skill)
+            return report.skills.first { Self.skillID($0) == id }
+                .map { LifecycleRequest(skill: $0, action: request.action) }
         }
     }
 }

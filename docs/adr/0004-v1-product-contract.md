@@ -60,3 +60,13 @@ has both a Vercel lock entry and `gh` frontmatter provenance; non-interactive
 `npx skills add -y` defaults to copy mode; the two installers use different
 discovery rules for the same source repository (`gh` fails to discover skills
 under a maintenance-style path prefix).
+
+## Amendment (2026-10-02): uninstalling a GitHub-ledger skill
+
+`gh skill` has no uninstall command. The `gh` ledger record lives in the
+skill's own `SKILL.md` frontmatter, so deleting the skill's placements also
+deletes its ledger entry without writing to any ledger. A Library uninstall
+of a GitHub-ledger skill is therefore a flagged direct file operation: links
+are removed as links (never followed), then directories are deleted, all
+inside the batch snapshot. Vercel-ledger uninstalls still go through
+`npx skills remove`.

@@ -39,6 +39,7 @@ struct LibraryProvenanceSection: View {
                 Text("No ledger claims this skill (ownerless).")
                     .foregroundStyle(.secondary)
             }
+            LibraryLifecycleControls(skill: skill)
         } header: {
             TokenSectionHeader(token: "sukiru.library.detail.provenance", title: "Provenance")
         }
@@ -52,7 +53,7 @@ struct LibraryProvenanceSection: View {
     private var readOnlyNotice: some View {
         // swiftlint:disable line_length
         let hint: LocalizedStringKey =
-            "Read-only. Repairing or updating this skill needs Node.js, which is not installed. Get it in Settings > Installers. Everything else still works."
+            "Read-only. Repairing, updating, or uninstalling this skill needs Node.js, which is not installed. Get it in Settings > Installers. Everything else still works."
         // swiftlint:enable line_length
         return HStack(spacing: 0) {
             AXToken(token: "sukiru.library.detail.readonly.\(AXTokens.skill(skill.name))")

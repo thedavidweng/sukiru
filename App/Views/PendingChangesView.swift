@@ -4,8 +4,9 @@ import SwiftUI
 /// The Pending Changes surface: the cart of queued repairs and the Command
 /// Batch safety model made visible.
 ///
-/// - **Cart** — repairs queued from Health, each removable, checked out
-///   together into one batch with one snapshot (`sukiru.pending.checkout`).
+/// - **Cart** — repairs queued from Health and updates or uninstalls queued
+///   from the Library, each removable, checked out together into one batch
+///   with one snapshot (`sukiru.pending.checkout`).
 /// - **Decision** — a Health "Choose Repair…" deep-link opens the decision
 ///   panel (`RepairDraftPanel`): ownership-routed repair options, with
 ///   capability-blocked options rendered as hints. A choice joins the cart.
@@ -26,7 +27,7 @@ struct PendingChangesView: View {
                     if let draft = state.repairDraft {
                         RepairDraftPanel(draft: draft)
                     }
-                    if !state.cart.isEmpty {
+                    if state.queuedChangeCount > 0 {
                         cartList
                     }
                 }
@@ -42,7 +43,7 @@ struct PendingChangesView: View {
                     title: "No pending changes",
                     // swiftlint:disable line_length
                     explanation:
-                        "Repairs you queue in Health collect here, so you can review and apply them together in one batch with one snapshot."
+                        "Repairs you queue in Health, and updates or uninstalls you queue in the Library, collect here, so you can review and apply them together in one batch with one snapshot."
                         // swiftlint:enable line_length
                 )
             }
@@ -55,7 +56,7 @@ struct PendingChangesView: View {
         .surfaceBar {
             if state.batchMutationInFlight && hasContent {
                 progressHeader
-            } else if !state.cart.isEmpty {
+            } else if state.queuedChangeCount > 0 {
                 checkoutHeader
             }
         }
@@ -70,23 +71,47 @@ struct PendingChangesView: View {
 
     private var hasContent: Bool {
         state.repairDraft != nil || state.lastExecutionRecord != nil
-            || state.lastExecutionFailure != nil || !state.cart.isEmpty
+            || state.lastExecutionFailure != nil || state.queuedChangeCount > 0
     }
 
     private var cartList: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(state.cart) { item in
-                CartRow(item: item)
-                if item != state.cart.last {
+                CartRow(
+                    name: item.finding.skillName ?? item.finding.title, change: item.title,
+                    detail: item.finding.title
+                ) {
+                    state.removeFromCart(item)
+                }
+                if item != state.cart.last || !state.lifecycleQueue.isEmpty {
+                    Divider()
+                }
+            }
+            ForEach(state.lifecycleQueue) { request in
+                CartRow(
+                    name: request.skill.name, change: String(localized: request.action.title),
+                    detail: scopeTitle(of: request.skill)
+                ) {
+                    state.removeFromCart(request)
+                }
+                if request != state.lifecycleQueue.last {
                     Divider()
                 }
             }
         }
     }
 
+    private func scopeTitle(of skill: Skill) -> String {
+        if skill.scope == .user {
+            return String(localized: "User Library")
+        }
+        return state.projectRoot(of: skill).map { URL(fileURLWithPath: $0).lastPathComponent }
+            ?? String(localized: "Project scope")
+    }
+
     private var checkoutHeader: some View {
         HStack(spacing: 12) {
-            Text("\(state.cart.count) queued changes")
+            Text("\(state.queuedChangeCount) queued changes")
                 .foregroundStyle(.secondary)
                 .contentTransition(.numericText())
             Spacer()
@@ -99,7 +124,7 @@ struct PendingChangesView: View {
             }
             .buttonStyle(.borderedProminent)
             .axButtonToken("sukiru.pending.checkout")
-            .help("Apply every queued repair in one batch, with one snapshot")
+            .help("Apply every queued change in one batch, with one snapshot")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -120,26 +145,27 @@ struct PendingChangesView: View {
     }
 }
 
-/// One queued repair: what it fixes, what it will do, and a remove button.
+/// One queued change: the skill, what will happen to it, why or where, and
+/// a remove button.
 private struct CartRow: View {
-    @EnvironmentObject private var state: AppState
-    let item: AppState.CartItem
+    let name: String
+    let change: String
+    let detail: String
+    let remove: () -> Void
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: item.finding.skillName ?? item.finding.title)
+                Text(verbatim: name)
                     .font(.callout.weight(.medium))
-                Text(verbatim: item.title)
+                Text(verbatim: change)
                     .font(.caption)
-                Text(verbatim: item.finding.title)
+                Text(verbatim: detail)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Button {
-                state.removeFromCart(item)
-            } label: {
+            Button(action: remove) {
                 Image(systemName: "xmark.circle.fill")
             }
             .buttonStyle(.borderless)

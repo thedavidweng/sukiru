@@ -9,20 +9,21 @@ import Foundation
 enum BatchCommandFactory {
     // MARK: - npx skills (vercel ledger)
 
-    /// `npx skills update <name> (-p|-g) -y` — the plain vercel update.
-    /// NEVER used for drift repair. Project-scope
-    /// commands carry the project root as `workingDirectory` (npx resolves
-    /// `-p` literally from cwd).
+    /// `npx skills update <name>… (-p|-g) -y` — the plain vercel update; the
+    /// CLI takes several names in one run. NEVER used for drift repair.
+    /// Project-scope commands carry the project root as `workingDirectory`
+    /// (npx resolves `-p` literally from cwd). `reason` names what asked
+    /// for the update (a finding, or the Library).
     static func vercelUpdate(
-        name: String, scope: Scope, finding: Finding, workingDirectory: String? = nil
+        names: [String], scope: Scope, reason: String, workingDirectory: String? = nil
     ) -> BatchCommand {
-        let argv = ["npx", "skills", "update", name, scope == .user ? "-g" : "-p", "-y"]
+        let argv = ["npx", "skills", "update"] + names + [scope == .user ? "-g" : "-p", "-y"]
         return BatchCommand(
             argv: argv,
             displayString: BatchCommand.display(for: argv),
             owningCLI: .vercel,
-            intent: "Update '\(name)' through the Vercel CLI (finding \(finding.ruleID)): "
-                + "refresh the ledger-owned copies of the skill.",
+            intent: "Update \(quoted(names)) through the Vercel CLI (\(reason)): "
+                + "refresh the ledger-owned copies.",
             dangerFlags: [],
             warning: nil,
             workingDirectory: workingDirectory
@@ -81,7 +82,6 @@ enum BatchCommandFactory {
     static func vercelRemove(
         name: String,
         scope: Scope,
-        finding: Finding,
         atRisk: [AtRiskSkill],
         intent: String,
         consequence: CommandConsequence? = nil,
@@ -105,6 +105,14 @@ enum BatchCommandFactory {
         )
     }
 
+    /// The skills a name-based `npx skills remove` of `skill` endangers:
+    /// none when the Vercel ledger alone claims the name in its scope,
+    /// otherwise the skill itself under its other claim.
+    static func removalAtRisk(_ skill: Skill) -> [AtRiskSkill] {
+        skill.ownership == .vercel
+            ? [] : [AtRiskSkill(skill: skill.name, ownership: skill.ownership.rawValue)]
+    }
+
     /// The dangerous-deletion warning prose: removal is
     /// by name across ownership, and detectable at-risk skills are named with
     /// their owning ledger.
@@ -122,22 +130,24 @@ enum BatchCommandFactory {
 
     // MARK: - gh skill (github ledger)
 
-    /// `gh skill update <name> --dir <dir>` per placement directory — the
-    /// narrowest targeting available (named skill + `--dir`, never a
-    /// bare `--all`), one command per distinct skills dir.
-    static func githubUpdates(name: String, dirs: [String], finding: Finding) -> [BatchCommand] {
-        dirs.map { dir in
-            let argv = ["gh", "skill", "update", name, "--dir", dir]
-            return BatchCommand(
-                argv: argv,
-                displayString: BatchCommand.display(for: argv),
-                owningCLI: .github,
-                intent: "Update '\(name)' through the GitHub CLI (finding \(finding.ruleID)): "
-                    + "gh skill update, narrowly scoped to \(dir).",
-                dangerFlags: [],
-                warning: nil
-            )
-        }
+    /// `gh skill update <name>… --dir <dir>` for one skills dir — the
+    /// narrowest targeting available (named skills + `--dir`, never a
+    /// bare `--all`); callers emit one per distinct placement dir.
+    static func githubUpdate(names: [String], dir: String, reason: String) -> BatchCommand {
+        let argv = ["gh", "skill", "update"] + names + ["--dir", dir]
+        return BatchCommand(
+            argv: argv,
+            displayString: BatchCommand.display(for: argv),
+            owningCLI: .github,
+            intent: "Update \(quoted(names)) through the GitHub CLI (\(reason)): "
+                + "gh skill update, narrowly scoped to \(dir).",
+            dangerFlags: [],
+            warning: nil
+        )
+    }
+
+    private static func quoted(_ names: [String]) -> String {
+        names.map { "'\($0)'" }.joined(separator: ", ")
     }
 
     /// `gh skill install <owner/repo> <path> --force --dir <dir>` — the

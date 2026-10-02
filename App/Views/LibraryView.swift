@@ -37,6 +37,10 @@ struct LibraryView: View {
         .navigationSubtitle(Text("\(skillCount) skills"))
         .toolbar {
             ToolbarItem {
+                // The selected scope, not the filters: a filter only narrows the view.
+                UpdateAllButton(skills: state.report?.skills.filter(isInSelectedScope) ?? [])
+            }
+            ToolbarItem {
                 filterMenu
             }
         }

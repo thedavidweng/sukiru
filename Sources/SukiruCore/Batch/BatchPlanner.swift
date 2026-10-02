@@ -142,7 +142,7 @@ extension CommandBatchBuilder {
             }
             return [
                 BatchCommandFactory.vercelUpdate(
-                    name: skill.name, scope: skill.scope, finding: finding,
+                    names: [skill.name], scope: skill.scope, reason: "finding \(finding.ruleID)",
                     workingDirectory: projectRoot(of: finding))
             ]
         case .github:
@@ -150,8 +150,10 @@ extension CommandBatchBuilder {
             guard !dirs.isEmpty else {
                 throw noDirectoryPlacements(skill: skill, entry: entry)
             }
-            return BatchCommandFactory.githubUpdates(
-                name: skill.name, dirs: dirs, finding: finding)
+            return dirs.map { dir in
+                BatchCommandFactory.githubUpdate(
+                    names: [skill.name], dir: dir, reason: "finding \(finding.ruleID)")
+            }
         case .doubleBooked:
             throw needsArbitration(skill: skill, entry: entry)
         case .ownerless:
@@ -220,7 +222,7 @@ extension CommandBatchBuilder {
         let dir = try ghProvenanceDir(skill: skill, finding: finding, report: report)
         let atRisk = [AtRiskSkill(skill: skill.name, ownership: skill.ownership.rawValue)]
         let remove = BatchCommandFactory.vercelRemove(
-            name: skill.name, scope: skill.scope, finding: finding, atRisk: atRisk,
+            name: skill.name, scope: skill.scope, atRisk: atRisk,
             intent: "Arbitrate '\(skill.name)' keeping the GitHub ledger (finding "
                 + "\(finding.ruleID)): remove every copy by name before re-anchoring.",
             workingDirectory: projectRoot(of: finding))
@@ -344,12 +346,10 @@ extension CommandBatchBuilder {
         }
         // Ledger-owned skills remove through the vercel CLI (gh has no remove
         // command); cross-ledger names are named as at-risk.
-        let atRisk: [AtRiskSkill] =
-            skill.ownership == .vercel
-            ? [] : [AtRiskSkill(skill: skill.name, ownership: skill.ownership.rawValue)]
         return [
             BatchCommandFactory.vercelRemove(
-                name: skill.name, scope: skill.scope, finding: finding, atRisk: atRisk,
+                name: skill.name, scope: skill.scope,
+                atRisk: BatchCommandFactory.removalAtRisk(skill),
                 intent: "Remove '\(skill.name)' (finding \(finding.ruleID)): npx skills "
                     + "remove is the only scriptable removal; gh has no remove command.",
                 workingDirectory: projectRoot(of: finding))

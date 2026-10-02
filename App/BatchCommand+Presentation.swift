@@ -26,7 +26,9 @@ extension BatchCommand {
         }
         switch fileOperation {
         case .deleteDirectory:
-            return String(localized: "command.warning.deleteOwnerless")
+            return dangerFlags.contains(.ownerlessCleanup)
+                ? String(localized: "command.warning.deleteOwnerless")
+                : String(localized: "command.warning.deleteGitHubSkill")
         case .deleteLink:
             return String(localized: "command.warning.deleteLink")
         case .relink:

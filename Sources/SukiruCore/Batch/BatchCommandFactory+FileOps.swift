@@ -17,6 +17,22 @@ extension BatchCommandFactory {
                 + "captured in the batch snapshot.")
     }
 
+    /// Deletes a directory placement of a GitHub-ledger skill: `gh skill`
+    /// has no uninstall command, and its ledger lives in the deleted
+    /// SKILL.md, so removing the folder is the whole uninstall.
+    static func deleteGitHubSkillDirectory(
+        name: String, path: String, intent: String
+    ) -> BatchCommand {
+        fileOperation(
+            .deleteDirectory(path),
+            display: "delete directory " + BatchCommand.display(for: [path]),
+            intent: intent,
+            flags: [.directFileOperation],
+            warning: "Direct deletion of '\(path)' for '\(name)': gh skill has no uninstall "
+                + "command. The full payload is captured in the batch snapshot before "
+                + "deletion.")
+    }
+
     /// Replaces a host-folder copy with a link to the shared-store copy.
     /// `diverged` marks a copy whose content differs from the store's, so
     /// its local edits are discarded (kept only in the snapshot).

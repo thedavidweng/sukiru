@@ -272,6 +272,28 @@
         }
       }
     },
+    "Add uninstalling this skill to Pending Changes" : {
+      "comment" : "Library detail: help for Uninstall.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将卸载此技能加入待处理更改"
+          }
+        }
+      }
+    },
+    "Add updating this skill through its installer to Pending Changes" : {
+      "comment" : "Library detail: help for Update.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将通过其安装器更新此技能加入待处理更改"
+          }
+        }
+      }
+    },
     "Adopt" : {
       "localizations" : {
         "zh-Hans" : {
@@ -459,12 +481,12 @@
         }
       }
     },
-    "Apply every queued repair in one batch, with one snapshot" : {
+    "Apply every queued change in one batch, with one snapshot" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在一个批次中应用所有排队的修复，只拍一个快照"
+            "value" : "在一个批次中应用所有排队的更改，只拍一个快照"
           }
         }
       }
@@ -517,6 +539,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "批次已执行。改动详情见“快照”。"
+          }
+        }
+      }
+    },
+    "Both installers claim this skill. Choose which one keeps it in Health before you update or uninstall it." : {
+      "comment" : "Library detail: a double-booked skill cannot be updated or uninstalled yet.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "两个安装器都记录了此技能。请先在「健康」中选择由哪个安装器保留它，再更新或卸载。"
           }
         }
       }
@@ -2350,13 +2383,13 @@
         }
       }
     },
-    "Read-only. Repairing or updating this skill needs Node.js, which is not installed. Get it in Settings > Installers. Everything else still works." : {
+    "Read-only. Repairing, updating, or uninstalling this skill needs Node.js, which is not installed. Get it in Settings > Installers. Everything else still works." : {
       "comment" : "Library detail hint: vercel-ledger skill read-only without the skills CLI.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "只读。修复或更新此技能需要 Node.js，但尚未安装。请在“设置 > 安装器”中获取。其他功能不受影响。"
+            "value" : "只读。修复、更新或卸载此技能需要 Node.js，但尚未安装。请在“设置 > 安装器”中获取。其他功能不受影响。"
           }
         }
       }
@@ -2500,12 +2533,12 @@
         }
       }
     },
-    "Repairs you queue in Health collect here, so you can review and apply them together in one batch with one snapshot." : {
+    "Repairs you queue in Health, and updates or uninstalls you queue in the Library, collect here, so you can review and apply them together in one batch with one snapshot." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在「健康」中排队的修复会汇总到这里，你可以一并审阅，并在一个批次中应用，只拍一个快照。"
+            "value" : "在「健康」中排队的修复，以及在「资源库」中排队的更新或卸载，会汇总到这里，你可以一并审阅，并在一个批次中应用，只拍一个快照。"
           }
         }
       }
@@ -3415,6 +3448,17 @@
         }
       }
     },
+    "Uninstall" : {
+      "comment" : "Library detail: queue uninstalling a ledger-owned skill.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "卸载"
+          }
+        }
+      }
+    },
     "Unpinned" : {
       "comment" : "Detail provenance: gh placement is unpinned.",
       "localizations" : {
@@ -3503,6 +3547,28 @@
         }
       }
     },
+    "Update All" : {
+      "comment" : "Library toolbar: queue an update for every ledger-owned skill in the selected scope.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部更新"
+          }
+        }
+      }
+    },
+    "Update every skill an installer manages here, reviewed in one batch" : {
+      "comment" : "Library toolbar: help for Update All.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新此处由安装器管理的所有技能，并在一个批次中审阅"
+          }
+        }
+      }
+    },
     "Update the skills CLI to the latest release with npx" : {
       "comment" : "Settings > Installers: tooltip of the skills CLI Update button.",
       "localizations" : {
@@ -3510,6 +3576,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用 npx 将 skills CLI 更新到最新版本"
+          }
+        }
+      }
+    },
+    "Updating needs the GitHub CLI. Get it in Settings > Installers." : {
+      "comment" : "Library detail: a GitHub-ledger skill cannot update without gh.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新需要 GitHub CLI。请在“设置 > 安装器”中获取。"
           }
         }
       }
@@ -3932,6 +4009,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此范围内存在风险：%@"
+          }
+        }
+      }
+    },
+    "command.warning.deleteGitHubSkill" : {
+      "comment" : "Batch review note for deleting a GitHub-ledger skill's folder.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh skill has no uninstall command, so Sukiru deletes this folder directly. The snapshot keeps a full copy first."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh skill 没有卸载命令，因此 Sukiru 将直接删除此文件夹。删除前快照会保留完整副本。"
           }
         }
       }
@@ -5370,13 +5464,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Delete %lld dead link"
+                  "value" : "Delete %lld link"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Delete %lld dead links"
+                  "value" : "Delete %lld links"
                 }
               }
             }
@@ -5385,7 +5479,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "删除 %lld 个失效链接"
+            "value" : "删除 %lld 个链接"
           }
         }
       }

@@ -266,11 +266,14 @@ struct BatchSummary {
     init(_ batch: CommandBatch) {
         var counts: [Kind: Int] = [:]
         var order: [Kind] = []
-        for kind in batch.commands.map(Kind.init) {
+        for command in batch.commands {
+            let kind = Kind(command)
             if counts[kind] == nil {
                 order.append(kind)
             }
-            counts[kind, default: 0] += 1
+            // One update command can name several skills.
+            let names = command.argv.dropFirst(3).prefix { !$0.hasPrefix("-") }.count
+            counts[kind, default: 0] += kind == .update ? max(names, 1) : 1
         }
         lines = order.map { $0.line(counts[$0] ?? 0) }
     }

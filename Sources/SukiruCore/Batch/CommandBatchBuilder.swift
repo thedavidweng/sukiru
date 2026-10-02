@@ -70,15 +70,17 @@ public struct CommandBatchBuilder: Sendable {
         return batch(from: planned)
     }
 
-    /// Builds one batch from every decision that applies, skipping the rest
-    /// (Fix All: one inapplicable repair must not block the others).
+    /// Builds one batch from every decision and Library request that
+    /// applies, skipping the rest (Fix All: one inapplicable repair must not
+    /// block the others).
     ///
     /// - Returns: the batch (nil when nothing applies) and the problem of
-    ///   every skipped decision.
+    ///   every skipped decision or request.
     public func buildApplicable(
-        report: ScanReport, decisions: [DecisionEntry]
+        report: ScanReport, decisions: [DecisionEntry], lifecycle: [LifecycleRequest] = []
     ) -> (batch: CommandBatch?, skipped: [String]) {
-        let planned = plan(report: report, decisions: decisions)
+        var planned = plan(report: report, decisions: decisions)
+        planLifecycle(lifecycle, report: report, into: &planned)
         return (batch(from: planned), planned.problems)
     }
 
