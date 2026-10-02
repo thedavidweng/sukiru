@@ -249,10 +249,10 @@ struct HealthView: View {
     }
 }
 
-/// One problem kind: a plain-language explanation, a Fix button for every
-/// one-click repair in the section, and its rows. Notes start collapsed,
-/// except while focused on one skill, where every finding is what was asked
-/// for.
+/// One problem kind: an info button for its plain-language explanation, a
+/// Fix button for every one-click repair in the section, and its rows. Notes
+/// start collapsed, except while focused on one skill, where every finding is
+/// what was asked for.
 private struct ProblemSection: View {
     @EnvironmentObject private var state: AppState
     let group: AppState.ProblemGroup
@@ -267,13 +267,6 @@ private struct ProblemSection: View {
 
     var body: some View {
         Section(isExpanded: isExpanded) {
-            // A row, not part of the header: macOS clips section headers to
-            // one line, which truncated the explanation with no way to read it.
-            Text(group.kind.explanation)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .selectionDisabled()
             ForEach(rows) { row in
                 FindingRow(row: row)
                     .tag(row.entry.id)
@@ -291,6 +284,7 @@ private struct ProblemSection: View {
             Text("\(group.entries.count)")
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
+            ProblemInfoButton(kind: group.kind)
             Spacer()
             let fixable = state.fixableEntries(group.entries)
             if fixable.count > 1 {
@@ -307,5 +301,31 @@ private struct ProblemSection: View {
         .textCase(nil)
         .accessibilityElement(children: .contain)
         .padding(.vertical, 4)
+    }
+}
+
+/// Opens a problem's explanation on click, the macOS convention for
+/// supplementary help; hover-only tooltips are too slow and hidden from
+/// keyboard users for multi-sentence copy.
+private struct ProblemInfoButton: View {
+    let kind: ProblemKind
+    @State private var isPresented = false
+
+    var body: some View {
+        Button {
+            isPresented.toggle()
+        } label: {
+            Image(systemName: "info.circle")
+        }
+        .buttonStyle(.borderless)
+        .foregroundStyle(.secondary)
+        .help("About This Problem")
+        .accessibilityLabel("About This Problem")
+        .popover(isPresented: $isPresented, arrowEdge: .bottom) {
+            Text(kind.explanation)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(width: 320, alignment: .leading)
+                .padding()
+        }
     }
 }

@@ -136,6 +136,17 @@
         }
       }
     },
+    "About This Problem" : {
+      "comment" : "Tooltip and accessibility label of the info button that explains a Health problem group.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关于此问题"
+          }
+        }
+      }
+    },
     "Action Needed" : {
       "comment" : "Finding severity tag.",
       "localizations" : {
