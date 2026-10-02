@@ -21,7 +21,7 @@ extension AppState {
         guard let action = ProblemKind.oneClickFix(for: finding) else { return nil }
         let needsNpx =
             action == .update || (action == .cleanup && finding.ruleID == "lock-without-files")
-        if needsNpx && capabilities?.npx.resolvable == false {
+        if needsNpx && capabilities?.npx.canRunSkills == false {
             return nil
         }
         return action

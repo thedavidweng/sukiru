@@ -159,7 +159,7 @@ extension AppState {
     func installCapabilityAvailable(_ installer: InstallerChoice) -> Bool {
         switch installer.capabilityGate {
         case .needsNode:
-            return capabilities?.npx.resolvable ?? true
+            return capabilities?.npx.canRunSkills ?? true
         case .needsGitHub:
             return capabilities?.github.available ?? true
         }
@@ -201,7 +201,7 @@ extension AppState {
         // visible.
         switch installInstaller.capabilityGate {
         case .needsNode:
-            guard capabilities?.npx.resolvable != false else {
+            guard capabilities?.npx.canRunSkills != false else {
                 installError = String(localized: "install.error.needsNode")
                 return
             }

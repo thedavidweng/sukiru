@@ -2134,13 +2134,13 @@
         }
       }
     },
-    "Read-only — repairing or updating this skill needs the skills CLI, which is not set up. Get it in Settings > Installers. Everything else still works." : {
+    "Read-only — repairing or updating this skill needs Node.js, which is not installed. Get it in Settings > Installers. Everything else still works." : {
       "comment" : "Library detail hint: vercel-ledger skill read-only without the skills CLI.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "只读 — 修复或更新此技能需要 skills CLI，但尚未配置。请在“设置 > 安装器”中获取。其他功能不受影响。"
+            "value" : "只读 — 修复或更新此技能需要 Node.js，但尚未安装。请在“设置 > 安装器”中获取。其他功能不受影响。"
           }
         }
       }
@@ -3436,6 +3436,23 @@
         }
       }
     },
+    "capability.downloadsOnFirstUse" : {
+      "comment" : "Settings: the skills CLI is not on this Mac yet; the first confirmed change downloads it through npx.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready (downloads on first use)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可用（首次使用时下载）"
+          }
+        }
+      }
+    },
     "capability.installed" : {
       "comment" : "Settings > Installers: Node.js is on PATH.",
       "localizations" : {
@@ -3482,23 +3499,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "需要 Node.js"
-          }
-        }
-      }
-    },
-    "capability.reason.notDownloaded" : {
-      "comment" : "Settings > Installers: npx works but the skills CLI is not on this Mac yet.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "not downloaded"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "尚未下载"
           }
         }
       }
@@ -3750,6 +3750,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "部分更改会删除文件或丢弃本地修改。执行前会先创建快照，可随时撤销。"
+          }
+        }
+      }
+    },
+    "confirm.downloadsSkillsCLI" : {
+      "comment" : "Batch confirmation: applying downloads the skills CLI first.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The skills CLI isn't on this Mac yet. npx downloads it from the npm registry when the first command runs."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这台 Mac 上还没有 skills CLI。第一条命令运行时，npx 会从 npm 仓库下载它。"
+          }
+        }
+      }
+    },
+    "confirm.downloadsSkillsCLI %@" : {
+      "comment" : "Batch confirmation: applying downloads the skills CLI first. The argument is the version.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The skills CLI isn't on this Mac yet. npx downloads version %@ from the npm registry when the first command runs."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这台 Mac 上还没有 skills CLI。第一条命令运行时，npx 会从 npm 仓库下载 %@ 版。"
           }
         }
       }
@@ -4329,13 +4363,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Repairing this needs the skills CLI. Get it in Settings > Installers."
+            "value" : "Repairing this needs Node.js. Get it in Settings > Installers."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "修复此项需要 skills CLI。请在“设置 > 安装器”中获取。"
+            "value" : "修复此项需要 Node.js。请在“设置 > 安装器”中获取。"
           }
         }
       }
@@ -4397,13 +4431,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The skills CLI is not set up, so the Vercel installer cannot build a batch. Get it in Settings > Installers."
+            "value" : "Node.js is not installed, so the Vercel installer cannot build a batch. Get it in Settings > Installers."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "尚未配置 skills CLI，Vercel 安装器无法构建批处理。请在“设置 > 安装器”中获取。"
+            "value" : "尚未安装 Node.js，Vercel 安装器无法构建批处理。请在“设置 > 安装器”中获取。"
           }
         }
       }
@@ -4548,13 +4582,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ needs the skills CLI. Get it in Settings > Installers."
+            "value" : "%@ needs Node.js. Get it in Settings > Installers."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ 需要 skills CLI。请在“设置 > 安装器”中获取。"
+            "value" : "%@ 需要 Node.js。请在“设置 > 安装器”中获取。"
           }
         }
       }
@@ -4564,13 +4598,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Repairing this needs the skills CLI. Get it in Settings > Installers."
+            "value" : "Repairing this needs Node.js. Get it in Settings > Installers."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "修复此项需要 skills CLI。请在“设置 > 安装器”中获取。"
+            "value" : "修复此项需要 Node.js。请在“设置 > 安装器”中获取。"
           }
         }
       }

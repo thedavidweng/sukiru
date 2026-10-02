@@ -45,14 +45,14 @@ struct LibraryProvenanceSection: View {
     }
 
     private var isVercelReadOnly: Bool {
-        guard let caps = state.capabilities, !caps.npx.resolvable else { return false }
+        guard let caps = state.capabilities, !caps.npx.canRunSkills else { return false }
         return skill.ownership == .vercel || skill.ownership == .doubleBooked
     }
 
     private var readOnlyNotice: some View {
         // swiftlint:disable line_length
         let hint: LocalizedStringKey =
-            "Read-only — repairing or updating this skill needs the skills CLI, which is not set up. Get it in Settings > Installers. Everything else still works."
+            "Read-only — repairing or updating this skill needs Node.js, which is not installed. Get it in Settings > Installers. Everything else still works."
         // swiftlint:enable line_length
         return HStack(spacing: 0) {
             AXToken(token: "sukiru.library.detail.readonly.\(AXTokens.skill(skill.name))")

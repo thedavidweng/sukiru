@@ -24,7 +24,7 @@ extension AppState {
     /// Why a repair decision is unavailable in this environment
     /// (capability degradation). The view layer renders the hint text.
     enum RepairBlock: Equatable {
-        /// The decision needs `npx skills`, which is not resolvable.
+        /// The decision needs `npx skills`, and Node.js is not installed.
         case needsNode
         /// The decision needs `gh` (≥ 2.90.0), which is unavailable.
         case needsGitHub
@@ -84,9 +84,9 @@ extension AppState {
         // common case is "available", and a genuinely missing CLI still
         // fails loudly at execution — but once settled, a
         // missing capability blocks construction up front.
-        let npxResolvable = capabilities?.npx.resolvable ?? true
+        let canRunSkills = capabilities?.npx.canRunSkills ?? true
         let ghAvailable = capabilities?.github.available ?? true
-        let needsNode: RepairBlock? = npxResolvable ? nil : .needsNode
+        let needsNode: RepairBlock? = canRunSkills ? nil : .needsNode
         let needsGitHub: RepairBlock? = ghAvailable ? nil : .needsGitHub
         func option(_ action: DecisionAction, _ block: RepairBlock?) -> RepairOption {
             RepairOption(action: action, blocked: block)
@@ -285,6 +285,10 @@ extension AppState {
         lastExecutionFailure = failure
         loadHistory()
         rescan()
+        // The batch may have downloaded the skills CLI; Settings should say so.
+        if capabilities?.npx.reason == .notDownloaded {
+            recheckCapabilities()
+        }
     }
 
     // MARK: - rollback

@@ -49,7 +49,9 @@ public struct ExecutionResult: Equatable, Sendable {
 ///   `GH_TOKEN` is stripped from every child and injected
 ///   only into gh (github-ledger) commands, never persisted;
 ///   `npm_config_prefer_offline=true` so `npx skills` runs the CLI already
-///   on this Mac instead of silently updating it (see `SkillsCLI`).
+///   on this Mac instead of silently updating it, and `npm_config_yes=true`
+///   so a CLI not yet on this Mac is downloaded instead of prompting on a
+///   stdin that cannot answer (see `SkillsCLI`).
 /// - **Stop-on-first-failure** with per-command status, exit code, captured
 ///   output files, and duration.
 /// - **Per-command timeout** terminating the child's whole process group.
@@ -228,6 +230,7 @@ public struct CLIExecutor: Sendable {
         environment["CI"] = "1"
         environment["SKILLS_TELEMETRY"] = "0"
         environment["npm_config_prefer_offline"] = "true"
+        environment["npm_config_yes"] = "true"
         if !self.environment.home.isEmpty {
             environment["HOME"] = self.environment.home
         }

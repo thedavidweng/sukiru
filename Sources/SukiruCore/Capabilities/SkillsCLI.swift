@@ -7,7 +7,9 @@ import Foundation
 /// `npx skills@latest` would silently install whatever the registry calls
 /// latest. Instead the launch probe runs `--offline` (answers only from what
 /// this Mac already has), the update check is a plain registry read, and the
-/// only command that fetches the CLI runs when the user asks for it.
+/// CLI is fetched only when the user asks: from Settings, or by confirming a
+/// batch whose first `npx skills` command downloads it (`CLIExecutor` runs
+/// prefer-offline, so a CLI already on this Mac is never replaced).
 public enum SkillsCLI {
     /// The launch probe: never touches the network.
     static let probeArguments = ["--offline", "skills", "--version"]

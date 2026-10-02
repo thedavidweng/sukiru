@@ -44,8 +44,9 @@ struct InstallerStatusSymbol: View {
 }
 
 /// The Vercel skills CLI, run through npx. Sukiru never downloads or updates
-/// it on its own: the row offers Download when it is missing and Update when
-/// the registry has a newer release, and runs npx only on that click.
+/// it on its own: a missing CLI is fetched by the first confirmed batch that
+/// needs it, or ahead of time with Download; Update appears when the
+/// registry has a newer release. npx runs only on those user actions.
 struct SkillsCLIRow: View {
     @EnvironmentObject private var state: AppState
     let status: InstallerStatus?
@@ -85,19 +86,16 @@ struct SkillsCLIRow: View {
                 Text("Working…")
                     .foregroundStyle(.secondary)
             }
-        } else if let npx = state.capabilities?.npx, npx.reason != .absent {
+        } else if let npx = state.capabilities?.npx, npx.canRunSkills {
             let busy = state.capabilityCheckRunning || state.installerInFlight != nil
-            switch status {
-            case .missing:
+            if npx.reason == .notDownloaded {
                 Button("Download") { state.fetchSkillsCLI() }
                     .disabled(busy)
                     .help("Download the skills CLI with npx")
-            case .outdated:
+            } else if case .outdated = status {
                 Button("Update") { state.fetchSkillsCLI() }
                     .disabled(busy)
                     .help("Update the skills CLI to the latest release with npx")
-            case .ready, nil:
-                EmptyView()
             }
         }
     }

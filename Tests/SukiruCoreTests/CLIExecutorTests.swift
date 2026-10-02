@@ -216,6 +216,7 @@ struct CLIExecutorTests {
         #expect(env["CI"] == "1")
         #expect(env["SKILLS_TELEMETRY"] == "0")
         #expect(env["npm_config_prefer_offline"] == "true")
+        #expect(env["npm_config_yes"] == "true")
         #expect(env["STDIN_TTY"] == "no")
         #expect(env["STDOUT_TTY"] == "no")
         // pwd -P is physical: temp dirs resolve /var → /private/var.

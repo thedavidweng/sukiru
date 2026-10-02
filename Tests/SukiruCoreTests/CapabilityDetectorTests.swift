@@ -118,6 +118,7 @@ struct CapabilityDetectorTests {
         #expect(report.npx.resolvable)
         #expect(report.npx.skillsVersion == "1.5.26")
         #expect(report.npx.reason == nil)
+        #expect(report.npx.canRunSkills)
     }
 
     @Test("npx absent → unresolvable, no version, still a valid report")
@@ -126,16 +127,18 @@ struct CapabilityDetectorTests {
         #expect(!report.npx.resolvable)
         #expect(report.npx.skillsVersion == nil)
         #expect(report.npx.reason == .absent)
+        #expect(!report.npx.canRunSkills)
         #expect(report.schemaVersion == CapabilityReport.currentSchemaVersion)
     }
 
-    @Test("npx fails or prints nothing → skills CLI not downloaded")
+    @Test("npx fails or prints nothing → skills CLI not downloaded, still runnable on demand")
     func npxFailureModes() {
         let failing = detect([
             "npx --offline skills --version": outcome(1, "npm error")
         ])
         #expect(!failing.npx.resolvable)
         #expect(failing.npx.reason == .notDownloaded)
+        #expect(failing.npx.canRunSkills)
 
         let empty = detect([
             "npx --offline skills --version": outcome(0, "  \n")

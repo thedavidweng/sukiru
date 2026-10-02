@@ -26,12 +26,15 @@ Sukiru makes these network requests, and no others:
   `npx --offline skills --version`. The `--offline` flag keeps `npx` from
   contacting the npm registry, so detection never downloads or updates the
   `skills` CLI.
-- **skills CLI update check**: when the `skills` CLI is present, Sukiru reads
+- **skills CLI version check**: when Node.js is installed, Sukiru reads
   `https://registry.npmjs.org/skills/latest` to learn the latest version
-  number. This only shows a hint in Settings; nothing is installed.
-- **skills CLI download**: only when you click Download or Update in Settings,
+  number. This only shows an update hint in Settings, or the version a first
+  change would download; nothing is installed.
+- **skills CLI download**: when you click Download or Update in Settings,
   Sukiru runs `npx --yes --prefer-online skills --version`, which fetches the
-  latest `skills` package from the npm registry.
+  latest `skills` package from the npm registry. If the CLI is not on this
+  Mac yet, the first `npx skills` command of a change you confirm downloads
+  it the same way; the confirmation says so beforehand.
 - **Search**: your query is sent to the skills.sh search API
   (`https://skills.sh/api/search`) and to `gh skill search`, which runs the
   GitHub CLI with your existing `gh` login.

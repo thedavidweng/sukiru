@@ -16,7 +16,8 @@ public enum NpxUnavailableReason: String, Codable, Equatable, Sendable {
     /// No npx on PATH (Node.js is not installed).
     case absent
     /// npx works, but the skills CLI has not been downloaded to this Mac yet.
-    /// Sukiru never downloads it on its own; the user does, from Settings.
+    /// npx fetches it when the first confirmed command needs it (or when the
+    /// user downloads it from Settings), never on its own.
     case notDownloaded = "not-downloaded"
 }
 
@@ -40,6 +41,10 @@ public struct CapabilityReport: Codable, Equatable, Sendable {
         public let skillsVersion: String?
         /// Why npx skills is not resolvable; omitted from the JSON when it is.
         public let reason: NpxUnavailableReason?
+
+        /// Whether `npx skills` commands can run: npx is present, so a
+        /// missing CLI is downloaded by the first command that needs it.
+        public var canRunSkills: Bool { reason != .absent }
     }
 
     public let schemaVersion: Int

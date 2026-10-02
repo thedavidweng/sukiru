@@ -49,6 +49,7 @@ struct BatchConfirmSheet: View {
                 }
                 .font(.callout)
             }
+            skillsDownloadNotice(batch)
             skippedList
             DisclosureGroup("Show Commands (\(batch.commands.count))") {
                 ScrollView {
@@ -66,6 +67,27 @@ struct BatchConfirmSheet: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             proposalButtons(batch)
+        }
+    }
+
+    /// Confirming is what downloads a skills CLI not yet on this Mac, so the
+    /// sheet says so before the user agrees.
+    @ViewBuilder private func skillsDownloadNotice(_ batch: CommandBatch) -> some View {
+        let runsSkills = batch.commands.contains { $0.argv.starts(with: ["npx", "skills"]) }
+        if runsSkills && state.capabilities?.npx.reason == .notDownloaded {
+            Label {
+                Group {
+                    if let version = state.skillsLatestVersion {
+                        Text("confirm.downloadsSkillsCLI \(version)")
+                    } else {
+                        Text("confirm.downloadsSkillsCLI")
+                    }
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            } icon: {
+                Image(systemName: "arrow.down.circle")
+            }
+            .font(.callout)
         }
     }
 

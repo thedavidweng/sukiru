@@ -26,7 +26,7 @@ public enum InstallerChoice: String, Codable, Equatable, Hashable, Sendable, Cas
     }
 
     /// Which capability gate the sheet consults before offering the choice
-    /// (capability degradation): vercel needs npx resolvable, github needs gh ≥
+    /// (capability degradation): vercel needs npx, github needs gh ≥
     /// 2.90.0 + the `gh skill` surface.
     public var capabilityGate: CapabilityGate {
         switch self {

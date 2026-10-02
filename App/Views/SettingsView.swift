@@ -216,7 +216,7 @@ private struct InstallersSettingsPane: View {
     // swiftlint:enable line_length
 
     private var neitherCLI: Bool {
-        state.capabilities.map { !$0.github.available && !$0.npx.resolvable } ?? false
+        state.capabilities.map { !$0.github.available && !$0.npx.canRunSkills } ?? false
     }
 
     private func githubStatus(_ github: CapabilityReport.GitHubCapability) -> InstallerStatus {
@@ -248,12 +248,12 @@ private struct InstallersSettingsPane: View {
     }
 
     private func skillsStatus(_ npx: CapabilityReport.NpxCapability) -> InstallerStatus {
-        guard npx.resolvable, let installed = npx.skillsVersion else {
-            let reason =
-                npx.reason == .absent
-                ? String(localized: "capability.reason.needsNode")
-                : String(localized: "capability.reason.notDownloaded")
+        guard npx.canRunSkills else {
+            let reason = String(localized: "capability.reason.needsNode")
             return .missing(String(localized: "capability.unavailable \(reason)"))
+        }
+        guard npx.resolvable, let installed = npx.skillsVersion else {
+            return .ready(String(localized: "capability.downloadsOnFirstUse"))
         }
         if let latest = state.skillsLatestVersion, SkillsCLI.isUpdate(latest, over: installed) {
             return .outdated(String(localized: "capability.updateAvailable \(installed) \(latest)"))

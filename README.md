@@ -107,9 +107,11 @@ missing tool. It finds them the way your terminal does, by reading your login
 shell's PATH, so Node.js from Homebrew or a version manager (mise, fnm, nvm,
 Volta, asdf, nodenv) works without extra setup. If you use a version manager
 and Node.js is missing, Settings › Installers tells you to install it there
-instead of offering Homebrew. It never downloads or updates the `skills` CLI on its own: if the
-CLI is missing or a newer release exists, Settings › Installers says so and
-offers a Download or Update button.
+instead of offering Homebrew. The `skills` CLI needs no install: with Node.js
+present, `npx` downloads it the first time you confirm a change that needs it,
+and the confirmation says so beforehand. Sukiru never downloads or updates it
+on its own; Settings › Installers also offers Download (to fetch it ahead of
+time) and Update (when a newer release exists).
 
 ### Homebrew (Recommended)
 

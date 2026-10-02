@@ -273,12 +273,13 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// Publishes a probe result, then asks the registry whether a newer
-    /// skills CLI exists (a hint only; updating stays the user's call).
+    /// Publishes a probe result, then asks the registry for the latest
+    /// skills CLI: the update hint when one is on this Mac, otherwise the
+    /// version a first `npx skills` command would download.
     private func applyCapabilities(_ report: CapabilityReport) {
         capabilities = report
         skillsLatestVersion = nil
-        if report.npx.resolvable {
+        if report.npx.canRunSkills {
             checkForSkillsUpdate()
         }
     }
