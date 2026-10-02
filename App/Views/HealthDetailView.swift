@@ -32,7 +32,7 @@ private struct FindingDetailForm: View {
                 Text(kind.explanation)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                if let caution = finding.removalCaution {
+                if let caution = finding.caution {
                     Text(verbatim: caution)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

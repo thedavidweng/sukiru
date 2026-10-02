@@ -35,6 +35,9 @@ tools that keep separate records:
   (`skills-lock.json` per project, `~/.agents/.skill-lock.json` globally).
 - **GitHub CLI** (`gh skill`) records provenance inside each skill's
   `SKILL.md` frontmatter (`metadata.github-*`).
+  It also records every install and update by bare skill name in the Vercel
+  global lock; Sukiru recognizes these companion records as gh's own, not as
+  Vercel claims.
 
 Both write into the same agent directories, and neither reads the other's
 records. In controlled experiments ([collision matrix](docs/collision-matrix.md))

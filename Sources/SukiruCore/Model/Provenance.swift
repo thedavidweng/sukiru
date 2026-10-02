@@ -35,6 +35,11 @@ public struct VercelProvenance: Codable, Equatable, Sendable {
     /// Unknown entry-level keys, preserved verbatim. Nil when
     /// the entry carries none, so the key is omitted from the wire JSON.
     public let extras: [String: JSONValue]?
+    /// True when `gh skill` created and last wrote this global-lock entry
+    /// (`VercelLockEntry.isGitHubCompanion`); nil otherwise, so the key is
+    /// omitted from the wire JSON. Ownership decides whether it is the
+    /// companion of a GitHub-ledger skill or still a Vercel claim.
+    public let githubCompanion: Bool?
 
     /// Projects the lock entry onto the wire shape for its lock's scope.
     public init(entry: VercelLockEntry, scope: VercelLock.Scope) {
@@ -54,5 +59,6 @@ public struct VercelProvenance: Codable, Equatable, Sendable {
         installedAt = entry.installedAt
         updatedAt = entry.updatedAt
         extras = entry.extras.isEmpty ? nil : entry.extras
+        githubCompanion = scope == .global && entry.isGitHubCompanion ? true : nil
     }
 }

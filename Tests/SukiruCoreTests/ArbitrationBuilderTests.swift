@@ -115,19 +115,37 @@ struct ArbitrationBuilderTests {
         #expect(vercelBatch.commands.map(\.argv) != githubBatch.commands.map(\.argv))
     }
 
-    @Test("FIX-OWNERSHIP-QUAD: user-scope keep-github scopes the remove with -g")
-    func keepGitHubUserScope() throws {
-        let tree = FixturePaths.tree("FIX-OWNERSHIP-QUAD")
+    @Test(
+        "FIX-OWNERSHIP-QUAD: keep-github is withheld while gh's rewrite would drop another record's ref"
+    )
+    func keepGitHubUserScopeWithheld() throws {
         let report = try OwnershipBuilders.scan(fixture: "FIX-OWNERSHIP-QUAD")
         let findingID = try Support.findingID(report, "double-booked", "double-booked-skill")
+        let problems = Support.problems(
+            report, [Support.decide(findingID, .arbitrate, .keepGitHub)])
+        #expect(problems.joined(separator: "\n").contains("would drop data npx skills needs"))
+    }
+
+    @Test("user-scope keep-github scopes the remove with -g when gh's rewrite loses nothing")
+    func keepGitHubUserScope() throws {
+        let home = try TempTree()
+        try home.file(".claude/settings.json", contents: "{}")
+        try home.file(
+            ".agents/.skill-lock.json", contents: OwnershipBuilders.globalLock(["dup"]))
+        try home.file(".agents/skills/dup/SKILL.md", contents: OwnershipBuilders.skillMD("dup"))
+        try home.file(
+            ".claude/skills/dup/SKILL.md", contents: OwnershipBuilders.ghSkillMD("dup", repo: "o/r")
+        )
+        let report = try OwnershipBuilders.scan(home: home)
+        let findingID = try Support.findingID(report, "double-booked", "dup")
         let batch = try Support.build(
             report, [Support.decide(findingID, .arbitrate, .keepGitHub)])
         #expect(batch.commands.count == 2)
         let removeLine = batch.commands[0].argv.joined(separator: " ")
-        #expect(removeLine == "npx skills remove double-booked-skill -g -y")
-        let ghHead = ["gh", "skill", "install", "thedavidweng/skills"]
-        let dir = tree + "/.agents/skills"
-        let rest = ["tools/double-booked-skill/SKILL.md", "--force", "--dir", dir]
+        #expect(removeLine == "npx skills remove dup -g -y")
+        let ghHead = ["gh", "skill", "install", "o/r"]
+        let dir = home.path + "/.claude/skills"
+        let rest = ["tools/dup/SKILL.md", "--force", "--dir", dir]
         #expect(batch.commands[1].argv == ghHead + rest)
     }
 

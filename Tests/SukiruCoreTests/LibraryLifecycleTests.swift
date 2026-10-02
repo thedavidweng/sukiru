@@ -86,7 +86,7 @@ struct LibraryLifecycleTests {
             ])
     }
 
-    @Test("A gh update that would write a user-scope Vercel lock record is withheld")
+    @Test("A gh update is withheld only when a genuine user-scope Vercel record shares the name")
     func githubUpdateTouchingVercelRecord() throws {
         let home = try TempTree()
         let project = try TempTree()
@@ -105,7 +105,9 @@ struct LibraryLifecycleTests {
             return CommandBatchBuilder.lifecycleBlocker(
                 skill: skill, action: .update, capabilities: nil, report: report)
         }
-        #expect(try blocker("u", .user) == .touchesVercelRecord)
+        // "u" has no Vercel record of its own: gh would only (re)write its
+        // companion record, so the update is allowed.
+        #expect(try blocker("u", .user) == nil)
         #expect(try blocker("v", .project) == .touchesVercelRecord)
         #expect(try blocker("p", .project) == nil)
         let projectV = try #require(

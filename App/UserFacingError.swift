@@ -39,6 +39,10 @@ enum UserFacingError {
             String(localized: "error.install.noSkillsSelected")
         case .missingGHAgent:
             String(localized: "error.install.missingGHAgent")
+        case .githubWriteWithheld(let skill, .touchesVercelRecord):
+            String(localized: "error.install.githubTouchesVercelRecord \(skill)")
+        case .githubWriteWithheld(let skill, _):
+            String(localized: "error.install.githubDropsVercelLockData \(skill)")
         }
     }
 

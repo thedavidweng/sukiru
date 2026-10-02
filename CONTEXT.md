@@ -37,6 +37,14 @@ The ledger of `gh skill`, written at install time into the `SKILL.md`
 frontmatter as `metadata.github-*` (repo, path, ref, pinned, tree-sha). The
 record travels with the skill.
 
+**Companion Record** (伴随记录):
+The entry every `gh skill` install or update also writes into the Vercel
+ledger's global lock, keyed by bare skill name, "for interop" (gh
+`internal/skills/lockfile`). It is recognized by gh's write signature
+(whole-second UTC timestamps, only gh's fields) and belongs to the GitHub
+ledger: a skill whose only Vercel-lock record is a companion is
+GitHub-owned, not double-booked.
+
 **Provenance** (溯源):
 The part of a ledger entry that identifies the source: repository, ref, and
 content hash.

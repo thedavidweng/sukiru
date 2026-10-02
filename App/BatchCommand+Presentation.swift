@@ -91,6 +91,8 @@ extension CommandConsequence {
             return String(localized: "consequence.resetsToGitHubRef")
         case .mergeOverwritesCollidingFiles:
             return String(localized: "consequence.mergeOverwritesCollidingFiles")
+        case .recordsInVercelGlobalLock:
+            return String(localized: "consequence.recordsInVercelGlobalLock")
         case .replacesCopiesWithSharedLinks:
             return String(localized: "consequence.replacesCopiesWithSharedLinks")
         case .removesOnlyStaleLockEntry(let skill):

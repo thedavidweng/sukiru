@@ -81,11 +81,48 @@ name. Consequences for v1:
 
 - Sukiru runs `gh skill update --dry-run` as a read-only update check
   ("Check for Updates"); it writes nothing.
-- A `gh skill update` is withheld when the skill is user-scope or when a
-  user-scope skill of the same name has Vercel provenance, because the write
-  would rewrite that Vercel record. Pinning, unpinning, and forced reinstall
-  through `gh` rewrite the same record and are not offered.
+- ~~A `gh skill update` is withheld when the skill is user-scope~~ —
+  superseded by the companion-record amendment below, which narrows the
+  guard to genuine Vercel records.
 - `gh skill update` is dispatched with `--all` plus the skill names, since
   non-interactive runs refuse to apply updates without it.
 - The batch snapshot always captures the global lock, so rollback restores
   any `gh` write to it.
+
+## Amendment (2026-10-02): recognizing gh companion records
+
+The second follow-up experiment (same date, same section of
+[`docs/collision-matrix.md`](../collision-matrix.md)) found a field-level
+signature that separates a record `gh` created from one `npx skills`
+created: `gh`'s `lockfile.RecordInstall` stamps `time.RFC3339` (UTC, whole
+seconds) and its entry struct holds only the shared fields plus `pinnedRef`,
+while every `skills` release that writes the global lock stamps
+`toISOString()` (always with milliseconds) and may add `ref`, `pluginName`,
+`sourceBaseUrl`, and `wellKnownDigest`. An entry npx created and gh later
+rewrote keeps npx's `installedAt`, so the signature also excludes those.
+`gh` has written this way since 2.90.0, Sukiru's minimum supported version,
+so every supported gh is covered.
+
+Rules:
+
+- A global-lock entry carrying gh's signature is gh's **companion record**.
+  When the skill also carries gh frontmatter provenance, the entry is not a
+  Vercel claim: the skill is GitHub-owned, not double-booked, and no
+  lock-derived rule (impostor, divergence, removal-surface, missing shared
+  copy) treats the entry as the Vercel ledger speaking.
+- A companion record whose skill has files only in projects is a Note, not
+  a stale lock entry: `gh` rewrites it on every install or update of that
+  skill, and the sandbox showed only a bare `npx skills update -g` acts on
+  it (it materializes the skill at user scope). Sukiru never runs a bare
+  update, and it must not route `npx skills remove` at it.
+- Every `gh` write also rewrites the whole global lock through a struct
+  that keeps only gh's fields (dropping other records' `ref`, plugin
+  groups, and unknown keys), and replaces the file outright when its
+  version is not 3. A `gh` install, update, adoption, or keep-GitHub
+  arbitration is therefore withheld when a user-scope skill of the same
+  name has a genuine (non-companion) Vercel record, or when any genuine
+  record in the global lock carries data `npx skills` needs (`ref`,
+  well-known source fields, unknown keys), or when the lock carries unknown
+  top-level keys or a newer version. Records that only lose display fields
+  (plugin groups, last selected agents) are disclosed in the command's
+  consequence text instead.

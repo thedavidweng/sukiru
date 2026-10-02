@@ -18,6 +18,26 @@ public struct ScopeLockClaim: Equatable, Sendable {
         self.lockPath = lockPath
         self.lock = lock
     }
+
+    /// The entry that claims `name` for the Vercel ledger. gh's companion
+    /// record of a GitHub-ledger skill (`VercelLockEntry.isGitHubCompanion`
+    /// in the global lock, with gh frontmatter provenance in the scope) is
+    /// not a claim: gh writes it beside every install for interop, and the
+    /// skill's ledger is its frontmatter.
+    public func vercelClaim(named name: String, githubClaimed: Bool) -> VercelLockEntry? {
+        guard let entry = lock.entries[name] else { return nil }
+        if githubClaimed, lock.scope == .global, entry.isGitHubCompanion {
+            return nil
+        }
+        return entry
+    }
+
+    /// `vercelClaim(named:githubClaimed:)` for a group's name and placements.
+    func vercelClaim(for group: SkillGroup) -> VercelLockEntry? {
+        vercelClaim(
+            named: group.name,
+            githubClaimed: group.members.contains { $0.githubProvenance != nil })
+    }
 }
 
 /// The resolver's full output: the wire-format skills plus the findings ownership
@@ -38,8 +58,10 @@ public struct OwnershipResolution: Equatable, Sendable {
 
 /// Resolves per-skill ownership from the two ledgers plus disk facts.
 ///
-/// For skill name N in scope S: `v` = N has an entry in S's Vercel lock;
-/// `g` = any placement of N in S carries `metadata.github-repo`.
+/// For skill name N in scope S: `v` = N has an entry in S's Vercel lock
+/// that is not gh's companion record of a GitHub-ledger skill
+/// (`ScopeLockClaim.vercelClaim`); `g` = any placement of N in S carries
+/// `metadata.github-repo`.
 /// v∧g → double-booked, v∧¬g → vercel, ¬v∧g → github, ¬v∧¬g → ownerless.
 /// When N is ambiguous (the refined trigger — the scope's UNEXPLAINED
 /// placements hold ≥2 distinct content hashes, computed by `SkillInventory`
@@ -73,7 +95,7 @@ public struct OwnershipResolver: Sendable {
             let ghPlacement = group.members.first { $0.githubProvenance != nil }
             let managingAgent = group.managingAgent
             let ownership = Self.ownership(
-                ambiguous: group.ambiguous, vercelClaim: entry != nil,
+                ambiguous: group.ambiguous, vercelClaim: claim?.vercelClaim(for: group) != nil,
                 githubClaim: ghPlacement != nil, agentClaim: managingAgent != nil)
             let provenance = SkillProvenance(
                 vercel: entry.map {

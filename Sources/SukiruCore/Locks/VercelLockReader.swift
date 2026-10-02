@@ -76,6 +76,35 @@ public struct VercelLockEntry: Equatable, Sendable {
     public var sourceIdentity: String {
         [source ?? "", sourceType ?? "", skillPath ?? "", ref ?? ""].joined(separator: "|")
     }
+
+    /// Whether `gh skill` both created and last wrote this global-lock entry
+    /// (its companion record, see docs/collision-matrix.md). gh's
+    /// `lockfile.RecordInstall` (every gh ≥ 2.90.0) stamps `time.RFC3339` in
+    /// UTC, whole seconds, and its entry struct has no key beyond the shared
+    /// ones except `pinnedRef`; every skills release that writes this lock stamps
+    /// `toISOString()`, always with milliseconds. An entry npx created and
+    /// gh later rewrote keeps npx's `installedAt`, so it stays a Vercel claim.
+    public var isGitHubCompanion: Bool {
+        guard sourceType == "github", let installedAt, let updatedAt,
+            Self.isWholeSecondUTC(installedAt), Self.isWholeSecondUTC(updatedAt),
+            ref == nil, computedHash == nil, pluginName == nil, sourceBaseUrl == nil,
+            wellKnownDigest == nil
+        else { return false }
+        return extras.keys.allSatisfy { $0 == "pinnedRef" }
+    }
+
+    /// `YYYY-MM-DDTHH:MM:SSZ`, Go's `time.RFC3339` layout for a UTC time.
+    static func isWholeSecondUTC(_ stamp: String) -> Bool {
+        let digitPositions = [0, 1, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18]
+        let chars = Array(stamp.utf8)
+        guard chars.count == 20, chars[4] == UInt8(ascii: "-"), chars[7] == UInt8(ascii: "-"),
+            chars[10] == UInt8(ascii: "T"), chars[13] == UInt8(ascii: ":"),
+            chars[16] == UInt8(ascii: ":"), chars[19] == UInt8(ascii: "Z")
+        else { return false }
+        return digitPositions.allSatisfy {
+            (UInt8(ascii: "0")...UInt8(ascii: "9")).contains(chars[$0])
+        }
+    }
 }
 
 /// A parsed Vercel lock file (project v1 or global v3).

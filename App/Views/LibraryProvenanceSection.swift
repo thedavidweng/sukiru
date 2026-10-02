@@ -13,7 +13,7 @@ struct LibraryProvenanceSection: View {
         Section {
             if isVercelReadOnly { readOnlyNotice }
             if skill.ambiguous { ambiguousNotice }
-            if let vercel = skill.provenance.vercel {
+            if let vercel = skill.provenance.vercel, !hasCompanionRecord {
                 field("Installer", String(localized: "Vercel skills CLI (lock entry)"))
                 if let source = vercel.source { field("Source", source) }
                 if let ref = vercel.ref { field("Ref", ref) }
@@ -38,6 +38,11 @@ struct LibraryProvenanceSection: View {
                             .compactMap { $0 }.joined(separator: " "))
                 }
             }
+            if hasCompanionRecord {
+                Text("library.githubCompanionRecord")
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if let agent = skill.managingAgent {
                 Text("library.agentManaged \(agent)")
                     .foregroundStyle(.secondary)
@@ -49,6 +54,11 @@ struct LibraryProvenanceSection: View {
         } header: {
             TokenSectionHeader(token: "sukiru.library.detail.provenance", title: "Provenance")
         }
+    }
+
+    /// The skill's Vercel lock entry is gh's companion record, not a claim.
+    private var hasCompanionRecord: Bool {
+        skill.ownership == .github && skill.provenance.vercel?.githubCompanion == true
     }
 
     private var isVercelReadOnly: Bool {

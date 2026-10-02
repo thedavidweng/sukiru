@@ -30,6 +30,7 @@
 
 - **Vercel `skills`**（`npx skills`）把安装记录写在锁文件里（项目级为 `skills-lock.json`，全局为 `~/.agents/.skill-lock.json`）。
 - **GitHub CLI**（`gh skill`）把溯源信息写进每个技能 `SKILL.md` 的 frontmatter（`metadata.github-*`）。
+  它还会把每次安装和更新按技能名写入 Vercel 的全局锁文件；Sukiru 能识别这些伴随记录属于 gh，而不是 Vercel 的认领。
 
 两者写入同一批宿主目录，却互不读取对方的账本。受控实验（[冲突矩阵](docs/collision-matrix.md)）表明，这会在不知不觉中造成锁文件哈希过期、同一技能被两边同时记账、副本内容分叉，以及一个工具删掉另一个工具装的技能。手动复制的技能则构成第三类：没有任何安装器能更新或干净地卸载它们。
 

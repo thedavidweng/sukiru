@@ -105,12 +105,16 @@ struct CommandBatchBuilderTests {
         #expect(!batch.commands.contains { $0.argv.first == "npx" })
     }
 
-    @Test("FIX-DANGER: update on a user-scope github skill is refused (gh writes the Vercel lock)")
-    func githubUserUpdateRefused() throws {
+    @Test(
+        "FIX-DANGER: a user-scope gh update is allowed (only gh's own companion record is written)")
+    func githubUserUpdateAllowed() throws {
         let report = try OwnershipBuilders.scan(fixture: "FIX-DANGER")
         let findingID = try Support.findingID(report, "dangerous-removal-surface", "gh-tool")
-        let problems = Support.problems(report, [Support.decide(findingID, .update)])
-        #expect(problems.joined(separator: "\n").contains("Vercel ledger's global lock"))
+        let batch = try Support.build(report, [Support.decide(findingID, .update)])
+        let command = try #require(batch.commands.only)
+        let dir = FixturePaths.tree("FIX-DANGER") + "/.claude/skills"
+        #expect(command.argv == ["gh", "skill", "update", "gh-tool", "--all", "--dir", dir])
+        #expect(command.consequenceKind == .recordsInVercelGlobalLock)
     }
 
     // MARK: - Drift repair re-installs from the recorded source
@@ -183,17 +187,13 @@ struct CommandBatchBuilderTests {
         #expect(consequence.contains("overwrites colliding"))
     }
 
-    @Test("FIX-AMBIGUOUS: adopt is offered to ambiguous skills, one install per placement dir")
-    func ambiguousAdopt() throws {
-        let tree = FixturePaths.tree("FIX-AMBIGUOUS")
+    @Test("FIX-AMBIGUOUS: gh adopt is withheld while a user-scope Vercel record shares the name")
+    func ambiguousAdoptWithheld() throws {
         let report = try OwnershipBuilders.scan(fixture: "FIX-AMBIGUOUS")
         let findingID = try Support.findingID(report, "ambiguous-name", "dup")
         let choice = DecisionChoice.adoptSource(repo: "acme/tools", path: "skills/dup")
-        let batch = try Support.build(report, [Support.decide(findingID, .adopt, choice)])
-        #expect(batch.commands.count == 2)
-        let dirs = batch.commands.map { $0.argv.last ?? "" }
-        #expect(dirs == [tree + "/.claude/skills", tree + "/.codex/skills"])
-        #expect(batch.commands.allSatisfy { $0.owningCLI == .github })
+        let problems = Support.problems(report, [Support.decide(findingID, .adopt, choice)])
+        #expect(problems.joined(separator: "\n").contains("would overwrite the Vercel record"))
     }
 
     @Test("adopt on an owned skill refuses, naming the owning ledger")

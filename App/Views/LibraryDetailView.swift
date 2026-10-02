@@ -170,7 +170,7 @@ struct SkillDetailForm: View {
                     Label {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(verbatim: entry.finding.title)
-                            if let caution = entry.finding.removalCaution {
+                            if let caution = entry.finding.caution {
                                 Text(verbatim: caution)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)

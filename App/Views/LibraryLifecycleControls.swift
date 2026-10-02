@@ -52,6 +52,10 @@ struct LibraryLifecycleControls: View {
                 Text("library.update.touchesVercelRecord")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+            } else if updateBlocker == .dropsVercelLockData {
+                Text("library.update.dropsVercelLockData")
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             HStack {
                 Spacer()

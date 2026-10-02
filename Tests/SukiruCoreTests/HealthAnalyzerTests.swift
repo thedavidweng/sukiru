@@ -130,6 +130,42 @@ struct HealthAnalyzerTests {
         #expect(!report.findings.contains { $0.ruleID == "lock-without-files" })
     }
 
+    @Test("A project-only gh install's companion record is a note, not a stale entry")
+    func ghostCompanionRecordIsNote() throws {
+        let home = try TempTree()
+        let project = try TempTree()
+        try home.file(".claude/settings.json", contents: "{}")
+        try home.file(
+            ".agents/.skill-lock.json", contents: OwnershipBuilders.ghCompanionLock(["ghost"]))
+        try project.file(
+            ".claude/skills/ghost/SKILL.md",
+            contents: OwnershipBuilders.ghSkillMD("ghost", repo: "o/r"))
+        let report = try OwnershipBuilders.scan(home: home, projectRoots: [project])
+        let note = try #require(
+            report.findings.first { $0.ruleID == "github-companion-record" })
+        #expect(note.severity == .info)
+        #expect(note.workspaceID == "user")
+        #expect(note.skillName == "ghost")
+        #expect(note.evidence.contains { $0.kind == "skillMdPath" })
+        #expect(!report.findings.contains { $0.ruleID == "lock-without-files" })
+        #expect(ProblemKind.of(note) == .note, "only npx could remove it, and gh rewrites it")
+    }
+
+    @Test("A gh-shaped entry with no gh placement anywhere is still a stale lock entry")
+    func unattributedGhShapedEntryIsStale() throws {
+        let home = try TempTree()
+        try home.file(".claude/settings.json", contents: "{}")
+        try home.file(
+            ".agents/.skill-lock.json", contents: OwnershipBuilders.ghCompanionLock(["ghost"]))
+        let report = try OwnershipBuilders.scan(home: home)
+        #expect(
+            report.findings.contains {
+                $0.ruleID == "lock-without-files" && $0.skillName == "ghost"
+            },
+            "no skill claims the record, and npx skills remove provably drops just the entry")
+        #expect(!report.findings.contains { $0.ruleID == "github-companion-record" })
+    }
+
     // MARK: - dangerous-removal-surface edge cases
 
     @Test("A vercel-locked name never carries the removal advisory, even when ambiguous")

@@ -295,4 +295,25 @@ extension CommandBatchBuilder {
         }
         return HostTable.canonicalStoreHost
     }
+    /// The gh-provenanced placement's parent skills dir: recovered from the
+    /// double-booked finding's `skillMdPath` evidence (contract-guaranteed
+    /// for double-booked names), falling back to the first
+    /// sorted placement dir.
+    func ghProvenanceDir(
+        skill: Skill, finding: Finding, report: ScanReport
+    ) throws -> String {
+        let arbitration = report.findings.first {
+            $0.ruleID == "double-booked" && $0.skillName == skill.name
+                && $0.workspaceID == finding.workspaceID
+        }
+        if let skillMD = arbitration?.evidence.first(where: { $0.kind == "skillMdPath" }) {
+            return Self.parentDir(Self.parentDir(skillMD.detail))
+        }
+        let dirs = placementDirs(skill)
+        guard let first = dirs.first else {
+            throw DecisionProblem(
+                message: "skill '\(skill.name)' has no directory placement to re-anchor")
+        }
+        return first
+    }
 }

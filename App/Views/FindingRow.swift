@@ -123,7 +123,7 @@ struct FindingRow: View {
                             .foregroundStyle(.tertiary)
                             .help("Rule identifier")
                     }
-                    if let caution = finding.removalCaution {
+                    if let caution = finding.caution {
                         Text(verbatim: caution)
                             .font(.caption)
                             .foregroundStyle(.secondary)

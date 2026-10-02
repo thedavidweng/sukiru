@@ -12,7 +12,7 @@ enum MissingSharedCopyRule {
     static let ruleID = "missing-shared-copy"
 
     static func finding(for group: SkillGroup, claim: ScopeLockClaim?) -> Finding? {
-        guard let claim, let entry = claim.lock.entries[group.name] else { return nil }
+        guard let claim, let entry = claim.vercelClaim(for: group) else { return nil }
         let healthy = group.members.filter { $0.placement.kind != .brokenSymlink }
         guard !healthy.isEmpty,
             !healthy.contains(where: { $0.workspaceID == group.scopeGroup }),

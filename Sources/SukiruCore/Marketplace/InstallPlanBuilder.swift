@@ -70,6 +70,9 @@ public enum InstallPlanError: Error, Equatable, Sendable {
     case emptySkillName
     case noSkillsSelected
     case missingGHAgent
+    /// gh's write to the Vercel global lock is withheld for this skill
+    /// (`CommandBatchBuilder.githubWriteBlocker`).
+    case githubWriteWithheld(skill: String, blocker: LifecycleBlocker)
 
     /// Human-readable refusal (English by design, like other core refusals).
     public var message: String {
@@ -86,6 +89,8 @@ public enum InstallPlanError: Error, Equatable, Sendable {
         case .missingGHAgent:
             return "a gh install needs a target agent (--agent); pick a host before "
                 + "building the batch"
+        case .githubWriteWithheld(let skill, let blocker):
+            return "cannot install '\(skill)' with gh skill: \(blocker.message)"
         }
     }
 }
@@ -134,7 +139,13 @@ public struct InstallOptions: Equatable, Sendable {
 ///   skill name per install)
 /// - github project:     same with `--scope project` (cwd = project root)
 public struct InstallPlanBuilder: Sendable {
-    public init() {}
+    /// The current scan, which guards gh installs against Vercel global lock
+    /// writes (`CommandBatchBuilder.githubWriteBlocker`); nil skips the guard.
+    let report: ScanReport?
+
+    public init(report: ScanReport? = nil) {
+        self.report = report
+    }
 
     /// Builds the proposed batch for one search result. Throws
     /// `InstallPlanError` for results from which no honest batch can be
@@ -154,6 +165,19 @@ public struct InstallPlanBuilder: Sendable {
         return try build(
             repo: repo, skills: [result.name], installer: installer, target: target,
             options: options)
+    }
+
+    /// Withholds a gh install whose write to the Vercel global lock would
+    /// lose data (`CommandBatchBuilder.githubWriteBlocker`); a nil report
+    /// skips the guard.
+    private func guardGitHubWrites(_ skills: [String]) throws {
+        guard let report else { return }
+        for skill in skills {
+            let blocker = CommandBatchBuilder.githubWriteBlocker(skillName: skill, report: report)
+            if let blocker {
+                throw InstallPlanError.githubWriteWithheld(skill: skill, blocker: blocker)
+            }
+        }
     }
 
     /// Builds the proposed batch (status `proposed`, no snapshot) installing
@@ -189,6 +213,7 @@ public struct InstallPlanBuilder: Sendable {
             guard let agent = options.ghAgent, !agent.isEmpty else {
                 throw InstallPlanError.missingGHAgent
             }
+            try guardGitHubWrites(skills)
             commands = skills.map { skill in
                 BatchCommandFactory.githubInstallNew(
                     repo: repo,

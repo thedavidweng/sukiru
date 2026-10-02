@@ -145,7 +145,8 @@ enum BatchCommandFactory {
             intent: "Update \(quoted(names)) through the GitHub CLI (\(reason)): "
                 + "gh skill update, narrowly scoped to \(dir).",
             dangerFlags: [],
-            warning: nil
+            warning: nil,
+            consequence: .recordsInVercelGlobalLock
         )
     }
 

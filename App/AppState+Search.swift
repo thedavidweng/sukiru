@@ -223,7 +223,7 @@ extension AppState {
             ghAgent: installInstaller == .github ? ghInstallAgent : nil,
             ghPinRef: installInstaller == .github ? ghPinRef : nil,
             copy: installAsCopies)
-        let builder = InstallPlanBuilder()
+        let builder = InstallPlanBuilder(report: report)
         do {
             let batch: CommandBatch
             switch installOrigin {

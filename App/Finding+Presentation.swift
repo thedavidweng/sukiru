@@ -19,6 +19,8 @@ extension Finding {
         case "ambiguous-name": String(localized: "Different skills share this name")
         case "lock-version-unsupported": String(localized: "Lock from a newer installer")
         case "dangerous-removal-surface": String(localized: "Removable by name")
+        case LockWithoutFilesRule.companionRecordRuleID:
+            String(localized: "gh record in the Vercel global lock")
         case "cross-host-duplicate": duplicateTitle
         default: ruleID
         }
@@ -32,12 +34,19 @@ extension Finding {
         }
     }
 
-    /// What a removal advisory warns about. The Finding model has no message
-    /// field, so the caution is spelled out here, naming the skill twice:
-    /// in the command and as what it would delete.
-    var removalCaution: String? {
-        guard ruleID == "dangerous-removal-surface", let name = skillName else { return nil }
-        return String(localized: "danger.removal.advisory \(name) \(name)")
+    /// What a note warns about. The Finding model has no message field, so
+    /// the caution is spelled out here. A removal advisory names the skill
+    /// twice: in the command and as what it would delete.
+    var caution: String? {
+        guard let name = skillName else { return nil }
+        switch ruleID {
+        case "dangerous-removal-surface":
+            return String(localized: "danger.removal.advisory \(name) \(name)")
+        case LockWithoutFilesRule.companionRecordRuleID:
+            return String(localized: "note.githubCompanionRecord \(name)")
+        default:
+            return nil
+        }
     }
 
     /// The severity the UI shows: a note never reads as needing action,

@@ -4489,13 +4489,30 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "If the upstream content differs from what's on disk, extra local files are kept but files with the same name are overwritten."
+            "value" : "If the upstream content differs from what's on disk, extra local files are kept but files with the same name are overwritten. gh also records the skill by name in the Vercel ledger's global lock (~/.agents/.skill-lock.json), dropping npx's display-only fields there (plugin groups, last selected agents)."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "如果上游内容与磁盘上的不同，多出的本地文件会保留，但同名文件会被覆盖。"
+            "value" : "如果上游内容与磁盘上的不同，多出的本地文件会保留，但同名文件会被覆盖。gh 还会把该技能名写入 Vercel 账本的全局锁文件（~/.agents/.skill-lock.json），并丢弃其中 npx 仅用于展示的字段（插件分组、上次选择的智能体）。"
+          }
+        }
+      }
+    },
+    "consequence.recordsInVercelGlobalLock" : {
+      "comment" : "Batch review note: a gh update also writes the Vercel global lock.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh also records the skill by name in the Vercel ledger's global lock (~/.agents/.skill-lock.json), dropping npx's display-only fields there (plugin groups, last selected agents)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh 还会把该技能名写入 Vercel 账本的全局锁文件（~/.agents/.skill-lock.json），并丢弃其中 npx 仅用于展示的字段（插件分组、上次选择的智能体）。"
           }
         }
       }
@@ -4557,13 +4574,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Content resets to the ref gh recorded; local edits are lost."
+            "value" : "Content resets to the ref gh recorded; local edits are lost. gh also records the skill by name in the Vercel ledger's global lock (~/.agents/.skill-lock.json), dropping npx's display-only fields there (plugin groups, last selected agents)."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "内容将重置为 gh 记录的版本，本地修改会丢失。"
+            "value" : "内容将重置为 gh 记录的版本，本地修改会丢失。gh 还会把该技能名写入 Vercel 账本的全局锁文件（~/.agents/.skill-lock.json），并丢弃其中 npx 仅用于展示的字段（插件分组、上次选择的智能体）。"
           }
         }
       }
@@ -4625,13 +4642,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh writes GitHub provenance into the skill's frontmatter (metadata.github-*). Installs for agent %@; GitHub sources only."
+            "value" : "gh writes GitHub provenance into the skill's frontmatter (metadata.github-*). Installs for agent %@; GitHub sources only. gh also records the skill by name in the Vercel ledger's global lock (~/.agents/.skill-lock.json), dropping npx's display-only fields there (plugin groups, last selected agents)."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh 会将 GitHub 溯源信息写入技能的 frontmatter（metadata.github-*）。安装给智能体 %@；仅支持 GitHub 来源。"
+            "value" : "gh 会将 GitHub 溯源信息写入技能的 frontmatter（metadata.github-*）。安装给智能体 %@；仅支持 GitHub 来源。gh 还会把该技能名写入 Vercel 账本的全局锁文件（~/.agents/.skill-lock.json），并丢弃其中 npx 仅用于展示的字段（插件分组、上次选择的智能体）。"
           }
         }
       }
@@ -4642,13 +4659,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh writes GitHub provenance into the skill's frontmatter (metadata.github-*). Installs for agent %1$@, pinned to %2$@; GitHub sources only."
+            "value" : "gh writes GitHub provenance into the skill's frontmatter (metadata.github-*). Installs for agent %1$@, pinned to %2$@; GitHub sources only. gh also records the skill by name in the Vercel ledger's global lock (~/.agents/.skill-lock.json), dropping npx's display-only fields there (plugin groups, last selected agents)."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh 会将 GitHub 溯源信息写入技能的 frontmatter（metadata.github-*）。安装给智能体 %1$@，固定在 %2$@；仅支持 GitHub 来源。"
+            "value" : "gh 会将 GitHub 溯源信息写入技能的 frontmatter（metadata.github-*）。安装给智能体 %1$@，固定在 %2$@；仅支持 GitHub 来源。gh 还会把该技能名写入 Vercel 账本的全局锁文件（~/.agents/.skill-lock.json），并丢弃其中 npx 仅用于展示的字段（插件分组、上次选择的智能体）。"
           }
         }
       }
@@ -4748,6 +4765,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此结果没有技能名称，因此无法安装。"
+          }
+        }
+      }
+    },
+    "error.install.githubDropsVercelLockData %@" : {
+      "comment" : "Install sheet refusal: gh's lock rewrite would drop data npx needs.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installing %@ with gh would rewrite the Vercel ledger's global lock, dropping data npx skills needs from other records. Install it outside Sukiru."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用 gh 安装 %@ 会重写 Vercel 账本的全局锁文件，丢弃其他记录中 npx skills 需要的数据。请在 Sukiru 之外安装。"
+          }
+        }
+      }
+    },
+    "error.install.githubTouchesVercelRecord %@" : {
+      "comment" : "Install sheet refusal: a gh install would overwrite the user-scope Vercel record of the same name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installing %@ with gh would overwrite the Vercel ledger record of the user-scope skill with this name. Install it with npx skills instead, or outside Sukiru."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用 gh 安装 %@ 会覆盖 Vercel 账本中用户范围同名技能的记录。请改用 npx skills 安装，或在 Sukiru 之外安装。"
           }
         }
       }
@@ -4978,6 +5029,23 @@
         }
       }
     },
+    "gh record in the Vercel global lock" : {
+      "comment" : "Finding title: gh's companion record in the Vercel global lock.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh record in the Vercel global lock"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh 写入 Vercel 全局锁的记录"
+          }
+        }
+      }
+    },
     "gh skill" : {
       "comment" : "Search backend picker option: gh skill search.",
       "localizations" : {
@@ -5041,13 +5109,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "GitHub ledger: provenance is written into the skill's frontmatter (metadata.github-*), GitHub-only sources, installed for one agent with a pin option."
+            "value" : "GitHub ledger: provenance is written into the skill's frontmatter (metadata.github-*), GitHub-only sources, installed for one agent with a pin option. gh also records the skill by name in the Vercel ledger's global lock."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "GitHub 账本：溯源写入技能的 frontmatter（metadata.github-*），仅限 GitHub 来源，装给单个 agent，可钉版本。"
+            "value" : "GitHub 账本：溯源写入技能的 frontmatter（metadata.github-*），仅限 GitHub 来源，装给单个 agent，可钉版本。gh 还会把该技能名写入 Vercel 账本的全局锁文件。"
           }
         }
       }
@@ -5154,6 +5222,23 @@
         }
       }
     },
+    "library.githubCompanionRecord" : {
+      "comment" : "Detail provenance: the Vercel lock entry for this skill is gh's own record, not a Vercel claim.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh also records this skill by name in the Vercel ledger's global lock. That record belongs to gh and is not a Vercel claim."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh 还会在 Vercel 账本的全局锁文件中按名称记录此技能。该记录属于 gh，不构成 Vercel 账本的认领。"
+          }
+        }
+      }
+    },
     "library.mode %lld %lld" : {
       "comment" : "Library Locations footer: how many placements are copies and links.",
       "localizations" : {
@@ -5171,19 +5256,36 @@
         }
       }
     },
-    "library.update.touchesVercelRecord" : {
-      "comment" : "Library detail: gh update withheld because gh would rewrite a user-scope Vercel ledger record of the same name.",
+    "library.update.dropsVercelLockData" : {
+      "comment" : "Library detail: gh update withheld because gh's lock rewrite would drop data npx needs.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh skill also writes this skill's name into the Vercel ledger's global lock, which would overwrite the record for the user-scope copy. Update it with npx skills, or update it outside Sukiru."
+            "value" : "gh rewrites the Vercel ledger's global lock on every install and update, and that rewrite would drop data npx skills needs from other records. Update this skill outside Sukiru."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh skill 也会把该技能名写入 Vercel 账本的全局锁文件，这会覆盖用户范围同名副本的记录。请改用 npx skills 更新，或在 Sukiru 之外更新。"
+            "value" : "gh 每次安装和更新都会重写 Vercel 账本的全局锁文件，而这会丢弃其他记录中 npx skills 需要的数据。请在 Sukiru 之外更新此技能。"
+          }
+        }
+      }
+    },
+    "library.update.touchesVercelRecord" : {
+      "comment" : "Library detail: gh update withheld because gh would overwrite the user-scope Vercel ledger record of the same name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh skill also records the skill by name in the Vercel ledger's global lock, which would overwrite the record of the user-scope skill with this name. Update it with npx skills, or outside Sukiru."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh skill 也会把该技能名写入 Vercel 账本的全局锁文件，这会覆盖用户范围同名技能的记录。请改用 npx skills 更新，或在 Sukiru 之外更新。"
           }
         }
       }
@@ -5201,6 +5303,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "检测到你在使用 %@。请用它安装 Node.js，然后点击“重新检查”。"
+          }
+        }
+      }
+    },
+    "note.githubCompanionRecord %@" : {
+      "comment" : "Health note for gh's record of a project-only skill in the Vercel global lock: the skill name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh records %@ in the Vercel ledger's global lock whenever it installs or updates this skill in a project. A bare `npx skills update -g` would act on that record and install the skill at user scope; gh rewrites it anyway, so there is nothing to clean."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh 每次在项目中安装或更新该技能时，都会把 %@ 写入 Vercel 账本的全局锁文件。直接运行 `npx skills update -g` 会读取该记录并把技能装到用户范围；gh 总会重写它，因此无需清理。"
           }
         }
       }

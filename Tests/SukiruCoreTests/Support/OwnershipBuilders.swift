@@ -62,6 +62,34 @@ enum OwnershipBuilders {
             """
     }
 
+    /// A global v3 lock whose entries carry gh's write signature
+    /// (`lockfile.RecordInstall`): whole-second UTC timestamps and only gh's
+    /// fields, `pinnedRef` included when `pinned`.
+    static func ghCompanionLock(_ names: [String], pinned: Bool = false) -> String {
+        let entries = names.map { name in
+            let pin = pinned ? ",\n          \"pinnedRef\": \"v1.2.3\"" : ""
+            return """
+                        "\(name)": {
+                          "source": "thedavidweng/skills",
+                          "sourceType": "github",
+                          "sourceUrl": "https://github.com/thedavidweng/skills.git",
+                          "skillPath": "tools/\(name)/SKILL.md",
+                          "skillFolderHash": "9999999999999999999999999999999999999999",
+                          "installedAt": "2026-06-15T23:27:24Z",
+                          "updatedAt": "2026-06-15T23:27:24Z"\(pin)
+                        }
+                """
+        }.joined(separator: ",\n")
+        return """
+            {
+              "version": 3,
+              "skills": {
+            \(entries)
+              }
+            }
+            """
+    }
+
     /// A project v1 lock claiming `name`. The computedHash defaults to a
     /// fixed value; pass a hash recomputed from disk when the test needs the
     /// lock to match a real placement (drift-free anchoring).

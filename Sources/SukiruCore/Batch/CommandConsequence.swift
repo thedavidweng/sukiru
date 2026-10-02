@@ -11,10 +11,15 @@ public enum CommandConsequence: Codable, Equatable, Sendable {
     /// As `resetsToUpstream`, and the re-install erases gh frontmatter
     /// provenance (keep-vercel arbitration).
     case resetsToUpstreamErasingGitHubProvenance
-    /// A gh re-install resets content to the recorded ref (keep-github arbitration).
+    /// A gh re-install resets content to the recorded ref (keep-github
+    /// arbitration). Like every gh write, it records the skill in the Vercel
+    /// global lock (`githubLockNote`).
     case resetsToGitHubRef
-    /// gh adoption merge-overwrites the existing directory.
+    /// gh adoption merge-overwrites the existing directory, and records the
+    /// skill in the Vercel global lock.
     case mergeOverwritesCollidingFiles
+    /// A gh update records the skill in the Vercel global lock.
+    case recordsInVercelGlobalLock
     /// Vercel adoption replaces local copies with links to a fresh shared copy.
     case replacesCopiesWithSharedLinks
     /// `npx skills remove` of a stale lock entry touches no skill files.
@@ -27,7 +32,8 @@ public enum CommandConsequence: Codable, Equatable, Sendable {
     case removesLockedSkill(skill: String, deleting: [String])
     /// A new install enters the Vercel lockfile ledger.
     case entersVercelLedger
-    /// A new install writes gh provenance into the frontmatter.
+    /// A new install writes gh provenance into the frontmatter, and records
+    /// the skill in the Vercel global lock.
     case writesGitHubProvenance(agent: String, pinRef: String?)
 
     /// The English rendering written to batch files and CLI output.
@@ -39,11 +45,14 @@ public enum CommandConsequence: Codable, Equatable, Sendable {
             return "Content resets to upstream; local edits are lost. The "
                 + "re-install erases the GitHub frontmatter provenance."
         case .resetsToGitHubRef:
-            return "Content resets to the gh-recorded ref; local edits are lost."
+            return "Content resets to the gh-recorded ref; local edits are lost. "
+                + Self.githubLockNote
         case .mergeOverwritesCollidingFiles:
             return "If upstream content differs from the on-disk payload, "
                 + "merge-overwrite keeps extra local files but overwrites colliding "
-                + "ones."
+                + "ones. " + Self.githubLockNote
+        case .recordsInVercelGlobalLock:
+            return Self.githubLockNote
         case .replacesCopiesWithSharedLinks:
             return "Local copies are replaced by the source's version, linked "
                 + "from the shared skills folder; local edits survive only in the "
@@ -70,7 +79,16 @@ public enum CommandConsequence: Codable, Equatable, Sendable {
             if let pinRef, !pinRef.isEmpty {
                 text += " Pinned to \(pinRef)."
             }
-            return text
+            return text + " " + Self.githubLockNote
         }
     }
+
+    /// Every gh install or update also writes the Vercel global lock
+    /// (`CommandBatchBuilder.githubWriteBlocker` withholds the writes that
+    /// would lose data npx needs; what remains is display-only).
+    static let githubLockNote =
+        "gh also records the skill by name in the Vercel ledger's global lock "
+        + "(~/.agents/.skill-lock.json); rewriting that file drops npx's display-only "
+        + "fields (plugin groups, last selected agents)."
+
 }

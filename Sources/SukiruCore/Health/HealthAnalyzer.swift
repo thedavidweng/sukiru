@@ -28,13 +28,13 @@ import Foundation
 ///   with confidence; anything else is "cannot verify" and stays silent.
 ///   Global scope is silent by design (`skillFolderHash` is a git tree SHA,
 ///   never recomputable — and never 64-hex, so the gate also catches it).
-/// - `lock-without-files` (action) — a lock entry whose name has no healthy
-///   (non-broken) placement in that scope; the ledger claim alone conjures no
-///   skill.
+/// - `lock-without-files` (action) and `github-companion-record` (info) —
+///   see `LockWithoutFilesRule`.
 /// - `canonical-host-divergence` (action) — ports the archive's
 ///   `SourceDuplicate`: one lock source identity, >1 distinct content hash.
 /// - `dangerous-removal-surface` (action) — advisory for every name the vercel
-///   ledger does NOT claim (github-owned, ownerless, ambiguous-without-claim):
+///   ledger does NOT claim (github-owned, including a gh companion record,
+///   ownerless, ambiguous-without-claim):
 ///   `npx skills remove <name>` deletes by name across ownership
 ///   (collision-matrix scenario 6), but only `<skills root>/<name>`, so a
 ///   name with no placement directly under a root is out of reach and not
@@ -88,7 +88,7 @@ public struct HealthAnalyzer: Sendable {
                 findings.append(finding)
             }
         }
-        findings.append(contentsOf: lockWithoutFilesFindings(locks: locks, groups: groups))
+        findings.append(contentsOf: LockWithoutFilesRule.findings(locks: locks, groups: groups))
         findings.append(contentsOf: lockVersionFindings(locks: locks))
         return findings
     }
@@ -180,7 +180,7 @@ public struct HealthAnalyzer: Sendable {
     /// scope never flags — copy mode is the stock layout there.
     private func impostorFindings(for group: SkillGroup, claim: ScopeLockClaim?) -> [Finding] {
         guard group.scopeGroup == "user",
-            claim?.lock.entries[group.name] != nil,
+            claim?.vercelClaim(for: group) != nil,
             let canonical = group.members.first(where: {
                 $0.workspaceID == group.scopeGroup && $0.placement.kind == .directory
             })
@@ -242,42 +242,6 @@ public struct HealthAnalyzer: Sendable {
         RecomputeEligibility(fileSystem: fileSystem).reasons(atPath: root)
     }
 
-    // MARK: - lock-without-files
-
-    /// Every lock entry whose name has no healthy placement in its scope.
-    /// A broken-symlink-only name counts as fileless (a dangling link is not
-    /// a healthy placement); incompatible-version locks never reach this rule
-    /// because the reader drops their claims entirely.
-    private func lockWithoutFilesFindings(
-        locks: [ScopeLockClaim], groups: [SkillGroup]
-    ) -> [Finding] {
-        var healthy: Set<String> = []
-        for group in groups {
-            let hasFiles = group.members.contains { $0.placement.kind != .brokenSymlink }
-            if hasFiles {
-                healthy.insert(group.scopeGroup + "\u{1F}" + group.name)
-            }
-        }
-        var findings: [Finding] = []
-        for claim in locks {
-            for name in claim.lock.entries.keys.sorted() {
-                if healthy.contains(claim.scopeGroup + "\u{1F}" + name) {
-                    continue
-                }
-                var evidence: [Evidence] = []
-                if let lockPath = claim.lockPath {
-                    evidence.append(Evidence(kind: "lockPath", detail: lockPath))
-                }
-                evidence.append(Evidence(kind: "entryKey", detail: name))
-                findings.append(
-                    Finding(
-                        ruleID: "lock-without-files", severity: .action, skillName: name,
-                        workspaceID: claim.scopeGroup, evidence: evidence))
-            }
-        }
-        return findings
-    }
-
     // MARK: - canonical-host-divergence
 
     /// One lock source identity, >1 distinct content hash (the archive's
@@ -286,7 +250,7 @@ public struct HealthAnalyzer: Sendable {
     /// diverge from. Fires independently of ambiguity: the lock claim is
     /// data even when attribution is voided.
     private func divergenceFinding(for group: SkillGroup, claim: ScopeLockClaim?) -> Finding? {
-        guard let entry = claim?.lock.entries[group.name], entry.isManaged else { return nil }
+        guard let entry = claim?.vercelClaim(for: group), entry.isManaged else { return nil }
         let hashed = group.members.filter {
             $0.placement.kind != .brokenSymlink && $0.placement.contentHash != nil
                 && $0.placement.managingAgent == nil
@@ -320,7 +284,7 @@ public struct HealthAnalyzer: Sendable {
     /// broken-symlink member is covered by its own finding and is filtered
     /// here like every other rule does.
     private func removalSurfaceFinding(for group: SkillGroup, claim: ScopeLockClaim?) -> Finding? {
-        guard claim?.lock.entries[group.name] == nil else { return nil }
+        guard claim?.vercelClaim(for: group) == nil else { return nil }
         let reachable = group.members.filter {
             $0.placement.kind != .brokenSymlink
                 && Self.isDirectChild($0.placement.path, of: $0.workspaceRoot)

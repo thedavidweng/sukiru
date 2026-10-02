@@ -142,7 +142,10 @@ public enum SkillInventory {
             else { return nil }
             return (member, hash)
         }
-        let lockClaims = claim?.lock.entries[name] != nil
+        let lockClaims =
+            claim?.vercelClaim(
+                named: name, githubClaimed: members.contains { $0.githubProvenance != nil })
+            != nil
         // The trigger anchors on THE canonical-store placement. Scanner invariant
         // this relies on: one skills dir per workspace per name, so at most
         // one placement per name carries `workspaceID == scopeGroup`.

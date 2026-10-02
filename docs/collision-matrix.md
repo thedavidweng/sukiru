@@ -58,6 +58,55 @@ tools. Test skills: `brand-guidelines`, `internal-comms`, `xlsx` (source
   "re-run with --all" whenever an update exists; `--all` combined with names
   updates only the named skills.
 
+## Follow-up (2026-10-02, second run): telling gh's records apart
+
+Run with `gh 2.102.0` and `npx skills@1.7.0` (Node v24), `HOME` and the
+project isolated per tool. Test skills: `xlsx`, `brand-guidelines`,
+`internal-comms` (source `anthropics/skills`, the latter two pinned to an
+older commit). Every lock write was captured before and after each command.
+
+- **The write signature.** A record `gh` created stamps `installedAt` /
+  `updatedAt` with `time.RFC3339` (UTC, whole seconds, e.g.
+  `2026-10-02T20:43:32Z`) and contains only `source`, `sourceType`,
+  `sourceUrl`, `skillPath`, `skillFolderHash`, the timestamps, and
+  optionally `pinnedRef`. `npx skills` stamps `toISOString()`, always with
+  milliseconds (verified in every published `skills` release that writes
+  the global lock, 1.1.0 through 1.7.0), and can add `ref`, `pluginName`,
+  `sourceBaseUrl`, `wellKnownDigest`. gh's `internal/skills/lockfile` has
+  written this way since the `gh skill` scaffold shipped in **gh 2.90.0**
+  (2026-04-16), Sukiru's minimum supported gh.
+- **gh rewrites the whole file.** One `gh skill install` into a lock npx
+  had written dropped the other entries' `ref` and `pluginName` fields,
+  the top-level `lastSelectedAgents`, and an empty `dismissed` map, and
+  reordered entries (source: `writeTo` re-marshals a struct with only gh's
+  fields). An entry npx created survives as an entry but loses those
+  fields; its `installedAt` keeps npx's millisecond stamp, so it still
+  reads as a Vercel record.
+- **`npx skills` acts on gh's records.** `npx skills update -g` (bare) and
+  `npx skills update <name> -g` both treat a gh-written entry as their own:
+  they compare its `skillFolderHash` against the upstream HEAD tree —
+  ignoring `pinnedRef` — and reinstall, which materializes the skill at
+  user scope (shared copy plus a copy in every detected host), rewrites
+  the record with npx's field set, and erases the gh frontmatter
+  provenance from the refreshed copy. A pinned gh install therefore shows
+  a phantom update.
+- **The project-scope ghost materializes.** A project-scope `gh` install
+  leaves a global-lock entry with no user-scope files; the next bare
+  `npx skills update -g` installs that skill at user scope even though the
+  user never asked for it there. `npx skills remove <name> -g` on such a
+  ghost deletes only the entry (no files exist in the scope), but gh
+  recreates the entry at the next project install or update.
+- **`gh skill update --dry-run` still writes nothing**, and `--from-local`
+  installs never touch the lock (`installer.InstallLocal` has no
+  `RecordInstall` call).
+
+Consequences for the referee are recorded in ADR-0004's companion-record
+amendment: the signature above decides whether a global-lock entry is gh's
+companion record (the GitHub ledger's business, not a Vercel claim) or a
+genuine Vercel record, ghost companions are notes rather than stale lock
+entries, and a gh write is withheld whenever its whole-file rewrite would
+drop data `npx skills` needs.
+
 ## Evidence samples
 
 Frontmatter of `.claude/skills/stale-docs-cleanup/SKILL.md` after scenario 3:
