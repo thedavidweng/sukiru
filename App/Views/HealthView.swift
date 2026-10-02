@@ -214,7 +214,7 @@ struct HealthView: View {
             ContentUnavailableView {
                 HStack(spacing: 0) {
                     AXToken(token: "sukiru.health.healthy")
-                    Label("No findings — library looks healthy", systemImage: "checkmark.seal")
+                    Label("The library looks healthy", systemImage: "checkmark.seal")
                 }
             }
         }

@@ -127,7 +127,7 @@ struct PendingResultBanners: View {
                     color: .green,
                     text: String(
                         localized:
-                            "Batch executed — the post-run diff is listed in Snapshots."))
+                            "Batch executed. See Snapshots for what changed."))
             default:
                 banner(
                     token: "sukiru.pending.result.failed",

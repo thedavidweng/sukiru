@@ -14,7 +14,7 @@ public enum ExecutionError: Error, Equatable, Sendable {
         switch self {
         case .notReviewed(let current):
             return "refusing to execute: the batch is '\(current.rawValue)', not "
-                + "'reviewed' — inspect every command and acknowledge the review first"
+                + "'reviewed'; inspect every command and acknowledge the review first"
         case .busy(let lockPath):
             return "another batch execution is already in progress (execution lock: "
                 + "\(lockPath)); wait for it to finish before starting a new batch"

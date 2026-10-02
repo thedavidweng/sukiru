@@ -110,7 +110,7 @@ enum BatchCommandFactory {
     /// their owning ledger.
     static func dangerousDeletionWarning(name: String, atRisk: [AtRiskSkill]) -> String {
         var warning = "Dangerous deletion: npx skills remove deletes by name across ownership"
-        warning += " — it can delete skills belonging to the other ledger or to no ledger."
+        warning += ", so it can delete skills belonging to the other ledger or to no ledger."
         if atRisk.isEmpty {
             warning += " No cross-ledger skills named '\(name)' were detected in this scope."
             return warning
@@ -180,7 +180,7 @@ enum BatchCommandFactory {
                     + " (direct file operation; ownerless skill cleanup)",
                 owningCLI: .file,
                 intent: "Clean up ownerless skill '\(name)' (finding \(finding.ruleID)): "
-                    + "delete \(path) directly — no official CLI manages this skill.",
+                    + "delete \(path) directly, since no official CLI manages this skill.",
                 dangerFlags: [.directFileOperation, .ownerlessCleanup],
                 warning: "Direct file deletion of ownerless skill '\(name)': no CLI owns "
                     + "this skill. The full payload is captured in the batch snapshot "

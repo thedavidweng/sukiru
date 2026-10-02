@@ -102,7 +102,7 @@ struct SnapshotsDetailView: View {
                     AXToken(token: "sukiru.snapshots.diff.empty")
                     Image(systemName: "equal.circle")
                         .foregroundStyle(.secondary)
-                    Text("No changes — the executed batch left the library unchanged.")
+                    Text("The batch ran without changing the library.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }

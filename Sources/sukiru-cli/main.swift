@@ -51,7 +51,7 @@ func runBatch(_ invocation: BatchInvocation) throws {
     }
     guard invocation.reviewed else {
         emitError(
-            "refusing to execute batch '\(batch.id)': it has not been reviewed — "
+            "refusing to execute batch '\(batch.id)': it has not been reviewed; "
                 + "inspect every command with --dry-run, then re-run adding --reviewed")
         exit(1)
     }

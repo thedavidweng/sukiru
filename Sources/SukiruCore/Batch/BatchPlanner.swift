@@ -157,7 +157,7 @@ extension CommandBatchBuilder {
         case .ownerless:
             throw DecisionProblem(
                 message: "skill '\(skill.name)' (finding '\(entry.findingID)'): no ledger "
-                    + "owns this skill — 'update' is not available; choose adopt, cleanup, "
+                    + "owns this skill, so 'update' is not available; choose adopt, cleanup, "
                     + "or leave")
         case .agent:
             throw Self.agentManaged(skill: skill)
@@ -376,7 +376,7 @@ extension CommandBatchBuilder {
     func needsArbitration(skill: Skill, entry: DecisionEntry) -> DecisionProblem {
         DecisionProblem(
             message: "skill '\(skill.name)' (finding '\(entry.findingID)') is "
-                + "double-booked: repair requires an explicit surviving-ledger choice — "
+                + "double-booked: repair requires an explicit surviving-ledger choice; "
                 + "use action 'arbitrate' with choice 'keep-vercel' or 'keep-github' "
                 + "(no default)")
     }

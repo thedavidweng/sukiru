@@ -24,7 +24,7 @@ struct LibraryHostsSection: View {
         let leftovers = entries.filter { !$0.installed }
         Section {
             if skill.placements.contains(where: \.internal) {
-                Text("Internal skill — hidden from host-facing listings.")
+                Text("Internal skill, hidden from host-facing listings.")
                     .foregroundStyle(.secondary)
             }
             if entries.isEmpty {
