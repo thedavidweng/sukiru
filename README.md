@@ -61,8 +61,8 @@ Website: <https://thedavidweng.github.io/sukiru/>
   becomes one batch that you confirm once, in plain language, with the exact
   commands one click away.
 - ↩️ **Safe by construction**: Every batch runs as snapshot → execute → diff,
-  with one-click rollback. The last 10 snapshots are kept, and you can delete
-  any of them.
+  and can be rolled back after you confirm. The last 10 snapshots are kept,
+  and you can delete any of them.
 - 📚 **Library**: See each skill's owner, provenance, pinned ref, and where it
   is placed across agents. Switch a skill between link and copy mode.
 - 🔍 **Search and install**: Search skills.sh and `gh skill search`, preview

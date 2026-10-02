@@ -122,7 +122,9 @@ final class AppState: ObservableObject {
     @Published var historyRows: [HistoryRow] = []
     /// Selected history row in Snapshots (drives the diff pane + rollback cmd).
     @Published var selectedHistoryID: String?
-    /// Batches whose snapshot deletion awaits confirmation.
+    /// The batch whose rollback, and the batches whose deletion, await
+    /// confirmation.
+    @Published var historyPendingRollback: String?
     @Published var historyPendingDeletion: Set<String> = []
     /// Rollback refusal/error text, surfaced on the Snapshots surface.
     @Published var rollbackError: String?

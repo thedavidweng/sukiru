@@ -52,11 +52,6 @@ struct SnapshotsDetailView: View {
             Text("snapshots.batchMeta \(startedAt) \(status)")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
-            Button("Delete Snapshot…", role: .destructive) {
-                state.historyPendingDeletion = [record.batchID]
-            }
-            .disabled(state.batchMutationInFlight)
-            .axButtonToken("sukiru.snapshots.delete.\(record.batchID)")
         } header: {
             TokenSectionHeader(token: nil, title: "Batch")
         }

@@ -7,6 +7,9 @@ import SwiftUI
 /// so a confirmed batch stays reversible (ADR-0007).
 struct BatchConfirmSheet: View {
     @EnvironmentObject private var state: AppState
+    /// The window-level rollback confirmation cannot present over this
+    /// sheet, so Undo confirms here.
+    @State private var confirmingUndo = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -176,12 +179,19 @@ struct BatchConfirmSheet: View {
             PendingResultBanners()
             HStack {
                 if let record = state.lastExecutionRecord {
-                    Button("Undo") {
-                        state.rollbackBatch(record.batchID)
-                        state.dismissBatchConfirm()
+                    Button("Undo…") {
+                        confirmingUndo = true
                     }
                     .disabled(!state.canRollback(batchID: record.batchID))
                     .axButtonToken("sukiru.confirm.undo")
+                    .confirmationDialog("Roll Back This Batch?", isPresented: $confirmingUndo) {
+                        Button("Roll Back", role: .destructive) {
+                            state.rollbackBatch(record.batchID)
+                            state.dismissBatchConfirm()
+                        }
+                    } message: {
+                        Text("snapshots.rollback.message")
+                    }
                 }
                 Spacer()
                 Button("Done") {

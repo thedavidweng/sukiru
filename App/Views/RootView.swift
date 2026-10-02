@@ -26,6 +26,7 @@ struct RootView: View {
                 OrphanSourceSheet(skill: skill)
             }
         }
+        .modifier(HistoryConfirmations())
     }
 
     private var showingSourceSheet: Binding<Bool> {

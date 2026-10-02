@@ -765,6 +765,16 @@
         }
       }
     },
+    "Copy Batch ID" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷贝批次 ID"
+          }
+        }
+      }
+    },
     "Copy where a link belongs" : {
       "comment" : "Health finding title: a physical copy where a link into the shared store belongs.",
       "localizations" : {
@@ -866,6 +876,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除链接 %@"
+          }
+        }
+      }
+    },
+    "Delete…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除…"
           }
         }
       }
@@ -2675,6 +2695,26 @@
         }
       }
     },
+    "Roll Back This Batch?" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回滚此批次？"
+          }
+        }
+      }
+    },
+    "Roll Back…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回滚…"
+          }
+        }
+      }
+    },
     "Rollback" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3345,12 +3385,12 @@
         }
       }
     },
-    "Undo" : {
+    "Undo…" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "撤销"
+            "value" : "撤销…"
           }
         }
       }
@@ -5230,6 +5270,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无变更"
+          }
+        }
+      }
+    },
+    "snapshots.rollback.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sukiru restores the files and installer records from before this batch ran, and deletes what the batch added."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将从快照恢复此批次运行前的文件和安装器记录，并删除批次新增的内容。"
           }
         }
       }

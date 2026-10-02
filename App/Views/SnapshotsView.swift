@@ -29,29 +29,12 @@ struct SnapshotsView: View {
         }
         .listStyle(.inset)
         .contextMenu(forSelectionType: String.self) { rowIDs in
-            if !rowIDs.isEmpty {
-                Button("Delete Snapshot…", role: .destructive) {
-                    state.historyPendingDeletion = batchIDs(rowIDs)
-                }
-                .disabled(state.batchMutationInFlight)
-            }
+            contextMenu(batchIDs(rowIDs))
         }
         .onDeleteCommand {
             if let selected = state.selectedHistoryID, !state.batchMutationInFlight {
                 state.historyPendingDeletion = batchIDs([selected])
             }
-        }
-        .confirmationDialog(
-            "Delete Snapshot?",
-            isPresented: Binding(
-                get: { !state.historyPendingDeletion.isEmpty },
-                set: { if !$0 { state.historyPendingDeletion = [] } })
-        ) {
-            Button("Delete", role: .destructive) {
-                state.deleteHistory(batchIDs: state.historyPendingDeletion)
-            }
-        } message: {
-            Text("snapshots.delete.message")
         }
         .overlay {
             if state.historyRows.isEmpty {
@@ -108,9 +91,33 @@ struct SnapshotsView: View {
         .accessibilityElement(children: .contain)
     }
 
-    /// A rollback row shares its batch's record, so it deletes that batch.
+    /// A rollback row shares its batch's record, so it acts on that batch.
     private func batchIDs(_ rowIDs: Set<String>) -> Set<String> {
         Set(state.historyRows.filter { rowIDs.contains($0.id) }.map(\.batchID))
+    }
+
+    @ViewBuilder private func contextMenu(_ batchIDs: Set<String>) -> some View {
+        if let batchID = batchIDs.first, batchIDs.count == 1 {
+            if state.canRollback(batchID: batchID) {
+                Button("Roll Back…") {
+                    state.requestRollback(batchID)
+                }
+            }
+            Button("Show in Finder") {
+                state.revealHistory(batchID: batchID)
+            }
+            Button("Copy Batch ID") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(batchID, forType: .string)
+            }
+            Divider()
+        }
+        if !batchIDs.isEmpty {
+            Button("Delete Snapshot…", role: .destructive) {
+                state.historyPendingDeletion = batchIDs
+            }
+            .disabled(state.batchMutationInFlight)
+        }
     }
 
     // MARK: - rows
@@ -124,14 +131,15 @@ struct SnapshotsView: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
                 Spacer()
-                // One-click rollback for every non-rolled-back batch;
-                // unavailable mid-mutation (disabled with
-                // the `.disabled` AX suffix, never silently inert).
+                // Rollback for every non-rolled-back batch, and deletion for
+                // every batch, both confirmed first; unavailable mid-mutation
+                // (disabled with the `.disabled` AX suffix, never silently
+                // inert).
                 if record.batchStatus == .succeeded || record.batchStatus == .failed {
                     Button {
-                        state.rollbackBatch(record.batchID)
+                        state.requestRollback(record.batchID)
                     } label: {
-                        Label("Roll Back", systemImage: "arrow.uturn.backward")
+                        Label("Roll Back…", systemImage: "arrow.uturn.backward")
                     }
                     .controlSize(.small)
                     .axButtonToken(
@@ -140,6 +148,17 @@ struct SnapshotsView: View {
                     )
                     .disabled(state.batchMutationInFlight)
                 }
+                Button(role: .destructive) {
+                    state.historyPendingDeletion = [record.batchID]
+                } label: {
+                    Label("Delete…", systemImage: "trash")
+                }
+                .controlSize(.small)
+                .axButtonToken(
+                    "sukiru.snapshots.delete.\(record.batchID)",
+                    disabled: state.batchMutationInFlight
+                )
+                .disabled(state.batchMutationInFlight)
             }
             HStack(spacing: 8) {
                 Text(RecordTimestamp.display(record.startedAt))

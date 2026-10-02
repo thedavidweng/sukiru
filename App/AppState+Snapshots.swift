@@ -50,6 +50,18 @@ extension AppState {
         }
     }
 
+    /// Shows a batch's snapshot folder in Finder, or its execution record
+    /// when retention pruning already removed the snapshot.
+    func revealHistory(batchID: String) {
+        let row = historyRows.first { $0.id == "batch-" + batchID }
+        guard let row, case .batch(let record) = row else { return }
+        let home = Self.makeEnvironment(roots: projectRoots).home
+        let snapshot = HostPathResolver.join(
+            home, "Library/Application Support/Sukiru/snapshots/" + record.snapshotID)
+        let exists = FileManager.default.fileExists(atPath: snapshot)
+        revealInFinder([exists ? snapshot : record.recordDirectory])
+    }
+
     /// Reloads the batch history from the on-disk execution records.
     func loadHistory() {
         let environment = Self.makeEnvironment(roots: projectRoots)

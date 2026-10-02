@@ -308,12 +308,19 @@ extension AppState {
 
     func rollbackSelectedBatch() {
         guard let selectedHistoryID, selectedHistoryID.hasPrefix("batch-") else { return }
-        rollbackBatch(String(selectedHistoryID.dropFirst("batch-".count)))
+        requestRollback(String(selectedHistoryID.dropFirst("batch-".count)))
     }
 
-    /// One-click rollback: restores the batch's pre-execution state
-    /// from its snapshot, then auto-refreshes every surface. Rollback
-    /// takes the same cross-process execution lock as executions.
+    /// Asks for confirmation before rolling back: a rollback deletes what the
+    /// batch added, which is as consequential as running a batch.
+    func requestRollback(_ batchID: String) {
+        guard canRollback(batchID: batchID) else { return }
+        historyPendingRollback = batchID
+    }
+
+    /// Restores the batch's pre-execution state from its snapshot, then
+    /// auto-refreshes every surface. Callers confirm first. Rollback takes
+    /// the same cross-process execution lock as executions.
     func rollbackBatch(_ batchID: String) {
         guard canRollback(batchID: batchID) else { return }
         batchMutationInFlight = true
