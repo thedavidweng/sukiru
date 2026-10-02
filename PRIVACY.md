@@ -1,6 +1,6 @@
 # Sukiru Privacy Policy
 
-Last updated: October 1, 2026
+Last updated: October 2, 2026
 
 Sukiru does not collect, sell, or share personal data. It has no accounts,
 analytics, advertising, telemetry, or cloud service of its own.
@@ -40,6 +40,11 @@ Sukiru makes these network requests, and no others:
   GitHub CLI with your existing `gh` login.
 - **Preview**: a selected skill's `SKILL.md` is downloaded from
   `raw.githubusercontent.com`.
+- **Finding sources**: when you click Find Sources or Find Source…, the name
+  of each skill with no known source is sent to the skills.sh search API, and
+  the `SKILL.md` of a few same-name listings is downloaded from
+  `raw.githubusercontent.com` (or the listing's own website) to compare with
+  your copy. Your copy is never uploaded.
 - **Commands you confirm**: installs, updates, and repairs run `npx skills` or
   `gh skill`, which may contact npm, GitHub, or a skill's source repository.
   Those tools follow their own privacy policies. Sukiru runs them with
@@ -59,7 +64,8 @@ Sukiru runs, and Sukiru never writes it to disk.
   `~/Library/Application Support/Sukiru`. Before each batch, Sukiru snapshots
   the files the batch can change so you can roll it back. Execution records
   hold the commands that ran and their output. Sukiru keeps the last 10
-  snapshots and deletes older ones.
+  snapshots and deletes older ones. You can delete any snapshot from the
+  Snapshots list.
 - **Preferences** such as your project roots, language, and install options,
   in the standard macOS user defaults.
 

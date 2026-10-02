@@ -26,6 +26,13 @@ extension AppState {
             }
         }
 
+        var batchID: String {
+            switch self {
+            case .batch(let record): return record.batchID
+            case .rollback(let record): return record.batchID
+            }
+        }
+
         /// Sort timestamp (ISO-8601 strings order lexicographically).
         var timestamp: String {
             switch self {

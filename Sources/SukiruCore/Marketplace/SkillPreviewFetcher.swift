@@ -22,9 +22,15 @@ public struct SkillPreviewFetcher: Sendable {
         self.transport = transport
     }
 
-    /// The raw SKILL.md URLs to try for a result, in order.
+    /// The raw SKILL.md URLs to try for a result, in order. A source without
+    /// an `owner/repo` slash is a domain publishing skills at
+    /// `/.well-known/skills/<name>/` (for example `open.feishu.cn`).
     public static func candidateURLs(for result: SkillSearchResult) -> [URL] {
         guard let repo = result.repo else { return [] }
+        if !repo.contains("/") {
+            let url = URL(string: "https://\(repo)/.well-known/skills/\(result.name)/SKILL.md")
+            return url.map { [$0] } ?? []
+        }
         let paths: [String]
         if let path = result.path, !path.isEmpty {
             paths = [path]
@@ -32,11 +38,13 @@ public struct SkillPreviewFetcher: Sendable {
             paths = [
                 "skills/\(result.name)/SKILL.md",
                 "\(result.name)/SKILL.md",
+                "skills/.curated/\(result.name)/SKILL.md",
+                "skills/.experimental/\(result.name)/SKILL.md",
                 "SKILL.md"
             ]
         }
-        return paths.map { path in
-            URL(string: "https://raw.githubusercontent.com/\(repo)/HEAD/\(path)")!
+        return paths.compactMap { path in
+            URL(string: "https://raw.githubusercontent.com/\(repo)/HEAD/\(path)")
         }
     }
 

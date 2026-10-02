@@ -94,10 +94,12 @@ final class AppState: ObservableObject {
     @Published var showingBatchConfirm = false
     /// Repairs a Fix All could not include, with the reason for each.
     @Published var fixSkipped: [String] = []
-    /// The orphan whose source is being chosen, and the skills.sh listings
-    /// suggested for it (nil while loading).
+    /// Repairs queued from Health, checked out together as one batch.
+    @Published var cart: [CartItem] = []
+    /// The orphan whose source is being chosen, and each orphan's source
+    /// lookup (by `skillID`), shared by its Health row and the source sheet.
     @Published var sourceSheetSkill: Skill?
-    @Published var sourceSuggestions: [SkillSearchResult]?
+    @Published var sourceLookups: [String: SourceLookup] = [:]
     /// Batch-construction refusal text (stale finding, ownership rule) —
     /// rendered inline, never swallowed. (Core diagnostic text, English by
     /// design, like CLI stderr.)
@@ -120,6 +122,8 @@ final class AppState: ObservableObject {
     @Published var historyRows: [HistoryRow] = []
     /// Selected history row in Snapshots (drives the diff pane + rollback cmd).
     @Published var selectedHistoryID: String?
+    /// Batches whose snapshot deletion awaits confirmation.
+    @Published var historyPendingDeletion: Set<String> = []
     /// Rollback refusal/error text, surfaced on the Snapshots surface.
     @Published var rollbackError: String?
     /// Whether the double-booked arbitration sheet is presented.
@@ -378,22 +382,6 @@ final class AppState: ObservableObject {
             showingArbitrationSheet = false
             showingAdoptSheet = false
         }
-    }
-
-    /// Builds a scan environment identical to the CLI wiring except
-    /// that the runtime project-roots list replaces `SUKIRU_ROOTS`.
-    /// Explicit roots are encoded back into `SUKIRU_ROOTS` so the engine's
-    /// root precedence (explicit `--root` never merges) is untouched — the app
-    /// always scans with default precedence over ITS root list. Also used by
-    /// the batch executors (CLIExecutor, Rollback) so app-initiated
-    /// mutations run against exactly the scanned environment.
-    static func makeEnvironment(roots: [String]) -> SukiruEnvironment {
-        var vars = ProcessInfo.processInfo.environment
-        if roots.isEmpty {
-            vars.removeValue(forKey: SukiruEnvironment.sukiruRootsKey)
-        } else {
-            vars[SukiruEnvironment.sukiruRootsKey] = roots.joined(separator: ":")
-        }
-        return SukiruEnvironment(reader: DictionaryEnvironmentReader(vars))
+        pruneCart(using: report)
     }
 }

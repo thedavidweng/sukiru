@@ -74,3 +74,22 @@ extension DecisionAction {
         }
     }
 }
+
+extension AppState.CartItem {
+    /// What the queued repair will do, naming the chosen source or owner.
+    var title: String {
+        switch choice {
+        case .adoptVercel(let source):
+            let shown = source.hasPrefix("https://") ? String(source.dropFirst(8)) : source
+            return String(localized: "Adopt from \(shown)")
+        case .adoptSource(let repo, _):
+            return String(localized: "Adopt from \(repo)")
+        case .keepVercel:
+            return String(localized: "Keep Vercel Ledger")
+        case .keepGitHub:
+            return String(localized: "Keep GitHub Ledger")
+        case nil:
+            return String(localized: action.title)
+        }
+    }
+}

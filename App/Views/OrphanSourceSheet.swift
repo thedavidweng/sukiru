@@ -2,9 +2,11 @@ import SukiruCore
 import SwiftUI
 
 /// Finds a source for a skill no installer recorded: skills.sh listings with
-/// the same name, or any `owner/repo` (or URL) the user knows. Adopting
-/// reinstalls the skill through `npx skills`, so it gains a lock entry and
-/// can be updated; the batch confirmation follows.
+/// the same name, each checked against the local `SKILL.md`, so the right
+/// one is usually marked and one click away. Any `owner/repo` (or URL) the
+/// user knows still works under Other Source. Choosing a source queues the
+/// adoption in Pending Changes; adopting reinstalls the skill through
+/// `npx skills`, so it gains a lock entry and can be updated.
 struct OrphanSourceSheet: View {
     @EnvironmentObject private var state: AppState
     let skill: Skill
@@ -18,16 +20,19 @@ struct OrphanSourceSheet: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             suggestions
-            TextField("owner/repo or URL", text: $source)
-                .textFieldStyle(.roundedBorder)
-                .onSubmit(adoptTyped)
+            DisclosureGroup("Other Source") {
+                TextField("owner/repo or URL", text: $source)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit(adoptTyped)
+                    .padding(.top, 4)
+            }
             HStack {
                 Spacer()
                 Button("Cancel") {
                     state.sourceSheetSkill = nil
                 }
                 .keyboardShortcut(.cancelAction)
-                Button("Adopt", action: adoptTyped)
+                Button("Queue Adoption", action: adoptTyped)
                     .keyboardShortcut(.defaultAction)
                     .disabled(source.trimmingCharacters(in: .whitespaces).isEmpty)
                     .axButtonToken("sukiru.orphan.adopt")
@@ -38,19 +43,25 @@ struct OrphanSourceSheet: View {
     }
 
     @ViewBuilder private var suggestions: some View {
-        if let results = state.sourceSuggestions {
-            if results.isEmpty {
-                Text("No skills.sh listing uses this name.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            } else {
+        switch state.sourceLookup(for: skill) {
+        case .found(let candidates) where candidates.isEmpty:
+            Text("No skills.sh listing uses this name.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        case .found(let candidates):
+            ScrollView {
                 VStack(alignment: .leading, spacing: 6) {
-                    ForEach(results) { result in
-                        suggestionRow(result)
+                    ForEach(candidates) { candidate in
+                        candidateRow(candidate)
                     }
                 }
             }
-        } else {
+            .frame(maxHeight: 240)
+        case .failed(let message):
+            Label(message, systemImage: "exclamationmark.triangle")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        case .searching, nil:
             HStack(spacing: 6) {
                 ProgressView()
                     .controlSize(.small)
@@ -60,23 +71,37 @@ struct OrphanSourceSheet: View {
         }
     }
 
-    private func suggestionRow(_ result: SkillSearchResult) -> some View {
+    private func candidateRow(_ candidate: SourceCandidate) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 1) {
-                Text(verbatim: result.repo ?? result.name)
-                if let installs = result.installs {
-                    Text("\(installs) installs")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                Text(verbatim: candidate.result.repo ?? candidate.result.name)
+                HStack(spacing: 6) {
+                    matchLabel(candidate.match)
+                    if let installs = candidate.result.installs {
+                        Text("\(installs) installs")
+                            .foregroundStyle(.secondary)
+                    }
                 }
+                .font(.caption)
             }
             Spacer()
             Button("Use") {
-                if let repo = result.repo {
-                    state.adoptOrphan(skill, source: repo)
-                }
+                state.adoptOrphan(skill, source: candidate.installSource)
             }
             .controlSize(.small)
+        }
+    }
+
+    @ViewBuilder private func matchLabel(_ match: SourceCandidate.Match) -> some View {
+        switch match {
+        case .identical:
+            Label("Same as your copy", systemImage: "checkmark.seal.fill")
+                .foregroundStyle(.green)
+        case .similar:
+            Label("Another version of your copy", systemImage: "checkmark.seal")
+                .foregroundStyle(.secondary)
+        case .unverified:
+            EmptyView()
         }
     }
 

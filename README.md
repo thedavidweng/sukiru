@@ -56,18 +56,21 @@ Website: <https://thedavidweng.github.io/sukiru/>
   lock records, broken links, copies where links belong, diverging copies,
   skills with unknown sources, and ownership conflicts. Healthy layouts and
   standing notices fold into Notes.
-- 🛠️ **One-click fixes**: Fix one problem or Fix All. Every fix becomes one
-  batch that you confirm once, in plain language, with the exact commands one
-  click away.
+- 🛠️ **Queue fixes, apply once**: Queue repairs from Health like items in a
+  cart, then review and apply them together, or Fix All. Every checkout
+  becomes one batch that you confirm once, in plain language, with the exact
+  commands one click away.
 - ↩️ **Safe by construction**: Every batch runs as snapshot → execute → diff,
-  with one-click rollback. The last 10 snapshots are kept.
+  with one-click rollback. The last 10 snapshots are kept, and you can delete
+  any of them.
 - 📚 **Library**: See each skill's owner, provenance, pinned ref, and where it
   is placed across agents. Switch a skill between link and copy mode.
 - 🔍 **Search and install**: Search skills.sh and `gh skill search`, preview
   `SKILL.md`, then install with the installer you choose, through the same
   confirm → snapshot → rollback pipeline.
-- 🧭 **Adopt unknown skills**: Find candidate sources for hand-copied skills
-  and bring them under an installer.
+- 🧭 **Adopt unknown skills**: Find Sources matches hand-copied skills to
+  skills.sh listings whose `SKILL.md` matches your copy, and queues their
+  adoption under `npx skills`.
 - 📴 **Works without the CLIs**: With neither Node.js nor `gh` installed,
   Sukiru is still a complete read-only health checker.
 - 🍎 **Native**: Pure Swift, SwiftUI, and AppKit with system controls only, so
@@ -146,7 +149,7 @@ does not block the first launch.
 2. To include project-level skills, add your project folders as project roots
    (**View › Add Project Root…**, `⇧ ⌘ A`, or in Settings).
 3. Open **Health** to see problems and what caused them. Click a problem's
-   fix button, or **Fix All**.
+   fix button to queue it, then **Review Changes**. Or click **Fix All**.
 4. Review the confirmation sheet and confirm. To undo, use the result page or
    **Repair › Roll Back Selected Batch**.
 
@@ -183,7 +186,8 @@ Sukiru has no accounts, analytics, or telemetry. It reads local files and
 runs the official CLIs on your machine. It connects to the network only to
 look up the latest `skills` CLI version on the npm registry, when you
 search (the skills.sh search API and `gh skill search`), preview a skill's
-`SKILL.md` from GitHub, or run a CLI command that needs the network.
+`SKILL.md` from GitHub, find sources for skills with no known source, or run
+a CLI command that needs the network.
 Snapshots and execution records stay in
 `~/Library/Application Support/Sukiru`.
 

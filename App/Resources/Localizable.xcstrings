@@ -85,6 +85,34 @@
         }
       }
     },
+    "%lld queued changes" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld queued change"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld queued changes"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已排队 %lld 项更改"
+          }
+        }
+      }
+    },
     "%lld skills" : {
       "comment" : "Skill count: Library toolbar subtitle and Settings project rows.",
       "localizations" : {
@@ -213,6 +241,26 @@
         }
       }
     },
+    "Add these repairs to Pending Changes" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将这些修复加入待处理更改"
+          }
+        }
+      }
+    },
+    "Add this repair to Pending Changes" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将此修复加入待处理更改"
+          }
+        }
+      }
+    },
     "Add to Pending Changes" : {
       "comment" : "Install sheet: builds the batch and opens Pending Changes.",
       "localizations" : {
@@ -230,6 +278,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "收编"
+          }
+        }
+      }
+    },
+    "Adopt from %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从 %@ 收编"
           }
         }
       }
@@ -352,6 +410,16 @@
         }
       }
     },
+    "Another version of your copy" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与本地副本为同一技能的不同版本"
+          }
+        }
+      }
+    },
     "Any Installer" : {
       "comment" : "Library filter option: do not filter by installer.",
       "localizations" : {
@@ -387,6 +455,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "应用 %lld 项更改"
+          }
+        }
+      }
+    },
+    "Apply every queued repair in one batch, with one snapshot" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在一个批次中应用所有排队的修复，只拍一个快照"
           }
         }
       }
@@ -556,6 +634,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "被两个安装器同时认领"
+          }
+        }
+      }
+    },
+    "Clear" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清空"
           }
         }
       }
@@ -730,12 +818,32 @@
         }
       }
     },
-    "Delete Skill…" : {
+    "Delete" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "删除技能…"
+            "value" : "删除"
+          }
+        }
+      }
+    },
+    "Delete Snapshot?" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除快照？"
+          }
+        }
+      }
+    },
+    "Delete Snapshot…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除快照…"
           }
         }
       }
@@ -758,16 +866,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除链接 %@"
-          }
-        }
-      }
-    },
-    "Delete…" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "删除…"
           }
         }
       }
@@ -974,6 +1072,16 @@
         }
       }
     },
+    "Find Sources" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查找来源"
+          }
+        }
+      }
+    },
     "Find Source…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1017,16 +1125,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 的发现"
-          }
-        }
-      }
-    },
-    "Fix %lld" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "修复 %lld 项"
           }
         }
       }
@@ -1614,6 +1712,26 @@
         }
       }
     },
+    "Looking for a source…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在查找来源…"
+          }
+        }
+      }
+    },
+    "Match each skill to a skills.sh listing and queue adoption of confirmed matches" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 skills.sh 上为每个技能匹配来源，并将内容核实一致的收编加入队列"
+          }
+        }
+      }
+    },
     "More actions for this finding" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1728,6 +1846,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有账本登记此技能（无属主）。"
+          }
+        }
+      }
+    },
+    "No listing matches this copy; choose one with Find Source." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有与本地副本一致的来源，请用「查找来源…」手动选择。"
           }
         }
       }
@@ -1886,6 +2014,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "其他修复方式…"
+          }
+        }
+      }
+    },
+    "Other Source" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他来源"
           }
         }
       }
@@ -2058,6 +2196,64 @@
         }
       }
     },
+    "Queue %lld Fixes" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Queue %lld Fix"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Queue %lld Fixes"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排队 %lld 项修复"
+          }
+        }
+      }
+    },
+    "Queue Adoption" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排队收编"
+          }
+        }
+      }
+    },
+    "Queue Deletion" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排队删除"
+          }
+        }
+      }
+    },
+    "Queued in Pending Changes. Click to remove it." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已加入待处理更改。点按可移除。"
+          }
+        }
+      }
+    },
     "Quick Look" : {
       "comment" : "Toolbar button: Quick Look the selected skill (Library).",
       "localizations" : {
@@ -2222,6 +2418,16 @@
         }
       }
     },
+    "Remove from Pending Changes" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从待处理更改中移除"
+          }
+        }
+      }
+    },
     "Remove the leftover folder %@" : {
       "comment" : "Direct file operation summary.",
       "localizations" : {
@@ -2254,23 +2460,22 @@
         }
       }
     },
-    "Repair every problem that needs no choice, in one confirmed batch" : {
+    "Repair every problem that needs no choice, together with queued repairs" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "一次确认，修复所有无需选择的问题"
+            "value" : "修复所有无需选择的问题，连同已排队的修复一起应用"
           }
         }
       }
     },
-    "Repairs and installs arrive here as command batches you can review. Use a finding's Fix button in Health, or Install in Search." : {
-      "comment" : "Pending Changes placeholder explanation.",
+    "Repairs you queue in Health collect here, so you can review and apply them together in one batch with one snapshot." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "修复与安装会以可审查的命令批次形式出现在这里。请在「体检」中使用发现项的「修复」按钮，或在「搜索」中使用「安装」。"
+            "value" : "在「健康」中排队的修复会汇总到这里，你可以一并审阅，并在一个批次中应用，只拍一个快照。"
           }
         }
       }
@@ -2377,6 +2582,44 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在资源库中显示"
+          }
+        }
+      }
+    },
+    "Review %lld Changes" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Review %lld Change"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Review %lld Changes"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "审阅 %lld 项更改"
+          }
+        }
+      }
+    },
+    "Review & Apply" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "审阅并应用"
           }
         }
       }
@@ -2512,6 +2755,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已设置 SUKIRU_ROOTS，此处的更改仅在 Sukiru 退出前有效。"
+          }
+        }
+      }
+    },
+    "Same as your copy" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与本地副本一致"
           }
         }
       }
@@ -2872,6 +3125,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "来源"
+          }
+        }
+      }
+    },
+    "Source lookup failed." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查找来源失败。"
           }
         }
       }
@@ -4530,13 +4793,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pick where this skill comes from. Sukiru reinstalls it with npx skills, which records the source so it can be updated."
+            "value" : "Pick where this skill comes from. Listings whose SKILL.md matches your copy are marked. Sukiru queues a reinstall with npx skills, which records the source so it can be updated."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "选择该技能的来源。Sukiru 会通过 npx skills 重新安装，并记录来源以便日后更新。"
+            "value" : "选择该技能的来源，SKILL.md 与本地副本一致的来源会被标出。Sukiru 会将通过 npx skills 重新安装加入队列，并记录来源以便日后更新。"
           }
         }
       }
@@ -4907,6 +5170,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld 条命令"
+          }
+        }
+      }
+    },
+    "snapshots.delete.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The snapshot and execution record are deleted, so the batch can no longer be rolled back. Skills on disk are not changed."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快照和执行记录将被删除，此批次将无法再回滚。磁盘上的技能不受影响。"
           }
         }
       }

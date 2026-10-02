@@ -71,7 +71,7 @@ struct SidebarView: View {
                     .badge(state.attentionFindingCount)
                     .tag(Destination.surface(.health))
                 row("Pending Changes", surface: .pending, icon: "list.bullet.rectangle")
-                    .badge(state.pendingBatch?.commands.count ?? 0)
+                    .badge(state.cart.count)
                     .tag(Destination.surface(.pending))
                 row("Snapshots", surface: .snapshots, icon: "camera.on.rectangle")
                     .tag(Destination.surface(.snapshots))

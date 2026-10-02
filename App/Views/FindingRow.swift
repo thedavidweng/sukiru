@@ -44,33 +44,25 @@ struct FindingRow: View {
                             .truncationMode(.middle)
                             .help(location)
                     }
+                    if let lookupStatus {
+                        Text(lookupStatus)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Spacer()
-                if let fix = state.oneClickFix(for: finding) {
+                if let item = state.cartItem(for: finding) {
                     Button {
-                        state.fix([row.entry])
+                        state.removeFromCart(item)
                     } label: {
-                        Text(fix.title)
+                        Label(item.title, systemImage: "checkmark.circle.fill")
                     }
                     .controlSize(.small)
                     .disabled(state.batchMutationInFlight)
-                    .axButtonToken("\(row.token).oneClickFix")
-                }
-                if ProblemKind.of(finding) == .missingSharedCopy {
-                    Button("Choose Repair…") {
-                        state.beginRepair(for: finding)
-                    }
-                    .controlSize(.small)
-                    .disabled(state.batchMutationInFlight)
-                    .axButtonToken("\(row.token).chooseRepair")
-                }
-                if let orphan {
-                    Button("Find Source…") {
-                        state.findSource(for: orphan)
-                    }
-                    .controlSize(.small)
-                    .disabled(state.batchMutationInFlight)
-                    .axButtonToken("\(row.token).findSource")
+                    .axButtonToken("\(row.token).queued")
+                    .help("Queued in Pending Changes. Click to remove it.")
+                } else {
+                    actionButtons
                 }
                 if state.skill(matching: finding) != nil {
                     Menu {
@@ -92,7 +84,7 @@ struct FindingRow: View {
                         }
                         if let orphan {
                             Divider()
-                            Button("Delete Skill…", role: .destructive) {
+                            Button("Queue Deletion", role: .destructive) {
                                 state.deleteOrphan(orphan)
                             }
                             .axButtonToken("\(row.token).delete")
@@ -150,6 +142,52 @@ struct FindingRow: View {
             }
         }
         .padding(.vertical, 2)
+    }
+
+    /// The repairs a row offers until one is queued.
+    @ViewBuilder private var actionButtons: some View {
+        if let fix = state.oneClickFix(for: finding) {
+            Button {
+                state.queue(fix, for: finding)
+            } label: {
+                Text(fix.title)
+            }
+            .controlSize(.small)
+            .disabled(state.batchMutationInFlight)
+            .axButtonToken("\(row.token).oneClickFix")
+            .help("Add this repair to Pending Changes")
+        }
+        if ProblemKind.of(finding) == .missingSharedCopy {
+            Button("Choose Repair…") {
+                state.beginRepair(for: finding)
+            }
+            .controlSize(.small)
+            .disabled(state.batchMutationInFlight)
+            .axButtonToken("\(row.token).chooseRepair")
+        }
+        if let orphan {
+            Button("Find Source…") {
+                state.findSource(for: orphan)
+            }
+            .controlSize(.small)
+            .disabled(state.batchMutationInFlight)
+            .axButtonToken("\(row.token).findSource")
+        }
+    }
+
+    /// An orphan's source lookup, while it runs or when it found nothing
+    /// to queue.
+    private var lookupStatus: LocalizedStringKey? {
+        guard let orphan, state.cartItem(for: finding) == nil else { return nil }
+        switch state.sourceLookup(for: orphan) {
+        case .searching: return "Looking for a source…"
+        case .found(let candidates) where candidates.isEmpty:
+            return "No skills.sh listing uses this name."
+        case .found(let candidates) where !candidates.contains(where: { $0.match >= .similar }):
+            return "No listing matches this copy; choose one with Find Source."
+        case .failed: return "Source lookup failed."
+        default: return nil
+        }
     }
 
     /// The skill behind an orphan finding: it gets Find Source and Delete.

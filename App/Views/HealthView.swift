@@ -152,22 +152,40 @@ struct HealthView: View {
             )
             .disabled(state.healthCheckRunning)
             let fixable = state.fixableEntries(problemEntries)
-            Button {
-                state.fix(fixable)
-            } label: {
-                Text("Fix All (\(fixable.count))")
-                    .contentTransition(.numericText())
+            if state.cart.isEmpty {
+                fixAllButton(fixable)
+                    .buttonStyle(.borderedProminent)
+            } else {
+                fixAllButton(fixable)
+                Button {
+                    state.checkout()
+                } label: {
+                    Text("Review \(state.cart.count) Changes")
+                        .contentTransition(.numericText())
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(state.batchMutationInFlight)
+                .axButtonToken("sukiru.health.review", disabled: state.batchMutationInFlight)
+                .help("Apply every queued repair in one batch, with one snapshot")
             }
-            .buttonStyle(.borderedProminent)
-            .axButtonToken(
-                "sukiru.health.fixAll", disabled: fixable.isEmpty || state.batchMutationInFlight
-            )
-            .disabled(fixable.isEmpty || state.batchMutationInFlight)
-            .help("Repair every problem that needs no choice, in one confirmed batch")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .animation(changeAnimation, value: summaryText)
+    }
+
+    private func fixAllButton(_ fixable: [AppState.FindingEntry]) -> some View {
+        Button {
+            state.fixAll(fixable)
+        } label: {
+            Text("Fix All (\(fixable.count))")
+                .contentTransition(.numericText())
+        }
+        .axButtonToken(
+            "sukiru.health.fixAll", disabled: fixable.isEmpty || state.batchMutationInFlight
+        )
+        .disabled(fixable.isEmpty || state.batchMutationInFlight)
+        .help("Repair every problem that needs no choice, together with queued repairs")
     }
 
     /// Findings that are problems (notes excluded), after focus and filter.
@@ -311,20 +329,41 @@ private struct ProblemSection: View {
             ProblemInfoButton(kind: group.kind)
             Spacer()
             let fixable = state.fixableEntries(group.entries)
+                .filter { state.cartItem(for: $0.finding) == nil }
             if fixable.count > 1 {
                 Button {
-                    state.fix(fixable)
+                    state.queueFixes(fixable)
                 } label: {
-                    Text("Fix \(fixable.count)")
+                    Text("Queue \(fixable.count) Fixes")
                 }
                 .controlSize(.small)
                 .disabled(state.batchMutationInFlight)
                 .axButtonToken("sukiru.health.group.\(group.kind.rawValue).fix")
+                .help("Add these repairs to Pending Changes")
+            }
+            if group.kind == .orphan {
+                findSourcesButton
             }
         }
         .textCase(nil)
         .accessibilityElement(children: .contain)
         .padding(.vertical, 4)
+    }
+
+    /// Looks up every orphan on skills.sh and queues the verified matches.
+    @ViewBuilder private var findSourcesButton: some View {
+        if state.sourceMatchingInFlight {
+            ProgressView()
+                .controlSize(.small)
+        } else {
+            Button("Find Sources") {
+                state.matchSources(group.entries)
+            }
+            .controlSize(.small)
+            .disabled(state.batchMutationInFlight)
+            .axButtonToken("sukiru.health.group.orphan.findSources")
+            .help("Match each skill to a skills.sh listing and queue adoption of confirmed matches")
+        }
     }
 }
 

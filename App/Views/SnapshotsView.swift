@@ -28,6 +28,31 @@ struct SnapshotsView: View {
             }
         }
         .listStyle(.inset)
+        .contextMenu(forSelectionType: String.self) { rowIDs in
+            if !rowIDs.isEmpty {
+                Button("Delete Snapshot…", role: .destructive) {
+                    state.historyPendingDeletion = batchIDs(rowIDs)
+                }
+                .disabled(state.batchMutationInFlight)
+            }
+        }
+        .onDeleteCommand {
+            if let selected = state.selectedHistoryID, !state.batchMutationInFlight {
+                state.historyPendingDeletion = batchIDs([selected])
+            }
+        }
+        .confirmationDialog(
+            "Delete Snapshot?",
+            isPresented: Binding(
+                get: { !state.historyPendingDeletion.isEmpty },
+                set: { if !$0 { state.historyPendingDeletion = [] } })
+        ) {
+            Button("Delete", role: .destructive) {
+                state.deleteHistory(batchIDs: state.historyPendingDeletion)
+            }
+        } message: {
+            Text("snapshots.delete.message")
+        }
         .overlay {
             if state.historyRows.isEmpty {
                 SurfacePlaceholder(
@@ -81,6 +106,11 @@ struct SnapshotsView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .accessibilityElement(children: .contain)
+    }
+
+    /// A rollback row shares its batch's record, so it deletes that batch.
+    private func batchIDs(_ rowIDs: Set<String>) -> Set<String> {
+        Set(state.historyRows.filter { rowIDs.contains($0.id) }.map(\.batchID))
     }
 
     // MARK: - rows

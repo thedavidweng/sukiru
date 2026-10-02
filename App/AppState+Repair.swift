@@ -223,24 +223,20 @@ extension AppState {
         buildPendingBatch(action: .adopt, choice: .adoptSource(repo: repo, path: path))
     }
 
-    /// Builds the proposed batch from the draft decision against the CURRENT
-    /// report. Construction problems (stale finding, ownership routing) are
-    /// surfaced inline, never swallowed.
+    /// Queues the draft decision in the cart once it builds against the
+    /// CURRENT report. Construction problems (stale finding, ownership
+    /// routing) are surfaced inline, never swallowed.
     private func buildPendingBatch(action: DecisionAction, choice: DecisionChoice?) {
         guard let draft = repairDraft, let report else { return }
         let entry = DecisionEntry(findingID: draft.findingID, action: action, choice: choice)
         do {
-            if let batch = try CommandBatchBuilder().build(report: report, decisions: [entry]) {
-                pendingBatch = batch
-                repairDraft = nil
-                repairError = nil
-                repairBlockNotice = nil
-                fixSkipped = []
-                showingBatchConfirm = true
-            } else {
-                // All-leave decisions produce no batch.
-                repairDraft = nil
+            // All-leave decisions produce no batch, so nothing is queued.
+            if try CommandBatchBuilder().build(report: report, decisions: [entry]) != nil {
+                queue(action, choice: choice, for: draft.finding)
             }
+            repairDraft = nil
+            repairError = nil
+            repairBlockNotice = nil
         } catch {
             repairError = UserFacingError.message(for: error)
         }
@@ -338,5 +334,33 @@ extension AppState {
         rollbackError = failure
         loadHistory()
         rescan()
+    }
+
+    // MARK: - history deletion
+
+    /// Deletes batches' snapshots and records. The skills on disk stay as
+    /// they are; the batches just can no longer be rolled back.
+    func deleteHistory(batchIDs: Set<String>) {
+        guard !batchMutationInFlight, !batchIDs.isEmpty else { return }
+        batchMutationInFlight = true
+        rollbackError = nil
+        let environment = Self.makeEnvironment(roots: projectRoots)
+        Task.detached(priority: .userInitiated) { [weak self] in
+            var failure: String?
+            let history = ExecutionHistory(environment: environment)
+            for batchID in batchIDs.sorted() {
+                do {
+                    try history.delete(batchID: batchID)
+                } catch {
+                    failure = UserFacingError.message(for: error)
+                }
+            }
+            await MainActor.run { [failure] in
+                guard let self else { return }
+                self.batchMutationInFlight = false
+                self.rollbackError = failure
+                self.loadHistory()
+            }
+        }
     }
 }

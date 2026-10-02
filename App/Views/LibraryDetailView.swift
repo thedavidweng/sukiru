@@ -132,14 +132,23 @@ private struct SkillDetailForm: View {
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
                 Spacer()
-                Button("Delete…", role: .destructive) {
-                    state.deleteOrphan(skill)
+                if let item = state.orphanFinding(for: skill).flatMap(state.cartItem(for:)) {
+                    Button {
+                        state.removeFromCart(item)
+                    } label: {
+                        Label(item.title, systemImage: "checkmark.circle.fill")
+                    }
+                    .help("Queued in Pending Changes. Click to remove it.")
+                } else {
+                    Button("Queue Deletion", role: .destructive) {
+                        state.deleteOrphan(skill)
+                    }
+                    .axButtonToken("sukiru.library.detail.orphan.delete")
+                    Button("Find Source…") {
+                        state.findSource(for: skill)
+                    }
+                    .axButtonToken("sukiru.library.detail.orphan.findSource")
                 }
-                .axButtonToken("sukiru.library.detail.orphan.delete")
-                Button("Find Source…") {
-                    state.findSource(for: skill)
-                }
-                .axButtonToken("sukiru.library.detail.orphan.findSource")
             }
             .disabled(state.batchMutationInFlight)
         } header: {
@@ -165,14 +174,24 @@ private struct SkillDetailForm: View {
                         SeverityIcon(severity: entry.finding.displaySeverity)
                     }
                     Spacer()
-                    if let fix = state.oneClickFix(for: entry.finding) {
+                    if let item = state.cartItem(for: entry.finding) {
                         Button {
-                            state.fix([entry])
+                            state.removeFromCart(item)
+                        } label: {
+                            Label(item.title, systemImage: "checkmark.circle.fill")
+                        }
+                        .controlSize(.small)
+                        .disabled(state.batchMutationInFlight)
+                        .help("Queued in Pending Changes. Click to remove it.")
+                    } else if let fix = state.oneClickFix(for: entry.finding) {
+                        Button {
+                            state.queue(fix, for: entry.finding)
                         } label: {
                             Text(fix.title)
                         }
                         .controlSize(.small)
                         .disabled(state.batchMutationInFlight)
+                        .help("Add this repair to Pending Changes")
                     }
                 }
             }
