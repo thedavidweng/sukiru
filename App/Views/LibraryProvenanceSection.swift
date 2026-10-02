@@ -31,6 +31,12 @@ struct LibraryProvenanceSection: View {
                     "Pin state",
                     github.pinned
                         ? String(localized: "Pinned") : String(localized: "Unpinned"))
+                if let update = state.githubUpdate(for: skill) {
+                    field(
+                        "Update available",
+                        [update.availableTree, update.ref.map { "(\($0))" }]
+                            .compactMap { $0 }.joined(separator: " "))
+                }
             }
             if let agent = skill.managingAgent {
                 Text("library.agentManaged \(agent)")

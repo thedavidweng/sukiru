@@ -66,7 +66,8 @@ Website: <https://thedavidweng.github.io/sukiru/>
 - 📚 **Library**: See each skill's owner, provenance, pinned ref, and where it
   is placed across agents. Switch a skill between link and copy mode, and
   update or uninstall it (or update everything at once) through the installer
-  that owns it.
+  that owns it. Check for Updates asks `gh skill` which GitHub-installed
+  skills have newer versions without changing anything.
 - 🔍 **Search and install**: Search skills.sh and `gh skill search`
   (optionally limited to one GitHub owner), preview `SKILL.md`, then install
   with the installer you choose, through the same confirm → snapshot →

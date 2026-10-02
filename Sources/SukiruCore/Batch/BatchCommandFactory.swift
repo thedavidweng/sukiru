@@ -130,11 +130,14 @@ enum BatchCommandFactory {
 
     // MARK: - gh skill (github ledger)
 
-    /// `gh skill update <name>… --dir <dir>` for one skills dir — the
-    /// narrowest targeting available (named skills + `--dir`, never a
-    /// bare `--all`); callers emit one per distinct placement dir.
+    /// `gh skill update <name>… --all --dir <dir>` for one skills dir — the
+    /// narrowest targeting available; callers emit one per distinct
+    /// placement dir. Probe-verified against gh 2.102.0: without a TTY and
+    /// without `--all`, gh lists the available updates and exits 1 instead
+    /// of applying them. gh filters to the named skills before `--all`
+    /// applies, so `--all` only skips the confirmation.
     static func githubUpdate(names: [String], dir: String, reason: String) -> BatchCommand {
-        let argv = ["gh", "skill", "update"] + names + ["--dir", dir]
+        let argv = ["gh", "skill", "update"] + names + ["--all", "--dir", dir]
         return BatchCommand(
             argv: argv,
             displayString: BatchCommand.display(for: argv),

@@ -68,22 +68,56 @@ struct LibraryLifecycleTests {
         #expect(batch.findingRefs.only?.workspaceID == "project:" + project.path)
     }
 
-    @Test("GitHub updates share one gh skill update per skills folder, never --all")
+    @Test("GitHub updates share one named gh skill update --all per skills folder")
     func githubUpdatesGroupPerDir() throws {
         let home = try TempTree()
-        try home.file(".claude/settings.json", contents: "{}")
-        try home.file(
+        let project = try TempTree()
+        try project.file(
             ".claude/skills/g1/SKILL.md", contents: OwnershipBuilders.ghSkillMD("g1", repo: "o/r"))
-        try home.file(
+        try project.file(
             ".claude/skills/g2/SKILL.md", contents: OwnershipBuilders.ghSkillMD("g2", repo: "o/r"))
-        let report = try OwnershipBuilders.scan(home: home)
+        let report = try OwnershipBuilders.scan(home: home, projectRoots: [project])
         #expect(try Self.skill("g1", in: report).ownership == .github)
         let batch = try #require(try Self.plan(report, [("g1", .update), ("g2", .update)]).batch)
+        let dir = project.path + "/.claude/skills"
         #expect(
             batch.commands.map(\.argv) == [
-                ["gh", "skill", "update", "g1", "g2", "--dir", home.path + "/.claude/skills"]
+                ["gh", "skill", "update", "g1", "g2", "--all", "--dir", dir]
             ])
-        #expect(!batch.commands.contains { $0.argv.contains("--all") })
+    }
+
+    @Test("A gh update that would write a user-scope Vercel lock record is withheld")
+    func githubUpdateTouchingVercelRecord() throws {
+        let home = try TempTree()
+        let project = try TempTree()
+        try home.file(".claude/settings.json", contents: "{}")
+        try home.file(".agents/.skill-lock.json", contents: OwnershipBuilders.globalLock(["v"]))
+        try home.file(".agents/skills/v/SKILL.md", contents: OwnershipBuilders.skillMD("v"))
+        try home.file(
+            ".claude/skills/u/SKILL.md", contents: OwnershipBuilders.ghSkillMD("u", repo: "o/r"))
+        try project.file(
+            ".claude/skills/v/SKILL.md", contents: OwnershipBuilders.ghSkillMD("v", repo: "o/r"))
+        try project.file(
+            ".claude/skills/p/SKILL.md", contents: OwnershipBuilders.ghSkillMD("p", repo: "o/r"))
+        let report = try OwnershipBuilders.scan(home: home, projectRoots: [project])
+        let blocker = { (name: String, scope: Scope) throws -> LifecycleBlocker? in
+            let skill = try #require(report.skills.first { $0.name == name && $0.scope == scope })
+            return CommandBatchBuilder.lifecycleBlocker(
+                skill: skill, action: .update, capabilities: nil, report: report)
+        }
+        #expect(try blocker("u", .user) == .touchesVercelRecord)
+        #expect(try blocker("v", .project) == .touchesVercelRecord)
+        #expect(try blocker("p", .project) == nil)
+        let projectV = try #require(
+            report.skills.first { $0.name == "v" && $0.scope == .project })
+        let planned = Support.makeBuilder().buildApplicable(
+            report: report, decisions: [],
+            lifecycle: [LifecycleRequest(skill: projectV, action: .update)])
+        #expect(planned.batch == nil)
+        #expect(planned.skipped.only?.contains("Vercel ledger's global lock") == true)
+        let uninstall = CommandBatchBuilder.lifecycleBlocker(
+            skill: projectV, action: .uninstall, capabilities: nil, report: report)
+        #expect(uninstall == nil, "a direct deletion writes no lock")
     }
 
     // MARK: - uninstall

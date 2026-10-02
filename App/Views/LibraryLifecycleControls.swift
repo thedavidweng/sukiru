@@ -48,6 +48,10 @@ struct LibraryLifecycleControls: View {
                 Text("Updating needs the GitHub CLI. Get it in Settings > Installers.")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+            } else if updateBlocker == .touchesVercelRecord {
+                Text("library.update.touchesVercelRecord")
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             HStack {
                 Spacer()
@@ -77,7 +81,8 @@ struct UpdateAllButton: View {
     let skills: [Skill]
 
     var body: some View {
-        let disabled = state.updatableSkills(skills).isEmpty || state.batchMutationInFlight
+        let none = state.updatableSkills(skills).isEmpty
+        let disabled = none || state.batchMutationInFlight
         Button {
             state.updateAll(skills)
         } label: {
@@ -85,6 +90,55 @@ struct UpdateAllButton: View {
         }
         .disabled(disabled)
         .axButtonToken("sukiru.library.updateAll", disabled: disabled)
-        .help("Update every skill an installer manages here, reviewed in one batch")
+        .help(help(nothingUpdatable: none))
+    }
+
+    private func help(nothingUpdatable: Bool) -> LocalizedStringKey {
+        nothingUpdatable && !state.withheldUpdates(skills).isEmpty
+            ? "None of these skills can be updated here. Select one to see why."
+            : "Update every skill an installer manages here, reviewed in one batch"
+    }
+}
+
+/// Lists the folders the last update check could not check.
+struct UpdateCheckFailureAlert: ViewModifier {
+    @EnvironmentObject private var state: AppState
+
+    func body(content: Content) -> some View {
+        content.alert(
+            "Some skills could not be checked for updates",
+            isPresented: Binding(
+                get: { !state.updateCheck.failures.isEmpty },
+                set: { if !$0 { state.updateCheck.failures = [] } })
+        ) {
+            Button("OK") {}
+        } message: {
+            Text(verbatim: state.updateCheck.failures.joined(separator: "\n\n"))
+        }
+    }
+}
+
+/// Library toolbar: asks gh which GitHub-ledger skills have upstream
+/// updates (`gh skill update --dry-run`, read-only).
+struct CheckForUpdatesButton: View {
+    @EnvironmentObject private var state: AppState
+
+    let skills: [Skill]
+
+    var body: some View {
+        if state.updateCheck.running {
+            ProgressView()
+                .controlSize(.small)
+        } else {
+            let disabled = !state.canCheckGitHubUpdates(skills)
+            Button {
+                state.checkGitHubUpdates(skills)
+            } label: {
+                Label("Check for Updates", systemImage: "arrow.down.circle")
+            }
+            .disabled(disabled)
+            .axButtonToken("sukiru.library.checkUpdates", disabled: disabled)
+            .help("Ask gh skill whether GitHub-installed skills have newer versions")
+        }
     }
 }

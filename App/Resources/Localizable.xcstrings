@@ -518,6 +518,17 @@
         }
       }
     },
+    "Ask gh skill whether GitHub-installed skills have newer versions" : {
+      "comment" : "Library toolbar help: Check for Updates.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "询问 gh skill 通过 GitHub 安装的技能是否有新版本"
+          }
+        }
+      }
+    },
     "Available" : {
       "comment" : "Settings > Installers: accessibility label for a ready CLI.",
       "localizations" : {
@@ -631,6 +642,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "立即检查"
+          }
+        }
+      }
+    },
+    "Check for Updates" : {
+      "comment" : "Library toolbar: read-only update check through gh skill update --dry-run.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查更新"
           }
         }
       }
@@ -2092,6 +2114,17 @@
         }
       }
     },
+    "None of these skills can be updated here. Select one to see why." : {
+      "comment" : "Update All help when no skill in scope is updatable.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这里的技能都无法在此更新。选择一个技能查看原因。"
+          }
+        }
+      }
+    },
     "Not Run" : {
       "comment" : "Status of a batch command that never ran because an earlier one failed.",
       "localizations" : {
@@ -3327,6 +3360,17 @@
         }
       }
     },
+    "Some skills could not be checked for updates" : {
+      "comment" : "Alert title after an update check with failures.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "部分技能无法检查更新"
+          }
+        }
+      }
+    },
     "Source" : {
       "comment" : "Detail provenance field label: Vercel lock source.",
       "localizations" : {
@@ -3692,6 +3736,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全部更新"
+          }
+        }
+      }
+    },
+    "Update Available" : {
+      "comment" : "Skill row badge: gh reports a newer version.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有可用更新"
+          }
+        }
+      }
+    },
+    "Update available" : {
+      "comment" : "Provenance field: newer version reported by gh.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可用更新"
           }
         }
       }
@@ -5037,6 +5103,23 @@
         }
       }
     },
+    "install.error.skillsNotDownloaded" : {
+      "comment" : "Install sheet: listing a repository needs the skills package, which is not downloaded yet.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The skills package is not downloaded yet, so Sukiru cannot list this repository through npx skills. Download it in Settings > Installers, or switch the installer to GitHub."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "skills 软件包尚未下载，Sukiru 无法通过 npx skills 列出该仓库。请在“设置 > 安装器”中下载，或将安装器切换为 GitHub。"
+          }
+        }
+      }
+    },
     "install.gh.agentNote %@" : {
       "comment" : "Install sheet note. The argument is the agent id.",
       "localizations" : {
@@ -5088,6 +5171,23 @@
         }
       }
     },
+    "library.update.touchesVercelRecord" : {
+      "comment" : "Library detail: gh update withheld because gh would rewrite a user-scope Vercel ledger record of the same name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh skill also writes this skill's name into the Vercel ledger's global lock, which would overwrite the record for the user-scope copy. Update it with npx skills, or update it outside Sukiru."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh skill 也会把该技能名写入 Vercel 账本的全局锁文件，这会覆盖用户范围同名副本的记录。请改用 npx skills 更新，或在 Sukiru 之外更新。"
+          }
+        }
+      }
+    },
     "node.installWithManager %@" : {
       "comment" : "Settings > Installers: Node.js is missing but a version manager (mise, fnm, nvm, Volta…) is installed; the install command follows.",
       "localizations" : {
@@ -5107,6 +5207,40 @@
     },
     "npx skills (Vercel)" : {
       "shouldTranslate" : false
+    },
+    "orphan.findSource.help" : {
+      "comment" : "Find Source button help: match a skill to a skills.sh listing.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Match this skill to a skills.sh listing and queue its adoption"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将该技能与 skills.sh 上的条目匹配，并将收编加入队列"
+          }
+        }
+      }
+    },
+    "orphan.findSource.needsNode" : {
+      "comment" : "Find Source button help when npx skills cannot run.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adopting a source reinstalls the skill with npx skills, which needs Node.js. Get it in Settings > Installers."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收编来源会通过 npx skills 重新安装该技能，这需要 Node.js。请在“设置 > 安装器”中获取。"
+          }
+        }
+      }
     },
     "orphan.sheet.explanation" : {
       "localizations" : {

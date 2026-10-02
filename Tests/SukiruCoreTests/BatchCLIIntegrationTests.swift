@@ -149,7 +149,7 @@ struct BatchCLIDryRunTests {
         }
     }
 
-    @Test("CM-2 update dry-run: gh skill update <name> --dir <dir>, never --all, never npx")
+    @Test("CM-2 update dry-run: gh skill update <name> --all --dir <dir>, never npx")
     func githubUpdateDryRun() throws {
         let scan = try Support.scanObject("CM-2")
         let findingID = try Support.findingID(
@@ -162,8 +162,8 @@ struct BatchCLIDryRunTests {
         let command = try Support.onlyCommand(in: batch)
         let argv = try #require(command["argv"] as? [String])
         #expect(argv.prefix(4) == ["gh", "skill", "update", "stale-docs-cleanup"])
+        #expect(argv.suffix(3).first == "--all")
         #expect(argv.contains("--dir"))
-        #expect(!argv.contains("--all"))
     }
 
     // MARK: - Ownerless adopt and cleanup

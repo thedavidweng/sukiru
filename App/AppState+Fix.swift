@@ -68,7 +68,8 @@ extension AppState {
     /// it gains a lock entry and can be updated.
     func adoptOrphan(_ skill: Skill, source: String) {
         let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, let finding = orphanFinding(for: skill) else { return }
+        guard !trimmed.isEmpty, canAdoptFromSource, let finding = orphanFinding(for: skill)
+        else { return }
         sourceSheetSkill = nil
         queue(.adopt, choice: .adoptVercel(source: trimmed), for: finding)
     }

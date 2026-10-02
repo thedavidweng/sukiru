@@ -35,15 +35,8 @@ struct LibraryView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle(libraryTitle)
         .navigationSubtitle(Text("\(skillCount) skills"))
-        .toolbar {
-            ToolbarItem {
-                // The selected scope, not the filters: a filter only narrows the view.
-                UpdateAllButton(skills: state.report?.skills.filter(isInSelectedScope) ?? [])
-            }
-            ToolbarItem {
-                filterMenu
-            }
-        }
+        .toolbar { libraryToolbar }
+        .modifier(UpdateCheckFailureAlert())
     }
 
     private var isFiltering: Bool { attentionOnly || ownershipFilter != nil }
@@ -298,6 +291,22 @@ struct LibraryView: View {
                 .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .contain)
+    }
+}
+
+extension LibraryView {
+    @ToolbarContentBuilder fileprivate var libraryToolbar: some ToolbarContent {
+        // The selected scope, not the filters: a filter only narrows the view.
+        let scoped = state.report?.skills.filter(isInSelectedScope) ?? []
+        ToolbarItem {
+            CheckForUpdatesButton(skills: scoped)
+        }
+        ToolbarItem {
+            UpdateAllButton(skills: scoped)
+        }
+        ToolbarItem {
+            filterMenu
+        }
     }
 }
 

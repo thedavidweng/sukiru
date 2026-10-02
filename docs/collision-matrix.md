@@ -12,7 +12,7 @@ calibrate the detection rules in ADR-0004.
 |---|---|---|---|
 | 0 | Discovery rules compared | `npx` deep traversal found 22 skills under the `maintenance/` prefix. `gh` convention-path scanning found 0, reported a "curated list", and could only install with an exact path plus the `SKILL.md` suffix. | **The same source repository is visible differently to each installer.** Missing provenance does not imply an ownerless skill; `gh` may simply be unable to install it. |
 | 1 | `npx` baseline (`add -y`, claude-code) | Non-interactive default is **copy mode**: a shared copy in `.agents/skills` plus a copy in `.claude/skills`. The lock (v1) records `source`, `sourceType`, `skillPath`, and `computedHash`. Frontmatter stays identical to upstream. | Vercel's records live entirely in the lock ✓ |
-| 2 | `gh` baseline (exact-path install) | Writes only the host directory. Injects `metadata.github-{path,ref,repo,tree-sha}`. Installing at `main` records `github-ref: refs/heads/main` (a branch name); content identity relies on the tree SHA. No lock. | `gh`'s records travel with the skill ✓ |
+| 2 | `gh` baseline (exact-path install) | Writes only the host directory. Injects `metadata.github-{path,ref,repo,tree-sha}`. Installing at `main` records `github-ref: refs/heads/main` (a branch name); content identity relies on the tree SHA. No project lock (but see the 2026-10-02 follow-up: `gh` also writes the global Vercel lock, which this run did not observe because `HOME` was isolated only for `npx`). | `gh`'s records travel with the skill ✓ |
 | 3 | `npx` installs first → `gh --force` double-books | `gh` overwrites the `.claude` copy and injects provenance. The Vercel lock's `computedHash` is unchanged (**now stale**). The `.agents` shared copy is untouched, so **the host copy and the shared copy diverge**. Neither tool warns. | Double booking, lock drift, and copy divergence occur together, all silently. |
 | 4 | `npx update -y -p` over the double-booked state | Reports "Updated ✓", but the lock hash is unchanged, the `gh` provenance in `.claude` **survives intact**, and the shared copy is untouched. | `npx update` neither verifies nor rewrites a drifted host copy. With no upstream change, the `gh` record survives (behavior with an upstream change was not tested). |
 | 5 | `gh` installs first → `npx add -y` double-books in reverse | `npx` overwrites the `.claude` copy, **silently erasing the `gh` provenance** (grep count 0), and writes the Vercel lock. No shared copy is created (the difference from scenario 1 needs investigation). | The directions are asymmetric: `gh --force` preserves its own record, while `npx add` destroys the other tool's. |
@@ -32,6 +32,31 @@ calibrate the detection rules in ADR-0004.
 4. **Untested variants** (future experiments): collisions in symlink mode (the
    non-interactive default is copy mode), and whether `npx update` erases `gh`
    provenance when upstream really changed.
+
+## Follow-up (2026-10-02): `gh` writes the global Vercel lock
+
+Run with `gh 2.102.0` and `npx skills@latest`, with `HOME` isolated for both
+tools. Test skills: `brand-guidelines`, `internal-comms`, `xlsx` (source
+`anthropics/skills`).
+
+- Every `gh skill install` and every applied `gh skill update` also writes
+  `~/.agents/.skill-lock.json` (version 3, the Vercel global lock), keyed by
+  bare skill name, whatever the scope or `--dir`. The `gh` source
+  (`internal/skills/lockfile`) says the version must match Vercel's for
+  interop. A user-scope `gh` install therefore shows as double-booked, and a
+  project-scope `gh` install leaves a global lock entry with no user-scope
+  files.
+- `gh skill update --force`, `gh skill install --pin <ref> --force`, and
+  `gh skill update --unpin` in a project each rewrote the user-scope Vercel
+  record of the same name (source fields, hash, timestamps, `pinnedRef`).
+  After the pin rewrite, `npx skills update -g` saw a phantom update and
+  reinstalled the user copy.
+- `gh skill update --dry-run` writes nothing (snapshot diff empty, lock
+  included). With `--dir` it scans only that directory and skips symlinked
+  entries.
+- Non-interactive `gh skill update <names> --dir <dir>` exits 1 with
+  "re-run with --all" whenever an update exists; `--all` combined with names
+  updates only the named skills.
 
 ## Evidence samples
 

@@ -74,7 +74,7 @@ extension AppState {
 
     /// The decisions applicable to a finding, ownership-routed exactly like
     /// `CommandBatchBuilder`: vercel/github get update +
-    /// cleanup, double-booked gets arbitration only, ownerless (and
+    /// cleanup (github cleanup is a direct deletion), double-booked gets arbitration only, ownerless (and
     /// ambiguous, attribution voided) get adopt/cleanup/leave. A decision
     /// whose owning CLI is unavailable is `blocked` — never offered as an
     /// action, so no unbuildable batch can be constructed.
@@ -110,9 +110,11 @@ extension AppState {
             }
             return options + [option(.cleanup, needsNode), option(.leave, nil)]
         case .github:
+            // Removal deletes the placements directly (gh has no remove
+            // command), so it needs no CLI.
             return [
                 option(.update, needsGitHub),
-                option(.cleanup, needsNode),
+                option(.cleanup, nil),
                 option(.leave, nil)
             ]
         case .doubleBooked:

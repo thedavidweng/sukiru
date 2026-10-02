@@ -54,6 +54,9 @@ struct SkillRow: View {
 
     private var status: some View {
         HStack(spacing: 6) {
+            if state.githubUpdate(for: skill) != nil {
+                Text("Update Available")
+            }
             if skill.ambiguous {
                 Text("Ambiguous")
             }

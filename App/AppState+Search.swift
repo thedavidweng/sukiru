@@ -149,7 +149,9 @@ extension AppState {
     /// Resets the selections the install sheet shares across origins.
     func resetInstallSheet(origin: InstallOrigin) {
         installOrigin = origin
-        installInstaller = .vercel
+        let ghOnly =
+            capabilities.map { !$0.npx.canRunSkills && $0.github.available } ?? false
+        installInstaller = ghOnly ? .github : .vercel
         installTarget = .user
         ghInstallAgent = HostTable.ghInstallAgentOptions.first ?? "codex"
         ghPinRef = ""

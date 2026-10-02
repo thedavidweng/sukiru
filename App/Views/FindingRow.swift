@@ -170,8 +170,10 @@ struct FindingRow: View {
                 state.findSource(for: orphan)
             }
             .controlSize(.small)
-            .disabled(state.batchMutationInFlight)
-            .axButtonToken("\(row.token).findSource")
+            .disabled(state.batchMutationInFlight || !state.canAdoptFromSource)
+            .axButtonToken("\(row.token).findSource", disabled: !state.canAdoptFromSource)
+            .help(
+                state.canAdoptFromSource ? "orphan.findSource.help" : "orphan.findSource.needsNode")
         }
     }
 

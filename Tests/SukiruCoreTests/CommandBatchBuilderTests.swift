@@ -90,7 +90,7 @@ struct CommandBatchBuilderTests {
 
     // MARK: - Github update routes to gh, narrowly targeted
 
-    @Test("CM-2: update on a github-ledger skill is gh skill update <name> --dir <dir>")
+    @Test("CM-2: update on a github-ledger skill is gh skill update <name> --all --dir <dir>")
     func githubUpdate() throws {
         let tree = FixturePaths.tree("CM-2")
         let report = try OwnershipBuilders.scanSplitFixture("CM-2")
@@ -98,11 +98,19 @@ struct CommandBatchBuilderTests {
             report, "dangerous-removal-surface", "stale-docs-cleanup")
         let batch = try Support.build(report, [Support.decide(findingID, .update)])
         let command = try #require(batch.commands.only)
-        let expected = "gh skill update stale-docs-cleanup --dir \(tree)/proj/.claude/skills"
+        let expected =
+            "gh skill update stale-docs-cleanup --all --dir \(tree)/proj/.claude/skills"
         #expect(command.argv.joined(separator: " ") == expected)
         #expect(command.owningCLI == .github)
-        #expect(!command.argv.contains("--all"))
         #expect(!batch.commands.contains { $0.argv.first == "npx" })
+    }
+
+    @Test("FIX-DANGER: update on a user-scope github skill is refused (gh writes the Vercel lock)")
+    func githubUserUpdateRefused() throws {
+        let report = try OwnershipBuilders.scan(fixture: "FIX-DANGER")
+        let findingID = try Support.findingID(report, "dangerous-removal-surface", "gh-tool")
+        let problems = Support.problems(report, [Support.decide(findingID, .update)])
+        #expect(problems.joined(separator: "\n").contains("Vercel ledger's global lock"))
     }
 
     // MARK: - Drift repair re-installs from the recorded source
@@ -220,31 +228,27 @@ struct CommandBatchBuilderTests {
 
     // MARK: - npx skills remove danger flag + at-risk naming
 
-    @Test("CM-6: cleanup on a github-owned skill dispatches npx skills remove with named at-risk")
-    func githubCleanupDanger() throws {
+    @Test("CM-6: cleanup on a github-owned skill deletes its placements directly, no npx")
+    func githubCleanupIsDirect() throws {
         let report = try OwnershipBuilders.scanSplitFixture("CM-6")
         let findingID = try Support.findingID(
             report, "dangerous-removal-surface", "stale-docs-cleanup")
         let batch = try Support.build(report, [Support.decide(findingID, .cleanup)])
-        let command = try #require(batch.commands.only)
-        #expect(command.argv == ["npx", "skills", "remove", "stale-docs-cleanup", "-y"])
-        #expect(command.dangerFlags == [.dangerousDeletion])
-        let warning = try #require(command.warning)
-        #expect(warning.contains("stale-docs-cleanup"))
-        #expect(warning.contains("github"))
-        let atRisk = [AtRiskSkill(skill: "stale-docs-cleanup", ownership: "github")]
-        #expect(command.atRiskSkills == atRisk)
+        let skill = try #require(report.skills.first { $0.name == "stale-docs-cleanup" })
+        #expect(!batch.commands.isEmpty)
+        #expect(batch.commands.allSatisfy { $0.owningCLI == .file })
+        #expect(batch.commands.allSatisfy { $0.dangerFlags.contains(.directFileOperation) })
+        let targets = Set(batch.commands.compactMap { $0.argv.last })
+        #expect(targets == Set(skill.placements.map(\.path)))
     }
 
-    @Test("FIX-DANGER: user-scope cleanup of a github skill carries -g and the danger flag")
+    @Test("FIX-DANGER: user-scope cleanup of a github skill needs no CLI either")
     func githubUserCleanup() throws {
         let report = try OwnershipBuilders.scan(fixture: "FIX-DANGER")
         let findingID = try Support.findingID(report, "dangerous-removal-surface", "gh-tool")
         let batch = try Support.build(report, [Support.decide(findingID, .cleanup)])
-        let command = try #require(batch.commands.only)
-        #expect(command.argv == ["npx", "skills", "remove", "gh-tool", "-g", "-y"])
-        #expect(command.dangerFlags == [.dangerousDeletion])
-        #expect(command.atRiskSkills == [AtRiskSkill(skill: "gh-tool", ownership: "github")])
+        #expect(!batch.commands.isEmpty)
+        #expect(!batch.commands.contains { $0.argv.first == "npx" || $0.argv.first == "gh" })
     }
 
     @Test("CM-1: cleanup on a vercel-owned skill is npx skills remove, flagged, with no at-risk")

@@ -22,6 +22,11 @@ extension AppState {
     /// Lookups run a handful at a time to stay polite to skills.sh and GitHub.
     nonisolated private static let concurrentLookups = 4
 
+    /// Adopting a found source runs `npx skills add`, so it needs Node.js.
+    var canAdoptFromSource: Bool {
+        capabilities?.npx.canRunSkills != false
+    }
+
     func sourceLookup(for skill: Skill) -> SourceLookup? {
         sourceLookups[Self.skillID(skill)]
     }
@@ -100,7 +105,7 @@ extension AppState {
 
     private func finishLookup(_ lookup: SourceLookup, for skill: Skill, queueMatch: Bool) {
         sourceLookups[Self.skillID(skill)] = lookup
-        guard queueMatch, let match = lookup.verifiedMatch,
+        guard queueMatch, canAdoptFromSource, let match = lookup.verifiedMatch,
             let finding = orphanFinding(for: skill), cartItem(for: finding) == nil
         else { return }
         queue(.adopt, choice: .adoptVercel(source: match.installSource), for: finding)

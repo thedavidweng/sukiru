@@ -67,6 +67,13 @@ extension AppState {
                     : String(localized: "install.error.needsGitHub"))
             return
         }
+        // The listing runs npx offline, so it cannot fetch a CLI that is
+        // not on this Mac yet.
+        if installInstaller == .vercel, capabilities?.npx.reason == .notDownloaded {
+            repositoryInstall.listing = .failed(
+                String(localized: "install.error.skillsNotDownloaded"))
+            return
+        }
         repositoryInstall.generation += 1
         let generation = repositoryInstall.generation
         let installer = installInstaller

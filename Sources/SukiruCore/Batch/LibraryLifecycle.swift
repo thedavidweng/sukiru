@@ -43,6 +43,9 @@ public enum LifecycleBlocker: Equatable, Sendable {
     case needsNpx
     /// The owning ledger's CLI is `gh skill`, and gh is unavailable.
     case needsGitHubCLI
+    /// gh would write the user-scope Vercel lock record of this name (see
+    /// `CommandBatchBuilder.githubWriteTouchesVercelRecord`).
+    case touchesVercelRecord
 
     /// Human-readable refusal (English by design, like other core refusals).
     var message: String {
@@ -59,16 +62,27 @@ public enum LifecycleBlocker: Equatable, Sendable {
             return "the Vercel ledger's CLI (npx skills) is not available"
         case .needsGitHubCLI:
             return "the GitHub ledger's CLI (gh skill) is not available"
+        case .touchesVercelRecord:
+            return "gh skill also records the skill under its name in the Vercel ledger's "
+                + "global lock, which would claim a user-scope skill of this name for the "
+                + "Vercel ledger"
         }
+    }
+
+    /// The refusal for `action` on `skill`, as the batch builder phrases it.
+    public func refusal(_ action: LifecycleAction, skill: Skill) -> String {
+        "cannot \(action.rawValue) '\(skill.name)': \(message)"
     }
 }
 
 extension CommandBatchBuilder {
     /// Whether the Library can queue `action` for `skill`. Capabilities not
-    /// yet probed (nil) block nothing, as with one-click fixes. A GitHub
+    /// yet probed (nil) block nothing, as with one-click fixes; without a
+    /// report, the cross-scope Vercel record check is skipped. A GitHub
     /// uninstall deletes files directly, so it needs no `gh`.
     public static func lifecycleBlocker(
-        skill: Skill, action: LifecycleAction, capabilities: CapabilityReport?
+        skill: Skill, action: LifecycleAction, capabilities: CapabilityReport?,
+        report: ScanReport? = nil
     ) -> LifecycleBlocker? {
         if skill.ambiguous {
             return .ambiguous
@@ -83,8 +97,47 @@ extension CommandBatchBuilder {
         case .vercel:
             return capabilities?.npx.canRunSkills == false ? .needsNpx : nil
         case .github:
-            return action == .update && capabilities?.github.available == false
-                ? .needsGitHubCLI : nil
+            guard action == .update else { return nil }
+            if capabilities?.github.available == false {
+                return .needsGitHubCLI
+            }
+            if let report, githubWriteTouchesVercelRecord(skill, report: report) {
+                return .touchesVercelRecord
+            }
+            return nil
+        }
+    }
+
+    /// Every `gh skill` install or update also writes `~/.agents/.skill-lock.json`,
+    /// the Vercel ledger's global lock, keyed by the bare skill name whatever
+    /// the scope or `--dir` (gh 2.102.0 `lockfile.RecordInstall`;
+    /// probe-verified in docs/collision-matrix.md). Such a write claims a
+    /// user-scope skill for the Vercel ledger: the skill itself when it is
+    /// user scope (it turns double-booked), or a user-scope skill of the same
+    /// name whose Vercel record it rewrites.
+    static func githubWriteTouchesVercelRecord(_ skill: Skill, report: ScanReport) -> Bool {
+        skill.scope == .user
+            || report.skills.contains {
+                $0.scope == .user && $0.name == skill.name && $0.provenance.vercel != nil
+            }
+    }
+
+    /// A Health update of a GitHub-ledger skill: one `gh skill update` per
+    /// skills dir, under the same Vercel-record guard as the Library.
+    func githubUpdateCommands(
+        _ skill: Skill, entry: DecisionEntry, finding: Finding, report: ScanReport
+    ) throws -> [BatchCommand] {
+        let dirs = placementDirs(skill)
+        guard !dirs.isEmpty else {
+            throw noDirectoryPlacements(skill: skill, entry: entry)
+        }
+        if Self.githubWriteTouchesVercelRecord(skill, report: report) {
+            throw DecisionProblem(
+                message: LifecycleBlocker.touchesVercelRecord.refusal(.update, skill: skill))
+        }
+        return dirs.map { dir in
+            BatchCommandFactory.githubUpdate(
+                names: [skill.name], dir: dir, reason: "finding \(finding.ruleID)")
         }
     }
 
@@ -123,19 +176,20 @@ extension CommandBatchBuilder {
                 message: "skill '\(skill.name)' is not in the current scan; queue it again")
         }
         let blocker = Self.lifecycleBlocker(
-            skill: skill, action: request.action, capabilities: nil)
+            skill: skill, action: request.action, capabilities: nil, report: report)
         if let blocker {
-            throw DecisionProblem(
-                message: "cannot \(request.action.rawValue) '\(skill.name)': \(blocker.message)")
+            throw DecisionProblem(message: blocker.refusal(request.action, skill: skill))
         }
         return bucket
     }
 
     /// Deletes every placement of a GitHub-ledger skill: links (live or
     /// dead) as links, never following them, then the directories.
-    static func githubUninstall(_ skill: Skill) -> [BatchCommand] {
+    static func githubUninstall(
+        _ skill: Skill, reason: String = "requested in the Library"
+    ) -> [BatchCommand] {
         let intent =
-            "Uninstall '\(skill.name)' (requested in the Library): gh skill has no "
+            "Uninstall '\(skill.name)' (\(reason)): gh skill has no "
             + "uninstall command, so its placements are deleted directly."
         let placements = skill.placements.sorted { $0.path < $1.path }
         let links = placements.filter { $0.kind != .directory }.map {

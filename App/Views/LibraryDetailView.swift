@@ -147,7 +147,14 @@ struct SkillDetailForm: View {
                     Button("Find Source…") {
                         state.findSource(for: skill)
                     }
-                    .axButtonToken("sukiru.library.detail.orphan.findSource")
+                    .disabled(!state.canAdoptFromSource)
+                    .axButtonToken(
+                        "sukiru.library.detail.orphan.findSource",
+                        disabled: !state.canAdoptFromSource
+                    )
+                    .help(
+                        state.canAdoptFromSource
+                            ? "orphan.findSource.help" : "orphan.findSource.needsNode")
                 }
             }
             .disabled(state.batchMutationInFlight)

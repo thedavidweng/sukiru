@@ -8,7 +8,7 @@ import SukiruCore
 extension AppState {
     func lifecycleBlocker(_ action: LifecycleAction, for skill: Skill) -> LifecycleBlocker? {
         CommandBatchBuilder.lifecycleBlocker(
-            skill: skill, action: action, capabilities: capabilities)
+            skill: skill, action: action, capabilities: capabilities, report: report)
     }
 
     func queuedLifecycle(for skill: Skill) -> LifecycleRequest? {
@@ -36,12 +36,25 @@ extension AppState {
     }
 
     /// Update All: queues every updatable skill and checks out the whole
-    /// cart, like Fix All.
+    /// cart, like Fix All. Installer-owned skills that cannot be updated
+    /// here (a missing CLI, a cross-ledger write) are listed as not included.
     func updateAll(_ skills: [Skill]) {
         for skill in updatableSkills(skills) {
             queueLifecycle(.update, for: skill)
         }
+        let withheld = withheldUpdates(skills)
         checkout()
+        fixSkipped += withheld
+    }
+
+    /// Why each installer-owned skill among `skills` cannot be updated here.
+    func withheldUpdates(_ skills: [Skill]) -> [String] {
+        skills.compactMap { skill in
+            guard skill.ownership == .vercel || skill.ownership == .github,
+                let blocker = lifecycleBlocker(.update, for: skill)
+            else { return nil }
+            return blocker.refusal(.update, skill: skill)
+        }
     }
 
     /// Drops the Library changes a succeeded batch carried; failed ones

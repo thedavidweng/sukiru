@@ -69,4 +69,23 @@ deletes its ledger entry without writing to any ledger. A Library uninstall
 of a GitHub-ledger skill is therefore a flagged direct file operation: links
 are removed as links (never followed), then directories are deleted, all
 inside the batch snapshot. Vercel-ledger uninstalls still go through
-`npx skills remove`.
+`npx skills remove`. The same direct deletion removes a GitHub-ledger skill
+when a Health fix cleans it up, so that path no longer needs Node.js.
+
+## Amendment (2026-10-02): `gh` writes the Vercel global lock
+
+The follow-up experiment in
+[`docs/collision-matrix.md`](../collision-matrix.md) showed that `gh skill`
+install and update also write the Vercel global lock, keyed by bare skill
+name. Consequences for v1:
+
+- Sukiru runs `gh skill update --dry-run` as a read-only update check
+  ("Check for Updates"); it writes nothing.
+- A `gh skill update` is withheld when the skill is user-scope or when a
+  user-scope skill of the same name has Vercel provenance, because the write
+  would rewrite that Vercel record. Pinning, unpinning, and forced reinstall
+  through `gh` rewrite the same record and are not offered.
+- `gh skill update` is dispatched with `--all` plus the skill names, since
+  non-interactive runs refuse to apply updates without it.
+- The batch snapshot always captures the global lock, so rollback restores
+  any `gh` write to it.

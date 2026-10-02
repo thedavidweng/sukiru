@@ -386,9 +386,14 @@ private struct ProblemSection: View {
                 state.matchSources(group.entries)
             }
             .controlSize(.small)
-            .disabled(state.batchMutationInFlight)
-            .axButtonToken("sukiru.health.group.orphan.findSources")
-            .help("Match each skill to a skills.sh listing and queue adoption of confirmed matches")
+            .disabled(state.batchMutationInFlight || !state.canAdoptFromSource)
+            .axButtonToken(
+                "sukiru.health.group.orphan.findSources", disabled: !state.canAdoptFromSource
+            )
+            .help(
+                state.canAdoptFromSource
+                    ? "Match each skill to a skills.sh listing and queue adoption of confirmed matches"
+                    : "orphan.findSource.needsNode")
         }
     }
 }

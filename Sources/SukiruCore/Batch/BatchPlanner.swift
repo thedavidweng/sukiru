@@ -146,14 +146,8 @@ extension CommandBatchBuilder {
                     workingDirectory: projectRoot(of: finding))
             ]
         case .github:
-            let dirs = placementDirs(skill)
-            guard !dirs.isEmpty else {
-                throw noDirectoryPlacements(skill: skill, entry: entry)
-            }
-            return dirs.map { dir in
-                BatchCommandFactory.githubUpdate(
-                    names: [skill.name], dir: dir, reason: "finding \(finding.ruleID)")
-            }
+            return try githubUpdateCommands(
+                skill, entry: entry, finding: finding, report: report)
         case .doubleBooked:
             throw needsArbitration(skill: skill, entry: entry)
         case .ownerless:
@@ -344,8 +338,14 @@ extension CommandBatchBuilder {
                 + BatchCommandFactory.ownerlessCleanups(
                     name: skill.name, paths: paths, finding: finding)
         }
-        // Ledger-owned skills remove through the vercel CLI (gh has no remove
-        // command); cross-ledger names are named as at-risk.
+        // gh has no remove command; its record lives in the skill's own
+        // frontmatter, so removal is the Library's direct deletion
+        // (ADR-0004 amendment) rather than a name-based npx skills remove.
+        if skill.ownership == .github {
+            return Self.githubUninstall(skill, reason: "finding \(finding.ruleID)")
+        }
+        // Vercel-owned and double-booked names remove through the vercel CLI;
+        // cross-ledger names are named as at-risk.
         return [
             BatchCommandFactory.vercelRemove(
                 name: skill.name, scope: skill.scope,
