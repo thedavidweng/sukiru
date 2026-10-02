@@ -11,6 +11,20 @@ extension AppState {
             skill: skill, action: action, capabilities: capabilities, report: report)
     }
 
+    /// Pin (or Unpin, once pinned) is a gh write, so it is offered only
+    /// when nothing would withhold it and no change is already queued.
+    func offersPinChange(for skill: Skill) -> Bool {
+        guard skill.ownership == .github, let github = skill.provenance.github else {
+            return false
+        }
+        return queuedLifecycle(for: skill) == nil
+            && lifecycleBlocker(github.pinned ? .unpin : .pin, for: skill) == nil
+    }
+
+    func offersRestore(for skill: Skill) -> Bool {
+        skill.ownership == .github && lifecycleBlocker(.restore, for: skill) == nil
+    }
+
     func queuedLifecycle(for skill: Skill) -> LifecycleRequest? {
         let id = Self.skillID(skill)
         return lifecycleQueue.first { Self.skillID($0.skill) == id }

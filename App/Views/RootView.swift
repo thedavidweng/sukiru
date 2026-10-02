@@ -26,6 +26,11 @@ struct RootView: View {
                 OrphanSourceSheet(skill: skill)
             }
         }
+        .sheet(isPresented: showingPinSheet) {
+            if let skill = state.pinSheetSkill {
+                PinSheet(skill: skill)
+            }
+        }
         .modifier(HistoryConfirmations())
     }
 
@@ -33,6 +38,12 @@ struct RootView: View {
         Binding(
             get: { state.sourceSheetSkill != nil },
             set: { if !$0 { state.sourceSheetSkill = nil } })
+    }
+
+    private var showingPinSheet: Binding<Bool> {
+        Binding(
+            get: { state.pinSheetSkill != nil },
+            set: { if !$0 { state.pinSheetSkill = nil } })
     }
 
     /// Finder-style Refresh, shared by every surface: the no-watchers model

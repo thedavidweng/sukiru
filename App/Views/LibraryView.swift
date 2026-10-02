@@ -182,6 +182,11 @@ struct LibraryView: View {
             }
         }
         .listStyle(.inset)
+        .contextMenu(forSelectionType: String.self) { ids in
+            if ids.count == 1, let skill = ids.first.flatMap(state.skill(withID:)) {
+                SkillContextMenu(skill: skill)
+            }
+        }
         .searchable(text: $filter, placement: .toolbar, prompt: Text("Search skills"))
         .overlay {
             if groups.isEmpty && !filter.isEmpty {

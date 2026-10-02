@@ -9,8 +9,6 @@ struct LibraryProvenanceSection: View {
 
     let skill: Skill
 
-    @State private var showingPinSheet = false
-
     var body: some View {
         // The No Known Source section already explains a plain ownerless
         // skill, so a section that would only repeat it is left out.
@@ -90,10 +88,7 @@ struct LibraryProvenanceSection: View {
             github.pinned
             ? github.pinnedRef ?? String(localized: "Yes")
             : String(localized: "No")
-        let action: LifecycleAction = github.pinned ? .unpin : .pin
-        let offered =
-            skill.ownership == .github && state.queuedLifecycle(for: skill) == nil
-            && state.lifecycleBlocker(action, for: skill) == nil
+        let offered = state.offersPinChange(for: skill)
         LabeledContent("Pinned") {
             HStack(spacing: 8) {
                 Text(value)
@@ -110,7 +105,7 @@ struct LibraryProvenanceSection: View {
                     .help("library.unpin.help")
                 } else if offered {
                     Button("Pin…") {
-                        showingPinSheet = true
+                        state.pinSheetSkill = skill
                     }
                     .controlSize(.small)
                     .axButtonToken("sukiru.library.detail.pin")
@@ -118,9 +113,6 @@ struct LibraryProvenanceSection: View {
                 }
             }
             .disabled(state.batchMutationInFlight)
-        }
-        .sheet(isPresented: $showingPinSheet) {
-            PinSheet(skill: skill)
         }
     }
 
@@ -172,7 +164,7 @@ struct LibraryProvenanceSection: View {
 /// other Library change (the batch confirmation is the review step). The
 /// field starts at the recorded ref, stripped to the branch or tag name gh
 /// `--pin` resolves.
-private struct PinSheet: View {
+struct PinSheet: View {
     @EnvironmentObject private var state: AppState
     @Environment(\.dismiss) private var dismiss
 

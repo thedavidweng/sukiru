@@ -83,7 +83,7 @@ struct LibraryLifecycleControls: View {
 
     @ViewBuilder
     private var restoreButton: some View {
-        if skill.ownership == .github && state.lifecycleBlocker(.restore, for: skill) == nil {
+        if state.offersRestore(for: skill) {
             Button("Restore Files") {
                 state.queueLifecycle(.restore, for: skill)
             }

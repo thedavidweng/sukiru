@@ -130,7 +130,11 @@ extension AppState {
 
     /// The currently selected skill, if it still exists in the report.
     func selectedSkill() -> Skill? {
-        guard let selectedSkillID else { return nil }
+        selectedSkillID.flatMap(skill(withID:))
+    }
+
+    /// The skill with an `AppState.skillID`, if it still exists in the report.
+    func skill(withID id: String) -> Skill? {
         if derived.skillsByID?.reportRevision != reportRevision {
             let skills = report?.skills ?? []
             derived.skillsByID = (
@@ -138,6 +142,6 @@ extension AppState {
                 Dictionary(skills.map { (Self.skillID($0), $0) }) { first, _ in first }
             )
         }
-        return derived.skillsByID?.skills[selectedSkillID]
+        return derived.skillsByID?.skills[id]
     }
 }

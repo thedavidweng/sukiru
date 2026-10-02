@@ -797,6 +797,17 @@
         }
       }
     },
+    "Copy Path" : {
+      "comment" : "Library row context menu: copy the skill folder's path.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷贝路径"
+          }
+        }
+      }
+    },
     "Copy where a link belongs" : {
       "comment" : "Health finding title: a physical copy where a link into the shared store belongs.",
       "localizations" : {

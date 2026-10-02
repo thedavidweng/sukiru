@@ -99,17 +99,17 @@ final class AppState: ObservableObject {
     /// Library updates and uninstalls, checked out with the cart.
     @Published var lifecycleQueue: [LifecycleRequest] = []
     @Published var updateCheck = UpdateCheckState()
-    /// The orphan whose source is being chosen, and each orphan's source
-    /// lookup (by `skillID`), shared by its Health row and the source sheet.
+    /// The skill whose pin ref, or orphan whose source, is being chosen, and
+    /// each orphan's source lookup (by `skillID`) for its row and sheet.
+    @Published var pinSheetSkill: Skill?
     @Published var sourceSheetSkill: Skill?
     @Published var sourceLookups: [String: SourceLookup] = [:]
     /// Batch-construction refusal text (stale finding, ownership rule) —
     /// rendered inline, never swallowed. (Core diagnostic text, English by
     /// design, like CLI stderr.)
     @Published var repairError: String?
-    /// A capability-blocked repair attempt: rendered
-    /// as a localized inline hint, separate from `repairError` so the copy
-    /// flows through the string catalog.
+    /// A capability-blocked repair attempt: a localized inline hint, apart
+    /// from `repairError` so the copy flows through the string catalog.
     @Published var repairBlockNotice: RepairBlock?
     /// True while a batch execution OR a rollback is in flight. Gates
     /// Execute and every rollback affordance (no rollback
