@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The app shell: a three-column navigation split —
 /// sidebar (surfaces), content (the selected surface), detail (selection
-/// detail for Library/Health). State lives in `AppState`, so selection and
+/// detail for Library, Snapshots, and Search). State lives in `AppState`, so selection and
 /// disclosure state survive surface switches and resizes.
 struct RootView: View {
     @EnvironmentObject private var state: AppState
@@ -40,14 +40,14 @@ struct RootView: View {
     private func refreshToolbar() -> some ToolbarContent {
         ToolbarItem {
             Button {
-                state.rescan()
+                state.refresh()
             } label: {
                 Label("Refresh", systemImage: "arrow.clockwise")
             }
             .axButtonToken("sukiru.toolbar.refresh", disabled: state.healthCheckRunning)
             .disabled(state.healthCheckRunning)
             .help(
-                "Re-reads the library from disk (⌘R). External changes appear only after Refresh."
+                "Re-reads the library and snapshots from disk (⌘R). External changes appear only after Refresh."
             )
         }
     }
@@ -80,7 +80,9 @@ struct RootView: View {
         case .snapshots:
             // Post-run diff / itemized rollback record.
             SnapshotsDetailView()
-        case .health, .pending, .search:
+        case .search:
+            SearchDetailView()
+        case .health, .pending:
             DetailPlaceholderView()
         }
     }

@@ -15,7 +15,20 @@ struct SnapshotsView: View {
     @EnvironmentObject private var state: AppState
 
     var body: some View {
-        Group {
+        List(selection: $state.selectedHistoryID) {
+            ForEach(state.historyRows) { row in
+                switch row {
+                case .batch(let record):
+                    batchRow(record)
+                        .tag(row.id)
+                case .rollback(let record):
+                    rollbackRow(record)
+                        .tag(row.id)
+                }
+            }
+        }
+        .listStyle(.inset)
+        .overlay {
             if state.historyRows.isEmpty {
                 SurfacePlaceholder(
                     token: "sukiru.snapshots.empty",
@@ -24,57 +37,34 @@ struct SnapshotsView: View {
                     explanation:
                         "Every command batch captures a snapshot before it runs; history appears here."
                 )
-            } else {
-                content
+            }
+        }
+        // Reloading is the window toolbar's Refresh, so the surface only
+        // adds a bar when something is running or went wrong.
+        .surfaceBar {
+            if state.batchMutationInFlight {
+                progressBanner
+            }
+            if let error = state.rollbackError {
+                rollbackErrorBanner(error)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private var content: some View {
-        VStack(spacing: 0) {
-            header
-            if let error = state.rollbackError {
-                Divider()
-                rollbackErrorBanner(error)
-            }
-            Divider()
-            List(selection: $state.selectedHistoryID) {
-                ForEach(state.historyRows) { row in
-                    switch row {
-                    case .batch(let record):
-                        batchRow(record)
-                            .tag(row.id)
-                    case .rollback(let record):
-                        rollbackRow(record)
-                            .tag(row.id)
-                    }
-                }
-            }
-            .listStyle(.inset)
-        }
-    }
-
-    private var header: some View {
-        HStack(spacing: 12) {
-            AXToken(token: "sukiru.snapshots.title")
-            if state.batchMutationInFlight {
-                HStack(spacing: 6) {
-                    ProgressView()
-                        .controlSize(.small)
-                    AXToken(token: "sukiru.pending.executing")
-                }
-            }
+    private var progressBanner: some View {
+        HStack(spacing: 8) {
+            AXToken(token: "sukiru.pending.executing")
+            ProgressView()
+                .controlSize(.small)
+            Text("Applying changes…")
+                .font(.callout)
+                .foregroundStyle(.secondary)
             Spacer()
-            Button {
-                state.loadHistory()
-            } label: {
-                Text("Reload")
-            }
-            .axButtonToken("sukiru.snapshots.reload")
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.vertical, 8)
+        .accessibilityElement(children: .contain)
     }
 
     private func rollbackErrorBanner(_ message: String) -> some View {
@@ -87,6 +77,7 @@ struct SnapshotsView: View {
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .accessibilityElement(children: .contain)
@@ -98,7 +89,7 @@ struct SnapshotsView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 AXToken(token: "sukiru.snapshots.batch.\(record.batchID)")
-                statusBadge(record.batchStatus)
+                statusLabel(record.batchStatus)
                 Text(commandsSummary(record))
                     .font(.callout)
                     .foregroundStyle(.secondary)
@@ -110,7 +101,7 @@ struct SnapshotsView: View {
                     Button {
                         state.rollbackBatch(record.batchID)
                     } label: {
-                        Text("Roll Back")
+                        Label("Roll Back", systemImage: "arrow.uturn.backward")
                     }
                     .controlSize(.small)
                     .axButtonToken(
@@ -153,20 +144,21 @@ struct SnapshotsView: View {
         .padding(.vertical, 2)
     }
 
-    private func statusBadge(_ status: BatchStatus) -> some View {
-        let color: Color =
+    private func statusLabel(_ status: BatchStatus) -> some View {
+        let (symbol, color): (String, Color) =
             switch status {
-            case .succeeded: .green
-            case .failed: .red
-            case .rolledBack: .purple
-            case .proposed, .reviewed, .executing: .blue
+            case .succeeded: ("checkmark.circle.fill", .green)
+            case .failed: ("xmark.octagon.fill", .red)
+            case .rolledBack: ("arrow.uturn.backward.circle.fill", .purple)
+            case .proposed, .reviewed, .executing: ("clock.fill", .blue)
             }
-        return Text(status.title)
-            .font(.caption.weight(.medium))
-            .padding(.horizontal, 6)
-            .padding(.vertical, 1)
-            .background(color.opacity(0.16), in: Capsule())
-            .foregroundStyle(color)
+        return Label {
+            Text(status.title)
+                .font(.callout.weight(.medium))
+        } icon: {
+            Image(systemName: symbol)
+                .foregroundStyle(color)
+        }
     }
 
     private func commandsSummary(_ record: ExecutionRecord) -> String {

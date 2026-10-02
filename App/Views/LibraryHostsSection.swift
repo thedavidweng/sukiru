@@ -34,13 +34,14 @@ struct LibraryHostsSection: View {
             if !installed.isEmpty {
                 grid(installed)
             }
-            // Leftover folders are spray residue, not installs; folding them
-            // away keeps the agents that really read the skill in front.
+            // Copies in folders of agents that are not installed are never
+            // read; folding them away keeps the agents that really read the
+            // skill in front.
             if !leftovers.isEmpty {
                 DisclosureGroup {
                     grid(leftovers)
                 } label: {
-                    Text("Leftover (spray residue — not an install)")
+                    Text("Agents not installed on this Mac")
                         .foregroundStyle(.secondary)
                         .badge(leftovers.count)
                 }

@@ -80,7 +80,7 @@ struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+        .sidebarFooter {
             Button {
                 state.addProjectRootViaPanel()
             } label: {
@@ -139,6 +139,19 @@ private struct SkillCounts {
                 projects[root, default: 0] += 1
                 all += 1
             }
+        }
+    }
+}
+
+extension View {
+    /// Pins the sidebar's footer controls; on macOS 26+ as a bar, so the list
+    /// keeps the system's bottom scroll-edge treatment.
+    @ViewBuilder
+    fileprivate func sidebarFooter<Bar: View>(@ViewBuilder _ footer: () -> Bar) -> some View {
+        if #available(macOS 26.0, *) {
+            safeAreaBar(edge: .bottom, spacing: 0, content: footer)
+        } else {
+            safeAreaInset(edge: .bottom, spacing: 0, content: footer)
         }
     }
 }

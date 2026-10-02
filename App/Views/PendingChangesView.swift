@@ -15,10 +15,22 @@ struct PendingChangesView: View {
     @EnvironmentObject private var state: AppState
 
     var body: some View {
-        Group {
+        // The scroll view stays even when empty, so the column starts with
+        // one and the toolbar matches every other surface.
+        ScrollView {
             if hasContent {
-                content
-            } else {
+                VStack(alignment: .leading, spacing: 16) {
+                    PendingResultBanners()
+                    if let draft = state.repairDraft {
+                        RepairDraftPanel(draft: draft)
+                    }
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .overlay {
+            if !hasContent {
                 SurfacePlaceholder(
                     token: "sukiru.pending.empty",
                     icon: "list.bullet.rectangle",
@@ -28,6 +40,16 @@ struct PendingChangesView: View {
                         "Repairs and installs arrive here as reviewable command batches — use a finding's Fix button in Health, or Install in Search."
                         // swiftlint:enable line_length
                 )
+            }
+        }
+        .overlay(alignment: .topLeading) {
+            if hasContent {
+                AXToken(token: "sukiru.pending.title")
+            }
+        }
+        .surfaceBar {
+            if state.batchMutationInFlight && hasContent {
+                progressHeader
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -42,30 +64,6 @@ struct PendingChangesView: View {
     private var hasContent: Bool {
         state.repairDraft != nil || state.lastExecutionRecord != nil
             || state.lastExecutionFailure != nil
-    }
-
-    // MARK: - layout
-
-    private var content: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if state.batchMutationInFlight {
-                progressHeader
-                Divider()
-            }
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    PendingResultBanners()
-                    if let draft = state.repairDraft {
-                        RepairDraftPanel(draft: draft)
-                    }
-                }
-                .padding(20)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-        .overlay(alignment: .topLeading) {
-            AXToken(token: "sukiru.pending.title")
-        }
     }
 
     private var progressHeader: some View {

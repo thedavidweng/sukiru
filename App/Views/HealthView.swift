@@ -87,19 +87,18 @@ struct HealthView: View {
     }
 
     private var loadedState: some View {
-        VStack(spacing: 0) {
-            header
-            Divider()
-            // A focused skill lives in one scope, so the workspace filter
-            // would only repeat the banner's count.
-            if let focus = state.healthFocus {
-                HealthFocusBanner(focus: focus)
-            } else {
-                HealthFilterBar()
+        findingsList
+            .surfaceBar {
+                header
+                Divider()
+                // A focused skill lives in one scope, so the workspace filter
+                // would only repeat the banner's count.
+                if let focus = state.healthFocus {
+                    HealthFocusBanner(focus: focus)
+                } else {
+                    HealthFilterBar()
+                }
             }
-            Divider()
-            findingsList
-        }
     }
 
     // MARK: - header
@@ -166,35 +165,32 @@ struct HealthView: View {
 
     // MARK: - findings
 
-    @ViewBuilder
     private var findingsList: some View {
         let entries = state.visibleHealthEntries()
         let issues = state.visibleIssues()
-        if entries.isEmpty && issues.isEmpty {
-            // ContentUnavailableView only takes its intrinsic height; without
-            // this the VStack is centered and the header sinks.
-            emptyState
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else {
-            List(selection: $state.selectedFindingID) {
-                ForEach(state.problemGroups()) { group in
-                    ProblemSection(group: group, rows: rows(group.entries))
-                }
-                if !issues.isEmpty {
-                    Section {
-                        ForEach(Array(issues.enumerated()), id: \.offset) { pair in
-                            IssueRow(issue: pair.element, index: pair.offset)
-                        }
-                    } header: {
-                        HStack(spacing: 0) {
-                            AXToken(token: "sukiru.health.group.issues")
-                            Text("Issues (\(issues.count))")
-                        }
-                        .accessibilityElement(children: .contain)
+        return List(selection: $state.selectedFindingID) {
+            ForEach(state.problemGroups()) { group in
+                ProblemSection(group: group, rows: rows(group.entries))
+            }
+            if !issues.isEmpty {
+                Section {
+                    ForEach(Array(issues.enumerated()), id: \.element) { pair in
+                        IssueRow(issue: pair.element, index: pair.offset)
                     }
+                } header: {
+                    HStack(spacing: 0) {
+                        AXToken(token: "sukiru.health.group.issues")
+                        Text("Issues (\(issues.count))")
+                    }
+                    .accessibilityElement(children: .contain)
                 }
             }
-            .listStyle(.inset)
+        }
+        .listStyle(.inset)
+        .overlay {
+            if entries.isEmpty && issues.isEmpty {
+                emptyState
+            }
         }
     }
 

@@ -150,7 +150,7 @@ public struct Finding: Codable, Equatable, Sendable {
 ///
 /// `Error` conformance lets parsers hand issues back through `Result` without
 /// wrapping; semantically an issue is always data, never a thrown failure.
-public struct Issue: Codable, Equatable, Sendable, Error {
+public struct Issue: Codable, Hashable, Sendable, Error {
     public let kind: String
     public let path: String
     public let message: String

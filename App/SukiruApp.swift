@@ -100,7 +100,7 @@ struct SukiruApp: App {
                 .disabled(!state.isProjectScopeSelected)
                 Divider()
                 Button("Refresh") {
-                    state.rescan()
+                    state.refresh()
                 }
                 .keyboardShortcut("r", modifiers: .command)
             }

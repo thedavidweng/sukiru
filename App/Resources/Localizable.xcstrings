@@ -308,6 +308,17 @@
         }
       }
     },
+    "Agents not installed on this Mac" : {
+      "comment" : "Library detail: folds away agents whose skills folder holds this skill although the agent itself is not installed.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未安装在这台 Mac 上的智能体"
+          }
+        }
+      }
+    },
     "All" : {
       "comment" : "Workspace filter option: every workspace.",
       "localizations" : {
@@ -1204,6 +1215,17 @@
         }
       }
     },
+    "Install the selected skill (⌘⇧I)" : {
+      "comment" : "Search detail toolbar Install button help.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装所选技能（⌘⇧I）"
+          }
+        }
+      }
+    },
     "Installer" : {
       "comment" : "Detail provenance field label.",
       "localizations" : {
@@ -1340,17 +1362,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保持现状"
-          }
-        }
-      }
-    },
-    "Leftover (spray residue — not an install)" : {
-      "comment" : "Library detail host row: CLI spray residue root, explicitly NOT an installation.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "残留（喷洒残留，并非安装）"
           }
         }
       }
@@ -2112,13 +2123,13 @@
         }
       }
     },
-    "Re-reads the library from disk (⌘R). External changes appear only after Refresh." : {
+    "Re-reads the library and snapshots from disk (⌘R). External changes appear only after Refresh." : {
       "comment" : "Toolbar Refresh tooltip (no filesystem watchers).",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "从磁盘重新读取技能库（⌘R）。外部更改仅在刷新后显示。"
+            "value" : "从磁盘重新读取技能库和快照（⌘R）。外部更改仅在刷新后显示。"
           }
         }
       }
@@ -2185,16 +2196,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "立即重新启动"
-          }
-        }
-      }
-    },
-    "Reload" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "重新载入"
           }
         }
       }
@@ -2630,6 +2631,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在搜索…"
+          }
+        }
+      }
+    },
+    "Select a result to preview it" : {
+      "comment" : "Search detail empty-selection text.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择一个结果以预览"
           }
         }
       }

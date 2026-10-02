@@ -1,11 +1,9 @@
 import SukiruCore
 import SwiftUI
 
-/// The Search surface: query field, live backend picker
-/// (skills.sh API / `gh skill search`), results list, and the per-result
-/// detail column. Selecting a row loads the read-only SKILL.md preview;
-/// "Install…" opens the installer-choice sheet whose
-/// resulting Command Batch lands on the standard Pending Changes flow.
+/// The Search surface: the toolbar search field, the backend picker
+/// (skills.sh API / `gh skill search`), and the results list. The selected
+/// result's preview lives in the detail column (`SearchDetailView`).
 ///
 /// The backend picker gates on launch capabilities: skills.sh is
 /// always available (a pure network read, zero CLIs), gh is
@@ -14,10 +12,10 @@ struct SearchView: View {
     @EnvironmentObject private var state: AppState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            searchBar
-            Divider()
-            Group {
+        // The list stays even when empty, so the column starts with a scroll
+        // view and the toolbar matches every other surface.
+        resultsList
+            .overlay {
                 switch state.searchPhase {
                 case .idle:
                     idleState
@@ -25,59 +23,34 @@ struct SearchView: View {
                     searchingState
                 case .failed(let message):
                     failureState(message)
-                case .results:
-                    resultsContent
+                case .results(let results):
+                    if results.isEmpty {
+                        ContentUnavailableView.search(text: state.searchQuery)
+                    }
                 }
             }
-            // ContentUnavailableView only takes its intrinsic height; without
-            // this the VStack is centered and the search bar sinks.
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .sheet(isPresented: $state.showingInstallSheet) {
-            InstallSheet()
-        }
-    }
-
-    // MARK: - search bar
-
-    private var searchBar: some View {
-        HStack(spacing: 10) {
-            AXToken(token: "sukiru.search.query")
-            TextField("Search skills", text: $state.searchQuery)
-                .textFieldStyle(.roundedBorder)
-                .frame(maxWidth: 320)
-                .onSubmit {
-                    state.performSearch()
-                }
-                .axButtonToken("sukiru.search.query")
-            Button {
-                state.performSearch()
-            } label: {
-                Text("Search")
-            }
-            .axButtonToken(
-                "sukiru.search.run",
-                disabled: state.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-                    .isEmpty
+            .searchable(
+                text: $state.searchQuery, placement: .toolbar, prompt: Text("Search skills")
             )
-            .disabled(
-                state.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-                    .isEmpty)
-            backendPicker
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+            .onSubmit(of: .search) {
+                state.performSearch()
+            }
+            .toolbar {
+                ToolbarItem {
+                    backendPicker
+                }
+            }
+            .sheet(isPresented: $state.showingInstallSheet) {
+                InstallSheet()
+            }
     }
 
     /// Backend picker. gh is gated on capability: with gh
     /// unavailable the picker shows only skills.sh (GitHub-side
     /// features clearly absent, everything else works).
-    @ViewBuilder
     private var backendPicker: some View {
         let ghAvailable = state.capabilities?.github.available ?? true
-        HStack(spacing: 6) {
+        return HStack(spacing: 0) {
             AXToken(token: "sukiru.search.backend")
             Picker("Backend", selection: $state.searchBackend) {
                 ForEach(SkillSearchResult.Backend.allCases, id: \.self) { backend in
@@ -86,15 +59,10 @@ struct SearchView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
-            .frame(width: 170)
             .disabled(!ghAvailable)
-            if !ghAvailable {
-                Text("gh unavailable")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
         }
         .accessibilityElement(children: .contain)
+        .help(ghAvailable ? Text("Backend") : Text("gh unavailable"))
     }
 
     // MARK: - states
@@ -135,50 +103,74 @@ struct SearchView: View {
         }
     }
 
-    private var resultsContent: some View {
-        HStack(spacing: 0) {
-            resultsList
-            Divider()
-            resultDetail
-        }
-    }
-
     private var resultsList: some View {
-        List(selection: $state.selectedSearchResultID) {
+        List(selection: selection) {
             ForEach(state.searchResults) { result in
                 SearchResultRow(result: result)
                     .tag(result.id)
             }
         }
         .listStyle(.inset)
-        .frame(minWidth: 260, maxWidth: 380)
     }
 
-    private var resultDetail: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    /// Selecting a row also loads its SKILL.md preview.
+    private var selection: Binding<String?> {
+        Binding(
+            get: { state.selectedSearchResultID },
+            set: { id in
+                if let id {
+                    state.selectSearchResult(id)
+                } else {
+                    state.selectedSearchResultID = nil
+                }
+            })
+    }
+}
+
+/// The selected search result in the detail column: header and the
+/// read-only SKILL.md preview, with Install in the window toolbar.
+struct SearchDetailView: View {
+    @EnvironmentObject private var state: AppState
+
+    var body: some View {
+        Group {
             if let result = state.selectedSearchResult() {
-                resultHeader(result)
-                Divider()
-                previewPane
-                HStack(spacing: 12) {
-                    Button {
-                        state.presentInstallSheet()
-                    } label: {
-                        Text("Install…")
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        resultHeader(result)
+                        Divider()
+                        previewPane
                     }
-                    .axButtonToken(
-                        "sukiru.search.install",
-                        disabled: !result.isInstallable
-                    )
-                    .disabled(!result.isInstallable)
-                    Spacer()
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
-                Spacer()
+                ContentUnavailableView {
+                    Label("Select a result to preview it", systemImage: "doc.text.magnifyingglass")
+                }
             }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .toolbar(content: toolbar)
+    }
+
+    @ToolbarContentBuilder
+    private func toolbar() -> some ToolbarContent {
+        let installable = state.selectedSearchResult()?.isInstallable ?? false
+        // macOS 26+ lays toolbar items out from the column's leading edge;
+        // a flexible spacer keeps Install at the trailing edge.
+        if #available(macOS 26.0, *) {
+            ToolbarSpacer(.flexible)
+        }
+        ToolbarItem {
+            Button {
+                state.presentInstallSheet()
+            } label: {
+                Label("Install…", systemImage: "arrow.down.circle")
+            }
+            .axButtonToken("sukiru.search.install", disabled: !installable)
+            .disabled(!installable)
+            .help("Install the selected skill (⌘⇧I)")
+        }
     }
 
     // MARK: - result header + preview
@@ -199,7 +191,7 @@ struct SearchView: View {
                     .font(.caption.weight(.medium))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 1)
-                    .background(Color.gray.opacity(0.14), in: Capsule())
+                    .background(.quaternary, in: Capsule())
                     .foregroundStyle(.secondary)
             }
             if let repo = result.repo {
@@ -244,13 +236,10 @@ struct SearchView: View {
                     .foregroundStyle(.red)
                     .textSelection(.enabled)
             } else if let preview = state.searchPreview {
-                ScrollView {
-                    Text(preview)
-                        .font(.caption.monospaced())
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .frame(maxHeight: .infinity)
+                Text(preview)
+                    .font(.caption.monospaced())
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 // swiftlint:disable line_length
                 Text(
@@ -261,7 +250,6 @@ struct SearchView: View {
                 .foregroundStyle(.secondary)
             }
         }
-        .frame(maxHeight: .infinity, alignment: .top)
     }
 }
 

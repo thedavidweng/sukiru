@@ -189,6 +189,13 @@ final class AppState: ObservableObject {
         loadHistory()
     }
 
+    /// Refresh (toolbar and ⌘R): re-reads everything Sukiru shows from disk,
+    /// the library and the batch history alike.
+    func refresh() {
+        rescan()
+        loadHistory()
+    }
+
     /// Re-runs the scan against the current environment and project roots.
     /// The previous report stays on screen while the scan runs (no flicker);
     /// surfaces swap when the new report lands. Used by the initial load,
