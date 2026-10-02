@@ -213,7 +213,7 @@ struct LibraryView: View {
     private func groups(in report: ScanReport) -> [SkillGroup] {
         var groups: [SkillGroup] = []
         let userSkills = report.skills.filter {
-            $0.scope == .user && isInSelectedScope($0) && matches($0)
+            $0.scope == .user && state.isInLibraryScope($0) && matches($0)
         }
         if !userSkills.isEmpty {
             groups.append(SkillGroup(kind: .user, skills: userSkills))
@@ -221,7 +221,7 @@ struct LibraryView: View {
         for root in projectRootsWithSkills(report) {
             let skills = report.skills.filter {
                 $0.scope == .project && state.projectRoot(of: $0) == root
-                    && isInSelectedScope($0) && matches($0)
+                    && state.isInLibraryScope($0) && matches($0)
             }
             if !skills.isEmpty {
                 groups.append(SkillGroup(kind: .project(root), skills: skills))
@@ -238,14 +238,6 @@ struct LibraryView: View {
                 == true
             || skill.provenance.github?.repo.localizedCaseInsensitiveContains(filter) == true
             || skill.provenance.vercel?.source?.localizedCaseInsensitiveContains(filter) == true
-    }
-
-    private func isInSelectedScope(_ skill: Skill) -> Bool {
-        switch state.libraryScope {
-        case .all: true
-        case .user: skill.scope == .user
-        case .project(let root): skill.scope == .project && state.projectRoot(of: skill) == root
-        }
     }
 
     /// Project roots that own at least one skill in the report, sorted for
@@ -296,8 +288,7 @@ struct LibraryView: View {
 
 extension LibraryView {
     @ToolbarContentBuilder fileprivate var libraryToolbar: some ToolbarContent {
-        // The selected scope, not the filters: a filter only narrows the view.
-        let scoped = state.report?.skills.filter(isInSelectedScope) ?? []
+        let scoped = state.skillsInLibraryScope
         ToolbarItem {
             CheckForUpdatesButton(skills: scoped)
         }

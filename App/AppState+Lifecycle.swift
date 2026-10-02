@@ -28,6 +28,20 @@ extension AppState {
         lifecycleQueue.append(LifecycleRequest(skill: skill, action: action, pinRef: pinRef))
     }
 
+    /// The skills in the Library's selected scope, before any filter: a
+    /// filter only narrows the view, so updates still cover the whole scope.
+    var skillsInLibraryScope: [Skill] {
+        report?.skills.filter(isInLibraryScope) ?? []
+    }
+
+    func isInLibraryScope(_ skill: Skill) -> Bool {
+        switch libraryScope {
+        case .all: true
+        case .user: skill.scope == .user
+        case .project(let root): skill.scope == .project && projectRoot(of: skill) == root
+        }
+    }
+
     func removeFromCart(_ request: LifecycleRequest) {
         lifecycleQueue.removeAll { $0 == request }
     }

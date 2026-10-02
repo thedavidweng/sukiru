@@ -41,10 +41,8 @@ struct PendingChangesView: View {
                     token: "sukiru.pending.empty",
                     icon: "list.bullet.rectangle",
                     title: "No pending changes",
-                    // swiftlint:disable line_length
                     explanation:
-                        "Repairs you queue in Health, and updates or uninstalls you queue in the Library, collect here, so you can review and apply them together in one batch with one snapshot."
-                        // swiftlint:enable line_length
+                        "Repairs from Health and changes from the Library wait here until you apply them together."
                 )
             }
         }

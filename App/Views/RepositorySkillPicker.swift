@@ -21,6 +21,7 @@ struct RepositorySkillPicker: View {
                 Button("Show Skills", action: state.listRepositorySkills)
                     .axButtonToken("sukiru.search.install.list", disabled: !canList)
                     .disabled(!canList)
+                    .help("List the skills in this repository with the chosen installer")
             }
             listing
         }
@@ -36,12 +37,10 @@ struct RepositorySkillPicker: View {
     private var listing: some View {
         switch state.repositoryInstall.listing {
         case .idle:
-            Text(
-                "The installer you choose lists the repository's skills without installing anything."
-            )
-            .font(.callout)
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
+            Text("Shows the repository's skills without installing anything.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         case .listing:
             HStack(spacing: 6) {
                 ProgressView()
@@ -58,7 +57,7 @@ struct RepositorySkillPicker: View {
         case .listed:
             let skills = state.listedRepositorySkills
             if skills.isEmpty {
-                Text("The installer found no skills in this repository.")
+                Text("No skills found in this repository.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             } else {

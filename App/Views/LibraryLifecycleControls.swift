@@ -26,13 +26,14 @@ extension LifecycleRequest {
 /// Update and Uninstall for a skill one ledger owns, queued in Pending
 /// Changes. Agent-managed and ownerless skills (ambiguous ones included) get
 /// nothing here: their own notices and sections say what applies to them.
+///
+/// Uninstall sits apart on the leading edge; Update is prominent only when a
+/// check found a newer version. Restore Files is a gh write, so it is hidden
+/// rather than shown permanently disabled when gh writes are withheld.
 struct LibraryLifecycleControls: View {
     @EnvironmentObject private var state: AppState
 
     let skill: Skill
-
-    private let doubleBookedNote: LocalizedStringKey =
-        "Both installers claim this skill. Choose which one keeps it in Health before you update or uninstall it."
 
     var body: some View {
         if let request = state.queuedLifecycle(for: skill) {
@@ -41,60 +42,78 @@ struct LibraryLifecycleControls: View {
                 Button {
                     state.removeFromCart(request)
                 } label: {
-                    Label {
-                        Text(request.action.title)
-                    } icon: {
-                        Image(systemName: "checkmark.circle.fill")
-                    }
+                    Label(request.queueTitle, systemImage: "checkmark.circle.fill")
                 }
                 .help("Queued in Pending Changes. Click to remove it.")
             }
             .disabled(state.batchMutationInFlight)
         } else if skill.ownership == .doubleBooked {
-            Text(doubleBookedNote)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            Text(
+                "Both installers claim this skill. Choose one in Health to update or uninstall it."
+            )
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
         } else if skill.ownership == .vercel || skill.ownership == .github {
             let updateBlocker = state.lifecycleBlocker(.update, for: skill)
-            let uninstallBlocked = state.lifecycleBlocker(.uninstall, for: skill) != nil
-            if updateBlocker == .needsGitHubCLI {
-                Text("Updating needs the GitHub CLI. Get it in Settings > Installers.")
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else if updateBlocker == .touchesVercelRecord {
-                Text("library.update.touchesVercelRecord")
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else if updateBlocker == .dropsVercelLockData {
-                Text("library.update.dropsVercelLockData")
+            if let note = updateBlocker.flatMap(Self.note) {
+                Text(note)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             HStack {
+                uninstallButton
                 Spacer()
-                Button("Uninstall", role: .destructive) {
-                    state.queueLifecycle(.uninstall, for: skill)
-                }
-                .disabled(uninstallBlocked)
-                .axButtonToken("sukiru.library.detail.uninstall", disabled: uninstallBlocked)
-                .help("Add uninstalling this skill to Pending Changes")
-                if skill.ownership == .github {
-                    let restoreBlocked = state.lifecycleBlocker(.restore, for: skill) != nil
-                    Button("Restore Files") {
-                        state.queueLifecycle(.restore, for: skill)
-                    }
-                    .disabled(restoreBlocked)
-                    .axButtonToken("sukiru.library.detail.restore", disabled: restoreBlocked)
-                    .help("library.restore.help")
-                }
-                Button("Update") {
-                    state.queueLifecycle(.update, for: skill)
-                }
-                .disabled(updateBlocker != nil)
-                .axButtonToken("sukiru.library.detail.update", disabled: updateBlocker != nil)
-                .help("Add updating this skill through its installer to Pending Changes")
+                restoreButton
+                updateButton(blocked: updateBlocker != nil)
             }
             .disabled(state.batchMutationInFlight)
+        }
+    }
+
+    /// Why Update is unavailable, when the reason is not already on screen
+    /// (the read-only notice covers a missing Node.js).
+    private static func note(_ blocker: LifecycleBlocker) -> LocalizedStringKey? {
+        switch blocker {
+        case .needsGitHubCLI: "Updating needs the GitHub CLI. Get it in Settings > Installers."
+        case .touchesVercelRecord: "library.update.touchesVercelRecord"
+        case .dropsVercelLockData: "library.update.dropsVercelLockData"
+        default: nil
+        }
+    }
+
+    @ViewBuilder
+    private var restoreButton: some View {
+        if skill.ownership == .github && state.lifecycleBlocker(.restore, for: skill) == nil {
+            Button("Restore Files") {
+                state.queueLifecycle(.restore, for: skill)
+            }
+            .axButtonToken("sukiru.library.detail.restore")
+            .help("library.restore.help")
+        }
+    }
+
+    private var uninstallButton: some View {
+        let blocked = state.lifecycleBlocker(.uninstall, for: skill) != nil
+        return Button("Uninstall", role: .destructive) {
+            state.queueLifecycle(.uninstall, for: skill)
+        }
+        .disabled(blocked)
+        .axButtonToken("sukiru.library.detail.uninstall", disabled: blocked)
+        .help("Remove this skill's files (adds to Pending Changes)")
+    }
+
+    @ViewBuilder
+    private func updateButton(blocked: Bool) -> some View {
+        let button = Button("Update") {
+            state.queueLifecycle(.update, for: skill)
+        }
+        .disabled(blocked)
+        .axButtonToken("sukiru.library.detail.update", disabled: blocked)
+        .help("Update to the latest version (adds to Pending Changes)")
+        if state.githubUpdate(for: skill) != nil {
+            button.buttonStyle(.borderedProminent)
+        } else {
+            button
         }
     }
 }
@@ -122,7 +141,7 @@ struct UpdateAllButton: View {
     private func help(nothingUpdatable: Bool) -> LocalizedStringKey {
         nothingUpdatable && !state.withheldUpdates(skills).isEmpty
             ? "None of these skills can be updated here. Select one to see why."
-            : "Update every skill an installer manages here, reviewed in one batch"
+            : "Update every skill an installer manages, in one batch"
     }
 }
 
@@ -132,7 +151,7 @@ struct UpdateCheckFailureAlert: ViewModifier {
 
     func body(content: Content) -> some View {
         content.alert(
-            "Some skills could not be checked for updates",
+            "Couldn't Check Some Skills for Updates",
             isPresented: Binding(
                 get: { !state.updateCheck.failures.isEmpty },
                 set: { if !$0 { state.updateCheck.failures = [] } })
@@ -164,7 +183,7 @@ struct CheckForUpdatesButton: View {
             }
             .disabled(disabled)
             .axButtonToken("sukiru.library.checkUpdates", disabled: disabled)
-            .help("Ask gh skill whether GitHub-installed skills have newer versions")
+            .help("Look for newer versions of skills installed with gh skill")
         }
     }
 }

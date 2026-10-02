@@ -12,47 +12,67 @@ struct LibraryProvenanceSection: View {
     @State private var showingPinSheet = false
 
     var body: some View {
-        Section {
-            if isVercelReadOnly { readOnlyNotice }
-            if skill.ambiguous { ambiguousNotice }
-            if let vercel = skill.provenance.vercel, !hasCompanionRecord {
-                field("Installer", String(localized: "Vercel skills CLI (lock entry)"))
-                if let source = vercel.source { field("Source", source) }
-                if let ref = vercel.ref { field("Ref", ref) }
-                field(
-                    "Version",
-                    (vercel.updatedAt ?? vercel.installedAt).map(RecordTimestamp.display)
-                        ?? String(localized: "unknown"))
+        // The No Known Source section already explains a plain ownerless
+        // skill, so a section that would only repeat it is left out.
+        if !isExplainedElsewhere {
+            Section {
+                rows
+            } header: {
+                TokenSectionHeader(token: "sukiru.library.detail.provenance", title: "Provenance")
             }
-            if let github = skill.provenance.github {
-                field("Installer", String(localized: "GitHub gh skill (frontmatter)"))
-                field("Repository", github.repo)
-                if let ref = github.ref { field("Ref", ref) }
-                field("Version", github.treeSha ?? String(localized: "unknown"))
-                pinStateRow(github)
-                if let update = state.githubUpdate(for: skill) {
-                    field(
-                        "Update available",
-                        [update.availableTree, update.ref.map { "(\($0))" }]
-                            .compactMap { $0 }.joined(separator: " "))
-                }
-            }
-            if hasCompanionRecord {
-                Text("library.githubCompanionRecord")
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            if let agent = skill.managingAgent {
-                Text("library.agentManaged \(agent)")
-                    .foregroundStyle(.secondary)
-            } else if skill.provenance.vercel == nil && skill.provenance.github == nil {
-                Text("No ledger claims this skill (ownerless).")
-                    .foregroundStyle(.secondary)
-            }
-            LibraryLifecycleControls(skill: skill)
-        } header: {
-            TokenSectionHeader(token: "sukiru.library.detail.provenance", title: "Provenance")
         }
+    }
+
+    @ViewBuilder
+    private var rows: some View {
+        if isVercelReadOnly { readOnlyNotice }
+        if skill.ambiguous { ambiguousNotice }
+        if let vercel = skill.provenance.vercel, !hasCompanionRecord {
+            field("Installer", String(localized: "npx skills (Vercel)"))
+            if let source = vercel.source { field("Source", source) }
+            if let ref = vercel.ref { field("Ref", ref) }
+            field(
+                "Version",
+                (vercel.updatedAt ?? vercel.installedAt).map(RecordTimestamp.display)
+                    ?? String(localized: "unknown"))
+        }
+        if let github = skill.provenance.github {
+            field("Installer", String(localized: "gh skill (GitHub)"))
+            field("Repository", github.repo)
+            if let ref = github.ref { field("Ref", ref) }
+            field(
+                "Version", github.treeSha.map(Self.short) ?? String(localized: "unknown"),
+                help: github.treeSha)
+            pinnedRow(github)
+            if let update = state.githubUpdate(for: skill) {
+                field("New Version", Self.short(update.availableTree), help: update.availableTree)
+            }
+        }
+        if hasCompanionRecord {
+            Text("library.githubCompanionRecord")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        if let agent = skill.managingAgent {
+            Text("library.agentManaged \(agent)")
+                .foregroundStyle(.secondary)
+        } else if skill.provenance.vercel == nil && skill.provenance.github == nil {
+            Text("No installer records this skill.")
+                .foregroundStyle(.secondary)
+        }
+        LibraryLifecycleControls(skill: skill)
+    }
+
+    private var isExplainedElsewhere: Bool {
+        skill.ownership == .ownerless && !skill.ambiguous && !isVercelReadOnly
+            && skill.provenance.vercel == nil && skill.provenance.github == nil
+            && state.orphanFinding(for: skill) != nil
+    }
+
+    /// A tree SHA shortened like `git log --oneline`, the full value in the
+    /// tooltip.
+    private static func short(_ sha: String) -> String {
+        String(sha.prefix(7))
     }
 
     /// The skill's Vercel lock entry is gh's companion record, not a claim.
@@ -60,45 +80,44 @@ struct LibraryProvenanceSection: View {
         skill.ownership == .github && skill.provenance.vercel?.githubCompanion == true
     }
 
-    /// The Pin state row plus its actions: Pin… on an unpinned GitHub-ledger
-    /// skill, Unpin on a pinned one. Both queue into Pending Changes; a
-    /// queued change (any action) hides them, like the update controls.
+    /// The Pinned row plus its action: Pin… on an unpinned GitHub-ledger
+    /// skill, Unpin on a pinned one, each queued into Pending Changes. Like
+    /// Restore Files, the action is hidden while gh writes are withheld or
+    /// any change for the skill is queued.
     @ViewBuilder
-    private func pinStateRow(_ github: GitHubProvenance) -> some View {
-        let pinnedText =
+    private func pinnedRow(_ github: GitHubProvenance) -> some View {
+        let value =
             github.pinned
-            ? github.pinnedRef.map { String(localized: "Pinned to \($0)") }
-                ?? String(localized: "Pinned")
-            : String(localized: "Unpinned")
-        LabeledContent("Pin state") {
+            ? github.pinnedRef ?? String(localized: "Yes")
+            : String(localized: "No")
+        let action: LifecycleAction = github.pinned ? .unpin : .pin
+        let offered =
+            skill.ownership == .github && state.queuedLifecycle(for: skill) == nil
+            && state.lifecycleBlocker(action, for: skill) == nil
+        LabeledContent("Pinned") {
             HStack(spacing: 8) {
-                Text(pinnedText)
+                Text(value)
                     .lineLimit(1)
                     .truncationMode(.middle)
                     .textSelection(.enabled)
-                    .help(pinnedText)
-                if skill.ownership == .github && state.queuedLifecycle(for: skill) == nil {
-                    if github.pinned {
-                        let unpinBlocked = state.lifecycleBlocker(.unpin, for: skill) != nil
-                        Button("Unpin") {
-                            state.queueLifecycle(.unpin, for: skill)
-                        }
-                        .controlSize(.small)
-                        .disabled(unpinBlocked)
-                        .axButtonToken("sukiru.library.detail.unpin", disabled: unpinBlocked)
-                        .help("library.unpin.help")
-                    } else {
-                        let pinBlocked = state.lifecycleBlocker(.pin, for: skill) != nil
-                        Button("Pin…") {
-                            showingPinSheet = true
-                        }
-                        .controlSize(.small)
-                        .disabled(pinBlocked)
-                        .axButtonToken("sukiru.library.detail.pin", disabled: pinBlocked)
-                        .help("Pin this skill to a tag, branch, or commit so updates skip it")
+                    .help(value)
+                if offered && github.pinned {
+                    Button("Unpin") {
+                        state.queueLifecycle(.unpin, for: skill)
                     }
+                    .controlSize(.small)
+                    .axButtonToken("sukiru.library.detail.unpin")
+                    .help("library.unpin.help")
+                } else if offered {
+                    Button("Pin…") {
+                        showingPinSheet = true
+                    }
+                    .controlSize(.small)
+                    .axButtonToken("sukiru.library.detail.pin")
+                    .help("Keep this skill at a tag, branch, or commit so updates skip it")
                 }
             }
+            .disabled(state.batchMutationInFlight)
         }
         .sheet(isPresented: $showingPinSheet) {
             PinSheet(skill: skill)
@@ -111,25 +130,17 @@ struct LibraryProvenanceSection: View {
     }
 
     private var readOnlyNotice: some View {
-        // swiftlint:disable line_length
-        let hint: LocalizedStringKey =
-            "Read-only. Repairing, updating, or uninstalling this skill needs Node.js, which is not installed. Get it in Settings > Installers. Everything else still works."
-        // swiftlint:enable line_length
-        return HStack(spacing: 0) {
+        HStack(spacing: 0) {
             AXToken(token: "sukiru.library.detail.readonly.\(AXTokens.skill(skill.name))")
-            notice(hint)
+            notice("library.readOnly.needsNode")
         }
         .accessibilityElement(children: .contain)
     }
 
     private var ambiguousNotice: some View {
-        // swiftlint:disable line_length
-        let explanation: LocalizedStringKey =
-            "Ownership ambiguous: distinct copies of this name disagree, so attribution is voided and the skill is treated as ownerless. Ledger claims below are data, not verdicts."
-        // swiftlint:enable line_length
-        return HStack(spacing: 0) {
+        HStack(spacing: 0) {
             AXToken(token: "sukiru.library.detail.ambiguous.\(AXTokens.skill(skill.name))")
-            notice(explanation)
+            notice("library.ambiguous.explanation")
         }
         .accessibilityElement(children: .contain)
     }
@@ -144,13 +155,15 @@ struct LibraryProvenanceSection: View {
         }
     }
 
-    private func field(_ name: LocalizedStringKey, _ value: String) -> some View {
+    private func field(
+        _ name: LocalizedStringKey, _ value: String, help: String? = nil
+    ) -> some View {
         LabeledContent(name) {
             Text(value)
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .textSelection(.enabled)
-                .help(value)
+                .help(help ?? value)
         }
     }
 }
@@ -192,9 +205,10 @@ private struct PinSheet: View {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
-                Button("Queue Pin", action: queue)
+                Button("Pin", action: queue)
                     .keyboardShortcut(.defaultAction)
                     .disabled(!LifecycleRequest.isValidPinRef(trimmedRef))
+                    .help("Adds the pin to Pending Changes")
                     .axButtonToken(
                         "sukiru.library.detail.pin.queue",
                         disabled: !LifecycleRequest.isValidPinRef(trimmedRef))

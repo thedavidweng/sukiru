@@ -17,10 +17,10 @@ struct InstallSheet: View {
             if state.installOrigin == .searchResult, let result = state.selectedSearchResult() {
                 resultSummary(result)
             }
-            installerChoice
             if state.installOrigin == .repository {
                 RepositorySkillPicker()
             }
+            installerChoice
             targetScope
             Divider()
             if let error = state.installError {
@@ -30,22 +30,23 @@ struct InstallSheet: View {
                     .textSelection(.enabled)
             }
             HStack(spacing: 12) {
+                Spacer()
                 Button("Cancel") {
                     state.showingInstallSheet = false
                 }
                 .axButtonToken("sukiru.search.install.cancel")
                 .keyboardShortcut(.cancelAction)
-                Spacer()
-                Button {
+                // No default-button shortcut: Return in the repository field
+                // lists its skills and must not also queue the install.
+                Button("Add to Pending Changes") {
                     state.confirmInstall()
-                } label: {
-                    Text("Add to Pending Changes")
                 }
                 .axButtonToken(
                     "sukiru.search.install.confirm",
                     disabled: !canConfirm
                 )
                 .disabled(!canConfirm)
+                .help("Review and apply the install in Pending Changes")
             }
         }
         .padding(20)
@@ -56,27 +57,18 @@ struct InstallSheet: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 0) {
-                AXToken(token: "sukiru.search.install.title")
-                switch state.installOrigin {
-                case .searchResult:
-                    Text("Install Skill")
-                        .font(.title3.weight(.semibold))
-                case .repository:
-                    Text("Install from Repository")
-                        .font(.title3.weight(.semibold))
-                }
+        HStack(spacing: 0) {
+            AXToken(token: "sukiru.search.install.title")
+            switch state.installOrigin {
+            case .searchResult:
+                Text("Install Skill")
+                    .font(.title3.weight(.semibold))
+            case .repository:
+                Text("Install from Repository")
+                    .font(.title3.weight(.semibold))
             }
-            .accessibilityElement(children: .contain)
-            // swiftlint:disable line_length
-            Text(
-                "The install is a reviewable Command Batch: it runs through Pending Changes with a snapshot, post-run diff, and rollback."
-            )
-            // swiftlint:enable line_length
-            .font(.callout)
-            .foregroundStyle(.secondary)
         }
+        .accessibilityElement(children: .contain)
     }
 
     private func resultSummary(_ result: SkillSearchResult) -> some View {
@@ -107,25 +99,32 @@ struct InstallSheet: View {
             }
             .pickerStyle(.radioGroup)
             .labelsHidden()
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Image(systemName: "info.circle")
-                    .foregroundStyle(.secondary)
+            if state.installCapabilityAvailable(state.installInstaller) {
                 Text(state.installConsequenceCopy(state.installInstaller))
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-            }
-            if !state.installCapabilityAvailable(state.installInstaller) {
+            } else {
                 HStack(spacing: 0) {
                     AXToken(token: "sukiru.search.install.blocked")
-                    let hint: LocalizedStringKey =
-                        "The required CLI is unavailable in this environment; this installer cannot build a batch."
-                    Text(hint)
-                        .font(.callout)
-                        .foregroundStyle(.orange)
+                    Label {
+                        Text(blockedHint)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .symbolRenderingMode(.multicolor)
+                    }
+                    .font(.callout)
                 }
                 .accessibilityElement(children: .contain)
             }
+        }
+    }
+
+    private var blockedHint: LocalizedStringKey {
+        switch state.installInstaller {
+        case .vercel: "install.error.needsNode"
+        case .github: "install.error.needsGitHub"
         }
     }
 
@@ -135,25 +134,22 @@ struct InstallSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 0) {
                 AXToken(token: "sukiru.search.install.scope")
-                Text("Target")
+                Text("Location")
                     .font(.headline)
             }
             .accessibilityElement(children: .contain)
-            Picker("Target", selection: $state.installTarget) {
-                Text("User (global)").tag(InstallTarget.user)
+            Picker("Location", selection: $state.installTarget) {
+                Text("User Library").tag(InstallTarget.user)
                 ForEach(state.projectRoots, id: \.self) { root in
-                    Text(root)
+                    Text(verbatim: (root as NSString).abbreviatingWithTildeInPath)
                         .tag(InstallTarget.project(root: root))
-                        .lineLimit(2)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .help(root)
                 }
             }
             .pickerStyle(.radioGroup)
             .labelsHidden()
-            if case .project(let root) = state.installTarget {
-                Text("Installs into \(root) at project scope.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
             switch state.installInstaller {
             case .vercel:
                 vercelAgentFields
@@ -183,7 +179,7 @@ struct InstallSheet: View {
                         .toggleStyle(.checkbox)
                 }
             }
-            Text("With no agent checked, npx skills chooses where to link the skills.")
+            Text("If none are checked, npx skills chooses the agents.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -208,24 +204,23 @@ struct InstallSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 AXToken(token: "sukiru.search.install.agent")
-                Text("Agent target")
+                Text("Agent")
                     .font(.callout.weight(.medium))
             }
             .accessibilityElement(children: .contain)
             Picker("Agent", selection: $state.ghInstallAgent) {
                 ForEach(HostTable.ghInstallAgentOptions, id: \.self) { agent in
-                    Text(agent).tag(agent)
+                    Text(verbatim: agent).tag(agent)
                 }
             }
             .labelsHidden()
-            Text("install.gh.agentNote \(state.ghInstallAgent)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            .fixedSize()
             HStack(spacing: 8) {
                 AXToken(token: "sukiru.search.install.pin")
-                TextField("Pin ref (optional: tag or SHA)", text: $state.ghPinRef)
+                TextField("Pin to tag or commit (optional)", text: $state.ghPinRef)
                     .textFieldStyle(.roundedBorder)
                     .frame(maxWidth: 240)
+                    .help("Updates skip a pinned skill")
             }
             .accessibilityElement(children: .contain)
         }

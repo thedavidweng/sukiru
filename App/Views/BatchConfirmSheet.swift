@@ -69,7 +69,7 @@ struct BatchConfirmSheet: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            proposalButtons(batch)
+            proposalButtons
         }
     }
 
@@ -94,7 +94,7 @@ struct BatchConfirmSheet: View {
         }
     }
 
-    private func proposalButtons(_ batch: CommandBatch) -> some View {
+    private var proposalButtons: some View {
         HStack {
             Spacer()
             Button("Cancel") {
@@ -102,10 +102,10 @@ struct BatchConfirmSheet: View {
             }
             .keyboardShortcut(.cancelAction)
             .axButtonToken("sukiru.confirm.cancel")
-            Button {
+            // No count: one command can update several skills, so a command
+            // count would disagree with the summary above.
+            Button("Apply") {
                 state.executePendingBatch()
-            } label: {
-                Text("Apply \(batch.commands.count) Changes")
             }
             .keyboardShortcut(.defaultAction)
             .disabled(!state.canExecutePendingBatch)
@@ -223,30 +223,55 @@ struct BatchConfirmSheet: View {
 struct BatchSummary {
     private enum Kind: CaseIterable {
         case deleteLink, relink, relinkDiverged, materialize, deleteDirectory
-        case removeLeftover, remove, install, update
+        case removeLeftover, remove, install, reinstall, pin, unpin, update
 
         init(_ command: BatchCommand) {
             if let operation = command.fileOperation {
-                switch operation {
-                case .deleteLink: self = .deleteLink
-                case .relink:
-                    self =
-                        command.dangerFlags.contains(.discardsLocalChanges)
-                        ? .relinkDiverged : .relink
-                case .materialize: self = .materialize
-                case .deleteDirectory: self = .deleteDirectory
-                case .removeLeftoverSkillsDir: self = .removeLeftover
-                }
-                return
-            }
-            switch (command.argv.first, command.argv.dropFirst(2).first) {
-            case ("npx", "remove"): self = .remove
-            case ("npx", "add"), ("gh", "install"): self = .install
-            default: self = .update
+                self = Self.fileOperation(
+                    operation,
+                    discardsLocalChanges: command.dangerFlags.contains(
+                        .discardsLocalChanges))
+            } else {
+                self = Self.cliCommand(command)
             }
         }
 
+        private static func fileOperation(
+            _ operation: FileOperation, discardsLocalChanges: Bool
+        ) -> Kind {
+            switch operation {
+            case .deleteLink: .deleteLink
+            case .relink: discardsLocalChanges ? .relinkDiverged : .relink
+            case .materialize: .materialize
+            case .deleteDirectory: .deleteDirectory
+            case .removeLeftoverSkillsDir: .removeLeftover
+            }
+        }
+
+        private static func cliCommand(_ command: BatchCommand) -> Kind {
+            switch command.consequenceKind {
+            case .pinsGitHubSkill: return .pin
+            case .unpinsAndUpdates: return .unpin
+            default: break
+            }
+            switch (command.argv.first, command.argv.dropFirst(2).first) {
+            case ("npx", "remove"): return .remove
+            // A forced gh install re-anchors a skill already on disk
+            // (Restore Files, adoption, keep-GitHub arbitration).
+            case ("gh", "install") where command.argv.contains("--force"): return .reinstall
+            case ("npx", "add"), ("gh", "install"): return .install
+            default: return .update
+            }
+        }
+
+        /// One update or unpin command can name several skills.
+        var countsNames: Bool { self == .update || self == .unpin }
+
         func line(_ count: Int) -> String {
+            fileOperationLine(count) ?? cliCommandLine(count)
+        }
+
+        private func fileOperationLine(_ count: Int) -> String? {
             switch self {
             case .deleteLink: String(localized: "summary.deleteLink \(count)")
             case .relink: String(localized: "summary.relink \(count)")
@@ -254,9 +279,18 @@ struct BatchSummary {
             case .materialize: String(localized: "summary.materialize \(count)")
             case .deleteDirectory: String(localized: "summary.deleteDirectory \(count)")
             case .removeLeftover: String(localized: "summary.removeLeftover \(count)")
+            default: nil
+            }
+        }
+
+        private func cliCommandLine(_ count: Int) -> String {
+            switch self {
             case .remove: String(localized: "summary.remove \(count)")
             case .install: String(localized: "summary.install \(count)")
-            case .update: String(localized: "summary.update \(count)")
+            case .reinstall: String(localized: "summary.reinstall \(count)")
+            case .pin: String(localized: "summary.pin \(count)")
+            case .unpin: String(localized: "summary.unpin \(count)")
+            default: String(localized: "summary.update \(count)")
             }
         }
     }
@@ -271,9 +305,8 @@ struct BatchSummary {
             if counts[kind] == nil {
                 order.append(kind)
             }
-            // One update command can name several skills.
             let names = command.argv.dropFirst(3).prefix { !$0.hasPrefix("-") }.count
-            counts[kind, default: 0] += kind == .update ? max(names, 1) : 1
+            counts[kind, default: 0] += kind.countsNames ? max(names, 1) : 1
         }
         lines = order.map { $0.line(counts[$0] ?? 0) }
     }

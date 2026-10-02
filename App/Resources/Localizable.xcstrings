@@ -284,29 +284,18 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "加入待处理变更"
+            "value" : "加入待处理更改"
           }
         }
       }
     },
-    "Add uninstalling this skill to Pending Changes" : {
-      "comment" : "Library detail: help for Uninstall.",
+    "Adds the pin to Pending Changes" : {
+      "comment" : "Pin sheet: help for the Pin button.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "将卸载此技能加入待处理更改"
-          }
-        }
-      }
-    },
-    "Add updating this skill through its installer to Pending Changes" : {
-      "comment" : "Library detail: help for Update.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "将通过其安装器更新此技能加入待处理更改"
+            "value" : "将固定加入待处理更改"
           }
         }
       }
@@ -357,7 +346,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Agent"
+            "value" : "智能体"
           }
         }
       }
@@ -369,17 +358,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "智能体文件夹"
-          }
-        }
-      }
-    },
-    "Agent target" : {
-      "comment" : "Install sheet: gh --agent field label.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "目标 agent"
           }
         }
       }
@@ -470,30 +448,13 @@
         }
       }
     },
-    "Apply %lld Changes" : {
+    "Apply" : {
+      "comment" : "Batch confirmation: runs the reviewed batch.",
       "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Apply %lld Change"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Apply %lld Changes"
-                }
-              }
-            }
-          }
-        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "应用 %lld 项更改"
+            "value" : "应用"
           }
         }
       }
@@ -514,17 +475,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在应用更改…"
-          }
-        }
-      }
-    },
-    "Ask gh skill whether GitHub-installed skills have newer versions" : {
-      "comment" : "Library toolbar help: Check for Updates.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "询问 gh skill 通过 GitHub 安装的技能是否有新版本"
           }
         }
       }
@@ -571,13 +521,13 @@
         }
       }
     },
-    "Both installers claim this skill. Choose which one keeps it in Health before you update or uninstall it." : {
+    "Both installers claim this skill. Choose one in Health to update or uninstall it." : {
       "comment" : "Library detail: a double-booked skill cannot be updated or uninstalled yet.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "两个安装器都记录了此技能。请先在「健康」中选择由哪个安装器保留它，再更新或卸载。"
+            "value" : "两个安装器都认领了此技能。请在“健康”中选定一个，再更新或卸载。"
           }
         }
       }
@@ -875,6 +825,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法恢复"
+          }
+        }
+      }
+    },
+    "Couldn't Check Some Skills for Updates" : {
+      "comment" : "Alert title after a gh update check could not check some folders.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法检查部分技能的更新"
           }
         }
       }
@@ -1306,28 +1267,6 @@
         }
       }
     },
-    "GitHub gh skill (frontmatter)" : {
-      "comment" : "Detail provenance: installer line for a gh-claimed skill.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "GitHub gh skill（前置元数据）"
-          }
-        }
-      }
-    },
-    "GitHub owner" : {
-      "comment" : "Search toolbar: placeholder of the owner filter field (a GitHub user or organization).",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "GitHub 所有者"
-          }
-        }
-      }
-    },
     "GitHub repository" : {
       "comment" : "Finding evidence label.",
       "localizations" : {
@@ -1379,6 +1318,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "相同副本而非链接"
+          }
+        }
+      }
+    },
+    "If none are checked, npx skills chooses the agents." : {
+      "comment" : "Install sheet: footnote under the Vercel agent checkboxes.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果都不勾选，将由 npx skills 选择智能体。"
           }
         }
       }
@@ -1503,17 +1453,6 @@
         }
       }
     },
-    "Installs into %@ at project scope." : {
-      "comment" : "Install sheet: project-scope target note (interpolated: project root).",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "将以项目作用域安装到 %@。"
-          }
-        }
-      }
-    },
     "Install…" : {
       "comment" : "Search result detail: opens the installer-choice sheet.",
       "localizations" : {
@@ -1585,6 +1524,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保留 Vercel 账本"
+          }
+        }
+      }
+    },
+    "Keep this skill at a tag, branch, or commit so updates skip it" : {
+      "comment" : "Library detail: help for Pin….",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将此技能固定在某个标签、分支或提交，更新时会跳过它"
           }
         }
       }
@@ -1665,17 +1615,6 @@
         }
       }
     },
-    "Limit results to one GitHub user or organization" : {
-      "comment" : "Search toolbar: help for the owner filter field.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "只显示某个 GitHub 用户或组织的结果"
-          }
-        }
-      }
-    },
     "Link" : {
       "comment" : "Finding evidence label (noun).",
       "localizations" : {
@@ -1737,6 +1676,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "链接数"
+          }
+        }
+      }
+    },
+    "List the skills in this repository with the chosen installer" : {
+      "comment" : "Install sheet: help for Show Skills.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用所选安装器列出此仓库中的技能"
           }
         }
       }
@@ -1891,22 +1841,34 @@
         }
       }
     },
+    "Look for newer versions of skills installed with gh skill" : {
+      "comment" : "Library toolbar help: Check for Updates.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查通过 gh skill 安装的技能是否有新版本"
+          }
+        }
+      }
+    },
+    "Look up each skill on skills.sh and queue the matches" : {
+      "comment" : "Health: help for Find Sources on the ownerless group.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 skills.sh 上查找每个技能，并将匹配项加入队列"
+          }
+        }
+      }
+    },
     "Looking for a source…" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在查找来源…"
-          }
-        }
-      }
-    },
-    "Match each skill to a skills.sh listing and queue adoption of confirmed matches" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在 skills.sh 上为每个技能匹配来源，并将内容核实一致的收编加入队列"
           }
         }
       }
@@ -1949,6 +1911,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "需要关注"
+          }
+        }
+      }
+    },
+    "New Version" : {
+      "comment" : "Library detail provenance: the newer upstream version a check found.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新版本"
+          }
+        }
+      }
+    },
+    "No" : {
+      "comment" : "Library detail: value of the Pinned row for an unpinned skill.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "否"
           }
         }
       }
@@ -2007,6 +1991,17 @@
         }
       }
     },
+    "No installer records this skill." : {
+      "comment" : "Library detail provenance: an ownerless skill.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有安装器记录此技能。"
+          }
+        }
+      }
+    },
     "No known source" : {
       "comment" : "Health finding title: no installer ledger records this skill.",
       "localizations" : {
@@ -2014,17 +2009,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "来源未知"
-          }
-        }
-      }
-    },
-    "No ledger claims this skill (ownerless)." : {
-      "comment" : "Detail provenance for an ownerless skill.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "没有账本登记此技能（无属主）。"
           }
         }
       }
@@ -2078,6 +2062,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未找到技能"
+          }
+        }
+      }
+    },
+    "No skills found in this repository." : {
+      "comment" : "Install sheet: repository listing came back empty.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此仓库中没有找到技能。"
           }
         }
       }
@@ -2198,6 +2193,17 @@
         }
       }
     },
+    "Only show skills from this GitHub user or organization" : {
+      "comment" : "Search toolbar: help for the owner filter field.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只显示该 GitHub 用户或组织的技能"
+          }
+        }
+      }
+    },
     "Other Repairs…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2236,17 +2242,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无属主"
-          }
-        }
-      }
-    },
-    "Ownership ambiguous: distinct copies of this name disagree, so attribution is voided and the skill is treated as ownerless. Ledger claims below are data, not verdicts." : {
-      "comment" : "Library detail notice for ambiguous-name skills (attribution voided per D23).",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "所有权存在歧义：同名技能的多个副本内容不一致，归属判定已作废，该技能按无归属处理。下方的账本声明仅供参考，不代表判定结果。"
           }
         }
       }
@@ -2294,39 +2289,6 @@
         }
       }
     },
-    "Pin ref (optional: tag or SHA)" : {
-      "comment" : "Install sheet: gh --pin field placeholder.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "钉版本 ref（可选：标签或 SHA）"
-          }
-        }
-      }
-    },
-    "Pin state" : {
-      "comment" : "Detail provenance field label for the gh pin state.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "固定状态"
-          }
-        }
-      }
-    },
-    "Pin this skill to a tag, branch, or commit so updates skip it" : {
-      "comment" : "Library detail: help for the Pin button.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "将此技能固定到某个标签、分支或提交，更新时会跳过它"
-          }
-        }
-      }
-    },
     "Pin to %@" : {
       "comment" : "Pending Changes cart: a queued pin and its ref.",
       "localizations" : {
@@ -2338,6 +2300,17 @@
         }
       }
     },
+    "Pin to tag or commit (optional)" : {
+      "comment" : "Install sheet: placeholder of the gh pin field.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "固定到标签或提交（可选）"
+          }
+        }
+      }
+    },
     "Pinned" : {
       "comment" : "Detail provenance: gh placement is pinned.",
       "localizations" : {
@@ -2345,17 +2318,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已固定"
-          }
-        }
-      }
-    },
-    "Pinned to %@" : {
-      "comment" : "Detail provenance: gh placement is pinned to the given ref.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已固定到 %@"
           }
         }
       }
@@ -2447,7 +2409,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "来源"
+            "value" : "溯源"
           }
         }
       }
@@ -2496,17 +2458,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "排队删除"
-          }
-        }
-      }
-    },
-    "Queue Pin" : {
-      "comment" : "Pin sheet: queue the pin in Pending Changes.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "将固定加入队列"
           }
         }
       }
@@ -2583,17 +2534,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "只读诊断模式：gh 和 skills CLI 均不可用。Sukiru 可检查并报告技能库，但无法执行修复和安装。"
-          }
-        }
-      }
-    },
-    "Read-only. Repairing, updating, or uninstalling this skill needs Node.js, which is not installed. Get it in Settings > Installers. Everything else still works." : {
-      "comment" : "Library detail hint: vercel-ledger skill read-only without the skills CLI.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "只读。修复、更新或卸载此技能需要 Node.js，但尚未安装。请在“设置 > 安装器”中获取。其他功能不受影响。"
           }
         }
       }
@@ -2706,6 +2646,17 @@
         }
       }
     },
+    "Remove this skill's files (adds to Pending Changes)" : {
+      "comment" : "Library detail: help for Uninstall.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除此技能的文件（加入待处理更改）"
+          }
+        }
+      }
+    },
     "Removed (added by the batch)" : {
       "comment" : "Rollback result: the batch had created this path, so rollback removed it.",
       "localizations" : {
@@ -2737,12 +2688,13 @@
         }
       }
     },
-    "Repairs you queue in Health, and updates or uninstalls you queue in the Library, collect here, so you can review and apply them together in one batch with one snapshot." : {
+    "Repairs from Health and changes from the Library wait here until you apply them together." : {
+      "comment" : "Pending Changes: empty state.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在「健康」中排队的修复，以及在「资源库」中排队的更新或卸载，会汇总到这里，你可以一并审阅，并在一个批次中应用，只拍一个快照。"
+            "value" : "来自“健康”的修复和来自“资源库”的更改会在这里等待，直到你一并应用。"
           }
         }
       }
@@ -2908,6 +2860,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "检查更改"
+          }
+        }
+      }
+    },
+    "Review and apply the install in Pending Changes" : {
+      "comment" : "Install sheet: help for Add to Pending Changes.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在“待处理更改”中检查并应用此安装"
           }
         }
       }
@@ -3372,6 +3335,17 @@
         }
       }
     },
+    "Shows the repository's skills without installing anything." : {
+      "comment" : "Install sheet: before a repository is listed.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只列出仓库中的技能，不会安装任何内容。"
+          }
+        }
+      }
+    },
     "Skill" : {
       "comment" : "Finding evidence label.",
       "localizations" : {
@@ -3444,17 +3418,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "快照"
-          }
-        }
-      }
-    },
-    "Some skills could not be checked for updates" : {
-      "comment" : "Alert title after an update check with failures.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "部分技能无法检查更新"
           }
         }
       }
@@ -3588,56 +3551,12 @@
         }
       }
     },
-    "Target" : {
-      "comment" : "Install sheet: target scope field label.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "目标"
-          }
-        }
-      }
-    },
     "The batch ran without changing the library." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "批次已执行，资源库没有任何改动。"
-          }
-        }
-      }
-    },
-    "The install is a reviewable Command Batch: it runs through Pending Changes with a snapshot, post-run diff, and rollback." : {
-      "comment" : "Install sheet explanation.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "安装是一个可审阅的命令批次：会经过「待处理变更」，带快照、事后 diff 与一键回滚。"
-          }
-        }
-      }
-    },
-    "The installer found no skills in this repository." : {
-      "comment" : "Install from Repository: empty listing.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "安装器在此仓库中没有找到技能。"
-          }
-        }
-      }
-    },
-    "The installer you choose lists the repository's skills without installing anything." : {
-      "comment" : "Install from Repository: explains the listing before it runs.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "所选安装器会列出仓库中的技能，不会安装任何内容。"
           }
         }
       }
@@ -3660,17 +3579,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "资源库根目录（SUKIRU_HOME）不存在。请修正路径后按“刷新”，或使用有效的根目录重新启动。"
-          }
-        }
-      }
-    },
-    "The required CLI is unavailable in this environment; this installer cannot build a batch." : {
-      "comment" : "Install sheet: capability-blocked installer hint.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "当前环境缺少所需的 CLI；该安装器无法构建批次。"
           }
         }
       }
@@ -3747,17 +3655,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消固定"
-          }
-        }
-      }
-    },
-    "Unpinned" : {
-      "comment" : "Detail provenance: gh placement is unpinned.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "未固定"
           }
         }
       }
@@ -3861,24 +3758,13 @@
         }
       }
     },
-    "Update available" : {
-      "comment" : "Provenance field: newer version reported by gh.",
+    "Update every skill an installer manages, in one batch" : {
+      "comment" : "Library toolbar help: Update All.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "可用更新"
-          }
-        }
-      }
-    },
-    "Update every skill an installer manages here, reviewed in one batch" : {
-      "comment" : "Library toolbar: help for Update All.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "更新此处由安装器管理的所有技能，并在一个批次中审阅"
+            "value" : "在一个批次中更新所有由安装器管理的技能"
           }
         }
       }
@@ -3890,6 +3776,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用 npx 将 skills CLI 更新到最新版本"
+          }
+        }
+      }
+    },
+    "Update to the latest version (adds to Pending Changes)" : {
+      "comment" : "Library detail: help for Update.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新到最新版本（加入待处理更改）"
+          }
+        }
+      }
+    },
+    "Updates skip a pinned skill" : {
+      "comment" : "Install sheet: help for the gh pin field.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新会跳过已固定的技能"
           }
         }
       }
@@ -3935,17 +3843,6 @@
         }
       }
     },
-    "User (global)" : {
-      "comment" : "Install sheet: user-scope target option.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "用户（全局）"
-          }
-        }
-      }
-    },
     "User Library" : {
       "comment" : "Sidebar folder and Library title for user-scope skills.",
       "localizations" : {
@@ -3979,17 +3876,6 @@
         }
       }
     },
-    "Vercel skills CLI (lock entry)" : {
-      "comment" : "Detail provenance: installer line for a lock-claimed skill.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vercel skills CLI（锁定条目）"
-          }
-        }
-      }
-    },
     "Version" : {
       "comment" : "Detail provenance field label.",
       "localizations" : {
@@ -4012,17 +3898,6 @@
         }
       }
     },
-    "With no agent checked, npx skills chooses where to link the skills." : {
-      "comment" : "Install sheet: note under the npx skills -a agent checkboxes.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "如果不勾选任何 agent，npx skills 会自行决定把技能链接到哪里。"
-          }
-        }
-      }
-    },
     "Working…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4040,6 +3915,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "工作区"
+          }
+        }
+      }
+    },
+    "Yes" : {
+      "comment" : "Library detail: value of the Pinned row when the pin has no recorded ref.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "是"
           }
         }
       }
@@ -5253,13 +5139,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "GitHub ledger: provenance is written into the skill's frontmatter (metadata.github-*), GitHub-only sources, installed for one agent with a pin option. gh also records the skill by name in the Vercel ledger's global lock."
+            "value" : "Installs from GitHub for one agent, with an optional pin. gh also lists the skill in the npx skills lock file."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "GitHub 账本：溯源写入技能的 frontmatter（metadata.github-*），仅限 GitHub 来源，装给单个 agent，可钉版本。gh 还会把该技能名写入 Vercel 账本的全局锁文件。"
+            "value" : "从 GitHub 为单个智能体安装，可选择固定版本。gh 还会在 npx skills 的锁文件中登记此技能。"
           }
         }
       }
@@ -5270,13 +5156,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vercel ledger: the canonical copy lands in .agents/skills with host placement per the CLI's default agent coverage; non-GitHub sources are usable."
+            "value" : "Installs a shared copy in .agents/skills for your agents. Works with any source, not only GitHub."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vercel 账本：canonical 副本落在 .agents/skills，宿主放置遵循 CLI 的默认 agent 覆盖；也支持非 GitHub 来源。"
+            "value" : "在 .agents/skills 中安装一份共享副本供各智能体使用。支持任意来源，不限于 GitHub。"
           }
         }
       }
@@ -5287,13 +5173,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh (≥ 2.90.0) is unavailable in this environment; the GitHub installer cannot build a batch."
+            "value" : "This installer needs the GitHub CLI 2.90 or later. Get it in Settings > Installers."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "当前环境没有可用的 gh（≥ 2.90.0）；GitHub 安装器无法构建批处理。"
+            "value" : "此安装器需要 GitHub CLI 2.90 或更高版本。请在“设置 > 安装器”中获取。"
           }
         }
       }
@@ -5304,13 +5190,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Node.js is not installed, so the Vercel installer cannot build a batch. Get it in Settings > Installers."
+            "value" : "This installer needs Node.js. Get it in Settings > Installers."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "尚未安装 Node.js，Vercel 安装器无法构建批处理。请在“设置 > 安装器”中获取。"
+            "value" : "此安装器需要 Node.js。请在“设置 > 安装器”中获取。"
           }
         }
       }
@@ -5332,23 +5218,6 @@
         }
       }
     },
-    "install.gh.agentNote %@" : {
-      "comment" : "Install sheet note. The argument is the agent id.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "gh skill install --agent %@: the skill's GitHub provenance is written into its frontmatter."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "gh skill install --agent %@：技能的 GitHub 溯源会写入其 frontmatter。"
-          }
-        }
-      }
-    },
     "library.agentManaged %@" : {
       "comment" : "Library provenance for an agent-managed skill; the argument is the agent id.",
       "localizations" : {
@@ -5366,19 +5235,36 @@
         }
       }
     },
+    "library.ambiguous.explanation" : {
+      "comment" : "Library detail: notice for a skill whose copies disagree, so ownership is unknown.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This skill's copies differ, so Sukiru can't tell which installer owns it. The records below are for reference only."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此技能的副本内容不一致，Sukiru 无法判断它归属哪个安装器。下方记录仅供参考。"
+          }
+        }
+      }
+    },
     "library.githubCompanionRecord" : {
       "comment" : "Detail provenance: the Vercel lock entry for this skill is gh's own record, not a Vercel claim.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh also records this skill by name in the Vercel ledger's global lock. That record belongs to gh and is not a Vercel claim."
+            "value" : "gh also lists this skill in the npx skills lock file. That entry belongs to gh."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh 还会在 Vercel 账本的全局锁文件中按名称记录此技能。该记录属于 gh，不构成 Vercel 账本的认领。"
+            "value" : "gh 还会在 npx skills 的锁文件中登记此技能，该条目属于 gh。"
           }
         }
       }
@@ -5406,13 +5292,30 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh re-installs the skill at that ref and pins it there, so updates skip it. Files that differ from that version are overwritten; files you added are kept."
+            "value" : "Updates skip a pinned skill. Pinning reinstalls that version, replacing edits to its files; files you added are kept."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh 会将技能重新安装到该版本引用并固定在那里，更新时会跳过它。与该版本不同的文件会被覆盖；你新增的文件会保留。"
+            "value" : "更新会跳过已固定的技能。固定会重新安装该版本并覆盖对其文件的修改；你新增的文件会保留。"
+          }
+        }
+      }
+    },
+    "library.readOnly.needsNode" : {
+      "comment" : "Library detail: notice for a Vercel-ledger skill when Node.js is missing.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repairing, updating, or uninstalling this skill needs Node.js. Get it in Settings > Installers."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "修复、更新或卸载此技能需要 Node.js。请在“设置 > 安装器”中获取。"
           }
         }
       }
@@ -5423,13 +5326,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Re-download the recorded version over local edits (files you added are kept), queued in Pending Changes"
+            "value" : "Discard local edits by reinstalling the recorded version. Files you added are kept (adds to Pending Changes)."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "重新下载记录的版本以覆盖本地修改（你新增的文件会保留），并加入待处理更改队列"
+            "value" : "重新安装记录的版本以丢弃本地修改，你新增的文件会保留（加入待处理更改）。"
           }
         }
       }
@@ -5440,13 +5343,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Clear the pin and update to the latest upstream version, queued in Pending Changes"
+            "value" : "Remove the pin and update to the latest version (adds to Pending Changes)"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "取消固定并更新到上游最新版本，加入待处理更改队列"
+            "value" : "取消固定并更新到最新版本（加入待处理更改）"
           }
         }
       }
@@ -5457,13 +5360,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh rewrites the Vercel ledger's global lock on every install and update, and that rewrite would drop data npx skills needs from other records. Update this skill outside Sukiru."
+            "value" : "Update this skill outside Sukiru: gh would drop data that npx skills keeps for other skills."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh 每次安装和更新都会重写 Vercel 账本的全局锁文件，而这会丢弃其他记录中 npx skills 需要的数据。请在 Sukiru 之外更新此技能。"
+            "value" : "请在 Sukiru 之外更新此技能：gh 会丢弃 npx skills 为其他技能保存的数据。"
           }
         }
       }
@@ -5474,13 +5377,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh skill also records the skill by name in the Vercel ledger's global lock, which would overwrite the record of the user-scope skill with this name. Update it with npx skills, or outside Sukiru."
+            "value" : "Update this skill outside Sukiru: gh would overwrite the npx skills record of the user skill with the same name."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "gh skill 也会把该技能名写入 Vercel 账本的全局锁文件，这会覆盖用户范围同名技能的记录。请改用 npx skills 更新，或在 Sukiru 之外更新。"
+            "value" : "请在 Sukiru 之外更新此技能：gh 会覆盖 npx skills 中同名用户技能的记录。"
           }
         }
       }
@@ -5528,13 +5431,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Match this skill to a skills.sh listing and queue its adoption"
+            "value" : "Look up this skill on skills.sh and queue its adoption"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "将该技能与 skills.sh 上的条目匹配，并将收编加入队列"
+            "value" : "在 skills.sh 上查找此技能，并将收编加入队列"
           }
         }
       }
@@ -5545,13 +5448,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Adopting a source reinstalls the skill with npx skills, which needs Node.js. Get it in Settings > Installers."
+            "value" : "Finding a source needs Node.js. Get it in Settings > Installers."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "收编来源会通过 npx skills 重新安装该技能，这需要 Node.js。请在“设置 > 安装器”中获取。"
+            "value" : "查找来源需要 Node.js。请在“设置 > 安装器”中获取。"
           }
         }
       }
@@ -5871,6 +5774,23 @@
         }
       }
     },
+    "search.ownerField" : {
+      "comment" : "Search toolbar: placeholder of the owner filter field (a GitHub user or organization).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Owner"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有者"
+          }
+        }
+      }
+    },
     "settings.installAsCopies.footer" : {
       "localizations" : {
         "en" : {
@@ -6156,6 +6076,64 @@
         }
       }
     },
+    "summary.pin %lld" : {
+      "comment" : "Batch confirmation summary line.",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pin %lld skill"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pin %lld skills"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "固定 %lld 个技能"
+          }
+        }
+      }
+    },
+    "summary.reinstall %lld" : {
+      "comment" : "Batch confirmation summary line: gh install --force (restore, adoption).",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Reinstall %lld skill from GitHub"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Reinstall %lld skills from GitHub"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从 GitHub 重新安装 %lld 个技能"
+          }
+        }
+      }
+    },
     "summary.relink %lld" : {
       "comment" : "Batch confirmation summary line, counted by kind.",
       "localizations" : {
@@ -6223,13 +6201,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Remove %lld entry with npx skills"
+                  "value" : "Remove %lld skill with npx skills"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Remove %lld entries with npx skills"
+                  "value" : "Remove %lld skills with npx skills"
                 }
               }
             }
@@ -6238,7 +6216,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "通过 npx skills 移除 %lld 项"
+            "value" : "通过 npx skills 移除 %lld 个技能"
           }
         }
       }
@@ -6268,6 +6246,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移除 %lld 个残留的智能体文件夹"
+          }
+        }
+      }
+    },
+    "summary.unpin %lld" : {
+      "comment" : "Batch confirmation summary line.",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Unpin and update %lld skill"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Unpin and update %lld skills"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消固定并更新 %lld 个技能"
           }
         }
       }

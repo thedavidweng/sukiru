@@ -103,6 +103,18 @@ struct SukiruApp: App {
                     state.refresh()
                 }
                 .keyboardShortcut("r", modifiers: .command)
+                Button("Check for Updates") {
+                    state.checkGitHubUpdates(state.skillsInLibraryScope)
+                }
+                .disabled(
+                    state.updateCheck.running
+                        || !state.canCheckGitHubUpdates(state.skillsInLibraryScope))
+                Button("Update All") {
+                    state.updateAll(state.skillsInLibraryScope)
+                }
+                .disabled(
+                    state.batchMutationInFlight
+                        || state.updatableSkills(state.skillsInLibraryScope).isEmpty)
             }
             // The search/install flow, keyboard-operable: the
             // search field's onSubmit (Return in the field) runs the query;
@@ -124,6 +136,7 @@ struct SukiruApp: App {
                 Button("Install from Repository…") {
                     state.presentRepositoryInstallSheet()
                 }
+                .keyboardShortcut("i", modifiers: [.command, .option])
             }
             // The repair flow, fully keyboard-operable.
             // Full Keyboard Access off means the Pending/Snapshots buttons

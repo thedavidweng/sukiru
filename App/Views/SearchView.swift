@@ -80,11 +80,11 @@ struct SearchView: View {
     /// Limits the search to one GitHub owner (`--owner` for gh, the
     /// `owner` parameter for skills.sh).
     private var ownerField: some View {
-        TextField("GitHub owner", text: $state.searchOwner)
+        TextField("search.ownerField", text: $state.searchOwner)
             .textFieldStyle(.roundedBorder)
             .frame(width: 120)
             .onSubmit(state.performSearch)
-            .help("Limit results to one GitHub user or organization")
+            .help("Only show skills from this GitHub user or organization")
     }
 
     // MARK: - states

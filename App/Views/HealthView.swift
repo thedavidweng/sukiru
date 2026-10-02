@@ -392,7 +392,7 @@ private struct ProblemSection: View {
             )
             .help(
                 state.canAdoptFromSource
-                    ? "Match each skill to a skills.sh listing and queue adoption of confirmed matches"
+                    ? "Look up each skill on skills.sh and queue the matches"
                     : "orphan.findSource.needsNode")
         }
     }
