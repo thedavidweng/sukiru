@@ -54,7 +54,7 @@ struct LibraryDetailView: View {
     }
 }
 
-private struct SkillDetailForm: View {
+struct SkillDetailForm: View {
     @EnvironmentObject private var state: AppState
     let skill: Skill
 
@@ -195,16 +195,22 @@ private struct SkillDetailForm: View {
                     }
                 }
             }
-            HStack {
-                Spacer()
-                Button("Show in Health") {
-                    state.showFindings(for: skill)
-                }
-                .axButtonToken("sukiru.library.detail.showFindings")
-                .help("Review the evidence and plan a repair in Health (⌘⇧F)")
+            if state.surface != .health {
+                showInHealthButton
             }
         } header: {
             TokenSectionHeader(token: nil, title: "Findings", count: findings.count)
+        }
+    }
+
+    private var showInHealthButton: some View {
+        HStack {
+            Spacer()
+            Button("Show in Health") {
+                state.showFindings(for: skill)
+            }
+            .axButtonToken("sukiru.library.detail.showFindings")
+            .help("Review the evidence and plan a repair in Health (⌘⇧F)")
         }
     }
 }

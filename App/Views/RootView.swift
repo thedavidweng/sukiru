@@ -83,7 +83,9 @@ struct RootView: View {
             SnapshotsDetailView()
         case .search:
             SearchDetailView()
-        case .health, .pending:
+        case .health:
+            HealthDetailView()
+        case .pending:
             DetailPlaceholderView()
         }
     }

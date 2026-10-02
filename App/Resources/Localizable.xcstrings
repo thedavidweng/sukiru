@@ -997,6 +997,16 @@
         }
       }
     },
+    "Evidence" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "证据"
+          }
+        }
+      }
+    },
     "Execute Batch" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2903,6 +2913,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在搜索…"
+          }
+        }
+      }
+    },
+    "Select a problem to inspect it" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择一个问题以查看详情"
           }
         }
       }
