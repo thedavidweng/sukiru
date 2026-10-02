@@ -141,9 +141,11 @@ final class AppState: ObservableObject {
 
     // MARK: - Search / Install state
 
-    /// The query being run and the active backend: the skills.sh
-    /// API (network read) or `gh skill search` (needs gh ≥ 2.90).
+    /// The query being run, the optional GitHub owner it is limited to, and
+    /// the active backend: the skills.sh API (network read) or
+    /// `gh skill search` (needs gh ≥ 2.90).
     @Published var searchQuery = ""
+    @Published var searchOwner = ""
     @Published var searchBackend: SkillSearchResult.Backend = .skillsDotSh
     /// Search lifecycle, selected row, and its SKILL.md preview
     /// with fetch flags/errors.
@@ -157,10 +159,16 @@ final class AppState: ObservableObject {
     @Published var showingInstallSheet = false
     @Published var installInstaller: InstallerChoice = .vercel
     @Published var installTarget: InstallTarget = .user
-    /// gh-ledger install host (--agent; sheet offers the common host set)
-    /// and optional --pin ref.
+    /// gh-ledger install host (--agent, from the common host set) and --pin.
     @Published var ghInstallAgent = "codex"
     @Published var ghPinRef = ""
+    /// Vercel install hosts (`-a`; empty keeps the CLI's default), offered
+    /// from the hosts detected when the sheet opened.
+    @Published var vercelInstallAgents: Set<String> = []
+    @Published var vercelInstallAgentOptions: [HostSpec] = []
+    /// What the sheet installs, and the typed-repository flow's state.
+    @Published var installOrigin: InstallOrigin = .searchResult
+    @Published var repositoryInstall = RepositoryInstall()
     /// Install-batch build refusal (stale source, malformed repo).
     @Published var installError: String?
 

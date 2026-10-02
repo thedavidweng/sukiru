@@ -201,18 +201,27 @@ enum BatchCommandFactory {
 
     // MARK: - new installs
 
-    /// `npx skills add <owner/repo> -s <name> [--copy] (-g|-p) -y` — the verified
-    /// non-interactive NEW-install shape (probe-verified 2026-09-18 against
-    /// skills@1.5.x: `-y` runs with zero prompts; `-g`/`-p` pin the scope
-    /// explicitly, never relying on cwd auto-detection). Project scope
-    /// carries the root as `workingDirectory` (npx resolves `-p` from cwd).
+    /// `npx skills add <owner/repo> -s <name>… [-a <host>…] [--copy] (-g|-p) -y`
+    /// — the verified non-interactive NEW-install shape (probe-verified
+    /// 2026-09-18 against skills@1.5.x: `-y` runs with zero prompts; `-g`/`-p`
+    /// pin the scope explicitly, never relying on cwd auto-detection).
+    /// Repeated `-s` and `-a` accumulate (skills@1.7.0), so one command
+    /// installs every selected skill. Project scope carries the root as
+    /// `workingDirectory` (npx resolves `-p` from cwd).
     static func vercelAdd(
         repo: String,
-        skill: String,
+        skills: [String],
+        agents: [String] = [],
         target: InstallTarget,
         copy: Bool = false
     ) -> BatchCommand {
-        var argv = ["npx", "skills", "add", repo, "-s", skill]
+        var argv = ["npx", "skills", "add", repo]
+        for skill in skills {
+            argv += ["-s", skill]
+        }
+        for agent in agents {
+            argv += ["-a", agent]
+        }
         if copy {
             argv.append("--copy")
         }
@@ -230,7 +239,7 @@ enum BatchCommandFactory {
             argv: argv,
             displayString: BatchCommand.display(for: argv),
             owningCLI: .vercel,
-            intent: "Install new skill '\(skill)' from \(repo) into the Vercel ledger"
+            intent: "Install new skills \(quoted(skills)) from \(repo) into the Vercel ledger"
                 + " (installer choice: npx skills add).",
             dangerFlags: [],
             warning: nil,

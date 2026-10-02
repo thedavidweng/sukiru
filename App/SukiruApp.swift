@@ -121,6 +121,9 @@ struct SukiruApp: App {
                 }
                 .keyboardShortcut("i", modifiers: [.command, .shift])
                 .disabled(state.selectedSearchResult() == nil)
+                Button("Install from Repository…") {
+                    state.presentRepositoryInstallSheet()
+                }
             }
             // The repair flow, fully keyboard-operable.
             // Full Keyboard Access off means the Pending/Snapshots buttons

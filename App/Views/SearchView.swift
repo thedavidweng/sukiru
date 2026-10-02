@@ -37,7 +37,19 @@ struct SearchView: View {
             }
             .toolbar {
                 ToolbarItem {
+                    ownerField
+                }
+                ToolbarItem {
                     backendPicker
+                }
+                ToolbarItem {
+                    Button {
+                        state.presentRepositoryInstallSheet()
+                    } label: {
+                        Label("Install from Repository…", systemImage: "plus")
+                    }
+                    .axButtonToken("sukiru.search.installFromRepository")
+                    .help("Install skills from a GitHub repository")
                 }
             }
             .sheet(isPresented: $state.showingInstallSheet) {
@@ -63,6 +75,16 @@ struct SearchView: View {
         }
         .accessibilityElement(children: .contain)
         .help(ghAvailable ? Text("Backend") : Text("gh unavailable"))
+    }
+
+    /// Limits the search to one GitHub owner (`--owner` for gh, the
+    /// `owner` parameter for skills.sh).
+    private var ownerField: some View {
+        TextField("GitHub owner", text: $state.searchOwner)
+            .textFieldStyle(.roundedBorder)
+            .frame(width: 120)
+            .onSubmit(state.performSearch)
+            .help("Limit results to one GitHub user or organization")
     }
 
     // MARK: - states

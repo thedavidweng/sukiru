@@ -44,6 +44,8 @@ extension AppState {
     func performSearch() {
         let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return }
+        let trimmedOwner = searchOwner.trimmingCharacters(in: .whitespacesAndNewlines)
+        let owner = trimmedOwner.isEmpty ? nil : trimmedOwner
         searchGeneration += 1
         let generation = searchGeneration
         searchPhase = .searching
@@ -56,7 +58,7 @@ extension AppState {
                 transport: URLSessionMarketplaceTransport())
             Task.detached(priority: .userInitiated) { [weak self] in
                 do {
-                    let results = try await client.search(query: query)
+                    let results = try await client.search(query: query, owner: owner)
                     await self?.applySearchResults(results, generation: generation)
                 } catch {
                     await self?.applySearchFailure(
@@ -72,7 +74,7 @@ extension AppState {
                 runner: SystemCommandRunner(environment: environment))
             Task.detached(priority: .userInitiated) { [weak self] in
                 do {
-                    let results = try await client.search(query: query)
+                    let results = try await client.search(query: query, owner: owner)
                     await self?.applySearchResults(results, generation: generation)
                 } catch {
                     await self?.applySearchFailure(
@@ -145,12 +147,22 @@ extension AppState {
     /// Opens the install sheet for the selected result.
     func presentInstallSheet() {
         guard selectedSearchResult() != nil else { return }
+        resetInstallSheet(origin: .searchResult)
+        showingInstallSheet = true
+    }
+
+    /// Resets the selections the install sheet shares across origins.
+    func resetInstallSheet(origin: InstallOrigin) {
+        installOrigin = origin
         installInstaller = .vercel
         installTarget = .user
         ghInstallAgent = Self.ghInstallAgentOptions.first ?? "codex"
         ghPinRef = ""
+        vercelInstallAgents = []
+        let detector = HostDetector(environment: environment, fileSystem: DefaultFileSystemProbe())
+        vercelInstallAgentOptions = HostTable.hosts.filter(detector.isDetected)
+            .sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
         installError = nil
-        showingInstallSheet = true
     }
 
     /// Whether the selected installer is usable in this environment
@@ -192,9 +204,7 @@ extension AppState {
     /// inline; capability gating is enforced here as defense in depth
     /// (the sheet's proceed control is already disabled).
     func confirmInstall() {
-        guard let result = selectedSearchResult(), showingInstallSheet else {
-            return
-        }
+        guard showingInstallSheet else { return }
         // Capability gating enforced here as defense in depth (the sheet's
         // proceed control is already disabled; a keyboard path must refuse
         // just as loudly). Refusals keep the sheet open so the hint is
@@ -211,14 +221,28 @@ extension AppState {
                 return
             }
         }
+        let options = InstallOptions(
+            vercelAgents: installInstaller == .vercel ? vercelInstallAgents.sorted() : [],
+            ghAgent: installInstaller == .github ? ghInstallAgent : nil,
+            ghPinRef: installInstaller == .github ? ghPinRef : nil,
+            copy: installAsCopies)
+        let builder = InstallPlanBuilder()
         do {
-            let batch = try InstallPlanBuilder().build(
-                result: result,
-                installer: installInstaller,
-                target: installTarget,
-                ghAgent: installInstaller == .github ? ghInstallAgent : nil,
-                ghPinRef: installInstaller == .github ? ghPinRef : nil,
-                copy: installAsCopies)
+            let batch: CommandBatch
+            switch installOrigin {
+            case .searchResult:
+                guard let result = selectedSearchResult() else { return }
+                batch = try builder.build(
+                    result: result, installer: installInstaller, target: installTarget,
+                    options: options)
+            case .repository:
+                guard let selection = selectedRepositorySkills() else {
+                    throw InstallPlanError.noSkillsSelected
+                }
+                batch = try builder.build(
+                    repo: selection.repo, skills: selection.skills, installer: installInstaller,
+                    target: installTarget, options: options)
+            }
             showingInstallSheet = false
             pendingBatch = batch
             repairDraft = nil

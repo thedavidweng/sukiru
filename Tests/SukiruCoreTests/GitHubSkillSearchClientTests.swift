@@ -57,6 +57,27 @@ struct GitHubSkillSearchClientTests {
         #expect(first.id == "github|SectionTN/stale-docs|stale-docs")
     }
 
+    @Test("an owner filter maps to --owner")
+    func ownerFilter() async throws {
+        final class RecordingRunner: CommandRunning, @unchecked Sendable {
+            var arguments: [String] = []
+
+            func run(_ executable: String, _ arguments: [String]) -> ProcessOutcome? {
+                self.arguments = arguments
+                return ProcessOutcome(exitCode: 0, stdout: "[]", stderr: "")
+            }
+        }
+        let runner = RecordingRunner()
+        _ = try await GitHubSkillSearchClient(runner: runner)
+            .search(query: "react", owner: "vercel-labs", limit: 5)
+        #expect(
+            runner.arguments == [
+                "skill", "search", "react",
+                "--json", "description,namespace,path,repo,skillName,stars",
+                "-L", "5", "--owner", "vercel-labs"
+            ])
+    }
+
     @Test("missing gh surfaces as a transport error")
     func missingGh() async {
         let client = GitHubSkillSearchClient(runner: StubRunner(outcome: nil))

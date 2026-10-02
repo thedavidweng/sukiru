@@ -67,9 +67,12 @@ Website: <https://thedavidweng.github.io/sukiru/>
   is placed across agents. Switch a skill between link and copy mode, and
   update or uninstall it (or update everything at once) through the installer
   that owns it.
-- 🔍 **Search and install**: Search skills.sh and `gh skill search`, preview
-  `SKILL.md`, then install with the installer you choose, through the same
-  confirm → snapshot → rollback pipeline.
+- 🔍 **Search and install**: Search skills.sh and `gh skill search`
+  (optionally limited to one GitHub owner), preview `SKILL.md`, then install
+  with the installer you choose, through the same confirm → snapshot →
+  rollback pipeline. Install from Repository takes an `owner/repo` or GitHub
+  URL, lists its skills with that installer, and installs the ones you pick.
+  Vercel installs can target specific agents.
 - 🧭 **Adopt unknown skills**: Find Sources matches hand-copied skills to
   skills.sh listings whose `SKILL.md` matches your copy, and queues their
   adoption under `npx skills`.

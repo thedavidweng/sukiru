@@ -58,7 +58,8 @@ struct InstallPlanBuilderTests {
     @Test("github user scope: gh skill install --agent --scope user")
     func githubUserScope() throws {
         let batch = try InstallPlanBuilder().build(
-            result: result, installer: .github, target: .user, ghAgent: "codex")
+            result: result, installer: .github, target: .user,
+            options: InstallOptions(ghAgent: "codex"))
         let command = batch.commands[0]
         #expect(
             command.argv == [
@@ -73,7 +74,7 @@ struct InstallPlanBuilderTests {
     func githubProjectScope() throws {
         let batch = try InstallPlanBuilder().build(
             result: result, installer: .github, target: .project(root: "/tmp/proj"),
-            ghAgent: "codex")
+            options: InstallOptions(ghAgent: "codex"))
         let command = batch.commands[0]
         #expect(
             command.argv == [
@@ -87,7 +88,7 @@ struct InstallPlanBuilderTests {
     func githubPin() throws {
         let batch = try InstallPlanBuilder().build(
             result: result, installer: .github, target: .user,
-            ghAgent: "codex", ghPinRef: "v1.2.0")
+            options: InstallOptions(ghAgent: "codex", ghPinRef: "v1.2.0"))
         let command = batch.commands[0]
         #expect(
             command.argv == [
@@ -101,7 +102,8 @@ struct InstallPlanBuilderTests {
     func githubWithoutAgent() {
         #expect(throws: InstallPlanError.self) {
             _ = try InstallPlanBuilder().build(
-                result: result, installer: .github, target: .user, ghAgent: nil)
+                result: result, installer: .github, target: .user,
+                options: InstallOptions(ghAgent: nil))
         }
     }
 
@@ -118,7 +120,8 @@ struct InstallPlanBuilderTests {
         }
         #expect(throws: InstallPlanError.self) {
             _ = try InstallPlanBuilder().build(
-                result: repoLess, installer: .github, target: .user, ghAgent: "codex")
+                result: repoLess, installer: .github, target: .user,
+                options: InstallOptions(ghAgent: "codex"))
         }
     }
 
@@ -148,6 +151,98 @@ struct InstallPlanBuilderTests {
         #expect(throws: InstallPlanError.self) {
             _ = try InstallPlanBuilder().build(
                 result: empty, installer: .vercel, target: .user)
+        }
+    }
+
+    // MARK: - several skills from one repository
+
+    @Test("vercel installs every selected skill in one add, with -a per agent")
+    func vercelSeveralSkillsAndAgents() throws {
+        let batch = try InstallPlanBuilder().build(
+            repo: "anthropics/skills", skills: ["docx", "pdf"], installer: .vercel,
+            target: .user, options: InstallOptions(vercelAgents: ["claude-code", "cursor"]))
+        #expect(
+            batch.commands.map(\.argv) == [
+                [
+                    "npx", "skills", "add", "anthropics/skills", "-s", "docx", "-s", "pdf",
+                    "-a", "claude-code", "-a", "cursor", "-g", "-y"
+                ]
+            ])
+        #expect(batch.findingRefs.map(\.skillName) == ["docx", "pdf"])
+        #expect(Set(batch.findingRefs.map(\.workspaceID)) == ["user"])
+    }
+
+    @Test("vercel agents precede --copy and the project scope flag")
+    func vercelAgentsWithCopyInProject() throws {
+        let batch = try InstallPlanBuilder().build(
+            result: result, installer: .vercel, target: .project(root: "/tmp/proj"),
+            options: InstallOptions(vercelAgents: ["codex"], copy: true))
+        #expect(
+            batch.commands[0].argv == [
+                "npx", "skills", "add", "SectionTN/stale-docs", "-s", "stale-docs",
+                "-a", "codex", "--copy", "-p", "-y"
+            ])
+    }
+
+    @Test("github installs one command per skill, names passed verbatim")
+    func githubSeveralSkills() throws {
+        let batch = try InstallPlanBuilder().build(
+            repo: "anthropics/skills", skills: ["[root] template", "pdf"], installer: .github,
+            target: .user, options: InstallOptions(ghAgent: "claude-code"))
+        #expect(
+            batch.commands.map(\.argv) == [
+                [
+                    "gh", "skill", "install", "anthropics/skills", "[root] template",
+                    "--agent", "claude-code", "--scope", "user", "-f"
+                ],
+                [
+                    "gh", "skill", "install", "anthropics/skills", "pdf",
+                    "--agent", "claude-code", "--scope", "user", "-f"
+                ]
+            ])
+        #expect(batch.findingRefs.count == 2)
+    }
+
+    @Test("github ignores Vercel agents")
+    func githubIgnoresVercelAgents() throws {
+        let batch = try InstallPlanBuilder().build(
+            result: result, installer: .github, target: .user,
+            options: InstallOptions(vercelAgents: ["cursor"], ghAgent: "codex"))
+        #expect(!batch.commands[0].argv.contains("-a"))
+    }
+
+    @Test("an empty selection is refused")
+    func emptySelectionRefused() {
+        #expect(throws: InstallPlanError.noSkillsSelected) {
+            _ = try InstallPlanBuilder().build(
+                repo: "owner/repo", skills: [], installer: .vercel, target: .user)
+        }
+    }
+
+    // MARK: - typed sources
+
+    @Test("typed sources normalize to owner/repo")
+    func typedSourceNormalization() throws {
+        let accepted = [
+            "owner/repo", "  owner/repo\n", "https://github.com/owner/repo",
+            "https://github.com/owner/repo/", "https://github.com/owner/repo.git",
+            "http://github.com/owner/repo", "git@github.com:owner/repo.git"
+        ]
+        for source in accepted {
+            #expect(try InstallPlanBuilder.ownerRepo(fromSource: source) == "owner/repo")
+        }
+    }
+
+    @Test("typed sources that are not GitHub repositories are refused")
+    func typedSourceRefusal() {
+        let refused = [
+            "", "owner", "https://gitlab.com/owner/repo",
+            "https://github.com/owner/repo/tree/main/skills", "owner/repo name"
+        ]
+        for source in refused {
+            #expect(throws: InstallPlanError.self) {
+                _ = try InstallPlanBuilder.ownerRepo(fromSource: source)
+            }
         }
     }
 

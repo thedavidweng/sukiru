@@ -33,8 +33,12 @@ public struct SkillsDotShSearchClient: Sendable {
     }
 
     /// Searches the marketplace. `limit` maps to the API's `limit` query
-    /// parameter (probe verified: supports up to at least 50).
-    public func search(query: String, limit: Int = 25) async throws -> [SkillSearchResult] {
+    /// parameter (probe verified: supports up to at least 50). `owner` maps
+    /// to the `owner` parameter that `npx skills find --owner` sends,
+    /// lowercased as that command does.
+    public func search(
+        query: String, owner: String? = nil, limit: Int = 25
+    ) async throws -> [SkillSearchResult] {
         guard
             var components = URLComponents(
                 url: Self.endpoint, resolvingAgainstBaseURL: false)
@@ -45,6 +49,9 @@ public struct SkillsDotShSearchClient: Sendable {
             URLQueryItem(name: "q", value: query),
             URLQueryItem(name: "limit", value: String(limit))
         ]
+        if let owner {
+            components.queryItems?.append(URLQueryItem(name: "owner", value: owner.lowercased()))
+        }
         guard let url = components.url else {
             throw MarketplaceError.transport("cannot build search URL")
         }

@@ -46,6 +46,23 @@
         }
       }
     },
+    "%lld of %lld selected" : {
+      "comment" : "Install from Repository: how many listed skills are selected.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %2$lld selected"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选 %1$lld 个，共 %2$lld 个"
+          }
+        }
+      }
+    },
     "%lld problems, %lld fixable in one click" : {
       "comment" : "Health summary line.",
       "localizations" : {
@@ -923,6 +940,17 @@
         }
       }
     },
+    "Deselect All" : {
+      "comment" : "Install from Repository: clears the skill selection.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消全选"
+          }
+        }
+      }
+    },
     "Different skills share this name" : {
       "comment" : "Health finding title: distinct copies of one name disagree, so ownership is ambiguous.",
       "localizations" : {
@@ -1267,6 +1295,17 @@
         }
       }
     },
+    "GitHub owner" : {
+      "comment" : "Search toolbar: placeholder of the owner filter field (a GitHub user or organization).",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub 所有者"
+          }
+        }
+      }
+    },
     "GitHub repository" : {
       "comment" : "Finding evidence label.",
       "localizations" : {
@@ -1366,12 +1405,45 @@
         }
       }
     },
+    "Install from Repository" : {
+      "comment" : "Install sheet title when installing from a typed repository.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从仓库安装"
+          }
+        }
+      }
+    },
+    "Install from Repository…" : {
+      "comment" : "Search toolbar and Search menu: opens the install sheet for a typed repository.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从仓库安装…"
+          }
+        }
+      }
+    },
     "Install new skills as copies" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "以副本形式安装新技能"
+          }
+        }
+      }
+    },
+    "Install skills from a GitHub repository" : {
+      "comment" : "Search toolbar: help for Install from Repository.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从 GitHub 仓库安装技能"
           }
         }
       }
@@ -1571,6 +1643,17 @@
         }
       }
     },
+    "Limit results to one GitHub user or organization" : {
+      "comment" : "Search toolbar: help for the owner filter field.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只显示某个 GitHub 用户或组织的结果"
+          }
+        }
+      }
+    },
     "Link" : {
       "comment" : "Finding evidence label (noun).",
       "localizations" : {
@@ -1632,6 +1715,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "链接数"
+          }
+        }
+      }
+    },
+    "Listing skills…" : {
+      "comment" : "Install from Repository: the installer is listing the repository's skills.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在列出技能…"
           }
         }
       }
@@ -2950,6 +3044,17 @@
         }
       }
     },
+    "Select All" : {
+      "comment" : "Install from Repository: selects every listed skill.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全选"
+          }
+        }
+      }
+    },
     "Select a problem to inspect it" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3087,6 +3192,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示上一个工作区"
+          }
+        }
+      }
+    },
+    "Show Skills" : {
+      "comment" : "Install from Repository: lists the typed repository's skills.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示技能"
           }
         }
       }
@@ -3357,6 +3473,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安装是一个可审阅的命令批次：会经过「待处理变更」，带快照、事后 diff 与一键回滚。"
+          }
+        }
+      }
+    },
+    "The installer found no skills in this repository." : {
+      "comment" : "Install from Repository: empty listing.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装器在此仓库中没有找到技能。"
+          }
+        }
+      }
+    },
+    "The installer you choose lists the repository's skills without installing anything." : {
+      "comment" : "Install from Repository: explains the listing before it runs.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所选安装器会列出仓库中的技能，不会安装任何内容。"
           }
         }
       }
@@ -3694,6 +3832,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "警告"
+          }
+        }
+      }
+    },
+    "With no agent checked, npx skills chooses where to link the skills." : {
+      "comment" : "Install sheet: note under the npx skills -a agent checkboxes.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果不勾选任何 agent，npx skills 会自行决定把技能链接到哪里。"
           }
         }
       }
@@ -4538,7 +4687,7 @@
       }
     },
     "error.install.malformedRepo %@" : {
-      "comment" : "The argument is the source the search result named.",
+      "comment" : "The argument is the source a search result or the user named.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4582,6 +4731,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此结果没有可供安装的 GitHub 来源。"
+          }
+        }
+      }
+    },
+    "error.install.noSkillsSelected" : {
+      "comment" : "Install from Repository: confirm with no skill selected.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select at least one skill to install."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请至少选择一个要安装的技能。"
           }
         }
       }

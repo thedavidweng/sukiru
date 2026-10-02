@@ -110,4 +110,15 @@ struct SkillsDotShSearchClientTests {
             .search(query: "my skill", limit: 50)
         #expect(results.isEmpty)
     }
+
+    @Test("an owner filter adds the lowercased owner parameter")
+    func ownerFilter() async throws {
+        let transport = StubMarketplaceTransport(responses: [
+            "https://skills.sh/api/search?q=react&limit=25&owner=vercel-labs":
+                .success(Data("{\"skills\":[]}".utf8))
+        ])
+        let results = try await SkillsDotShSearchClient(transport: transport)
+            .search(query: "react", owner: "Vercel-Labs")
+        #expect(results.isEmpty)
+    }
 }

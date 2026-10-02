@@ -35,6 +35,8 @@ enum UserFacingError {
             String(localized: "error.install.malformedRepo \(repo)")
         case .emptySkillName:
             String(localized: "error.install.emptySkillName")
+        case .noSkillsSelected:
+            String(localized: "error.install.noSkillsSelected")
         case .missingGHAgent:
             String(localized: "error.install.missingGHAgent")
         }

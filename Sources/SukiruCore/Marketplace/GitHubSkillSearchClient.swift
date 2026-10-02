@@ -25,15 +25,21 @@ public struct GitHubSkillSearchClient: Sendable {
         self.runner = runner
     }
 
-    /// Runs `gh skill search`. `limit` maps to `-L`. Non-zero exit or
-    /// unparseable JSON surfaces as a marketplace failure (never a crash).
-    public func search(query: String, limit: Int = 25) async throws -> [SkillSearchResult] {
+    /// Runs `gh skill search`. `limit` maps to `-L`, `owner` to `--owner`.
+    /// Non-zero exit or unparseable JSON surfaces as a marketplace failure
+    /// (never a crash).
+    public func search(
+        query: String, owner: String? = nil, limit: Int = 25
+    ) async throws -> [SkillSearchResult] {
         let jsonFields = "description,namespace,path,repo,skillName,stars"
-        let args = [
+        var args = [
             "skill", "search", query,
             "--json", jsonFields,
             "-L", String(limit)
         ]
+        if let owner {
+            args += ["--owner", owner]
+        }
         guard let outcome = runner.run("gh", args) else {
             throw MarketplaceError.transport("gh executable not found")
         }
