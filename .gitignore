@@ -27,3 +27,4 @@ target/
 # Website assets copied in by the Pages workflow
 /site/assets/icon.webp
 /site/assets/screenshot*.webp
+/site/assets/screenshot*.jpg
