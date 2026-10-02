@@ -154,17 +154,25 @@ enum BatchCommandFactory {
         names.map { "'\($0)'" }.joined(separator: ", ")
     }
 
-    /// `gh skill install <owner/repo> <path> --force --dir <dir>` — the
-    /// verified non-interactive re-anchoring shape, used for ownerless
-    /// adoption and the keep-github arbitration.
+    /// `gh skill install <owner/repo> <path> [--pin <ref>] --force --dir <dir>`
+    /// — the verified non-interactive re-anchoring shape, used for ownerless
+    /// adoption, the keep-github arbitration, and the Library's pin and
+    /// restore actions. Probe-verified against gh 2.102.0: the re-install
+    /// merge-overwrites files that differ (extra local files are KEPT) and,
+    /// with `--pin`, sets the pin; without it, any existing pin is cleared.
     static func githubInstall(
         repo: String,
         path: String,
         dir: String,
+        pinRef: String? = nil,
         intent: String,
         consequence: CommandConsequence
     ) -> BatchCommand {
-        let argv = ["gh", "skill", "install", repo, path, "--force", "--dir", dir]
+        var argv = ["gh", "skill", "install", repo, path]
+        if let pinRef, !pinRef.isEmpty {
+            argv += ["--pin", pinRef]
+        }
+        argv += ["--force", "--dir", dir]
         return BatchCommand(
             argv: argv,
             displayString: BatchCommand.display(for: argv),
@@ -173,6 +181,27 @@ enum BatchCommandFactory {
             dangerFlags: [],
             warning: nil,
             consequence: consequence
+        )
+    }
+
+    /// `gh skill update <name>… --unpin --all --dir <dir>` — clears the pin
+    /// and updates to the latest upstream. Probe-verified against gh
+    /// 2.102.0: without `--all` a non-interactive run lists the update and
+    /// exits 1 applying nothing; the update REPLACES the skill's files
+    /// (extra local files are deleted). Known gh limit: when the pinned
+    /// content already matches upstream HEAD, the run reports "up to date"
+    /// and keeps the pin.
+    static func githubUnpin(names: [String], dir: String, reason: String) -> BatchCommand {
+        let argv = ["gh", "skill", "update"] + names + ["--unpin", "--all", "--dir", dir]
+        return BatchCommand(
+            argv: argv,
+            displayString: BatchCommand.display(for: argv),
+            owningCLI: .github,
+            intent: "Unpin \(quoted(names)) through the GitHub CLI (\(reason)): "
+                + "gh skill update --unpin, narrowly scoped to \(dir).",
+            dangerFlags: [],
+            warning: nil,
+            consequence: .unpinsAndUpdates
         )
     }
 

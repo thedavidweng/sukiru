@@ -16,12 +16,16 @@ extension AppState {
         return lifecycleQueue.first { Self.skillID($0.skill) == id }
     }
 
-    /// Queues an update or uninstall, replacing any earlier one for the skill.
-    func queueLifecycle(_ action: LifecycleAction, for skill: Skill) {
+    /// Queues an update, uninstall, pin, unpin, or restore, replacing any
+    /// earlier one for the skill. A pin without a valid ref is refused.
+    func queueLifecycle(_ action: LifecycleAction, for skill: Skill, pinRef: String? = nil) {
         guard lifecycleBlocker(action, for: skill) == nil else { return }
+        if action == .pin {
+            guard let pinRef, LifecycleRequest.isValidPinRef(pinRef) else { return }
+        }
         let id = Self.skillID(skill)
         lifecycleQueue.removeAll { Self.skillID($0.skill) == id }
-        lifecycleQueue.append(LifecycleRequest(skill: skill, action: action))
+        lifecycleQueue.append(LifecycleRequest(skill: skill, action: action, pinRef: pinRef))
     }
 
     func removeFromCart(_ request: LifecycleRequest) {

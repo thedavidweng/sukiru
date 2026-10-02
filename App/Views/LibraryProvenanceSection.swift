@@ -9,6 +9,8 @@ struct LibraryProvenanceSection: View {
 
     let skill: Skill
 
+    @State private var showingPinSheet = false
+
     var body: some View {
         Section {
             if isVercelReadOnly { readOnlyNotice }
@@ -27,10 +29,7 @@ struct LibraryProvenanceSection: View {
                 field("Repository", github.repo)
                 if let ref = github.ref { field("Ref", ref) }
                 field("Version", github.treeSha ?? String(localized: "unknown"))
-                field(
-                    "Pin state",
-                    github.pinned
-                        ? String(localized: "Pinned") : String(localized: "Unpinned"))
+                pinStateRow(github)
                 if let update = state.githubUpdate(for: skill) {
                     field(
                         "Update available",
@@ -59,6 +58,51 @@ struct LibraryProvenanceSection: View {
     /// The skill's Vercel lock entry is gh's companion record, not a claim.
     private var hasCompanionRecord: Bool {
         skill.ownership == .github && skill.provenance.vercel?.githubCompanion == true
+    }
+
+    /// The Pin state row plus its actions: Pin… on an unpinned GitHub-ledger
+    /// skill, Unpin on a pinned one. Both queue into Pending Changes; a
+    /// queued change (any action) hides them, like the update controls.
+    @ViewBuilder
+    private func pinStateRow(_ github: GitHubProvenance) -> some View {
+        let pinnedText =
+            github.pinned
+            ? github.pinnedRef.map { String(localized: "Pinned to \($0)") }
+                ?? String(localized: "Pinned")
+            : String(localized: "Unpinned")
+        LabeledContent("Pin state") {
+            HStack(spacing: 8) {
+                Text(pinnedText)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .textSelection(.enabled)
+                    .help(pinnedText)
+                if skill.ownership == .github && state.queuedLifecycle(for: skill) == nil {
+                    if github.pinned {
+                        let unpinBlocked = state.lifecycleBlocker(.unpin, for: skill) != nil
+                        Button("Unpin") {
+                            state.queueLifecycle(.unpin, for: skill)
+                        }
+                        .controlSize(.small)
+                        .disabled(unpinBlocked)
+                        .axButtonToken("sukiru.library.detail.unpin", disabled: unpinBlocked)
+                        .help("library.unpin.help")
+                    } else {
+                        let pinBlocked = state.lifecycleBlocker(.pin, for: skill) != nil
+                        Button("Pin…") {
+                            showingPinSheet = true
+                        }
+                        .controlSize(.small)
+                        .disabled(pinBlocked)
+                        .axButtonToken("sukiru.library.detail.pin", disabled: pinBlocked)
+                        .help("Pin this skill to a tag, branch, or commit so updates skip it")
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showingPinSheet) {
+            PinSheet(skill: skill)
+        }
     }
 
     private var isVercelReadOnly: Bool {
@@ -108,5 +152,65 @@ struct LibraryProvenanceSection: View {
                 .textSelection(.enabled)
                 .help(value)
         }
+    }
+}
+
+/// The pin dialog: one ref field, queued into Pending Changes like every
+/// other Library change (the batch confirmation is the review step). The
+/// field starts at the recorded ref, stripped to the branch or tag name gh
+/// `--pin` resolves.
+private struct PinSheet: View {
+    @EnvironmentObject private var state: AppState
+    @Environment(\.dismiss) private var dismiss
+
+    let skill: Skill
+    @State private var ref: String
+
+    init(skill: Skill) {
+        self.skill = skill
+        let recorded = skill.provenance.github?.ref ?? ""
+        _ref = State(
+            initialValue:
+                recorded
+                .replacingOccurrences(
+                    of: "^refs/(heads|tags)/", with: "", options: .regularExpression))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Pin \(skill.name)")
+                .font(.headline)
+            Text("library.pin.explanation")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            TextField("Tag, branch, or commit SHA", text: $ref)
+                .textFieldStyle(.roundedBorder)
+                .onSubmit(queue)
+            HStack {
+                Spacer()
+                Button("Cancel") {
+                    dismiss()
+                }
+                .keyboardShortcut(.cancelAction)
+                Button("Queue Pin", action: queue)
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(!LifecycleRequest.isValidPinRef(trimmedRef))
+                    .axButtonToken(
+                        "sukiru.library.detail.pin.queue",
+                        disabled: !LifecycleRequest.isValidPinRef(trimmedRef))
+            }
+        }
+        .padding(24)
+        .frame(width: 420)
+    }
+
+    private var trimmedRef: String {
+        ref.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func queue() {
+        guard LifecycleRequest.isValidPinRef(trimmedRef) else { return }
+        state.queueLifecycle(.pin, for: skill, pinRef: trimmedRef)
+        dismiss()
     }
 }

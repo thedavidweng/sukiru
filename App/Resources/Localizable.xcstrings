@@ -2272,6 +2272,28 @@
         }
       }
     },
+    "Pin" : {
+      "comment" : "Library detail: queue pinning a gh-owned skill (button and cart label).",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "固定"
+          }
+        }
+      }
+    },
+    "Pin %@" : {
+      "comment" : "Pin sheet title; the argument is the skill name.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "固定 %@"
+          }
+        }
+      }
+    },
     "Pin ref (optional: tag or SHA)" : {
       "comment" : "Install sheet: gh --pin field placeholder.",
       "localizations" : {
@@ -2294,6 +2316,28 @@
         }
       }
     },
+    "Pin this skill to a tag, branch, or commit so updates skip it" : {
+      "comment" : "Library detail: help for the Pin button.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将此技能固定到某个标签、分支或提交，更新时会跳过它"
+          }
+        }
+      }
+    },
+    "Pin to %@" : {
+      "comment" : "Pending Changes cart: a queued pin and its ref.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "固定到 %@"
+          }
+        }
+      }
+    },
     "Pinned" : {
       "comment" : "Detail provenance: gh placement is pinned.",
       "localizations" : {
@@ -2301,6 +2345,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已固定"
+          }
+        }
+      }
+    },
+    "Pinned to %@" : {
+      "comment" : "Detail provenance: gh placement is pinned to the given ref.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已固定到 %@"
+          }
+        }
+      }
+    },
+    "Pin…" : {
+      "comment" : "Library detail provenance: open the pin dialog for an unpinned gh-owned skill.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "固定…"
           }
         }
       }
@@ -2430,6 +2496,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "排队删除"
+          }
+        }
+      }
+    },
+    "Queue Pin" : {
+      "comment" : "Pin sheet: queue the pin in Pending Changes.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将固定加入队列"
           }
         }
       }
@@ -2739,6 +2816,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "解析后路径"
+          }
+        }
+      }
+    },
+    "Restore Files" : {
+      "comment" : "Library detail: queue restoring a gh-owned skill's files (button and cart label).",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还原文件"
           }
         }
       }
@@ -3489,6 +3577,17 @@
         }
       }
     },
+    "Tag, branch, or commit SHA" : {
+      "comment" : "Pin sheet: ref field placeholder.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标签、分支或提交 SHA"
+          }
+        }
+      }
+    },
     "Target" : {
       "comment" : "Install sheet: target scope field label.",
       "localizations" : {
@@ -3637,6 +3736,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "卸载"
+          }
+        }
+      }
+    },
+    "Unpin" : {
+      "comment" : "Library detail provenance: queue clearing the pin of a pinned gh-owned skill.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消固定"
           }
         }
       }
@@ -4500,6 +4610,23 @@
         }
       }
     },
+    "consequence.pinsGitHubSkill %@" : {
+      "comment" : "Batch review note: a gh pin re-installs at the ref.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The skill is re-installed pinned to %@: files that differ from that version are overwritten; files added locally are kept. gh also records the skill by name in the Vercel ledger's global lock (~/.agents/.skill-lock.json), dropping npx's display-only fields there (plugin groups, last selected agents)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "技能将被重新安装并固定到 %@：与该版本不同的文件会被覆盖；本地新增的文件会保留。gh 还会把该技能名写入 Vercel 账本的全局锁文件（~/.agents/.skill-lock.json），并丢弃其中 npx 仅用于展示的字段（插件分组、上次选择的智能体）。"
+          }
+        }
+      }
+    },
     "consequence.recordsInVercelGlobalLock" : {
       "comment" : "Batch review note: a gh update also writes the Vercel global lock.",
       "localizations" : {
@@ -4632,6 +4759,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "会从锁文件记录的来源重新安装共享副本，以下位置将变成指向它的链接（它们现在的内容只保留在快照中）：%@。"
+          }
+        }
+      }
+    },
+    "consequence.unpinsAndUpdates" : {
+      "comment" : "Batch review note: unpin clears the pin and updates, replacing the files.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The pin is cleared and the skill updates to the latest upstream version; its files are replaced, deleting files added locally. gh also records the skill by name in the Vercel ledger's global lock (~/.agents/.skill-lock.json), dropping npx's display-only fields there (plugin groups, last selected agents)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消固定并更新到上游最新版本；技能的文件会被整体替换，本地新增的文件会被删除。gh 还会把该技能名写入 Vercel 账本的全局锁文件（~/.agents/.skill-lock.json），并丢弃其中 npx 仅用于展示的字段（插件分组、上次选择的智能体）。"
           }
         }
       }
@@ -5252,6 +5396,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "副本：%1$lld · 链接：%2$lld"
+          }
+        }
+      }
+    },
+    "library.pin.explanation" : {
+      "comment" : "Pin sheet body.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh re-installs the skill at that ref and pins it there, so updates skip it. Files that differ from that version are overwritten; files you added are kept."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh 会将技能重新安装到该版本引用并固定在那里，更新时会跳过它。与该版本不同的文件会被覆盖；你新增的文件会保留。"
+          }
+        }
+      }
+    },
+    "library.restore.help" : {
+      "comment" : "Library detail: help for the Restore Files button.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Re-download the recorded version over local edits (files you added are kept), queued in Pending Changes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新下载记录的版本以覆盖本地修改（你新增的文件会保留），并加入待处理更改队列"
+          }
+        }
+      }
+    },
+    "library.unpin.help" : {
+      "comment" : "Library detail: help for the Unpin button.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear the pin and update to the latest upstream version, queued in Pending Changes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消固定并更新到上游最新版本，加入待处理更改队列"
           }
         }
       }

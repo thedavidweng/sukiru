@@ -20,6 +20,14 @@ public enum CommandConsequence: Codable, Equatable, Sendable {
     case mergeOverwritesCollidingFiles
     /// A gh update records the skill in the Vercel global lock.
     case recordsInVercelGlobalLock
+    /// A gh re-install pins the skill to a ref: files that differ from that
+    /// version are overwritten, extra local files are kept, and the skill is
+    /// recorded in the Vercel global lock.
+    case pinsGitHubSkill(ref: String)
+    /// `gh skill update --unpin` clears the pin and updates to the latest
+    /// upstream, REPLACING the skill's files (extra local files are
+    /// deleted), and records the skill in the Vercel global lock.
+    case unpinsAndUpdates
     /// Vercel adoption replaces local copies with links to a fresh shared copy.
     case replacesCopiesWithSharedLinks
     /// `npx skills remove` of a stale lock entry touches no skill files.
@@ -53,6 +61,14 @@ public enum CommandConsequence: Codable, Equatable, Sendable {
                 + "ones. " + Self.githubLockNote
         case .recordsInVercelGlobalLock:
             return Self.githubLockNote
+        case .pinsGitHubSkill(let ref):
+            return "The skill is re-installed pinned to \(ref): files that differ "
+                + "from that version are overwritten; files added locally are kept. "
+                + Self.githubLockNote
+        case .unpinsAndUpdates:
+            return "The pin is cleared and the skill updates to the latest upstream "
+                + "version; its files are replaced, deleting files added locally. "
+                + Self.githubLockNote
         case .replacesCopiesWithSharedLinks:
             return "Local copies are replaced by the source's version, linked "
                 + "from the shared skills folder; local edits survive only in the "

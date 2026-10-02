@@ -6,7 +6,20 @@ extension LifecycleAction {
         switch self {
         case .update: "Update"
         case .uninstall: "Uninstall"
+        case .pin: "Pin"
+        case .unpin: "Unpin"
+        case .restore: "Restore Files"
         }
+    }
+}
+
+extension LifecycleRequest {
+    /// The queued-change label in Pending Changes; a pin names its ref.
+    var queueTitle: String {
+        if action == .pin, let pinRef {
+            return String(localized: "Pin to \(pinRef)")
+        }
+        return String(localized: action.title)
     }
 }
 
@@ -65,6 +78,15 @@ struct LibraryLifecycleControls: View {
                 .disabled(uninstallBlocked)
                 .axButtonToken("sukiru.library.detail.uninstall", disabled: uninstallBlocked)
                 .help("Add uninstalling this skill to Pending Changes")
+                if skill.ownership == .github {
+                    let restoreBlocked = state.lifecycleBlocker(.restore, for: skill) != nil
+                    Button("Restore Files") {
+                        state.queueLifecycle(.restore, for: skill)
+                    }
+                    .disabled(restoreBlocked)
+                    .axButtonToken("sukiru.library.detail.restore", disabled: restoreBlocked)
+                    .help("library.restore.help")
+                }
                 Button("Update") {
                     state.queueLifecycle(.update, for: skill)
                 }

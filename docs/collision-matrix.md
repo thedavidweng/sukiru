@@ -107,6 +107,36 @@ genuine Vercel record, ghost companions are notes rather than stale lock
 entries, and a gh write is withheld whenever its whole-file rewrite would
 drop data `npx skills` needs.
 
+## Follow-up (2026-10-02, third run): pin, unpin, and restore shapes
+
+Run with `gh 2.102.0` (isolated `HOME`, project scope, `anthropics/skills`
+`xlsx`), calibrating the Library's pin, unpin, and restore actions:
+
+- **Pin**: `gh skill install <repo> <path>/SKILL.md --pin <ref> --force
+  --dir <dir>` sets `github-pinned: <ref>` in the frontmatter and
+  `pinnedRef` in the global lock, and merge-overwrites the content to the
+  pinned ref. `--pin` accepts a commit SHA, a branch name, or a tag.
+  **Correction to the read side**: `github-pinned` holds the pin VALUE (a
+  string), not a bool — confirmed against gh's
+  `frontmatter.InjectGitHubMetadata` (`meta["github-pinned"] = pinnedRef`).
+- **Unpin**: `gh skill update <name> --unpin --dir <dir>` non-interactively
+  lists the update and exits 1 applying nothing; `--all` is required. With
+  it, the pin is cleared (`github-pinned` and `pinnedRef` removed) and the
+  skill updates to the latest upstream. Known limit: when the pinned
+  content already matches upstream HEAD, the run reports "up to date",
+  exits 0, and keeps the pin.
+- **`gh skill update --force` does NOT keep extra files**, contradicting
+  its `--help` text: the update stages the new content and swaps the whole
+  skill directory (`swapDirectoryContents` in `pkg/cmd/skills/update`),
+  deleting files added locally (verified on disk). It also silently SKIPS
+  pinned skills ("xlsx is pinned … (skipped)", exit 0). Neither property
+  makes it usable as the restore action.
+- **Restore**: `gh skill install <repo> <path>/SKILL.md [--pin <ref>]
+  --force --dir <dir>` re-downloads the recorded version over local edits
+  and KEEPS extra local files (merge-overwrite, same as adoption). The
+  recorded pin must be passed back: an unpinned re-install clears
+  `github-pinned`.
+
 ## Evidence samples
 
 Frontmatter of `.claude/skills/stale-docs-cleanup/SKILL.md` after scenario 3:

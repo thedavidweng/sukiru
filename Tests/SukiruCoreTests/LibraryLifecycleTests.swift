@@ -237,10 +237,19 @@ struct LibraryLifecycleTests {
         #expect(blocker(vercel, .uninstall, none) == .needsNpx)
         #expect(blocker(github, .update, none) == .needsGitHubCLI)
         #expect(blocker(github, .uninstall, none) == nil)
-        for action in LifecycleAction.allCases {
-            #expect(blocker(vercel, action, all) == nil)
-            #expect(blocker(github, action, all) == nil)
+        // Pin, unpin, and restore are GitHub-ledger writes: they need gh,
+        // and the Vercel ledger has no concept of them.
+        for action: LifecycleAction in [.pin, .unpin, .restore] {
+            #expect(blocker(vercel, action, all) == .githubLedgerOnly)
+            #expect(blocker(github, action, none) == .needsGitHubCLI)
         }
+        #expect(blocker(vercel, .update, all) == nil)
+        #expect(blocker(vercel, .uninstall, all) == nil)
+        #expect(blocker(github, .update, all) == nil)
+        #expect(blocker(github, .uninstall, all) == nil)
+        #expect(blocker(github, .pin, all) == nil, "the skill is unpinned")
+        #expect(blocker(github, .restore, all) == nil)
+        #expect(blocker(github, .unpin, all) == .notPinned, "the skill is unpinned")
     }
 
     @Test("A request for a skill the current scan no longer holds is skipped")

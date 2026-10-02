@@ -5,6 +5,13 @@ import Foundation
 public enum LifecycleAction: String, Codable, Equatable, Sendable, CaseIterable {
     case update
     case uninstall
+    /// Set a pinned version (GitHub ledger only; `pinRef` carries the ref).
+    case pin
+    /// Clear the pinned version (GitHub ledger only).
+    case unpin
+    /// Re-download the recorded version over local edits (GitHub ledger
+    /// only).
+    case restore
 
     /// The synthetic finding-ref rule ID (like `new-install`): the executor's
     /// snapshot, bounds, and rescan derive their scope from finding refs.
@@ -15,17 +22,33 @@ public enum LifecycleAction: String, Codable, Equatable, Sendable, CaseIterable 
 public struct LifecycleRequest: Identifiable, Equatable, Sendable {
     public let skill: Skill
     public let action: LifecycleAction
+    /// The ref a `pin` request installs at; nil for every other action.
+    public let pinRef: String?
 
-    public init(skill: Skill, action: LifecycleAction) {
+    public init(skill: Skill, action: LifecycleAction, pinRef: String? = nil) {
         self.skill = skill
         self.action = action
+        self.pinRef = action == .pin ? pinRef : nil
     }
 
     /// Also the synthetic finding ID of the batch ref the request produces,
     /// so a caller can tell which requests an executed batch carried.
     public var id: String {
-        [action.ruleID, skill.scope.rawValue, skill.name, skill.placements.first?.path ?? "-"]
-            .joined(separator: "|")
+        var parts = [
+            action.ruleID, skill.scope.rawValue, skill.name, skill.placements.first?.path ?? "-"
+        ]
+        if let pinRef {
+            parts.append(pinRef)
+        }
+        return parts.joined(separator: "|")
+    }
+
+    /// A usable git ref for pinning: non-empty, no whitespace or control
+    /// characters (git refs never contain either; gh accepts tags, branch
+    /// names, and commit SHAs).
+    public static func isValidPinRef(_ ref: String) -> Bool {
+        !ref.isEmpty && ref.allSatisfy { !$0.isWhitespace }
+            && ref.unicodeScalars.allSatisfy { !CharacterSet.controlCharacters.contains($0) }
     }
 }
 
@@ -49,6 +72,13 @@ public enum LifecycleBlocker: Equatable, Sendable {
     /// gh's rewrite of the Vercel global lock would drop data npx needs from
     /// other records (see `CommandBatchBuilder.githubWriteBlocker`).
     case dropsVercelLockData
+    /// Pin, unpin, and restore exist only in the GitHub ledger; the Vercel
+    /// ledger has no pin or re-download concept.
+    case githubLedgerOnly
+    /// The skill is already pinned (Pin applies to unpinned skills).
+    case alreadyPinned
+    /// The skill is not pinned (Unpin applies to pinned skills).
+    case notPinned
 
     /// Human-readable refusal (English by design, like other core refusals).
     var message: String {
@@ -73,6 +103,13 @@ public enum LifecycleBlocker: Equatable, Sendable {
             return "gh skill rewrites the Vercel ledger's global lock and would drop data "
                 + "npx skills needs from other records (the branch or tag a skill was "
                 + "installed from, a well-known source, or fields gh does not know)"
+        case .githubLedgerOnly:
+            return "only the GitHub ledger (gh skill) supports this action; the Vercel "
+                + "ledger has no pin or re-download concept"
+        case .alreadyPinned:
+            return "the skill is already pinned; unpin it first to change the pin"
+        case .notPinned:
+            return "the skill is not pinned"
         }
     }
 
@@ -86,7 +123,10 @@ extension CommandBatchBuilder {
     /// Whether the Library can queue `action` for `skill`. Capabilities not
     /// yet probed (nil) block nothing, as with one-click fixes; without a
     /// report, the cross-scope Vercel record check is skipped. A GitHub
-    /// uninstall deletes files directly, so it needs no `gh`.
+    /// uninstall deletes files directly, so it needs no `gh`. Pin, unpin,
+    /// and restore are GitHub-ledger writes, so they carry the same
+    /// capability and `githubWriteBlocker` guards as a gh update, plus their
+    /// pin-state preconditions.
     public static func lifecycleBlocker(
         skill: Skill, action: LifecycleAction, capabilities: CapabilityReport?,
         report: ScanReport? = nil
@@ -102,14 +142,35 @@ extension CommandBatchBuilder {
         case .ownerless:
             return .ownerless
         case .vercel:
+            guard action == .update || action == .uninstall else {
+                return .githubLedgerOnly
+            }
             return capabilities?.npx.canRunSkills == false ? .needsNpx : nil
         case .github:
-            guard action == .update else { return nil }
-            if capabilities?.github.available == false {
-                return .needsGitHubCLI
-            }
-            return report.flatMap { githubWriteBlocker(skillName: skill.name, report: $0) }
+            return githubLifecycleBlocker(
+                skill: skill, action: action, capabilities: capabilities, report: report)
         }
+    }
+
+    /// The GitHub-ledger branch of `lifecycleBlocker`: uninstall is a direct
+    /// deletion needing no `gh`; every other action is a gh write, so it
+    /// carries the capability and `githubWriteBlocker` guards plus the
+    /// pin-state preconditions.
+    private static func githubLifecycleBlocker(
+        skill: Skill, action: LifecycleAction, capabilities: CapabilityReport?,
+        report: ScanReport?
+    ) -> LifecycleBlocker? {
+        guard action != .uninstall else { return nil }
+        if capabilities?.github.available == false {
+            return .needsGitHubCLI
+        }
+        if action == .pin, skill.provenance.github?.pinned == true {
+            return .alreadyPinned
+        }
+        if action == .unpin, skill.provenance.github?.pinned != true {
+            return .notPinned
+        }
+        return report.flatMap { githubWriteBlocker(skillName: skill.name, report: $0) }
     }
 
     /// Why a `gh skill` install or update of `name` must not run. Every one
@@ -172,48 +233,6 @@ extension CommandBatchBuilder {
         }
     }
 
-    /// Plans every Library request into `planned`. Updates are grouped, since
-    /// both CLIs accept several names in one run: one `npx skills update`
-    /// per scope, one `gh skill update` per skills dir.
-    func planLifecycle(
-        _ requests: [LifecycleRequest], report: ScanReport, into planned: inout PlannedDecisions
-    ) {
-        var groups = LifecycleGroups()
-        for request in requests.sorted(by: { $0.id < $1.id }) {
-            do {
-                let bucket = try self.bucket(of: request, report: report)
-                try groups.add(request, bucket: bucket, dirs: placementDirs(request.skill))
-                planned.refs.append(
-                    FindingRef(
-                        findingID: request.id, ruleID: request.action.ruleID,
-                        skillName: request.skill.name, workspaceID: bucket))
-            } catch {
-                planned.problems.append((error as? DecisionProblem)?.message ?? "\(error)")
-            }
-        }
-        for command in groups.commands
-        where !planned.commands.contains(where: { $0.argv == command.argv }) {
-            planned.commands.append(command)
-        }
-    }
-
-    /// The request's ownership bucket, once it is known to apply to the
-    /// current scan.
-    private func bucket(of request: LifecycleRequest, report: ScanReport) throws -> String {
-        let skill = request.skill
-        guard report.skills.contains(skill), let bucket = Self.bucket(of: skill, report: report)
-        else {
-            throw DecisionProblem(
-                message: "skill '\(skill.name)' is not in the current scan; queue it again")
-        }
-        let blocker = Self.lifecycleBlocker(
-            skill: skill, action: request.action, capabilities: nil, report: report)
-        if let blocker {
-            throw DecisionProblem(message: blocker.refusal(request.action, skill: skill))
-        }
-        return bucket
-    }
-
     /// Deletes every placement of a GitHub-ledger skill: links (live or
     /// dead) as links, never following them, then the directories.
     static func githubUninstall(
@@ -235,54 +254,5 @@ extension CommandBatchBuilder {
 
     static func projectRoot(ofBucket bucket: String) -> String? {
         bucket.hasPrefix("project:") ? String(bucket.dropFirst("project:".count)) : nil
-    }
-}
-
-/// Library commands collected across requests: removals as they come,
-/// update names grouped by scope (npx) or skills dir (gh).
-private struct LifecycleGroups {
-    private var removals: [BatchCommand] = []
-    private var vercelNames: [String: [String]] = [:]
-    private var githubNames: [String: [String]] = [:]
-
-    mutating func add(_ request: LifecycleRequest, bucket: String, dirs: [String]) throws {
-        let skill = request.skill
-        switch (request.action, skill.ownership) {
-        case (.update, .github):
-            guard !dirs.isEmpty else {
-                throw DecisionProblem(
-                    message: "skill '\(skill.name)' has no directory placement for "
-                        + "gh skill update")
-            }
-            for dir in dirs {
-                githubNames[dir, default: []].append(skill.name)
-            }
-        case (.update, _):
-            vercelNames[bucket, default: []].append(skill.name)
-        case (.uninstall, .github):
-            removals += CommandBatchBuilder.githubUninstall(skill)
-        case (.uninstall, _):
-            removals.append(
-                BatchCommandFactory.vercelRemove(
-                    name: skill.name, scope: skill.scope,
-                    atRisk: BatchCommandFactory.removalAtRisk(skill),
-                    intent: "Uninstall '\(skill.name)' (requested in the Library): "
-                        + "npx skills remove drops its lock entry and placements.",
-                    workingDirectory: CommandBatchBuilder.projectRoot(ofBucket: bucket)))
-        }
-    }
-
-    var commands: [BatchCommand] {
-        let reason = "requested in the Library"
-        let vercel = vercelNames.keys.sorted().map { bucket in
-            BatchCommandFactory.vercelUpdate(
-                names: vercelNames[bucket] ?? [], scope: bucket == "user" ? .user : .project,
-                reason: reason, workingDirectory: CommandBatchBuilder.projectRoot(ofBucket: bucket))
-        }
-        let github = githubNames.keys.sorted().map { dir in
-            BatchCommandFactory.githubUpdate(
-                names: githubNames[dir] ?? [], dir: dir, reason: reason)
-        }
-        return removals + vercel + github
     }
 }

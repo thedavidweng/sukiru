@@ -89,7 +89,7 @@ struct PendingChangesView: View {
             }
             ForEach(state.lifecycleQueue) { request in
                 CartRow(
-                    name: request.skill.name, change: String(localized: request.action.title),
+                    name: request.skill.name, change: request.queueTitle,
                     detail: scopeTitle(of: request.skill)
                 ) {
                     state.removeFromCart(request)

@@ -19,9 +19,16 @@ enum OwnershipBuilders {
     }
 
     /// A SKILL.md carrying gh provenance; `pinned: nil` OMITS the key
-    /// entirely (the absent-key tri-state case).
-    static func ghSkillMD(_ name: String, repo: String, pinned: Bool? = nil) -> String {
-        let pinnedLine = pinned == nil ? "" : "  github-pinned: \(pinned!)\n"
+    /// entirely (the absent-key tri-state case). `pinnedRef` writes gh's
+    /// real format, the pin VALUE as a string (`github-pinned: <ref>`, with
+    /// `github-ref` set to the same ref, as gh 2.102.0 writes it).
+    static func ghSkillMD(
+        _ name: String, repo: String, pinned: Bool? = nil, pinnedRef: String? = nil
+    ) -> String {
+        let pinnedLine =
+            pinnedRef.map { "  github-pinned: \($0)\n" }
+            ?? (pinned == nil ? "" : "  github-pinned: \(pinned!)\n")
+        let ref = pinnedRef ?? "refs/heads/main"
         return """
             ---
             name: \(name)
@@ -29,7 +36,7 @@ enum OwnershipBuilders {
             metadata:
               github-repo: \(repo)
               github-path: tools/\(name)/SKILL.md
-              github-ref: refs/heads/main
+              github-ref: \(ref)
               github-tree-sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
             \(pinnedLine)---
             Body.
