@@ -55,7 +55,7 @@ extension ProblemKind {
         case .orphan: "questionmark.folder"
         case .ownerConflict: "person.2"
         case .unsupportedLock: "lock.trianglebadge.exclamationmark"
-        case .note: "info.circle"
+        case .note: "note.text"
         }
     }
 }

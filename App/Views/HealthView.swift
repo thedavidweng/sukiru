@@ -385,7 +385,11 @@ private struct ProblemInfoButton: View {
         .help("About This Problem")
         .accessibilityLabel("About This Problem")
         .popover(isPresented: $isPresented, arrowEdge: .bottom) {
+            // The popover inherits the section header's environment, which
+            // limits text to one bold line.
             Text(kind.explanation)
+                .font(.body)
+                .lineLimit(nil)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(width: 320, alignment: .leading)
                 .padding()
