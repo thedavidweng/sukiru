@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.0](https://github.com/thedavidweng/sukiru/compare/v1.1.0...v1.2.0) (2026-10-02)
+
+
+### ✨ Features
+
+* **app:** give every surface the system toolbar treatment ([8dcd9b5](https://github.com/thedavidweng/sukiru/commit/8dcd9b5139a6e5ced75a812b67de6998e0751c80))
+* **health:** move problem explanations into an info popover ([28eb913](https://github.com/thedavidweng/sukiru/commit/28eb913de11a6f738edca0b1ffb04aeb8f4368de))
+* **installers:** run the skills CLI on demand through npx ([395171b](https://github.com/thedavidweng/sukiru/commit/395171b1fc79a3a5d767d5c0557a20c50eecc9f7))
+* **library:** add icons for 27 more agents ([dcdfc4b](https://github.com/thedavidweng/sukiru/commit/dcdfc4be744a17459e1a8f1c5aa7d40d6293b136))
+
+
+### 🐛 Bug Fixes
+
+* **library:** show the attention marker after the agent icons ([f269d64](https://github.com/thedavidweng/sukiru/commit/f269d640f89ba8cbcb2a8edf6f6e9fcca7652277))
+
 ## [1.1.0](https://github.com/thedavidweng/sukiru/compare/v1.0.0...v1.1.0) (2026-10-01)
 
 
