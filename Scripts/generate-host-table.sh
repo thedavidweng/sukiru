@@ -35,6 +35,13 @@ appends="$(
           + (if .globalBase != "Home" then ", base: ." + (.globalBase | ascii_downcase) else "" end)
           + (if .detectInProject then ", detectInProject: true" else "" end)
           + (if .showInUniversalList == false then ", universal: false" else "" end)
+          + (if (.legacyProjectSkillDirs | length) > 0
+               then ", legacyProject: [" + (.legacyProjectSkillDirs | map(@json) | join(", ")) + "]"
+               else "" end)
+          + (if (.legacyGlobalSkillDirs | length) > 0
+               then ", legacyGlobal: [" + (.legacyGlobalSkillDirs | map(@json) | join(", ")) + "]"
+               else "" end)
+          + (if .ghAgentId != null then ", gh: " + (.ghAgentId | @json) else "" end)
           + "))"
     ' "$json"
 )"
@@ -51,7 +58,7 @@ num_chunks=$(((total + per_chunk - 1) / per_chunk))
     echo "// Do NOT edit by hand — regenerate instead. Host count: $count."
     echo ""
     echo "extension HostTable {"
-    echo "    /// The generated 56-host table backing \`HostTable.hosts\`."
+    echo "    /// The generated $count-host table backing \`HostTable.hosts\`."
     combined=""
     for ((c = 0; c < num_chunks; c++)); do
         combined+="hostsChunk${c}()"
@@ -83,7 +90,10 @@ num_chunks=$(((total + per_chunk - 1) / per_chunk))
         extra extraMarkers: [String] = [],
         base globalBase: HostSpec.GlobalBase = .home,
         detectInProject: Bool = false,
-        universal showInUniversalList: Bool = true
+        universal showInUniversalList: Bool = true,
+        legacyProject legacyProjectSkillDirs: [String] = [],
+        legacyGlobal legacyGlobalSkillDirs: [String] = [],
+        gh ghAgentId: String? = nil
     ) -> HostSpec {
         HostSpec(
             id: id,
@@ -96,7 +106,10 @@ num_chunks=$(((total + per_chunk - 1) / per_chunk))
             extraMarkers: extraMarkers,
             globalBase: globalBase,
             detectInProject: detectInProject,
-            showInUniversalList: showInUniversalList
+            showInUniversalList: showInUniversalList,
+            legacyProjectSkillDirs: legacyProjectSkillDirs,
+            legacyGlobalSkillDirs: legacyGlobalSkillDirs,
+            ghAgentId: ghAgentId
         )
     }
 }

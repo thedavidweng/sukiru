@@ -1,16 +1,23 @@
-/// The embedded 56-host directory table.
+/// The embedded host directory table.
 ///
 /// The data itself is generated from `research/host-table.json` into
 /// `HostTableData.swift` by `Scripts/generate-host-table.sh`; regenerate rather
 /// than editing by hand. `HostTableTests` asserts the count and JSON parity.
 public enum HostTable {
-    /// All 56 host specifications, in the source table's order.
+    /// All host specifications, in the source table's order.
     public static let hosts: [HostSpec] = generatedHosts
 
     /// Looks up a host by its stable id.
     public static func host(id: String) -> HostSpec? {
         hosts.first { $0.id == id }
     }
+
+    /// The `gh skill install --agent` values the install sheet offers: the
+    /// canonical store host first, then widely adopted hosts. Each is mapped
+    /// through `ghAgentId`, so a host gh does not accept is never offered.
+    public static let ghInstallAgentOptions: [String] =
+        [canonicalStoreHost, "claude-code", "cursor", "gemini-cli"]
+        .compactMap { host(id: $0)?.ghAgentId }
 
     /// The project-scope skills dir shared by every "canonical store" host:
     /// `<project>/.agents/skills`.

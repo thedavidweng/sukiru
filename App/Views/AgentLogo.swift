@@ -25,12 +25,16 @@ struct AgentLogo: View {
             "codearts-agent", "codebuddy", "codestudio", "codex", "command-code", "continue",
             "cortex", "crush", "cursor", "deepagents", "devin", "dexto", "droid", "firebender",
             "forgecode", "gemini-cli", "github-copilot", "goose", "hermes-agent", "junie", "kilo",
-            "kimi-cli", "kiro-cli", "mcpjam", "mistral-vibe", "mux", "neovate", "openclaw",
+            "kiro-cli", "mcpjam", "mistral-vibe", "mux", "neovate", "openclaw",
             "opencode", "openhands", "pi", "pochi", "qoder", "qwen-code", "replit", "roo",
             "rovodev", "tabnine-cli", "trae", "warp", "windsurf", "zed", "zencoder":
             return "agent-\(hostID)"
+        case "qoder-cn":
+            return "agent-qoder"
         case "trae-cn":
             return "agent-trae"
+        case "kimi-code-cli":
+            return "agent-kimi-cli"
         default:
             return nil
         }

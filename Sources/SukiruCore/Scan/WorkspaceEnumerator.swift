@@ -12,6 +12,10 @@
 /// `.trae/skills`) collapse to one workspace per path; the first host in
 /// table order lends its id.
 ///
+/// Legacy dirs (`legacyGlobalSkillDirs` / `legacyProjectSkillDirs`) are
+/// scanned read-only when they exist on disk, as `…#legacy:<dir>`
+/// workspaces after the host workspaces of their scope.
+///
 /// The output order is defined and deterministic: user scope first (canonical
 /// then hosts in host-table order), then project scopes sorted by root.
 /// A workspace enriched with the engine-side context the wire
@@ -36,6 +40,15 @@ public struct EnumeratedWorkspace: Equatable, Sendable {
 }
 
 public struct WorkspaceEnumerator: Sendable {
+    /// Separates a host workspace id from the legacy dir it was found at.
+    public static let legacyIDMarker = "#legacy:"
+
+    /// Whether a workspace id names a legacy dir: one the CLI no longer
+    /// installs into, so no command may target it through a host.
+    public static func isLegacy(workspaceID: String) -> Bool {
+        workspaceID.contains(legacyIDMarker)
+    }
+
     private let environment: SukiruEnvironment
     private let fileSystem: FileSystemProbe
     private let resolver: HostPathResolver
@@ -74,8 +87,9 @@ public struct WorkspaceEnumerator: Sendable {
             )
         ]
         // Dedup by resolved root, mirroring the project-scope seen set: hosts
-        // sharing one global dir (amp/kimi-cli/replit/universal →
-        // `~/.config/agents/skills`; cline/warp/dexto → the canonical store)
+        // sharing one global dir (amp/replit/universal →
+        // `~/.config/agents/skills`; zencoder/zenflow → `~/.zencoder/skills`;
+        // cline/warp/dexto → the canonical store)
         // emit ONE workspace. The first non-absent host in table order lends
         // its id; every sharing host stays visible via candidateHosts.
         var seen: Set<String> = [canonical]
@@ -87,8 +101,7 @@ public struct WorkspaceEnumerator: Sendable {
             seen.insert(root)
             // `installed` reflects EVERY host sharing the root, not just the
             // id-lending first sharer: the first sharer may be spray residue
-            // while a later one is really installed (amp leftover while
-            // kimi-cli is detected at `~/.config/agents/skills`).
+            // while a later one is really installed.
             let sharers = HostTable.hosts.filter { resolver.globalSkillsRoot(for: $0) == root }
             let installed = sharers.contains { detector.detectionState(for: $0) == .detected }
             workspaces.append(
@@ -104,6 +117,7 @@ public struct WorkspaceEnumerator: Sendable {
                 )
             )
         }
+        workspaces += legacyUserWorkspaces(seen: &seen)
         return workspaces
     }
 
@@ -152,6 +166,67 @@ public struct WorkspaceEnumerator: Sendable {
                     scopeGroup: "project:\(projectRoot)"
                 )
             )
+        }
+        workspaces += legacyProjectWorkspaces(projectRoot: projectRoot, seen: &seen)
+        return workspaces
+    }
+
+    /// User-scope workspaces for legacy global dirs present on disk.
+    /// `installed` reflects detection of any host listing the dir.
+    private func legacyUserWorkspaces(seen: inout Set<String>) -> [EnumeratedWorkspace] {
+        var workspaces: [EnumeratedWorkspace] = []
+        for host in HostTable.hosts {
+            let roots = resolver.legacyGlobalSkillsRoots(for: host)
+            for (dir, root) in zip(host.legacyGlobalSkillDirs, roots)
+            where !seen.contains(root) && fileSystem.exists(atPath: root) {
+                seen.insert(root)
+                let sharers = HostTable.hosts.filter {
+                    resolver.legacyGlobalSkillsRoots(for: $0).contains(root)
+                }
+                workspaces.append(
+                    EnumeratedWorkspace(
+                        workspace: Workspace(
+                            id: "host:\(host.id)\(Self.legacyIDMarker)\(dir)",
+                            kind: .user,
+                            root: root,
+                            installed: sharers.contains(where: detector.isDetected)
+                        ),
+                        candidateHosts: sharers.map(\.id),
+                        scopeGroup: "user"
+                    )
+                )
+            }
+        }
+        return workspaces
+    }
+
+    /// Project-scope workspaces for legacy project dirs present on disk.
+    private func legacyProjectWorkspaces(
+        projectRoot: String, seen: inout Set<String>
+    ) -> [EnumeratedWorkspace] {
+        var workspaces: [EnumeratedWorkspace] = []
+        for host in HostTable.hosts {
+            let roots = resolver.legacyProjectSkillsRoots(for: host, projectRoot: projectRoot)
+            for (dir, root) in zip(host.legacyProjectSkillDirs, roots)
+            where !seen.contains(root) && fileSystem.exists(atPath: root) {
+                seen.insert(root)
+                let sharers = HostTable.hosts.filter {
+                    resolver.legacyProjectSkillsRoots(for: $0, projectRoot: projectRoot)
+                        .contains(root)
+                }
+                workspaces.append(
+                    EnumeratedWorkspace(
+                        workspace: Workspace(
+                            id: "project:\(projectRoot)#\(host.id)\(Self.legacyIDMarker)\(dir)",
+                            kind: .project,
+                            root: root,
+                            installed: true
+                        ),
+                        candidateHosts: sharers.map(\.id),
+                        scopeGroup: "project:\(projectRoot)"
+                    )
+                )
+            }
         }
         return workspaces
     }

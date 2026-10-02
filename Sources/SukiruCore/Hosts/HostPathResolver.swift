@@ -80,6 +80,17 @@ public struct HostPathResolver: Sendable {
         Self.join(projectRoot, host.projectSkillDir)
     }
 
+    /// The host's legacy global skills roots (read-only scan locations).
+    public func legacyGlobalSkillsRoots(for host: HostSpec) -> [String] {
+        host.legacyGlobalSkillDirs.map { Self.join(configHome(for: host), $0) }
+    }
+
+    /// The host's legacy project skills roots under a project root
+    /// (read-only scan locations).
+    public func legacyProjectSkillsRoots(for host: HostSpec, projectRoot: String) -> [String] {
+        host.legacyProjectSkillDirs.map { Self.join(projectRoot, $0) }
+    }
+
     /// The canonical user store, `$HOME/.agents/skills`.
     public func canonicalUserRoot() -> String {
         Self.join(environment.home, ".agents/skills")

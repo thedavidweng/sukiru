@@ -37,6 +37,25 @@ struct LeftoverHostTests {
         #expect(evidence["hosts"] == "AdaL")
     }
 
+    @Test("A legacy folder of links for an agent that is not installed is flagged")
+    func legacyDetection() throws {
+        let home = try TempTree()
+        try home.file(".agents/skills/alpha/SKILL.md", contents: OwnershipBuilders.skillMD("alpha"))
+        try home.symlink(".kilocode/skills/alpha", to: "../../.agents/skills/alpha")
+        let report = try OwnershipBuilders.scan(home: home)
+        let finding = try #require(
+            report.findings.filter { $0.ruleID == LeftoverHostRule.ruleID }.only)
+        #expect(finding.workspaceID == "host:kilo#legacy:.kilocode/skills")
+        let evidence = Dictionary(
+            uniqueKeysWithValues: finding.evidence.map { ($0.kind, $0.detail) })
+        #expect(evidence["skillsDir"] == home.path + "/.kilocode/skills")
+        #expect(evidence["hosts"] == "Kilo Code")
+
+        try home.file(".kilocode/settings.json", contents: "{}")
+        let installed = try OwnershipBuilders.scan(home: home)
+        #expect(!installed.findings.contains { $0.ruleID == LeftoverHostRule.ruleID })
+    }
+
     @Test("The fix removes the folder and its emptied parent; rollback restores both")
     func fixAndRollback() throws {
         let home = try Self.sprayedHome()

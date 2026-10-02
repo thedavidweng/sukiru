@@ -199,6 +199,11 @@ extension CommandBatchBuilder {
                 throw DecisionProblem(
                     message: "cannot adopt '\(skill.name)': no agent installs into '\(dir)'")
             }
+            guard !WorkspaceEnumerator.isLegacy(workspaceID: workspace.id) else {
+                throw DecisionProblem(
+                    message: "cannot adopt '\(skill.name)': '\(dir)' is a legacy folder the "
+                        + "CLI no longer installs into")
+            }
             agents.insert(Self.host(of: workspace))
         }
         return [
@@ -262,8 +267,9 @@ extension CommandBatchBuilder {
     }
 
     /// The skill's live placements `npx skills` acts on: those directly in a
-    /// scanned skills folder. A copy an agent files deeper (Hermes's
-    /// `<root>/<category>/<name>`) is outside `<root>/<name>` and untouched.
+    /// scanned skills folder the CLI still installs into. A copy an agent
+    /// files deeper (Hermes's `<root>/<category>/<name>`) is outside
+    /// `<root>/<name>` and untouched, as is a copy in a legacy folder.
     private static func cliReachable(
         skill: Skill, report: ScanReport
     ) -> [(path: String, workspace: Workspace)] {
@@ -271,7 +277,8 @@ extension CommandBatchBuilder {
             guard placement.kind != .brokenSymlink,
                 let workspace = report.workspaces.first(where: {
                     $0.root == parentDir(placement.path)
-                })
+                }),
+                !WorkspaceEnumerator.isLegacy(workspaceID: workspace.id)
             else { return nil }
             return (placement.path, workspace)
         }

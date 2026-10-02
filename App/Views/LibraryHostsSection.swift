@@ -96,15 +96,19 @@ struct LibraryHostsSection: View {
                     continue
                 }
                 for host in HostTable.hosts {
-                    let root: String
+                    let roots: [String]
                     if skill.scope == .user {
-                        root = resolver.globalSkillsRoot(for: host)
+                        roots =
+                            [resolver.globalSkillsRoot(for: host)]
+                            + resolver.legacyGlobalSkillsRoots(for: host)
                     } else if let projectRoot {
-                        root = resolver.projectSkillsRoot(for: host, projectRoot: projectRoot)
+                        roots =
+                            [resolver.projectSkillsRoot(for: host, projectRoot: projectRoot)]
+                            + resolver.legacyProjectSkillsRoots(for: host, projectRoot: projectRoot)
                     } else {
                         continue
                     }
-                    guard root == workspace.root else { continue }
+                    guard roots.contains(workspace.root) else { continue }
                     let entry = HostEntry(
                         workspaceID: "\(workspace.id)#\(host.id)",
                         hostID: host.id,

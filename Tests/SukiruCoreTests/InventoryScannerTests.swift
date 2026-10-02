@@ -270,7 +270,6 @@ struct InventoryScannerTests {
         #expect(known.contains(".system"))
         // Archive phantoms matching no host are gone.
         #expect(!known.contains(".opencode"))
-        #expect(!known.contains(".autohand"))
         // Every dotted first component of a host projectSkillDir is known.
         for host in HostTable.hosts {
             let first = String(host.projectSkillDir.split(separator: "/").first ?? "")

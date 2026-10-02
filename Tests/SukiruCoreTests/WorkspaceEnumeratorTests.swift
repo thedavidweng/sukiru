@@ -81,11 +81,9 @@ struct WorkspaceEnumeratorTests {
     func userScopeSharedDirDeduped() throws {
         let tree = try TempTree()
         // `~/.config/agents/skills` exists as CLI spray residue — amp,
-        // kimi-cli, replit AND universal all resolve their global skills dir
-        // to this path (kimi-cli via a Home base with a `.config/...`
-        // relative dir, the other three via the Xdg default). Without dedup
-        // the enumerator emits four workspaces with identical roots (latent
-        // bug reported by the inventory-scanner worker).
+        // replit AND universal all resolve their global skills dir to this
+        // path via the Xdg default. Without dedup the enumerator emits three
+        // workspaces with identical roots.
         try tree.dir(".config/agents/skills")
 
         let environment = SukiruEnvironment(
@@ -101,7 +99,7 @@ struct WorkspaceEnumeratorTests {
         // The first non-absent host in table order (amp, index 2) lends its
         // id; all sharing hosts stay visible via candidateHosts.
         #expect(shared.first?.workspace.id == "host:amp")
-        #expect(shared.first?.candidateHosts == ["amp", "kimi-cli", "replit", "universal"])
+        #expect(shared.first?.candidateHosts == ["amp", "replit", "universal"])
         // None of the three is *detected* (replit is cwd-only, universal is a
         // pseudo-host, amp's marker is absent) — the root is leftover residue.
         #expect(shared.first?.workspace.installed == false)
@@ -110,21 +108,75 @@ struct WorkspaceEnumeratorTests {
         #expect(Set(allIDs).count == allIDs.count)
     }
 
-    @Test("A shared user root is installed when ANY sharing host is detected")
-    func sharedRootInstalledWhenLaterSharerDetected() throws {
+    @Test("A shared user root lists every sharer and is installed when one is detected")
+    func sharedRootInstalledWhenSharerDetected() throws {
         let tree = try TempTree()
-        // `~/.config/agents/skills` exists (spray residue shape); amp — the
-        // FIRST sharer in table order, which lends the workspace id — has no
-        // marker, but kimi-cli's `~/.kimi` does. The merged workspace must
-        // report installed=true: a real installation exists at that root,
-        // regardless of which sharer lent its id.
-        try tree.dir(".config/agents/skills")
-        try tree.file(".kimi/config.json", contents: "{}")
+        // zencoder and zenflow share `~/.zencoder/skills` and its marker. The
+        // first sharer lends the id; both stay visible as candidates.
+        try tree.dir(".zencoder/skills")
+        try tree.file(".zencoder/config.json", contents: "{}")
 
+        let environment = SukiruEnvironment(
+            reader: DictionaryEnvironmentReader(["SUKIRU_HOME": tree.path])
+        )
+        let detailed = WorkspaceEnumerator(
+            environment: environment,
+            fileSystem: DefaultFileSystemProbe()
+        ).enumerateDetailed(projectRoots: [])
+        let shared = try #require(detailed.first { $0.workspace.id == "host:zencoder" })
+        #expect(shared.workspace.root == "\(tree.path)/.zencoder/skills")
+        #expect(shared.candidateHosts == ["zencoder", "zenflow"])
+        #expect(shared.workspace.installed)
+        #expect(!detailed.contains { $0.workspace.id == "host:zenflow" })
+    }
+
+    @Test("Kimi Code CLI's legacy global dir is still scanned through the Xdg sharers")
+    func legacyKimiGlobalDirStillScanned() throws {
+        let tree = try TempTree()
+        // kimi-cli (skills@1.5.9) wrote to `~/.config/agents/skills`;
+        // kimi-code-cli now uses the canonical store. Skills left at the old
+        // path must stay in the scan set.
+        try tree.dir(".config/agents/skills/old-skill")
         let workspaces = enumerate(home: tree.path)
-        let shared = try #require(workspaces.first { $0.id == "host:amp" })
-        #expect(shared.root == "\(tree.path)/.config/agents/skills")
-        #expect(shared.installed, "kimi-cli is detected at the shared root")
+        #expect(workspaces.contains { $0.root == "\(tree.path)/.config/agents/skills" })
+    }
+
+    @Test("Legacy global dirs are scanned only when present, flagged by detection")
+    func legacyGlobalDirs() throws {
+        let tree = try TempTree()
+        #expect(!enumerate(home: tree.path).contains { $0.id.contains("#legacy:") })
+
+        // A bare `skills` entry is spray residue, so Kilo Code is not detected.
+        try tree.dir(".kilocode/skills/old")
+        let leftover = try #require(
+            enumerate(home: tree.path).first { $0.id == "host:kilo#legacy:.kilocode/skills" })
+        #expect(leftover.root == "\(tree.path)/.kilocode/skills")
+        #expect(leftover.kind == .user)
+        #expect(!leftover.installed)
+        #expect(WorkspaceEnumerator.isLegacy(workspaceID: leftover.id))
+
+        try tree.file(".kilocode/settings.json", contents: "{}")
+        let detected = try #require(
+            enumerate(home: tree.path).first { $0.root == "\(tree.path)/.kilocode/skills" })
+        #expect(detected.installed)
+    }
+
+    @Test("Legacy project dirs (Droid's .factory/skills, Kilo's .kilocode/skills) are scanned")
+    func legacyProjectDirs() throws {
+        let home = try TempTree()
+        let project = try TempTree()
+        let proj = project.path
+        try project.dir(".factory/skills")
+        try project.dir(".kilocode/skills")
+
+        let workspaces = enumerate(home: home.path, projectRoots: [proj])
+        #expect(
+            ids(workspaces)
+                == "user project:\(proj) project:\(proj)#droid#legacy:.factory/skills"
+                + " project:\(proj)#kilo#legacy:.kilocode/skills")
+        #expect(workspaces[2].root == "\(proj)/.factory/skills")
+        #expect(workspaces[3].root == "\(proj)/.kilocode/skills")
+        #expect(workspaces.allSatisfy { $0.installed })
     }
 
     @Test("Project scope: canonical store plus per-host project dirs")

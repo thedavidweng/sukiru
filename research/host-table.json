@@ -1,7 +1,16 @@
 {
-  "sourceOfTruth": "git branch archive/rust-gui, src/agents.rs SPECS const array (lines 294-967); struct Spec at 279-291",
-  "upstreamPin": "vercel-labs/skills@1.5.9",
-  "hostCount": 56,
+  "sourceOfTruth": "skills@1.7.0 npm package, dist/cli.mjs `const agents` object (one entry per agent: skillsDir, globalSkillsDir, detectInstalled). Refreshed from the 1.5.9 table, which was absorbed from git branch archive/rust-gui src/agents.rs SPECS; pathSemantics and detectionOrder below describe Sukiru's detector and still cite that port.",
+  "upstreamPin": "vercel-labs/skills@1.7.0",
+  "hostCount": 77,
+  "ghAgentSource": "ghAgentId is the `gh skill install --agent` value for the host, captured from `gh skill install --help` (gh 2.102.0); null means gh does not accept the host. gh-only values with no skills@1.7.0 host: antigravity2.0.",
+  "omittedUpstreamHosts": {
+    "eve": "project-only: upstream globalSkillsDir is undefined, which the schema (non-empty globalSkillDirRelative) cannot express",
+    "promptscript": "project-only: upstream globalSkillsDir is undefined, which the schema (non-empty globalSkillDirRelative) cannot express"
+  },
+  "unmodeledUpstreamFields": {
+    "showInUniversalPrompt": "false for antigravity, antigravity-cli, deepagents, dexto, firebender, loaf, sarvam-code: hides the host from the CLI's interactive universal-agents prompt only; it does not change getUniversalAgents, so Sukiru does not model it.",
+    "createProjectSkillsDirByDefault": "true for claude-code: the CLI creates .claude/skills in a project without an existing .claude dir; install-side only."
+  },
   "globalBaseResolution": {
     "Home": "$HOME (fallback $USERPROFILE)",
     "Xdg": "$XDG_CONFIG_HOME if set and non-empty, else $HOME/.config",
@@ -11,7 +20,9 @@
     "globalSkillDirRelative": "Relative to the RESOLVED BASE (see globalBaseResolution), NOT to $HOME. Resolved global root = configHome(base) + globalSkillDirRelative (agents.rs:81-97).",
     "projectSkillDir": "Relative to the project root: projectRoot + projectSkillDir (agents.rs:43-45).",
     "detectionMarker": "Tested against the resolved base first, then against $HOME (agents.rs:159-161). Empty string means: test the resolved base itself and do NOT fall through to $HOME.",
-    "extraMarkers": "Tested against $HOME only (agents.rs:164-166)."
+    "extraMarkers": "Tested against $HOME only (agents.rs:164-166).",
+    "legacyProjectSkillDirs": "Relative to the project root, like projectSkillDir. Dirs the pinned CLI no longer installs into but users may still hold; scanned READ-ONLY (never an install or -a target).",
+    "legacyGlobalSkillDirs": "Relative to the RESOLVED BASE, like globalSkillDirRelative. Scanned READ-ONLY when the dir exists; never an install target."
   },
   "detectionOrder": [
     "id == universal -> false",
@@ -36,6 +47,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "adal",
       "notes": null
     },
     {
@@ -50,6 +64,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": null
     },
     {
@@ -64,6 +81,9 @@
       "globalBase": "Xdg",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "amp",
       "notes": null
     },
     {
@@ -78,7 +98,44 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "antigravity",
       "notes": null
+    },
+    {
+      "id": "antigravity-cli",
+      "displayName": "Antigravity CLI",
+      "projectSkillDir": ".agents/skills",
+      "globalSkillDirRelative": ".gemini/antigravity-cli/skills",
+      "detectionMarker": ".gemini/antigravity-cli",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "antigravity-cli",
+      "notes": null
+    },
+    {
+      "id": "astrbot",
+      "displayName": "AstrBot",
+      "projectSkillDir": "data/skills",
+      "globalSkillDirRelative": ".astrbot/data/skills",
+      "detectionMarker": ".astrbot",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": true,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": "detectInProject: upstream probes cwd/<projectSkillDir> (data/skills) only, not cwd/<detectionMarker>."
     },
     {
       "id": "augment",
@@ -92,7 +149,27 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "augment",
       "notes": null
+    },
+    {
+      "id": "autohand-code",
+      "displayName": "Autohand Code CLI",
+      "projectSkillDir": ".autohand/skills",
+      "globalSkillDirRelative": "skills",
+      "detectionMarker": "",
+      "envHomeVar": "AUTOHAND_HOME",
+      "envFallbackDir": ".autohand",
+      "extraMarkers": [],
+      "globalBase": "Env",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": "Empty detectionMarker: probes resolved config home ($AUTOHAND_HOME or $HOME/.autohand)."
     },
     {
       "id": "bob",
@@ -106,6 +183,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "bob",
       "notes": null
     },
     {
@@ -120,6 +200,9 @@
       "globalBase": "Env",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "claude-code",
       "notes": "Empty detectionMarker: is_detected_at tests the RESOLVED config home ($CLAUDE_CONFIG_DIR or $HOME/.claude) via marks_installation, and must NOT fall through to $HOME (agents.rs:156-158)."
     },
     {
@@ -134,6 +217,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "cline",
       "notes": null
     },
     {
@@ -148,6 +234,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": null
     },
     {
@@ -162,6 +251,9 @@
       "globalBase": "Home",
       "detectInProject": true,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "codebuddy",
       "notes": "detectInProject: cwd/<detectionMarker> or cwd/<projectSkillDir> via marks_installation short-circuits detection (agents.rs:147-152)."
     },
     {
@@ -176,6 +268,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": null
     },
     {
@@ -190,6 +285,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": null
     },
     {
@@ -204,7 +302,10 @@
       "globalBase": "Env",
       "detectInProject": false,
       "showInUniversalList": true,
-      "notes": "Empty detectionMarker (resolved config home probe). Additionally short-circuits true if marks_installation(\"/etc/codex\") \u2014 an ABSOLUTE path, not home-relative (agents.rs:122-124)."
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "codex",
+      "notes": "Empty detectionMarker (resolved config home probe). Additionally short-circuits true if marks_installation(\"/etc/codex\") — an ABSOLUTE path, not home-relative (agents.rs:122-124)."
     },
     {
       "id": "command-code",
@@ -218,6 +319,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "command-code",
       "notes": null
     },
     {
@@ -232,6 +336,9 @@
       "globalBase": "Home",
       "detectInProject": true,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "continue",
       "notes": "detectInProject: cwd/<detectionMarker> or cwd/<projectSkillDir> via marks_installation short-circuits detection (agents.rs:147-152)."
     },
     {
@@ -246,6 +353,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "cortex",
       "notes": null
     },
     {
@@ -260,6 +370,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "crush",
       "notes": null
     },
     {
@@ -274,6 +387,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "cursor",
       "notes": null
     },
     {
@@ -288,6 +404,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "deepagents",
       "notes": null
     },
     {
@@ -302,6 +421,9 @@
       "globalBase": "Xdg",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "devin",
       "notes": null
     },
     {
@@ -316,12 +438,15 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": null
     },
     {
       "id": "droid",
       "displayName": "Droid",
-      "projectSkillDir": ".factory/skills",
+      "projectSkillDir": ".agents/skills",
       "globalSkillDirRelative": ".factory/skills",
       "detectionMarker": ".factory",
       "envHomeVar": null,
@@ -330,7 +455,12 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
-      "notes": null
+      "legacyProjectSkillDirs": [
+        ".factory/skills"
+      ],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "droid",
+      "notes": "Between skills@1.5.9 and 1.7.0 the project dir moved from .factory/skills to the canonical .agents/skills; the global dir is unchanged. .factory/skills is kept as a legacy project scan location (Factory Droid still reads it)."
     },
     {
       "id": "firebender",
@@ -344,6 +474,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "firebender",
       "notes": null
     },
     {
@@ -358,6 +491,26 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": null
+    },
+    {
+      "id": "fx",
+      "displayName": "fx",
+      "projectSkillDir": ".fx/skills",
+      "globalSkillDirRelative": ".fx/skills",
+      "detectionMarker": ".fx",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": null
     },
     {
@@ -372,6 +525,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "gemini-cli",
       "notes": null
     },
     {
@@ -386,6 +542,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "github-copilot",
       "notes": null
     },
     {
@@ -400,21 +559,44 @@
       "globalBase": "Xdg",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "goose",
       "notes": null
+    },
+    {
+      "id": "grok",
+      "displayName": "Grok Build",
+      "projectSkillDir": ".grok/skills",
+      "globalSkillDirRelative": "skills",
+      "detectionMarker": "",
+      "envHomeVar": "GROK_HOME",
+      "envFallbackDir": ".grok",
+      "extraMarkers": [],
+      "globalBase": "Env",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "grok",
+      "notes": "Empty detectionMarker: probes resolved config home ($GROK_HOME or $HOME/.grok)."
     },
     {
       "id": "hermes-agent",
       "displayName": "Hermes Agent",
       "projectSkillDir": ".hermes/skills",
-      "globalSkillDirRelative": ".hermes/skills",
-      "detectionMarker": ".hermes",
-      "envHomeVar": null,
-      "envFallbackDir": null,
+      "globalSkillDirRelative": "skills",
+      "detectionMarker": "",
+      "envHomeVar": "HERMES_HOME",
+      "envFallbackDir": ".hermes",
       "extraMarkers": [],
-      "globalBase": "Home",
+      "globalBase": "Env",
       "detectInProject": false,
       "showInUniversalList": true,
-      "notes": null
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": "Empty detectionMarker: probes resolved config home ($HERMES_HOME or $HOME/.hermes). Between skills@1.5.9 and 1.7.0 the global dir moved under $HERMES_HOME."
     },
     {
       "id": "iflow-cli",
@@ -428,7 +610,44 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "iflow-cli",
       "notes": null
+    },
+    {
+      "id": "inference-sh",
+      "displayName": "inference.sh",
+      "projectSkillDir": ".inferencesh/skills",
+      "globalSkillDirRelative": ".inferencesh/skills",
+      "detectionMarker": ".inferencesh",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": null
+    },
+    {
+      "id": "jazz",
+      "displayName": "Jazz",
+      "projectSkillDir": ".jazz/skills",
+      "globalSkillDirRelative": ".jazz/skills",
+      "detectionMarker": ".jazz",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": true,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": "detectInProject: upstream probes cwd/<detectionMarker> (.jazz)."
     },
     {
       "id": "junie",
@@ -442,35 +661,69 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "junie",
       "notes": null
     },
     {
       "id": "kilo",
       "displayName": "Kilo Code",
-      "projectSkillDir": ".kilocode/skills",
-      "globalSkillDirRelative": ".kilocode/skills",
-      "detectionMarker": ".kilocode",
+      "projectSkillDir": ".agents/skills",
+      "globalSkillDirRelative": ".kilo/skills",
+      "detectionMarker": ".kilo",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [
+        ".kilocode"
+      ],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [
+        ".kilocode/skills"
+      ],
+      "legacyGlobalSkillDirs": [
+        ".kilocode/skills"
+      ],
+      "ghAgentId": "kilo",
+      "notes": "Between skills@1.5.9 and 1.7.0 Kilo Code moved from .kilocode/skills (project and global) to .agents/skills (project) and .kilo/skills (global); the legacy $HOME/.kilocode home still marks an installation. The .kilocode/skills dirs are kept as legacy scan locations."
+    },
+    {
+      "id": "kimchi",
+      "displayName": "Kimchi",
+      "projectSkillDir": ".kimchi/skills",
+      "globalSkillDirRelative": ".config/kimchi/harness/skills",
+      "detectionMarker": ".config/kimchi",
       "envHomeVar": null,
       "envFallbackDir": null,
       "extraMarkers": [],
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": null
     },
     {
-      "id": "kimi-cli",
+      "id": "kimi-code-cli",
       "displayName": "Kimi Code CLI",
       "projectSkillDir": ".agents/skills",
-      "globalSkillDirRelative": ".config/agents/skills",
-      "detectionMarker": ".kimi",
+      "globalSkillDirRelative": ".agents/skills",
+      "detectionMarker": ".kimi-code",
       "envHomeVar": null,
       "envFallbackDir": null,
-      "extraMarkers": [],
+      "extraMarkers": [
+        ".kimi"
+      ],
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
-      "notes": null
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "kimi-cli",
+      "notes": "Renamed from kimi-cli between skills@1.5.9 and 1.7.0 (gh 2.102.0 still names it kimi-cli); the global dir moved from $HOME/.config/agents/skills to $HOME/.agents/skills, and $HOME/.kimi still marks an installation."
     },
     {
       "id": "kiro-cli",
@@ -484,6 +737,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "kiro-cli",
       "notes": null
     },
     {
@@ -498,6 +754,43 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "kode",
+      "notes": null
+    },
+    {
+      "id": "lingma",
+      "displayName": "Lingma",
+      "projectSkillDir": ".lingma/skills",
+      "globalSkillDirRelative": ".lingma/skills",
+      "detectionMarker": ".lingma",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": null
+    },
+    {
+      "id": "loaf",
+      "displayName": "Loaf",
+      "projectSkillDir": ".agents/skills",
+      "globalSkillDirRelative": ".agents/skills",
+      "detectionMarker": ".loaf",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": null
     },
     {
@@ -512,7 +805,27 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "mcpjam",
       "notes": null
+    },
+    {
+      "id": "minimax-code",
+      "displayName": "MiniMax Code",
+      "projectSkillDir": ".minimax/skills",
+      "globalSkillDirRelative": ".minimax/skills",
+      "detectionMarker": ".minimax",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": "Upstream also detects an absolute /Applications/MiniMax Code.app; absolute markers are not expressible in this schema, so only the home marker is modeled."
     },
     {
       "id": "mistral-vibe",
@@ -526,7 +839,27 @@
       "globalBase": "Env",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "mistral-vibe",
       "notes": "Empty detectionMarker: probes resolved config home ($VIBE_HOME or $HOME/.vibe) (agents.rs:156-158)."
+    },
+    {
+      "id": "moxby",
+      "displayName": "Moxby",
+      "projectSkillDir": ".moxby/skills",
+      "globalSkillDirRelative": ".moxby/skills",
+      "detectionMarker": ".moxby",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": null
     },
     {
       "id": "mux",
@@ -540,6 +873,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "mux",
       "notes": null
     },
     {
@@ -554,6 +890,26 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "neovate",
+      "notes": null
+    },
+    {
+      "id": "ona",
+      "displayName": "Ona",
+      "projectSkillDir": ".ona/skills",
+      "globalSkillDirRelative": ".ona/skills",
+      "detectionMarker": ".ona",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": null
     },
     {
@@ -571,7 +927,10 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
-      "notes": "global_skills_path_with is special-cased (agents.rs:81-97): probes $HOME/.openclaw, $HOME/.clawdbot, $HOME/.moltbot in that order and returns <first existing>/skills, else $HOME/.openclaw/skills \u2014 so globalSkillDirRelative is only the fallback. extraMarkers cover the legacy names."
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "openclaw",
+      "notes": "global_skills_path_with is special-cased (agents.rs:81-97): probes $HOME/.openclaw, $HOME/.clawdbot, $HOME/.moltbot in that order and returns <first existing>/skills, else $HOME/.openclaw/skills — so globalSkillDirRelative is only the fallback. extraMarkers cover the legacy names."
     },
     {
       "id": "opencode",
@@ -585,6 +944,9 @@
       "globalBase": "Xdg",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "opencode",
       "notes": null
     },
     {
@@ -599,6 +961,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "openhands",
       "notes": null
     },
     {
@@ -613,6 +978,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "pi",
       "notes": null
     },
     {
@@ -627,6 +995,28 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "pochi",
+      "notes": null
+    },
+    {
+      "id": "posit-assistant",
+      "displayName": "Posit Assistant",
+      "projectSkillDir": ".posit/assistant/skills",
+      "globalSkillDirRelative": ".posit/assistant/skills",
+      "detectionMarker": ".posit/assistant",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [
+        ".positai"
+      ],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": null
     },
     {
@@ -641,7 +1031,27 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
-      "notes": null
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "qoder",
+      "notes": "Shares projectSkillDir `.qoder/skills` with qoder-cn, so project-scope host identity is ambiguous; only the global dirs differ."
+    },
+    {
+      "id": "qoder-cn",
+      "displayName": "Qoder CN",
+      "projectSkillDir": ".qoder/skills",
+      "globalSkillDirRelative": ".qoder-cn/skills",
+      "detectionMarker": ".qoder-cn",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": "Shares projectSkillDir `.qoder/skills` with qoder, so project-scope host identity is ambiguous; only the global dirs differ."
     },
     {
       "id": "qwen-code",
@@ -655,6 +1065,26 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "qwen-code",
+      "notes": null
+    },
+    {
+      "id": "reasonix",
+      "displayName": "Reasonix",
+      "projectSkillDir": ".reasonix/skills",
+      "globalSkillDirRelative": ".reasonix/skills",
+      "detectionMarker": ".reasonix",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": null
     },
     {
@@ -669,6 +1099,9 @@
       "globalBase": "Xdg",
       "detectInProject": true,
       "showInUniversalList": false,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "replit",
       "notes": "cwd-only detection: `cwd/.replit` plain existence check, bypassing marks_installation and all home probing (agents.rs:126-128). Hidden from the universal list."
     },
     {
@@ -683,6 +1116,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "roo",
       "notes": null
     },
     {
@@ -697,7 +1133,27 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": null
+    },
+    {
+      "id": "sarvam-code",
+      "displayName": "Sarvam Code",
+      "projectSkillDir": ".agents/skills",
+      "globalSkillDirRelative": ".agents/skills",
+      "detectionMarker": ".sarvam",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": "Upstream detects existsSync($SARVAM_HOME or $HOME/.sarvam) while the global dir stays $HOME/.agents/skills; the schema cannot tie detection to an env home with a different global base, so only the $HOME/.sarvam fallback marker is modeled."
     },
     {
       "id": "tabnine-cli",
@@ -711,6 +1167,43 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": null
+    },
+    {
+      "id": "terramind",
+      "displayName": "Terramind",
+      "projectSkillDir": ".terramind/skills",
+      "globalSkillDirRelative": ".terramind/skills",
+      "detectionMarker": ".terramind",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": null
+    },
+    {
+      "id": "tinycloud",
+      "displayName": "Tinycloud",
+      "projectSkillDir": ".tinycloud/skills",
+      "globalSkillDirRelative": ".tinycloud/skills",
+      "detectionMarker": ".tinycloud",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": null
     },
     {
@@ -725,6 +1218,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "trae",
       "notes": "Shares projectSkillDir `.trae/skills` with trae-cn, so project-scope host identity is ambiguous; only the global dirs differ (.trae/skills vs .trae-cn/skills)."
     },
     {
@@ -739,6 +1235,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "trae-cn",
       "notes": "Shares projectSkillDir `.trae/skills` with trae, so project-scope host identity is ambiguous; only the global dirs differ."
     },
     {
@@ -753,6 +1252,9 @@
       "globalBase": "Xdg",
       "detectInProject": false,
       "showInUniversalList": false,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "universal",
       "notes": "is_detected_at returns false unconditionally (agents.rs:119-121); pseudo-host for the shared `agents/skills` layout. Hidden from the universal list."
     },
     {
@@ -767,6 +1269,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "warp",
       "notes": null
     },
     {
@@ -781,7 +1286,27 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": null
+    },
+    {
+      "id": "zcode",
+      "displayName": "ZCode",
+      "projectSkillDir": ".zcode/skills",
+      "globalSkillDirRelative": ".zcode/skills",
+      "detectionMarker": ".zcode",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": "Upstream also detects an absolute /Applications/ZCode.app; absolute markers are not expressible in this schema, so only the home marker is modeled."
     },
     {
       "id": "zed",
@@ -795,6 +1320,9 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
       "notes": "Custom detection probe, ignores detectionMarker/base: ($XDG_CONFIG_HOME|$HOME/.config)/zed, then $APPDATA/Zed, then $FLATPAK_XDG_CONFIG_HOME/zed; plain existence, not marks_installation (agents.rs:129-146)."
     },
     {
@@ -809,7 +1337,27 @@
       "globalBase": "Home",
       "detectInProject": false,
       "showInUniversalList": true,
-      "notes": null
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": "zencoder",
+      "notes": "Shares both dirs and the detection marker with zenflow (same vendor), so host identity is ambiguous in both scopes."
+    },
+    {
+      "id": "zenflow",
+      "displayName": "Zenflow",
+      "projectSkillDir": ".zencoder/skills",
+      "globalSkillDirRelative": ".zencoder/skills",
+      "detectionMarker": ".zencoder",
+      "envHomeVar": null,
+      "envFallbackDir": null,
+      "extraMarkers": [],
+      "globalBase": "Home",
+      "detectInProject": false,
+      "showInUniversalList": true,
+      "legacyProjectSkillDirs": [],
+      "legacyGlobalSkillDirs": [],
+      "ghAgentId": null,
+      "notes": "Shares both dirs and the detection marker with zencoder (same vendor), so host identity is ambiguous in both scopes."
     }
   ]
 }

@@ -139,11 +139,6 @@ extension AppState {
 
     // MARK: - installer choice
 
-    /// The common gh --agent targets offered by the install sheet. The
-    /// canonical store host heads the list; the rest are the widely adopted
-    /// agent hosts the gh CLI supports (probe-verified `--agent` values).
-    static let ghInstallAgentOptions = ["codex", "claude-code", "cursor", "gemini-cli"]
-
     /// Opens the install sheet for the selected result.
     func presentInstallSheet() {
         guard selectedSearchResult() != nil else { return }
@@ -156,7 +151,7 @@ extension AppState {
         installOrigin = origin
         installInstaller = .vercel
         installTarget = .user
-        ghInstallAgent = Self.ghInstallAgentOptions.first ?? "codex"
+        ghInstallAgent = HostTable.ghInstallAgentOptions.first ?? "codex"
         ghPinRef = ""
         vercelInstallAgents = []
         let detector = HostDetector(environment: environment, fileSystem: DefaultFileSystemProbe())

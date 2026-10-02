@@ -27,16 +27,17 @@ public enum ContainerIgnoreList {
     public static let curatedBuckets: Set<String> = [".curated", ".experimental", ".system"]
 
     /// Dot-prefixed container names derived from `HostTable`: the first path
-    /// component of every host's `projectSkillDir`, plus curated buckets.
+    /// component of every host's `projectSkillDir` and legacy project dirs,
+    /// plus curated buckets.
     public static let knownContainerNames: Set<String> = {
         var names = curatedBuckets
         for host in HostTable.hosts {
-            guard let first = host.projectSkillDir.split(separator: "/").first,
-                first.hasPrefix(".")
-            else {
-                continue
+            for dir in [host.projectSkillDir] + host.legacyProjectSkillDirs {
+                guard let first = dir.split(separator: "/").first, first.hasPrefix(".") else {
+                    continue
+                }
+                names.insert(String(first))
             }
-            names.insert(String(first))
         }
         return names
     }()

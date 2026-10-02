@@ -202,8 +202,8 @@ struct InstallSheet: View {
     }
 
     /// gh-only fields: the target agent (--agent, required) and the optional
-    /// pin ref. The agent list is the canonical store host plus the common
-    /// agent hosts (probe-verified `--agent` values); user picks one.
+    /// pin ref. The agent list is `HostTable.ghInstallAgentOptions`; user
+    /// picks one.
     private var githubAgentFields: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
@@ -213,7 +213,7 @@ struct InstallSheet: View {
             }
             .accessibilityElement(children: .contain)
             Picker("Agent", selection: $state.ghInstallAgent) {
-                ForEach(AppState.ghInstallAgentOptions, id: \.self) { agent in
+                ForEach(HostTable.ghInstallAgentOptions, id: \.self) { agent in
                     Text(agent).tag(agent)
                 }
             }

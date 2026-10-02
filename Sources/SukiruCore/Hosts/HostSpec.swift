@@ -2,10 +2,10 @@ import Foundation
 
 /// One agent host's directory + detection specification.
 ///
-/// Ported verbatim from `research/host-table.json` (56 hosts), which itself was
-/// extracted from the retired Rust implementation's `SPECS` array. The static
-/// data lives in the generated `HostTableData.swift`; a unit test asserts the
-/// count (56) and byte-parity with the JSON. Field semantics:
+/// Ported verbatim from `research/host-table.json`, which mirrors the agent
+/// definitions of the pinned `skills` CLI (see its `upstreamPin`). The static
+/// data lives in the generated `HostTableData.swift`; a unit test asserts
+/// parity with the JSON. Field semantics:
 ///
 /// - `projectSkillDir` is relative to a project root.
 /// - `globalSkillDirRelative` is relative to the RESOLVED base (see
@@ -13,6 +13,13 @@ import Foundation
 /// - `detectionMarker` is an existence probe; the empty string means "probe the
 ///   resolved config home itself and never fall through to `$HOME`".
 /// - `extraMarkers` are probed against `$HOME` only.
+/// - `legacyProjectSkillDirs` / `legacyGlobalSkillDirs` are dirs the pinned
+///   CLI no longer installs into but users may still hold, relative like
+///   `projectSkillDir` / `globalSkillDirRelative`. They are scanned
+///   read-only and are never an install target.
+/// - `ghAgentId` is the `gh skill install --agent` value for the host, which
+///   can differ from `id` (the `npx skills -a` value); nil when gh does not
+///   accept the host.
 public struct HostSpec: Equatable, Sendable, Codable {
     /// How a host's global configuration base directory is resolved.
     public enum GlobalBase: String, Equatable, Sendable, Codable {
@@ -35,6 +42,9 @@ public struct HostSpec: Equatable, Sendable, Codable {
     public let globalBase: GlobalBase
     public let detectInProject: Bool
     public let showInUniversalList: Bool
+    public let legacyProjectSkillDirs: [String]
+    public let legacyGlobalSkillDirs: [String]
+    public let ghAgentId: String?
 
     public init(
         id: String,
@@ -47,7 +57,10 @@ public struct HostSpec: Equatable, Sendable, Codable {
         extraMarkers: [String],
         globalBase: GlobalBase,
         detectInProject: Bool,
-        showInUniversalList: Bool
+        showInUniversalList: Bool,
+        legacyProjectSkillDirs: [String],
+        legacyGlobalSkillDirs: [String],
+        ghAgentId: String?
     ) {
         self.id = id
         self.displayName = displayName
@@ -60,6 +73,9 @@ public struct HostSpec: Equatable, Sendable, Codable {
         self.globalBase = globalBase
         self.detectInProject = detectInProject
         self.showInUniversalList = showInUniversalList
+        self.legacyProjectSkillDirs = legacyProjectSkillDirs
+        self.legacyGlobalSkillDirs = legacyGlobalSkillDirs
+        self.ghAgentId = ghAgentId
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -74,6 +90,9 @@ public struct HostSpec: Equatable, Sendable, Codable {
         case globalBase
         case detectInProject
         case showInUniversalList
+        case legacyProjectSkillDirs
+        case legacyGlobalSkillDirs
+        case ghAgentId
     }
 }
 
