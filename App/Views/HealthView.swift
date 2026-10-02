@@ -20,6 +20,15 @@ import SwiftUI
 /// derive from the scan report.
 struct HealthView: View {
     @EnvironmentObject private var state: AppState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Bumped when a rescan leaves the whole library clean; drives the
+    /// healthy seal's bounce.
+    @State private var healthyBounce = 0
+
+    /// Row and count changes from a rescan animate unless Reduce Motion is on.
+    private var changeAnimation: Animation? {
+        reduceMotion ? nil : .default
+    }
 
     var body: some View {
         Group {
@@ -99,6 +108,17 @@ struct HealthView: View {
                     HealthFilterBar()
                 }
             }
+            .onChange(of: isHealthy) { wasHealthy, nowHealthy in
+                if nowHealthy && !wasHealthy && !reduceMotion {
+                    healthyBounce += 1
+                }
+            }
+    }
+
+    /// The unfiltered, unfocused library has nothing left to show.
+    private var isHealthy: Bool {
+        state.healthFocus == nil && state.healthWorkspaceFilter == nil
+            && state.visibleHealthEntries().isEmpty && state.visibleIssues().isEmpty
     }
 
     // MARK: - header
@@ -110,6 +130,7 @@ struct HealthView: View {
                 AXToken(token: "sukiru.health.summary")
                 Text(summaryText)
                     .foregroundStyle(.secondary)
+                    .contentTransition(.numericText())
             }
             if state.healthCheckRunning {
                 // The run state stays visible while a check
@@ -135,6 +156,7 @@ struct HealthView: View {
                 state.fix(fixable)
             } label: {
                 Text("Fix All (\(fixable.count))")
+                    .contentTransition(.numericText())
             }
             .buttonStyle(.borderedProminent)
             .axButtonToken(
@@ -145,6 +167,7 @@ struct HealthView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
+        .animation(changeAnimation, value: summaryText)
     }
 
     /// Findings that are problems (notes excluded), after focus and filter.
@@ -192,6 +215,7 @@ struct HealthView: View {
                 emptyState
             }
         }
+        .animation(changeAnimation, value: entries.map(\.id) + issues.map(\.path))
     }
 
     /// Explicit empty states, distinguished by cause: skill focus,
@@ -215,6 +239,7 @@ struct HealthView: View {
                 HStack(spacing: 0) {
                     AXToken(token: "sukiru.health.healthy")
                     Label("The library looks healthy", systemImage: "checkmark.seal")
+                        .symbolEffect(.bounce, value: healthyBounce)
                 }
             }
         }
@@ -225,7 +250,10 @@ struct HealthView: View {
         let entry: AppState.FindingEntry
         let token: String
 
-        var id: String { entry.id }
+        /// The token, not `entry.id`: entry ids embed the report index, which
+        /// shifts on every rescan, so surviving rows would be redrawn as new
+        /// ones instead of staying put while fixed rows animate away.
+        var id: String { token }
     }
 
     /// Row items in report order. Tokens are
