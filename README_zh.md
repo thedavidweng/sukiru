@@ -19,7 +19,7 @@
   </p>
 
   <br />
-  <img src="public/screenshot.jpg" alt="Sukiru 主窗口界面" width="800" />
+  <img src="public/screenshot.webp" alt="Sukiru 主窗口界面" width="800" />
 </div>
 
 ---

@@ -42,7 +42,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Screenshots are optional; the pages drop an image that fails to load.
-          for shot in public/screenshot*.webp public/screenshot*.jpg; do
+          for shot in public/screenshot*.webp; do
             if [ -e "$shot" ]; then cp "$shot" site/assets/; fi
           done
           cp Resources/AppIcon.webp site/assets/icon.webp
