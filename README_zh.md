@@ -19,8 +19,7 @@
   </p>
 
   <br />
-  <!-- Screenshot slot: add public/screenshot-zh.webp and restore this image. -->
-  <!-- <img src="public/screenshot-zh.webp" alt="Sukiru 主窗口界面" width="800" /> -->
+  <img src="public/screenshot.webp" alt="Sukiru 主窗口界面" width="800" />
 </div>
 
 ---
