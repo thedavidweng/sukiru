@@ -21,10 +21,13 @@ struct AgentLogo: View {
 
     static func assetName(for hostID: String) -> String? {
         switch hostID {
-        case "amp", "antigravity", "augment", "claude-code", "cline", "codex", "cursor",
-            "droid", "gemini-cli", "github-copilot", "hermes-agent", "kilo", "kimi-cli",
-            "kiro-cli", "mistral-vibe", "openclaw", "opencode", "pi", "roo", "trae",
-            "warp", "windsurf", "zed":
+        case "adal", "amp", "antigravity", "augment", "bob", "claude-code", "cline",
+            "codearts-agent", "codebuddy", "codestudio", "codex", "command-code", "continue",
+            "cortex", "crush", "cursor", "deepagents", "devin", "dexto", "droid", "firebender",
+            "forgecode", "gemini-cli", "github-copilot", "goose", "hermes-agent", "junie", "kilo",
+            "kimi-cli", "kiro-cli", "mcpjam", "mistral-vibe", "mux", "neovate", "openclaw",
+            "opencode", "openhands", "pi", "pochi", "qoder", "qwen-code", "replit", "roo",
+            "rovodev", "tabnine-cli", "trae", "warp", "windsurf", "zed", "zencoder":
             return "agent-\(hostID)"
         case "trae-cn":
             return "agent-trae"

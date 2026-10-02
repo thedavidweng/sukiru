@@ -10,11 +10,40 @@ https://github.com/what1f/kitter/tree/7de9372a8b691c8dffed6e9102d2c1c53b0e46b2/a
 Kitter attributes these provider icons to Lobe Icons under MIT.
 Copyright (c) 2023 LobeHub.
 
+CodeBuddy, Command Code, Devin, Goose, Junie, OpenHands, Qoder, Qwen Code,
+Replit, and Zencoder were converted from the monochrome SVGs of
+@lobehub/icons-static-svg 1.95.1 (Lobe Icons, MIT, Copyright (c) 2023 LobeHub).
+
 Augment, Cline, Kilo Code, Kimi Code CLI, Kiro CLI, Mistral Vibe, Roo Code,
 Warp, Windsurf, and Zed were converted from aghub's agent SVGs at commit
 61a7ee799a035cd5eb0ccae6515b9d151984ec52:
 https://github.com/AkaraChen/aghub/tree/61a7ee799a035cd5eb0ccae6515b9d151984ec52/crates/desktop/src/assets/agent
 Copyright (c) 2026 akarachen.
+
+CodeArts Agent uses the Huawei Cloud mark and Cortex Code uses the Snowflake
+mark, both from @lobehub/icons-static-svg 1.95.1 (Lobe Icons, MIT, Copyright
+(c) 2023 LobeHub).
+
+The remaining marks were taken from each product's own published artwork and
+reduced to a single color; brand marks are used only to identify the product:
+- AdaL: https://sylph.ai/adal-icon-pink.svg
+- Continue: continuedev/continue docs/logo/light.svg (Apache-2.0)
+- Crush: redrawn as vector pixels from charmbracelet/crush
+  internal/ui/notification/crush-icon-solo.png
+- Deep Agents: langchain-ai/deepagents .github/images/logo-light.svg (MIT)
+- Dexto: truffle-ai/dexto docs/static/img/dexto/dexto_logo_icon.svg
+- Firebender: https://firebender.com/icon.svg
+- ForgeCode: https://forgecode.dev/images/favicon-light.svg
+- IBM Bob: https://bob.ibm.com/icon.svg
+- MCPJam: MCPJam/inspector mcpjam-inspector/client/public/mcp_jam.svg
+- Mux: coder/mux docs/favicon.svg
+- Neovate: https://neovate.dev/favicon.svg
+- Pochi: TabbyML/pochi packages/vscode/assets/icons/pochi-logo.svg (Apache-2.0)
+- Rovo Dev: the Rovo Dev wordmark on https://www.atlassian.com/software/rovo-dev
+- Code Studio: Syncfusion's code-studio-logo-v3.svg on
+  https://www.syncfusion.com/code-studio/
+- Tabnine CLI: codota/tabnine-vscode logo.svg (MIT)
+Tile logos keep their glyph as a cut-out so the mark stays one color.
 
 Each SVG was converted to a vector PDF with rsvg-convert --format pdf and
 included as a template image so macOS supplies its foreground color.
