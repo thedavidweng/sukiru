@@ -1,5 +1,44 @@
 # Changelog
 
+## [1.3.0](https://github.com/thedavidweng/sukiru/compare/v1.2.0...v1.3.0) (2026-10-03)
+
+
+### ✨ Features
+
+* **app:** align Discover search with skills.sh and fetch previews by slug ([db615d3](https://github.com/thedavidweng/sukiru/commit/db615d35a512d3c9031e563cc589a85cebcbbeb4))
+* **app:** animate Health changes after a rescan ([e802f17](https://github.com/thedavidweng/sukiru/commit/e802f17e668bc2073f819a81b7ccc181b71e17d6))
+* **app:** confirm rollbacks and deletions from Snapshot rows ([bb0703d](https://github.com/thedavidweng/sukiru/commit/bb0703ddc347bbae657ee9411a9ef4a468cac023))
+* **app:** inspect the selected Health problem in the detail column ([e43b552](https://github.com/thedavidweng/sukiru/commit/e43b552be64a920bd811ee98a1967ac763225d25))
+* **app:** queue Health repairs in a cart, match orphan sources, delete snapshots ([5b9d54d](https://github.com/thedavidweng/sukiru/commit/5b9d54d92360f22f92e1bb7b1f39e750ea127fa8))
+* **hosts:** refresh the host table to skills 1.7.0 ([6ae70d9](https://github.com/thedavidweng/sukiru/commit/6ae70d931963407b948822e174965ea897d2bbdd))
+* **library:** add a context menu to Library skill rows ([48e0f9b](https://github.com/thedavidweng/sukiru/commit/48e0f9b42c3a97378bf3a91af3139dd2fe2bfbc7))
+* **library:** check gh skills for updates and fix gh-only flows ([2a58703](https://github.com/thedavidweng/sukiru/commit/2a58703e187b4a5d32e2ab905d8ff0c0d6731627))
+* **library:** pin, unpin, and restore files on GitHub-ledger skills ([50200e9](https://github.com/thedavidweng/sukiru/commit/50200e9cceb7c0aeace3f2e0c74439267e10b922))
+* **library:** update, update all, and uninstall ledger-owned skills ([a46dd9b](https://github.com/thedavidweng/sukiru/commit/a46dd9b065b5eeb2b741228455e87aa95bc92e1e))
+* **search:** install several skills from a typed repository ([7174434](https://github.com/thedavidweng/sukiru/commit/7174434a46551be6d1e0246d1de6e00e4b110689))
+
+
+### 🐛 Bug Fixes
+
+* **app:** keep whole-surface toolbar actions over the list column ([338de6b](https://github.com/thedavidweng/sukiru/commit/338de6bd0d9502f548f36acce6dee9d93ba6f311))
+* **app:** polish Library lifecycle, pin, and install UI ([67af7a9](https://github.com/thedavidweng/sukiru/commit/67af7a95b9c60f393c9d36fb0a339f8b9e41bbe4))
+* **app:** show problem explanations in full and give Notes its own icon ([ead826b](https://github.com/thedavidweng/sukiru/commit/ead826bea1545c3fd4919924593bfdfedb811784))
+* **app:** show problem explanations inline instead of in a popover ([5b490af](https://github.com/thedavidweng/sukiru/commit/5b490af25e15075b5a848063b2de7bc1614a82e2))
+* **app:** write messages as plain sentences instead of dash asides ([bad8e17](https://github.com/thedavidweng/sukiru/commit/bad8e17165e63e8b5c414bf98b48bfdac5cc8a7c))
+* **health:** match Library's title bar and toolbar ([4bcf4cb](https://github.com/thedavidweng/sukiru/commit/4bcf4cb82c0d37dc116c431074d8280dd67c8db9))
+* **ownership:** recognize gh companion records in the Vercel global lock ([7032a95](https://github.com/thedavidweng/sukiru/commit/7032a9581575b1c3c83dc220cdb7e5c02042de71))
+
+
+### 📝 Documentation
+
+* add the main window screenshot to the README and website ([c231edb](https://github.com/thedavidweng/sukiru/commit/c231edbe2ffbe537e18a0b5f485b84b375cb06bf))
+* encode the screenshot losslessly so text stays sharp ([6569136](https://github.com/thedavidweng/sukiru/commit/656913619ed9397e41da9a961898346a22ea305a))
+* replace the screenshot with the correct capture ([65835d9](https://github.com/thedavidweng/sukiru/commit/65835d95836c46744bb2e7f6c20efa884ff5643f))
+* **site:** add the Open Graph and GitHub social preview images ([017eda3](https://github.com/thedavidweng/sukiru/commit/017eda3c7537493e5ce78e8c840927388cdc22d7))
+* **site:** replace the hero shrink with a sort-into-place intro ([22a2b8f](https://github.com/thedavidweng/sukiru/commit/22a2b8f9963c6ddc73906e785b32b75e0c287b38))
+* use the full-resolution original screenshot as lossless WebP ([7eb5fc2](https://github.com/thedavidweng/sukiru/commit/7eb5fc212253eb8b0164a17d073215798e082368))
+* use the original JPEG screenshot ([64d829f](https://github.com/thedavidweng/sukiru/commit/64d829fd62d52ddddad56da2d2d180e883732acd))
+
 ## [1.2.0](https://github.com/thedavidweng/sukiru/compare/v1.1.0...v1.2.0) (2026-10-02)
 
 
