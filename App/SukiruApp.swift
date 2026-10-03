@@ -29,7 +29,7 @@ struct SukiruApp: App {
                 sidebarCommand("Health", surface: .health, key: "2")
                 sidebarCommand("Pending Changes", surface: .pending, key: "3")
                 sidebarCommand("Snapshots", surface: .snapshots, key: "4")
-                sidebarCommand("Search", surface: .search, key: "5")
+                sidebarCommand("Discover", surface: .search, key: "5")
                 Divider()
                 // Quick Look in place. ⌘Y mirrors the
                 // Finder convention; the shortcut label in this menu is the
@@ -120,14 +120,13 @@ struct SukiruApp: App {
             // search field's onSubmit (Return in the field) runs the query;
             // ⌘K re-runs the current query from anywhere, ⌘⇧I opens the
             // installer-choice sheet for the selected result.
-            CommandMenu("Search") {
+            CommandMenu("Discover") {
                 Button("Run Search") {
                     state.performSearch()
                 }
                 .keyboardShortcut("k", modifiers: .command)
                 .disabled(
-                    state.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-                        .isEmpty)
+                    state.searchQuery.allSatisfy(\.isWhitespace) && state.searchOwner == nil)
                 Button("Install Selected Skill…") {
                     state.presentInstallSheet()
                 }

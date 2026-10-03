@@ -38,7 +38,7 @@ struct SkillsDotShSearchClientTests {
     private func client(fixture: String) -> SkillsDotShSearchClient {
         let data = Data(fixture.utf8)
         let transport = StubMarketplaceTransport(responses: [
-            "https://skills.sh/api/search?q=stale&limit=25":
+            "https://skills.sh/api/search?q=stale&limit=100":
                 .success(Data(data))
         ])
         return SkillsDotShSearchClient(transport: transport)
@@ -54,6 +54,7 @@ struct SkillsDotShSearchClientTests {
         #expect(first.backend == .skillsDotSh)
         #expect(first.installs == 305)
         #expect(first.path == nil)
+        #expect(first.slug == "cleaning-up-stale-feature-flags")
         #expect(first.popularityLabel == "305 installs")
         #expect(first.id == "skills.sh|posthog/ai-plugin|cleaning-up-stale-feature-flags")
     }
@@ -61,7 +62,7 @@ struct SkillsDotShSearchClientTests {
     @Test("empty skills array is a valid empty result")
     func emptyResults() async throws {
         let transport = StubMarketplaceTransport(responses: [
-            "https://skills.sh/api/search?q=zzz&limit=25":
+            "https://skills.sh/api/search?q=zzz&limit=100":
                 .success(Data("{\"skills\":[]}".utf8))
         ])
         let results = try await SkillsDotShSearchClient(transport: transport)
@@ -72,7 +73,7 @@ struct SkillsDotShSearchClientTests {
     @Test("malformed JSON surfaces as a marketplace error, never a crash")
     func malformedJSON() async {
         let transport = StubMarketplaceTransport(responses: [
-            "https://skills.sh/api/search?q=stale&limit=25":
+            "https://skills.sh/api/search?q=stale&limit=100":
                 .success(Data("not json".utf8))
         ])
         do {
@@ -114,11 +115,62 @@ struct SkillsDotShSearchClientTests {
     @Test("an owner filter adds the lowercased owner parameter")
     func ownerFilter() async throws {
         let transport = StubMarketplaceTransport(responses: [
-            "https://skills.sh/api/search?q=react&limit=25&owner=vercel-labs":
+            "https://skills.sh/api/search?q=react&limit=100&owner=vercel-labs":
                 .success(Data("{\"skills\":[]}".utf8))
         ])
         let results = try await SkillsDotShSearchClient(transport: transport)
             .search(query: "react", owner: "Vercel-Labs")
         #expect(results.isEmpty)
+    }
+
+    @Test("a plus sign is percent-encoded, as the server reads a bare + as a space")
+    func plusIsEncoded() async throws {
+        let transport = StubMarketplaceTransport(responses: [
+            "https://skills.sh/api/search?q=c%2B%2B%20%26%20go&limit=100":
+                .success(Data("{\"skills\":[]}".utf8))
+        ])
+        let results = try await SkillsDotShSearchClient(transport: transport)
+            .search(query: "c++ & go")
+        #expect(results.isEmpty)
+    }
+
+    @Test("results keep the server's ranking, deduplicated and sanitized")
+    func orderingAndSanitizing() async throws {
+        let body = """
+            {"skills": [
+              {"id": "a/r/low", "skillId": "low", "name": "low", "installs": 5, "source": "a/r"},
+              {"id": "b/r/high", "skillId": "high", "name": "hi\\u0007gh\\nx", "installs": 900,
+               "source": "b/r", "isDuplicate": true},
+              {"id": "a/r/low", "skillId": "low", "name": "low", "installs": 5, "source": "a/r"},
+              {"id": "c/r/tie", "skillId": "tie", "name": "tie", "installs": 5, "source": "c/r"}
+            ]}
+            """
+        let transport = StubMarketplaceTransport(responses: [
+            "https://skills.sh/api/search?q=x%20y&limit=100": .success(Data(body.utf8))
+        ])
+        let results = try await SkillsDotShSearchClient(transport: transport)
+            .search(query: "x y")
+        #expect(results.map(\.name) == ["low", "hi gh x", "tie"])
+        #expect(results.map(\.isDuplicate) == [false, true, false])
+    }
+
+    @Test("install counts read like npx skills find")
+    func installsLabel() {
+        #expect(SkillSearchResult.installsLabel(0) == nil)
+        #expect(SkillSearchResult.installsLabel(1) == "1 install")
+        #expect(SkillSearchResult.installsLabel(999) == "999 installs")
+        #expect(SkillSearchResult.installsLabel(1_000) == "1K installs")
+        #expect(SkillSearchResult.installsLabel(12_345) == "12.3K installs")
+        #expect(SkillSearchResult.installsLabel(1_274_516) == "1.3M installs")
+        #expect(SkillSearchResult.installsLabel(2_000_000) == "2M installs")
+    }
+
+    @Test("a refusal body becomes the error reason")
+    func refusalReason() {
+        let body = Data("{\"error\":\"Query must be at least 2 characters\"}".utf8)
+        #expect(
+            URLSessionMarketplaceTransport.errorReason(body)
+                == "Query must be at least 2 characters")
+        #expect(URLSessionMarketplaceTransport.errorReason(Data("<html>".utf8)) == nil)
     }
 }

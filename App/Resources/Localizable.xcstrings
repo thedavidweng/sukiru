@@ -965,6 +965,17 @@
         }
       }
     },
+    "Discover" : {
+      "comment" : "Sidebar, window title, and menu: the surface for finding new skills on skills.sh or GitHub.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发现"
+          }
+        }
+      }
+    },
     "Done" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1125,6 +1136,28 @@
         }
       }
     },
+    "Files" : {
+      "comment" : "Search result detail: section listing the files the skill ships.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件"
+          }
+        }
+      }
+    },
+    "Filter Library" : {
+      "comment" : "Library: placeholder of the toolbar field that filters installed skills.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "筛选资源库"
+          }
+        }
+      }
+    },
     "Filter skills" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1230,6 +1263,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "检测到的版本"
+          }
+        }
+      }
+    },
+    "Found with" : {
+      "comment" : "Search result detail: which search backend found the skill.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索来源"
           }
         }
       }
@@ -1449,6 +1493,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安装器"
+          }
+        }
+      }
+    },
+    "Installs" : {
+      "comment" : "Search result detail: skills.sh install count.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装量"
           }
         }
       }
@@ -1719,17 +1774,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在加载资源库…"
-          }
-        }
-      }
-    },
-    "Loading preview…" : {
-      "comment" : "Search result detail: preview loading state.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在加载预览…"
           }
         }
       }
@@ -2189,17 +2233,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"
-          }
-        }
-      }
-    },
-    "Only show skills from this GitHub user or organization" : {
-      "comment" : "Search toolbar: help for the owner filter field.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "只显示该 GitHub 用户或组织的技能"
           }
         }
       }
@@ -2998,17 +3031,6 @@
         }
       }
     },
-    "SKILL.md preview" : {
-      "comment" : "Search result detail: the read-only preview pane heading.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SKILL.md 预览"
-          }
-        }
-      }
-    },
     "SUKIRU_ROOTS is set, so changes here last until Sukiru quits." : {
       "comment" : "Settings > Projects: footer when the SUKIRU_ROOTS environment variable overrides saved projects.",
       "localizations" : {
@@ -3052,13 +3074,13 @@
         }
       }
     },
-    "Search" : {
-      "comment" : "Sidebar surface and menu title.",
+    "Search GitHub" : {
+      "comment" : "Discover: placeholder of the toolbar search field when searching with gh skill.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "搜索"
+            "value" : "搜索 GitHub"
           }
         }
       }
@@ -3074,17 +3096,6 @@
         }
       }
     },
-    "Search skills" : {
-      "comment" : "Search field placeholder.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "搜索技能"
-          }
-        }
-      }
-    },
     "Search skills by name" : {
       "comment" : "Search idle placeholder title.",
       "localizations" : {
@@ -3096,13 +3107,13 @@
         }
       }
     },
-    "Search the skills.sh marketplace or GitHub, preview any SKILL.md before installing, then send the install through Pending Changes." : {
-      "comment" : "Search idle placeholder explanation.",
+    "Search skills.sh" : {
+      "comment" : "Discover: placeholder of the toolbar search field when searching skills.sh.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在 skills.sh 市场或 GitHub 上搜索，安装前预览任意 SKILL.md，然后把安装送进「待处理变更」审阅。"
+            "value" : "搜索 skills.sh"
           }
         }
       }
@@ -3443,6 +3454,17 @@
         }
       }
     },
+    "Stars" : {
+      "comment" : "Search result detail: GitHub stars.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "星标"
+          }
+        }
+      }
+    },
     "Succeeded" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3605,6 +3627,17 @@
         }
       }
     },
+    "To see one owner's skills, type their GitHub name and pick it from the suggestions. Preview any SKILL.md, then install through Pending Changes." : {
+      "comment" : "Discover idle state: how to search and filter by owner.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要只看某个所有者的技能，输入其 GitHub 名称并从建议中选择。安装前可预览 SKILL.md，安装会经过待处理更改。"
+          }
+        }
+      }
+    },
     "Toggle Selected Finding Evidence" : {
       "comment" : "View menu command: expand/collapse the selected finding's evidence.",
       "localizations" : {
@@ -3623,6 +3656,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "工具"
+          }
+        }
+      }
+    },
+    "Type a skill name to search" : {
+      "comment" : "Search idle placeholder title when gh skill has only an owner filter.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入技能名称来搜索"
           }
         }
       }
@@ -3883,6 +3927,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "版本"
+          }
+        }
+      }
+    },
+    "View on GitHub" : {
+      "comment" : "Search result detail: link to the SKILL.md on GitHub.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 GitHub 上查看"
+          }
+        }
+      }
+    },
+    "View on skills.sh" : {
+      "comment" : "Search result detail: link to the skill page on skills.sh.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 skills.sh 上查看"
           }
         }
       }
@@ -5090,6 +5156,17 @@
     "gh skill (GitHub)" : {
       "shouldTranslate" : false
     },
+    "gh skill can't list an owner's skills. Type a skill name after the owner." : {
+      "comment" : "Discover idle state: an owner is picked but gh needs a query.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gh skill 无法列出所有者的全部技能，请在所有者后输入技能名称。"
+          }
+        }
+      }
+    },
     "gh unavailable" : {
       "comment" : "Search bar: hint when gh is not available so the backend picker is disabled.",
       "localizations" : {
@@ -5774,19 +5851,36 @@
         }
       }
     },
-    "search.ownerField" : {
-      "comment" : "Search toolbar: placeholder of the owner filter field (a GitHub user or organization).",
+    "search.noOwnerResults %@" : {
+      "comment" : "Search empty state title: the owner filter (a GitHub login) matched no skills.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Owner"
+            "value" : "No skills from %@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "所有者"
+            "value" : "没有来自 %@ 的技能"
+          }
+        }
+      }
+    },
+    "search.ownerSuggestion %@" : {
+      "comment" : "Discover: search suggestion that adds an owner filter token (a GitHub login).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skills from %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "来自 %@ 的技能"
           }
         }
       }
@@ -5814,6 +5908,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "skills.sh"
+          }
+        }
+      }
+    },
+    "skills.sh lists this as a copy of a skill published elsewhere." : {
+      "comment" : "Search result detail: note for a duplicate listing.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "skills.sh 将其标记为另一处已发布技能的副本。"
           }
         }
       }

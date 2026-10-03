@@ -1,14 +1,29 @@
 import Foundation
 import SukiruCore
 
-/// The Search surface's lifecycle: idle until the first query,
-/// searching while a query is in flight, results when a search landed,
-/// failed with an explicit message (never a swallowed error).
+/// The Discover surface's lifecycle: idle until something searchable is
+/// typed, searching while a query is in flight, results when a search
+/// landed, failed with an explicit message (never a swallowed error).
+/// Results keep their request, so an equivalent retype is recognized.
 enum SearchPhase: Equatable {
     case idle
-    case searching
-    case results([SkillSearchResult])
+    case searching(SkillSearchRequest)
+    case results([SkillSearchResult], request: SkillSearchRequest)
     case failed(String)
+
+    var request: SkillSearchRequest? {
+        switch self {
+        case .searching(let request), .results(_, let request): request
+        case .idle, .failed: nil
+        }
+    }
+}
+
+/// The owner filter, a token in the search field (like Mail's "From:")
+/// rather than a second text field.
+struct SearchOwnerToken: Identifiable, Hashable {
+    let login: String
+    var id: String { login }
 }
 
 /// Search-surface state derivations and intents: the
@@ -26,7 +41,7 @@ extension AppState {
     /// The live search results of the current phase (empty when not loaded).
     var searchResults: [SkillSearchResult] {
         switch searchPhase {
-        case .results(let results):
+        case .results(let results, _):
             return results
         case .idle, .searching, .failed:
             return []
@@ -38,58 +53,58 @@ extension AppState {
         searchResults.first { $0.id == selectedSearchResultID }
     }
 
-    /// Searches the selected backend. Runs off the main actor;
-    /// the phase swap happens on completion. A stale query competing against
-    /// a newer one is dropped (same generation discipline as rescan).
-    func performSearch() {
-        let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return }
-        let trimmedOwner = searchOwner.trimmingCharacters(in: .whitespacesAndNewlines)
-        let owner = trimmedOwner.isEmpty ? nil : trimmedOwner
+    /// Searches the selected backend with the typed query and owner,
+    /// normalized by `SkillSearchRequest`. Runs off the main actor; the
+    /// phase swap happens on completion. A stale query competing against a
+    /// newer one is dropped (same generation discipline as rescan).
+    /// `skippingRepeat` lets search-as-you-type leave an equivalent
+    /// request's results (and selection) alone; Return always re-runs.
+    func performSearch(skippingRepeat: Bool = false) {
+        guard
+            let request = SkillSearchRequest.parse(
+                query: searchQuery, owner: searchOwner, backend: searchBackend)
+        else {
+            searchGeneration += 1
+            selectedSearchResultID = nil
+            searchPhase = .idle
+            return
+        }
+        if skippingRepeat, request == searchPhase.request { return }
         searchGeneration += 1
         let generation = searchGeneration
-        searchPhase = .searching
+        searchPhase = .searching(request)
         selectedSearchResultID = nil
         searchPreview = nil
-        searchPreviewError = nil
-        switch searchBackend {
-        case .skillsDotSh:
-            let client = SkillsDotShSearchClient(
-                transport: URLSessionMarketplaceTransport())
-            Task.detached(priority: .userInitiated) { [weak self] in
-                do {
-                    let results = try await client.search(query: query, owner: owner)
-                    await self?.applySearchResults(results, generation: generation)
-                } catch {
-                    await self?.applySearchFailure(
-                        UserFacingError.message(for: error),
-                        generation: generation)
+        let environment = environment
+        Task.detached(priority: .userInitiated) { [weak self] in
+            do {
+                let results: [SkillSearchResult]
+                switch request.backend {
+                case .skillsDotSh:
+                    results = try await SkillsDotShSearchClient(
+                        transport: URLSessionMarketplaceTransport()
+                    ).search(query: request.query, owner: request.owner, limit: request.limit)
+                case .github:
+                    // Needs gh ≥ 2.90; the view disables the backend picker
+                    // when gh is unavailable.
+                    results = try await GitHubSkillSearchClient(
+                        runner: SystemCommandRunner(environment: environment)
+                    ).search(query: request.query, owner: request.owner, limit: request.limit)
                 }
-            }
-        case .github:
-            // Search via the gh subprocess (needs gh ≥ 2.90; capability
-            // gating happens in the view — the backend picker is disabled
-            // when gh is unavailable).
-            let client = GitHubSkillSearchClient(
-                runner: SystemCommandRunner(environment: environment))
-            Task.detached(priority: .userInitiated) { [weak self] in
-                do {
-                    let results = try await client.search(query: query, owner: owner)
-                    await self?.applySearchResults(results, generation: generation)
-                } catch {
-                    await self?.applySearchFailure(
-                        UserFacingError.message(for: error),
-                        generation: generation)
-                }
+                await self?.applySearchResults(results, for: request, generation: generation)
+            } catch {
+                await self?.applySearchFailure(
+                    UserFacingError.message(for: error),
+                    generation: generation)
             }
         }
     }
 
     private func applySearchResults(
-        _ results: [SkillSearchResult], generation: Int
+        _ results: [SkillSearchResult], for request: SkillSearchRequest, generation: Int
     ) {
         guard generation == searchGeneration else { return }
-        searchPhase = .results(results)
+        searchPhase = .results(results, request: request)
         selectedSearchResultID = results.first?.id
         if let first = results.first {
             loadPreview(for: first)
@@ -99,6 +114,19 @@ extension AppState {
     private func applySearchFailure(_ message: String, generation: Int) {
         guard generation == searchGeneration else { return }
         searchPhase = .failed(message)
+    }
+
+    /// The owner filter's login, nil without a token.
+    var searchOwner: String? {
+        searchOwnerTokens.last?.login
+    }
+
+    /// Owners to offer as a filter for the typed text, taken from the
+    /// results already on screen (no extra request); none once an owner
+    /// is picked.
+    var searchOwnerSuggestions: [String] {
+        guard searchOwnerTokens.isEmpty else { return [] }
+        return SkillSearchRequest.ownerSuggestions(for: searchQuery, in: searchResults)
     }
 
     /// Loads the SKILL.md preview for the selected result,
@@ -111,28 +139,14 @@ extension AppState {
 
     private func loadPreview(for result: SkillSearchResult) {
         searchPreview = nil
-        searchPreviewError = nil
         searchPreviewLoading = true
         let fetcher = SkillPreviewFetcher(transport: URLSessionMarketplaceTransport())
         Task.detached(priority: .utility) { [weak self] in
-            do {
-                let preview = try await fetcher.preview(of: result)
-                await MainActor.run {
-                    guard let self,
-                        self.selectedSearchResultID == result.id
-                    else { return }
-                    self.searchPreview = preview
-                    self.searchPreviewLoading = false
-                }
-            } catch {
-                let message = UserFacingError.message(for: error)
-                await MainActor.run {
-                    guard let self,
-                        self.selectedSearchResultID == result.id
-                    else { return }
-                    self.searchPreviewError = message
-                    self.searchPreviewLoading = false
-                }
+            let preview = await fetcher.skill(of: result)
+            await MainActor.run {
+                guard let self, self.selectedSearchResultID == result.id else { return }
+                self.searchPreview = preview
+                self.searchPreviewLoading = false
             }
         }
     }

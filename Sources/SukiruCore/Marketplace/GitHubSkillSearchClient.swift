@@ -29,7 +29,7 @@ public struct GitHubSkillSearchClient: Sendable {
     /// Non-zero exit or unparseable JSON surfaces as a marketplace failure
     /// (never a crash).
     public func search(
-        query: String, owner: String? = nil, limit: Int = 25
+        query: String, owner: String? = nil, limit: Int = 20
     ) async throws -> [SkillSearchResult] {
         let jsonFields = "description,namespace,path,repo,skillName,stars"
         var args = [
@@ -44,7 +44,12 @@ public struct GitHubSkillSearchClient: Sendable {
             throw MarketplaceError.transport("gh executable not found")
         }
         guard outcome.exitCode == 0 else {
-            let stderr = outcome.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+            // gh follows a usage error with its whole flag help; the first
+            // line is the diagnostic.
+            let stderr =
+                outcome.stderr.split(whereSeparator: \.isNewline)
+                .first { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+                .map { $0.trimmingCharacters(in: .whitespaces) } ?? ""
             throw MarketplaceError.transport(
                 stderr.isEmpty ? "gh skill search exited \(outcome.exitCode)" : stderr)
         }
@@ -54,6 +59,7 @@ public struct GitHubSkillSearchClient: Sendable {
         } catch {
             throw MarketplaceError.malformed(String(describing: error))
         }
+        var seen = Set<String>()
         return decoded.map { result in
             SkillSearchResult(
                 name: result.skillName,
@@ -64,5 +70,7 @@ public struct GitHubSkillSearchClient: Sendable {
                 stars: result.stars ?? 0,
                 backend: .github)
         }
+        // The list selects rows by id; a repeated id would select both.
+        .filter { seen.insert($0.id).inserted }
     }
 }

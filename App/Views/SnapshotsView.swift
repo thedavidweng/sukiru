@@ -127,10 +127,12 @@ struct SnapshotsView: View {
             HStack(spacing: 8) {
                 AXToken(token: "sukiru.snapshots.batch.\(record.batchID)")
                 statusLabel(record.batchStatus)
+                    .fixedSize()
                 Text(commandsSummary(record))
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                Spacer()
+                    .lineLimit(1)
+                Spacer(minLength: 8)
                 // Rollback for every non-rolled-back batch, and deletion for
                 // every batch, both confirmed first; unavailable mid-mutation
                 // (disabled with the `.disabled` AX suffix, never silently
@@ -141,7 +143,9 @@ struct SnapshotsView: View {
                     } label: {
                         Label("Roll Back…", systemImage: "arrow.uturn.backward")
                     }
+                    .labelStyle(.iconOnly)
                     .controlSize(.small)
+                    .help("Roll Back…")
                     .axButtonToken(
                         "sukiru.snapshots.rollback.\(record.batchID)",
                         disabled: state.batchMutationInFlight
@@ -153,7 +157,9 @@ struct SnapshotsView: View {
                 } label: {
                     Label("Delete…", systemImage: "trash")
                 }
+                .labelStyle(.iconOnly)
                 .controlSize(.small)
+                .help("Delete Snapshot…")
                 .axButtonToken(
                     "sukiru.snapshots.delete.\(record.batchID)",
                     disabled: state.batchMutationInFlight
@@ -168,6 +174,7 @@ struct SnapshotsView: View {
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
+            .lineLimit(1)
         }
         .padding(.vertical, 2)
     }
@@ -176,19 +183,26 @@ struct SnapshotsView: View {
         let restored = record.items.filter { $0.category == .restoredFromSnapshot }.count
         let deleted = record.items.filter { $0.category == .deletedBatchAdded }.count
         let unrestorable = record.items.filter { $0.category == .unrestorableWithReason }.count
-        return HStack(spacing: 8) {
-            AXToken(token: "sukiru.snapshots.event.rollback.\(record.batchID)")
-            Image(systemName: "arrow.uturn.backward.circle.fill")
-                .foregroundStyle(unrestorable > 0 ? .orange : .purple)
-            Text("Rolled back")
-                .font(.callout.weight(.medium))
-            Text("snapshots.rollbackCounts \(restored) \(deleted) \(unrestorable)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(RecordTimestamp.display(record.rolledBackAt))
-                .font(.caption.monospaced())
-                .foregroundStyle(.tertiary)
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                AXToken(token: "sukiru.snapshots.event.rollback.\(record.batchID)")
+                Label {
+                    Text("Rolled back")
+                        .font(.callout.weight(.medium))
+                } icon: {
+                    Image(systemName: "arrow.uturn.backward.circle.fill")
+                        .foregroundStyle(unrestorable > 0 ? .orange : .purple)
+                }
+            }
+            HStack(spacing: 8) {
+                Text(RecordTimestamp.display(record.rolledBackAt))
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.tertiary)
+                Text("snapshots.rollbackCounts \(restored) \(deleted) \(unrestorable)")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .lineLimit(1)
         }
         .padding(.vertical, 2)
     }

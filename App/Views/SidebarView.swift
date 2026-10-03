@@ -75,7 +75,7 @@ struct SidebarView: View {
                     .tag(Destination.surface(.pending))
                 row("Snapshots", surface: .snapshots, icon: "camera.on.rectangle")
                     .tag(Destination.surface(.snapshots))
-                row("Search", surface: .search, icon: "magnifyingglass")
+                row("Discover", surface: .search, icon: "safari")
                     .tag(Destination.surface(.search))
             }
         }

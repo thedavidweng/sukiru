@@ -93,7 +93,7 @@ struct RootView: View {
                 .navigationTitle("Snapshots")
         case .search:
             SearchView()
-                .navigationTitle("Search")
+                .navigationTitle("Discover")
         }
     }
 

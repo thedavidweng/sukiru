@@ -187,7 +187,7 @@ struct LibraryView: View {
                 SkillContextMenu(skill: skill)
             }
         }
-        .searchable(text: $filter, placement: .toolbar, prompt: Text("Search skills"))
+        .searchable(text: $filter, placement: .toolbar, prompt: Text("Filter Library"))
         .overlay {
             if groups.isEmpty && !filter.isEmpty {
                 ContentUnavailableView.search(text: filter)

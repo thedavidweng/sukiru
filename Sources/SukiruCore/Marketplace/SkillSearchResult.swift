@@ -31,6 +31,12 @@ public struct SkillSearchResult: Equatable, Sendable, Identifiable, Codable {
     public let stars: Int?
     /// Which backend found this skill.
     public let backend: Backend
+    /// skills.sh's mark for a copy of a skill first published elsewhere.
+    public let isDuplicate: Bool
+    /// skills.sh's `skillId`: the slug its pages and download API use,
+    /// which differs from `name` when the name is not a slug
+    /// (`C++ Code Formatter` is `c-code-formatter`).
+    public let slug: String?
 
     public init(
         name: String,
@@ -39,7 +45,9 @@ public struct SkillSearchResult: Equatable, Sendable, Identifiable, Codable {
         description: String?,
         installs: Int?,
         stars: Int?,
-        backend: Backend
+        backend: Backend,
+        isDuplicate: Bool = false,
+        slug: String? = nil
     ) {
         self.name = name
         self.repo = repo
@@ -48,6 +56,8 @@ public struct SkillSearchResult: Equatable, Sendable, Identifiable, Codable {
         self.installs = installs
         self.stars = stars
         self.backend = backend
+        self.isDuplicate = isDuplicate
+        self.slug = slug
     }
 
     /// The canonical row id: backend + source + name. Deterministic.
@@ -61,10 +71,39 @@ public struct SkillSearchResult: Equatable, Sendable, Identifiable, Codable {
     public var popularityLabel: String? {
         switch backend {
         case .skillsDotSh:
-            return installs.map { "\($0) installs" }
+            return installs.flatMap(Self.installsLabel)
         case .github:
             return stars.map { "\($0)★" }
         }
+    }
+
+    /// `npx skills find`'s install badge: `1.3M installs`, `12K installs`,
+    /// `1 install`, nothing for zero.
+    static func installsLabel(_ count: Int) -> String? {
+        func compact(_ value: Double, _ unit: String) -> String {
+            let rounded = (value * 10).rounded() / 10
+            let text = rounded == rounded.rounded() ? String(Int(rounded)) : String(rounded)
+            return "\(text)\(unit) installs"
+        }
+        switch count {
+        case ..<1: return nil
+        case 1: return "1 install"
+        case ..<1_000: return "\(count) installs"
+        case ..<1_000_000: return compact(Double(count) / 1e3, "K")
+        default: return compact(Double(count) / 1e6, "M")
+        }
+    }
+
+    /// The skill's page: its skills.sh listing (as the website links it),
+    /// or its SKILL.md on GitHub for `gh skill search` results.
+    public var webURL: URL? {
+        guard let repo else { return nil }
+        if let slug {
+            let page = repo.contains("/") ? repo : "site/\(repo)"
+            return URL(string: "https://skills.sh/\(page.lowercased())/\(slug.lowercased())")
+        }
+        guard let path, repo.contains("/") else { return nil }
+        return URL(string: "https://github.com/\(repo)/blob/HEAD/\(path)")
     }
 
     /// Whether a batched install can be derived from this row: both

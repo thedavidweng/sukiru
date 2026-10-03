@@ -107,6 +107,38 @@ struct GitHubSkillSearchClientTests {
         }
     }
 
+    @Test("a usage error keeps only its first line, not gh's flag help")
+    func usageErrorFirstLine() async {
+        let stderr =
+            "\ninvalid owner \"a/b\": must be a valid GitHub username\n\nUsage:  gh skill search"
+        let client = GitHubSkillSearchClient(
+            runner: StubRunner(outcome: ProcessOutcome(exitCode: 1, stdout: "", stderr: stderr)))
+        do {
+            _ = try await client.search(query: "stale docs")
+            Issue.record("expected a failure for non-zero exit")
+        } catch let error as MarketplaceError {
+            #expect(
+                error.message
+                    == "marketplace request failed: invalid owner \"a/b\": must be a valid GitHub username"
+            )
+        } catch {
+            Issue.record("unexpected error type \(error)")
+        }
+    }
+
+    @Test("repeated results collapse to one row")
+    func deduplicates() async throws {
+        let twice = """
+            [{"description": null, "namespace": "", "path": "a/SKILL.md", "repo": "o/r",
+              "skillName": "a", "stars": 1},
+             {"description": null, "namespace": "", "path": "b/SKILL.md", "repo": "o/r",
+              "skillName": "a", "stars": 1}]
+            """
+        let client = GitHubSkillSearchClient(
+            runner: StubRunner(outcome: ProcessOutcome(exitCode: 0, stdout: twice, stderr: "")))
+        #expect(try await client.search(query: "aa").count == 1)
+    }
+
     @Test("non-zero exit with empty stderr falls back to the exit code")
     func nonZeroExitNoStderr() async {
         let client = GitHubSkillSearchClient(

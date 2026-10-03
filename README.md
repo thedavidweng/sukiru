@@ -170,7 +170,7 @@ does not block the first launch.
 
 | Action | Shortcut |
 | :--- | :--- |
-| **Library / Health / Pending Changes / Snapshots / Search** | `⌘ 1` – `⌘ 5` |
+| **Library / Health / Pending Changes / Snapshots / Discover** | `⌘ 1` – `⌘ 5` |
 | **Refresh** | `⌘ R` |
 | **Add Project Root…** | `⇧ ⌘ A` |
 | **Quick Look Selected Skill** | `⌘ Y` |
@@ -186,7 +186,7 @@ does not block the first launch.
 | **Roll Back Selected Batch** | `⌥ ⌘ B` |
 | **Settings** | `⌘ ,` |
 
-All commands are also listed in the **View**, **Search**, and **Repair**
+All commands are also listed in the **View**, **Discover**, and **Repair**
 menus.
 
 ---

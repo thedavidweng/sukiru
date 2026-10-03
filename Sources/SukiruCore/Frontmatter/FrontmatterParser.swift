@@ -101,6 +101,17 @@ public struct FrontmatterParser: Sendable {
         )
     }
 
+    /// The `name` and `description` of SKILL.md text fetched for review,
+    /// by the same rules as a file on disk; nil when either is missing.
+    public static func summary(ofSkillMD text: String) -> (name: String, description: String)? {
+        guard let frontmatter = splitFrontmatter(Data(text.utf8)),
+            case .mapping(let mapping)? = try? Yams.compose(yaml: frontmatter),
+            let name = requiredString("name", in: mapping),
+            let description = requiredString("description", in: mapping)
+        else { return nil }
+        return (name, description)
+    }
+
     /// Upstream `split_frontmatter` (protocol.rs:93–107): strict start
     /// delimiter, first `\n---` closes. Operates on BYTES like the original —
     /// a Swift `String` would count `\r\n` as one `Character`, and `range(of:)`

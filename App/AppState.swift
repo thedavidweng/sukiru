@@ -145,14 +145,12 @@ final class AppState: ObservableObject {
     /// the active backend: the skills.sh API (network read) or
     /// `gh skill search` (needs gh ≥ 2.90).
     @Published var searchQuery = ""
-    @Published var searchOwner = ""
+    @Published var searchOwnerTokens: [SearchOwnerToken] = []
     @Published var searchBackend: SkillSearchResult.Backend = .skillsDotSh
-    /// Search lifecycle, selected row, and its SKILL.md preview
-    /// with fetch flags/errors.
+    /// Search lifecycle, selected row, and its fetched skill preview.
     @Published var searchPhase: SearchPhase = .idle
     @Published var selectedSearchResultID: String?
-    @Published var searchPreview: String?
-    @Published var searchPreviewError: String?
+    @Published var searchPreview: SkillPreview?
     @Published var searchPreviewLoading = false
     /// Install sheet presentation, installer choice (Vercel
     /// default — broader coverage) and target scope.

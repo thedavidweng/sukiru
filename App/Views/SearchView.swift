@@ -1,15 +1,21 @@
 import SukiruCore
 import SwiftUI
 
-/// The Search surface: the toolbar search field, the backend picker
-/// (skills.sh API / `gh skill search`), and the results list. The selected
-/// result's preview lives in the detail column (`SearchDetailView`).
+/// The Discover surface: the toolbar search field, which names the source
+/// it searches, the source picker under it (skills.sh API /
+/// `gh skill search`), and the results list. The selected result's
+/// preview lives in the detail column (`SearchDetailView`).
 ///
-/// The backend picker gates on launch capabilities: skills.sh is
+/// One field does all the searching. An owner filter is a token in that
+/// field, picked from suggestions as the owner's name is typed, the way
+/// Mail turns a name into a "From:" token.
+///
+/// The source picker gates on launch capabilities: skills.sh is
 /// always available (a pure network read, zero CLIs), gh is
 /// offered only when gh ≥ 2.90.0 is live.
 struct SearchView: View {
     @EnvironmentObject private var state: AppState
+    @State private var pendingSearch: Task<Void, Never>?
 
     var body: some View {
         // The list stays even when empty, so the column starts with a scroll
@@ -23,25 +29,36 @@ struct SearchView: View {
                     searchingState
                 case .failed(let message):
                     failureState(message)
-                case .results(let results):
+                case .results(let results, let request):
                     if results.isEmpty {
-                        ContentUnavailableView.search(text: state.searchQuery)
+                        noResultsState(request)
                     }
                 }
             }
             .searchable(
-                text: $state.searchQuery, placement: .toolbar, prompt: Text("Search skills")
-            )
-            .onSubmit(of: .search) {
-                state.performSearch()
+                text: $state.searchQuery, tokens: $state.searchOwnerTokens, placement: .toolbar,
+                prompt: searchPrompt
+            ) { token in
+                Text(verbatim: token.login)
+            }
+            .searchSuggestions {
+                ForEach(state.searchOwnerSuggestions, id: \.self) { owner in
+                    Label("search.ownerSuggestion \(owner)", systemImage: "person.crop.circle")
+                        .searchCompletion(SearchOwnerToken(login: owner))
+                }
+            }
+            .onSubmit(of: .search, searchNow)
+            .onChange(of: state.searchQuery) { scheduleSearch() }
+            .onChange(of: state.searchBackend) { scheduleSearch() }
+            .onChange(of: state.searchOwnerTokens) { old, new in
+                pickedOwner(added: new.count > old.count)
             }
             // Where to search sits under the toolbar, like Finder's search
             // scope bar, so the toolbar keeps room for the column's actions.
             .surfaceBar {
-                HStack(spacing: 12) {
+                HStack {
                     backendPicker
-                    Spacer(minLength: 8)
-                    ownerField
+                    Spacer()
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
@@ -62,7 +79,13 @@ struct SearchView: View {
             }
     }
 
-    /// Backend picker. gh is gated on capability: with gh
+    /// The field says which source it searches, so it never reads as the
+    /// Library's filter.
+    private var searchPrompt: Text {
+        state.searchBackend == .github ? Text("Search GitHub") : Text("Search skills.sh")
+    }
+
+    /// Source picker. gh is gated on capability: with gh
     /// unavailable the picker shows only skills.sh (GitHub-side
     /// features clearly absent, everything else works).
     private var backendPicker: some View {
@@ -83,28 +106,74 @@ struct SearchView: View {
         .help(ghAvailable ? Text("Backend") : Text("gh unavailable"))
     }
 
-    /// Limits the search to one GitHub owner (`--owner` for gh, the
-    /// `owner` parameter for skills.sh).
-    private var ownerField: some View {
-        TextField("search.ownerField", text: $state.searchOwner)
-            .textFieldStyle(.roundedBorder)
-            .frame(maxWidth: 160)
-            .onSubmit(state.performSearch)
-            .help("Only show skills from this GitHub user or organization")
+    /// Searches once typing pauses, waiting less as the query grows, as
+    /// `npx skills find` does, so each keystroke is not a network request
+    /// (or a `gh` subprocess).
+    private func scheduleSearch() {
+        pendingSearch?.cancel()
+        let delay = max(150, 350 - state.searchQuery.count * 50)
+        pendingSearch = Task {
+            try? await Task.sleep(for: .milliseconds(delay))
+            guard !Task.isCancelled else { return }
+            state.performSearch(skippingRepeat: true)
+        }
+    }
+
+    private func searchNow() {
+        pendingSearch?.cancel()
+        state.performSearch()
+    }
+
+    /// The typed text was the owner's name, so picking the owner consumes
+    /// it. Both backends filter by one owner, so a newly picked owner
+    /// replaces the previous one.
+    private func pickedOwner(added: Bool) {
+        if added {
+            state.searchQuery = ""
+        }
+        if state.searchOwnerTokens.count > 1 {
+            state.searchOwnerTokens = Array(state.searchOwnerTokens.suffix(1))
+        }
+        scheduleSearch()
     }
 
     // MARK: - states
 
+    @ViewBuilder
     private var idleState: some View {
-        SurfacePlaceholder(
-            token: "sukiru.search.idle",
-            icon: "magnifyingglass",
-            title: "Search skills by name",
-            // swiftlint:disable line_length
-            explanation:
-                "Search the skills.sh marketplace or GitHub, preview any SKILL.md before installing, then send the install through Pending Changes."
-                // swiftlint:enable line_length
-        )
+        if state.searchBackend == .github, state.searchOwner != nil {
+            SurfacePlaceholder(
+                token: "sukiru.search.idle",
+                icon: "magnifyingglass",
+                title: "Type a skill name to search",
+                explanation:
+                    "gh skill can't list an owner's skills. Type a skill name after the owner."
+            )
+        } else {
+            SurfacePlaceholder(
+                token: "sukiru.search.idle",
+                icon: "magnifyingglass",
+                title: "Search skills by name",
+                // swiftlint:disable line_length
+                explanation:
+                    "To see one owner's skills, type their GitHub name and pick it from the suggestions. Preview any SKILL.md, then install through Pending Changes."
+                    // swiftlint:enable line_length
+            )
+        }
+    }
+
+    @ViewBuilder
+    private func noResultsState(_ request: SkillSearchRequest) -> some View {
+        if request.listsOwner, let owner = request.owner {
+            ContentUnavailableView {
+                HStack(spacing: 0) {
+                    AXToken(token: "sukiru.search.noOwnerResults")
+                    Label("search.noOwnerResults \(owner)", systemImage: "magnifyingglass")
+                }
+            }
+        } else {
+            ContentUnavailableView.search(text: request.query)
+        }
     }
 
     private var searchingState: some View {
@@ -155,154 +224,38 @@ struct SearchView: View {
     }
 }
 
-/// The selected search result in the detail column: header and the
-/// read-only SKILL.md preview, with Install in the window toolbar.
-struct SearchDetailView: View {
-    @EnvironmentObject private var state: AppState
-
-    var body: some View {
-        Group {
-            if let result = state.selectedSearchResult() {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        resultHeader(result)
-                        Divider()
-                        previewPane
-                    }
-                    .padding(16)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            } else {
-                ContentUnavailableView {
-                    Label("Select a result to preview it", systemImage: "doc.text.magnifyingglass")
-                }
-            }
-        }
-        .toolbar(content: toolbar)
-    }
-
-    @ToolbarContentBuilder
-    private func toolbar() -> some ToolbarContent {
-        let installable = state.selectedSearchResult()?.isInstallable ?? false
-        // macOS 26+ lays toolbar items out from the column's leading edge;
-        // a flexible spacer keeps Install at the trailing edge.
-        if #available(macOS 26.0, *) {
-            ToolbarSpacer(.flexible)
-        }
-        ToolbarItem {
-            Button {
-                state.presentInstallSheet()
-            } label: {
-                Label("Install…", systemImage: "arrow.down.circle")
-            }
-            .axButtonToken("sukiru.search.install", disabled: !installable)
-            .disabled(!installable)
-            .help("Install the selected skill (⌘⇧I)")
-        }
-    }
-
-    // MARK: - result header + preview
-
-    private func resultHeader(_ result: SkillSearchResult) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                AXToken(token: "sukiru.search.result.name.\(AXTokens.skill(result.name))")
-                Text(result.name)
-                    .font(.title3.weight(.semibold))
-                if let popularity = result.popularityLabel {
-                    Text(popularity)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Text(result.backend.title)
-                    .font(.caption.weight(.medium))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 1)
-                    .background(.quaternary, in: Capsule())
-                    .foregroundStyle(.secondary)
-            }
-            if let repo = result.repo {
-                Text(repo)
-                    .font(.callout.monospaced())
-                    .foregroundStyle(.secondary)
-                    .textSelection(.enabled)
-            }
-            if let description = result.description, !description.isEmpty {
-                Text(description)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(6)
-            }
-        }
-    }
-
-    /// The read-only SKILL.md preview: raw text, never rendered
-    /// (prompt-injection risk is inspected, not trusted). Loads on
-    /// selection; unavailable previews render an explicit note, the row
-    /// stays installable.
-    @ViewBuilder
-    private var previewPane: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 0) {
-                AXToken(token: "sukiru.search.preview")
-                Text("SKILL.md preview")
-                    .font(.headline)
-            }
-            .accessibilityElement(children: .contain)
-            if state.searchPreviewLoading {
-                HStack(spacing: 6) {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Loading preview…")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                }
-            } else if let error = state.searchPreviewError {
-                Text(error)
-                    .font(.callout)
-                    .foregroundStyle(.red)
-                    .textSelection(.enabled)
-            } else if let preview = state.searchPreview {
-                Text(preview)
-                    .font(.caption.monospaced())
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                // swiftlint:disable line_length
-                Text(
-                    "Preview unavailable for this result.\nThe install re-resolves the exact skill through the official CLI."
-                )
-                // swiftlint:enable line_length
-                .font(.callout)
-                .foregroundStyle(.secondary)
-            }
-        }
-    }
-}
-
 /// One search result row: token carrier + name + repo + popularity + badge.
 struct SearchResultRow: View {
     let result: SkillSearchResult
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 6) {
+            HStack(spacing: 0) {
                 AXToken(token: "sukiru.search.row.\(AXTokens.skill(result.name))")
                 Text(result.name)
-                    .font(.body.weight(.medium))
+                    .fontWeight(.medium)
+                    .foregroundStyle(result.isDuplicate ? .secondary : .primary)
+                    .lineLimit(1)
             }
             .accessibilityElement(children: .contain)
-            if let repo = result.repo {
-                Text(repo)
-                    .font(.caption.monospaced())
-                    .foregroundStyle(.secondary)
+            HStack(spacing: 4) {
+                if let repo = result.repo {
+                    Text(repo)
+                        .monospaced()
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                if let popularity = result.popularityLabel {
+                    if result.repo != nil {
+                        Text(verbatim: "·")
+                    }
+                    Text(popularity)
+                        .lineLimit(1)
+                        .fixedSize()
+                }
             }
-            if let popularity = result.popularityLabel {
-                Text(popularity)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
             if let description = result.description, !description.isEmpty {
                 Text(description)
                     .font(.caption)
@@ -315,7 +268,7 @@ struct SearchResultRow: View {
 }
 
 extension SkillSearchResult.Backend {
-    /// The picker label, reused as the result's source badge.
+    /// The picker label, reused as the result's "Found with" value.
     var title: LocalizedStringKey {
         switch self {
         case .skillsDotSh: "skills.sh"

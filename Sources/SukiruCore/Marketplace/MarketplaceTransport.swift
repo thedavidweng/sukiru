@@ -43,9 +43,16 @@ public struct URLSessionMarketplaceTransport: MarketplaceTransport {
             throw MarketplaceError.transport("not an HTTP response")
         }
         guard (200..<300).contains(http.statusCode) else {
-            throw MarketplaceError.transport("HTTP \(http.statusCode)")
+            let reason = Self.errorReason(data).map { ": \($0)" } ?? ""
+            throw MarketplaceError.transport("HTTP \(http.statusCode)\(reason)")
         }
         return data
+    }
+
+    /// skills.sh explains refusals as `{"error": "..."}`.
+    static func errorReason(_ body: Data) -> String? {
+        struct Refusal: Decodable { let error: String }
+        return try? JSONDecoder().decode(Refusal.self, from: body).error
     }
 }
 
