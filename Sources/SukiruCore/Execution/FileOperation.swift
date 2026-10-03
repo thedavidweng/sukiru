@@ -20,6 +20,8 @@ public enum FileOperation: Equatable, Sendable {
     /// Delete a leftover host skills folder that holds only links, then its
     /// parent when nothing but Finder noise remains there.
     case removeLeftoverSkillsDir(String)
+    /// ADR-0008's confirmed local-plugin disable exception.
+    case movePlugin(path: String, destination: String)
 
     static let executable = "sukiru-fileop"
 
@@ -38,6 +40,8 @@ public enum FileOperation: Equatable, Sendable {
             self = .materialize(argv[2])
         case ("remove-leftover-skills-dir", 3):
             self = .removeLeftoverSkillsDir(argv[2])
+        case ("move-plugin", 4):
+            self = .movePlugin(path: argv[2], destination: argv[3])
         default:
             return nil
         }
@@ -55,6 +59,8 @@ public enum FileOperation: Equatable, Sendable {
             return [Self.executable, "materialize", path]
         case .removeLeftoverSkillsDir(let path):
             return [Self.executable, "remove-leftover-skills-dir", path]
+        case .movePlugin(let path, let destination):
+            return [Self.executable, "move-plugin", path, destination]
         }
     }
 
@@ -92,7 +98,25 @@ public enum FileOperation: Equatable, Sendable {
             }
         case .removeLeftoverSkillsDir(let path):
             try Self.removeLeftoverSkillsDir(path, probe: probe)
+        case .movePlugin(let path, let destination):
+            try Self.movePlugin(path, destination: destination)
         }
+    }
+
+    private static func movePlugin(_ path: String, destination: String) throws {
+        guard PluginLocalDisable.hasLegacyDefinition(at: path) else {
+            throw FileOperationError(
+                "The local plugin definition changed; inspect it again before disabling")
+        }
+        let discovery = URL(fileURLWithPath: path).deletingLastPathComponent()
+            .resolvingSymlinksInPath().path
+        let resolvedDestination = URL(fileURLWithPath: destination).resolvingSymlinksInPath().path
+        guard !resolvedDestination.hasPrefix(discovery + "/") else {
+            throw FileOperationError("The disabled destination resolves inside plugin discovery")
+        }
+        let parent = URL(fileURLWithPath: destination).deletingLastPathComponent().path
+        try FileManager.default.createDirectory(atPath: parent, withIntermediateDirectories: true)
+        try FileManager.default.moveItem(atPath: path, toPath: destination)
     }
 
     /// Re-checks at run time that the folder still holds only links, so a

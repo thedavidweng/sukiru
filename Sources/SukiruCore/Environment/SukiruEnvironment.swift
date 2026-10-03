@@ -43,7 +43,9 @@ public struct SukiruEnvironment: Equatable, Sendable {
     /// variables. Space-listed to avoid a multi-line collection literal (repo
     /// lint gates conflict on those).
     public static let externalEnvKeys: [String] =
-        "CLAUDE_CONFIG_DIR CODEX_HOME VIBE_HOME XDG_CONFIG_HOME XDG_STATE_HOME APPDATA FLATPAK_XDG_CONFIG_HOME"
+        ("CLAUDE_CONFIG_DIR CLAUDE_CODE_PLUGIN_CACHE_DIR CODEX_HOME OPENCODE_CONFIG_DIR OPENCODE_CONFIG XDG_CACHE_HOME "
+        + "XDG_DATA_HOME TMPDIR TMP TEMP "
+        + "OPENCODE_CONFIG_CONTENT VIBE_HOME XDG_CONFIG_HOME XDG_STATE_HOME APPDATA FLATPAK_XDG_CONFIG_HOME")
         .split(separator: " ").map(String.init)
 
     public init(reader: EnvironmentReader) {

@@ -33,6 +33,9 @@ final class AppState: ObservableObject {
 
     @Published var surface: Surface = .library
     @Published var libraryScope: LibraryScope = .all
+    @Published var libraryContent: LibraryContent = .skills
+    @Published var selectedPluginID: String?
+    @Published var pluginManagement = PluginManagementState()
     @Published private(set) var scanPhase: ScanPhase = .loading
     @Published private(set) var report: ScanReport? {
         didSet { reportRevision &+= 1 }
@@ -130,6 +133,7 @@ final class AppState: ObservableObject {
     @Published var historyPendingRollback: String?
     @Published var historyPendingDeletion: Set<String> = []
     /// Rollback refusal/error text, surfaced on the Snapshots surface.
+    @Published var rollbackReview: RollbackPreview?
     @Published var rollbackError: String?
     /// Whether the double-booked arbitration sheet is presented.
     @Published var showingArbitrationSheet = false
@@ -347,9 +351,6 @@ final class AppState: ObservableObject {
         saveProjectRoots()
         rescan()
     }
-
-    // The Health-surface derivations (skill focus, workspace filter, issue
-    // attribution, finding → Library reveal) live in `AppState+Health.swift`.
 
     /// Drops selection/disclosure/focus state that no longer resolves after
     /// a rescan (e.g. the skill's directory was deleted).

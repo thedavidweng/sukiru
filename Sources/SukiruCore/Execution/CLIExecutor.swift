@@ -123,18 +123,34 @@ public struct CLIExecutor: Sendable {
         let store = SnapshotStore(environment: environment)
         let manifest = try store.capture(batch: batch, report: report)
 
+        let affected = AffectedScope(workspaceIDs: batch.findingRefs.map(\.workspaceID))
+        let fileRoots =
+            RollbackFiles.roots(manifest: manifest, affected: affected, environment: environment)
+            + batch.commands.flatMap { $0.captureRoots ?? [] }
+        let snapshotDirectory = HostPathResolver.join(store.snapshotsRoot(), manifest.id)
+        let beforeFiles = try RollbackFiles.capture(roots: fileRoots)
+        try beforeFiles.write(to: snapshotDirectory, name: "before.json")
+
         let batchStart = Date()
         let records = runCommands(
             batch.commands,
             bounds: workspaceBounds(batch: batch, report: report),
             recordDirectory: recordDirectory)
 
+        let afterFiles = try RollbackFiles.capture(roots: fileRoots)
+        try afterFiles.write(to: snapshotDirectory, name: "after.json")
+        // File evidence and the transcript commit before the semantic rescan:
+        // even a failed rescan leaves an executable rollback entry in history.
+        _ = try persistRecord(
+            batch: batch, snapshotID: manifest.id, started: batchStart,
+            outcome: ExecutionOutcome(
+                commands: records, diff: beforeFiles.diff(to: afterFiles), affected: affected),
+            recordDirectory: recordDirectory)
+
         // Post-run diff: rescan the batch's
         // affected roots and measure against the pre-run scan + snapshot.
         // Computed for succeeded AND failed batches alike — a failed batch's
         // diff documents the partial state.
-        let affected = AffectedScope(
-            workspaceIDs: batch.findingRefs.map(\.workspaceID))
         let postReport = try ScanEngine(environment: environment).scan(affected.scanRequest)
         let diff = Differ(environment: environment).diff(
             touchedWorkspaceIDs: Set(affected.workspaceIDs),
@@ -144,13 +160,17 @@ public struct CLIExecutor: Sendable {
             batch: batch, snapshotID: manifest.id, started: batchStart,
             outcome: ExecutionOutcome(commands: records, diff: diff, affected: affected),
             recordDirectory: recordDirectory)
+        return executionResult(batch: batch, record: record)
+    }
+
+    private func executionResult(batch: CommandBatch, record: ExecutionRecord) -> ExecutionResult {
         let finalBatch = CommandBatch(
             id: batch.id,
             createdAt: batch.createdAt,
             findingRefs: batch.findingRefs,
             decisions: batch.decisions,
             commands: batch.commands,
-            snapshotID: manifest.id,
+            snapshotID: record.snapshotID,
             status: record.batchStatus)
         return ExecutionResult(batch: finalBatch, record: record)
     }
@@ -229,8 +249,17 @@ public struct CLIExecutor: Sendable {
         environment["GH_TOKEN"] = nil
         environment["CI"] = "1"
         environment["SKILLS_TELEMETRY"] = "0"
-        environment["npm_config_prefer_offline"] = "true"
-        environment["npm_config_yes"] = "true"
+        if self.environment.homeIsOverridden {
+            for key in SukiruEnvironment.externalEnvKeys { environment[key] = nil }
+            for key in environment.keys where key.lowercased().hasPrefix("npm_config_") {
+                environment[key] = nil
+            }
+            environment["TMPDIR"] = self.environment.home
+        }
+        if command.owningCLI == .vercel {
+            environment["npm_config_prefer_offline"] = "true"
+            environment["npm_config_yes"] = "true"
+        }
         if !self.environment.home.isEmpty {
             environment["HOME"] = self.environment.home
         }

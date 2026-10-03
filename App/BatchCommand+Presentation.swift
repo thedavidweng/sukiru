@@ -39,6 +39,11 @@ extension BatchCommand {
             return String(localized: "command.warning.materialize")
         case .removeLeftoverSkillsDir:
             return String(localized: "command.warning.removeLeftover")
+        case .movePlugin:
+            return String(
+                localized:
+                    "plugin.disableLocal.warning"
+            )
         case nil:
             return nil
         }
@@ -72,6 +77,10 @@ extension FileOperation {
             return String(localized: "Replace the link \(Self.display(path)) with a copy")
         case .removeLeftoverSkillsDir(let path):
             return String(localized: "Remove the leftover folder \(Self.display(path))")
+        case .movePlugin(let path, let destination):
+            return String(
+                localized:
+                    "Move \(Self.display(path)) to \(Self.display(destination)) to disable loading")
         }
     }
 

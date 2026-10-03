@@ -127,14 +127,13 @@ public struct SnapshotSummary: Codable, Equatable, Sendable {
     }
 }
 
-/// One restored or deleted path in a rollback record. The three categories
-/// are restored, deleted, and unrestorable-with-reason; there is no
-/// "compensated-via-CLI" category in v1.
+/// One restored, deleted, preserved, or unrestorable path in a rollback record.
 public struct RestoreItem: Codable, Equatable, Sendable {
     public enum Category: String, Codable, Equatable, Sendable {
         case restoredFromSnapshot = "restored-from-snapshot"
         case deletedBatchAdded = "deleted-batch-added"
         case unrestorableWithReason = "unrestorable-with-reason"
+        case preservedCurrent = "preserved-current"
     }
 
     public let path: String

@@ -225,6 +225,16 @@
         }
       }
     },
+    "Add Marketplace" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加插件市场"
+          }
+        }
+      }
+    },
     "Add Project Root…" : {
       "comment" : "View menu: keyboard path to the Settings add-folder button (Full Keyboard Access off).",
       "localizations" : {
@@ -285,6 +295,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "加入待处理更改"
+          }
+        }
+      }
+    },
+    "Added after execution" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Added after execution"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "执行后新增"
           }
         }
       }
@@ -401,6 +427,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全部"
+          }
+        }
+      }
+    },
+    "All Hosts" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有宿主"
+          }
+        }
+      }
+    },
+    "All Plugins" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有插件"
           }
         }
       }
@@ -553,12 +599,32 @@
         }
       }
     },
+    "Browse this host's locally configured catalog" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浏览此宿主在本地配置的目录"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
+          }
+        }
+      }
+    },
+    "Cancel rollback and keep current files." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消回滚并保留当前文件。"
           }
         }
       }
@@ -585,6 +651,16 @@
         }
       }
     },
+    "Check Plugin Updates" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查插件更新"
+          }
+        }
+      }
+    },
     "Check for Updates" : {
       "comment" : "Library toolbar: read-only update check through gh skill update --dry-run.",
       "localizations" : {
@@ -592,6 +668,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "检查更新"
+          }
+        }
+      }
+    },
+    "Check the host version and preview a protected move outside discovery" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查主机版本并预览受快照保护的移出发现目录操作"
           }
         }
       }
@@ -638,6 +724,62 @@
         }
       }
     },
+    "Choose how rollback handles this changed file." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择回滚如何处理此已更改文件。"
+          }
+        }
+      }
+    },
+    "Choose skills or host plugins" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择技能或宿主插件"
+          }
+        }
+      }
+    },
+    "Choose the host whose official interface manages this operation" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择通过官方接口管理此操作的宿主"
+          }
+        }
+      }
+    },
+    "Choose user scope or an already-added project" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择用户范围或已添加的项目"
+          }
+        }
+      }
+    },
+    "Choose…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请选择…"
+          }
+        }
+      }
+    },
     "Claimed by two installers" : {
       "comment" : "Health finding title: both the Vercel lock and GitHub frontmatter claim this skill.",
       "localizations" : {
@@ -670,6 +812,16 @@
         }
       }
     },
+    "Close without creating a command batch" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭且不创建命令批次"
+          }
+        }
+      }
+    },
     "Command-Line Tools" : {
       "comment" : "Settings > Installers: section header.",
       "localizations" : {
@@ -687,6 +839,66 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "命令"
+          }
+        }
+      }
+    },
+    "Components" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "组件"
+          }
+        }
+      }
+    },
+    "Components follow the host's plugin management granularity." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "组件的管理粒度由宿主决定。"
+          }
+        }
+      }
+    },
+    "Configured Enablement" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用配置"
+          }
+        }
+      }
+    },
+    "Configured Marketplaces" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已配置的插件市场"
+          }
+        }
+      }
+    },
+    "Configured enablement does not establish that a host session loaded this plugin." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用配置不能证明宿主会话已加载此插件。"
+          }
+        }
+      }
+    },
+    "Configured reference" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已配置的引用"
           }
         }
       }
@@ -913,6 +1125,22 @@
         }
       }
     },
+    "Deleted after execution" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleted after execution"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "执行后被删除"
+          }
+        }
+      }
+    },
     "Delete…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -955,6 +1183,36 @@
         }
       }
     },
+    "Disable Local Loading" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停用本地加载"
+          }
+        }
+      }
+    },
+    "Disable Plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停用插件"
+          }
+        }
+      }
+    },
+    "Disabled" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已停用"
+          }
+        }
+      }
+    },
     "Discard Batch" : {
       "localizations" : {
         "zh-Hans" : {
@@ -972,6 +1230,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "发现"
+          }
+        }
+      }
+    },
+    "Discovered local file" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发现的本地文件"
           }
         }
       }
@@ -1026,6 +1294,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下载…"
+          }
+        }
+      }
+    },
+    "Enable Plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用插件"
+          }
+        }
+      }
+    },
+    "Enabled" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已启用"
           }
         }
       }
@@ -1103,6 +1391,22 @@
         }
       }
     },
+    "File action" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File action"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件操作"
+          }
+        }
+      }
+    },
     "File added" : {
       "comment" : "Post-run diff entry.",
       "localizations" : {
@@ -1154,6 +1458,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "筛选资源库"
+          }
+        }
+      }
+    },
+    "Filter Plugins" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "筛选插件"
+          }
+        }
+      }
+    },
+    "Filter plugin installations by host" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按宿主筛选插件安装实例"
           }
         }
       }
@@ -1344,6 +1668,36 @@
         }
       }
     },
+    "Historical Load Errors" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "历史加载错误"
+          }
+        }
+      }
+    },
+    "Historical errors do not establish a current runtime failure." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "历史错误不能证明当前仍存在运行故障。"
+          }
+        }
+      }
+    },
+    "Host" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "宿主"
+          }
+        }
+      }
+    },
     "Hosts" : {
       "comment" : "Library detail: title of the host-presence region.",
       "localizations" : {
@@ -1388,6 +1742,16 @@
         }
       }
     },
+    "Inspection Issues" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查问题"
+          }
+        }
+      }
+    },
     "Install" : {
       "comment" : "Settings > Installers: install the CLI with Homebrew.",
       "localizations" : {
@@ -1395,6 +1759,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安装"
+          }
+        }
+      }
+    },
+    "Install Plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装插件"
           }
         }
       }
@@ -1453,6 +1827,16 @@
         }
       }
     },
+    "Install plugins or manage configured marketplaces using official host commands" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过宿主官方命令安装插件或管理已配置的插件市场"
+          }
+        }
+      }
+    },
     "Install skills from a GitHub repository" : {
       "comment" : "Search toolbar: help for Install from Repository.",
       "localizations" : {
@@ -1471,6 +1855,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安装所选技能（⌘⇧I）"
+          }
+        }
+      }
+    },
+    "Installation" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装状态"
+          }
+        }
+      }
+    },
+    "Installed payload" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已安装的内容"
           }
         }
       }
@@ -1648,6 +2052,16 @@
         }
       }
     },
+    "Legacy Plugin Definition" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "旧版插件定义"
+          }
+        }
+      }
+    },
     "Library" : {
       "comment" : "Sidebar surface and menu title.",
       "localizations" : {
@@ -1655,6 +2069,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "资源库"
+          }
+        }
+      }
+    },
+    "Library content" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "资料库内容"
           }
         }
       }
@@ -1757,6 +2181,16 @@
         }
       }
     },
+    "Load Status" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加载状态"
+          }
+        }
+      }
+    },
     "Loading SKILL.md…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1774,6 +2208,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在加载资源库…"
+          }
+        }
+      }
+    },
+    "Local project settings" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "项目本地设置"
           }
         }
       }
@@ -1917,6 +2361,52 @@
         }
       }
     },
+    "Manage Host Plugins" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理宿主插件"
+          }
+        }
+      }
+    },
+    "Manage Plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理插件"
+          }
+        }
+      }
+    },
+    "Manage Plugins…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理插件…"
+          }
+        }
+      }
+    },
+    "Modified after execution" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modified after execution"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "执行后被修改"
+          }
+        }
+      }
+    },
     "More actions for this finding" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1934,6 +2424,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此项目的更多操作"
+          }
+        }
+      }
+    },
+    "Move %@ to %@ to disable loading" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将 %1$@ 移至 %2$@ 以停用加载"
           }
         }
       }
@@ -2237,6 +2737,16 @@
         }
       }
     },
+    "Operation" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作"
+          }
+        }
+      }
+    },
     "Other Repairs…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2366,12 +2876,134 @@
         }
       }
     },
+    "Plugin Compatibility" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "插件兼容性"
+          }
+        }
+      }
+    },
+    "Plugin Installations" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "插件安装实例"
+          }
+        }
+      }
+    },
+    "Plugin, marketplace, package or address" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "插件、插件市场、软件包或地址"
+          }
+        }
+      }
+    },
+    "Plugins" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "插件"
+          }
+        }
+      }
+    },
     "Post-run diff" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "运行后差异"
+          }
+        }
+      }
+    },
+    "Preserve current file" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preserve current file"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留当前文件"
+          }
+        }
+      }
+    },
+    "Preserved current file" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preserved current file"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已保留当前文件"
+          }
+        }
+      }
+    },
+    "Preview Local Disable…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览停用本地插件…"
+          }
+        }
+      }
+    },
+    "Preview in Pending Changes" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在待处理变更中预览"
+          }
+        }
+      }
+    },
+    "Preview installation from this configured marketplace" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览从此已配置市场安装插件"
+          }
+        }
+      }
+    },
+    "Preview the official marketplace operation and its full impact" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览官方插件市场操作及其完整影响"
+          }
+        }
+      }
+    },
+    "Preview this host's supported operation or capability limit" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览此宿主支持的操作或能力限制"
           }
         }
       }
@@ -2389,6 +3021,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法预览此结果。\n安装时会通过官方 CLI 重新解析确切技能。"
+          }
+        }
+      }
+    },
+    "Producer Migration Instructions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "作者迁移说明"
           }
         }
       }
@@ -2571,6 +3213,16 @@
         }
       }
     },
+    "Recorded by host" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "宿主记录的安装"
+          }
+        }
+      }
+    },
     "Ref" : {
       "comment" : "Detail provenance field label: git ref.",
       "localizations" : {
@@ -2589,6 +3241,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "刷新"
+          }
+        }
+      }
+    },
+    "Refresh Marketplace" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刷新插件市场"
           }
         }
       }
@@ -2632,6 +3294,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移除"
+          }
+        }
+      }
+    },
+    "Remove Marketplace" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除插件市场"
+          }
+        }
+      }
+    },
+    "Remove Plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除插件"
           }
         }
       }
@@ -2816,6 +3498,22 @@
         }
       }
     },
+    "Restore snapshot" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore snapshot"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复快照"
+          }
+        }
+      }
+    },
     "Restored from snapshot" : {
       "comment" : "Rollback result: the path was restored from the batch's snapshot.",
       "localizations" : {
@@ -2897,6 +3595,22 @@
         }
       }
     },
+    "Review Rollback Conflicts" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review Rollback Conflicts"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查回滚冲突"
+          }
+        }
+      }
+    },
     "Review and apply the install in Pending Changes" : {
       "comment" : "Install sheet: help for Add to Pending Changes.",
       "localizations" : {
@@ -2904,6 +3618,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在“待处理更改”中检查并应用此安装"
+          }
+        }
+      }
+    },
+    "Review exact commands, affected files and consequences before execution" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "执行前审查确切命令、受影响文件及后果"
+          }
+        }
+      }
+    },
+    "Review plugin lifecycle changes before running them" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "执行前审查插件生命周期变更"
           }
         }
       }
@@ -2965,6 +3699,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "回滚…"
+          }
+        }
+      }
+    },
+    "Roll back using the selected file actions." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按所选文件操作进行回滚。"
           }
         }
       }
@@ -3150,6 +3894,16 @@
         }
       }
     },
+    "Select a plugin to inspect it" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择插件以查看详情"
+          }
+        }
+      }
+    },
     "Select a problem to inspect it" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3324,6 +4078,16 @@
         }
       }
     },
+    "Show the plugin's recorded path in Finder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在访达中显示插件记录的路径"
+          }
+        }
+      }
+    },
     "Show the selected skill's folder in Finder" : {
       "comment" : "Help tag for the toolbar Show in Finder button.",
       "localizations" : {
@@ -3335,13 +4099,12 @@
         }
       }
     },
-    "Show user-scope skills" : {
-      "comment" : "User Library sidebar row tooltip.",
+    "Show user-scope library items" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "显示用户范围内的技能"
+            "value" : "显示用户范围的库项目"
           }
         }
       }
@@ -3397,6 +4160,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已移除技能文件夹"
+          }
+        }
+      }
+    },
+    "Skills" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "技能"
           }
         }
       }
@@ -3692,6 +4465,16 @@
         }
       }
     },
+    "Unknown" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知"
+          }
+        }
+      }
+    },
     "Unpin" : {
       "comment" : "Library detail provenance: queue clearing the pin of a pinned gh-owned skill.",
       "localizations" : {
@@ -3758,6 +4541,16 @@
         }
       }
     },
+    "Unsupported host operations show the host's capability limit" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不支持的操作会显示宿主的能力限制"
+          }
+        }
+      }
+    },
     "Unsupported lock file version" : {
       "comment" : "Scan issue title.",
       "localizations" : {
@@ -3798,6 +4591,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "有可用更新"
+          }
+        }
+      }
+    },
+    "Update Plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新插件"
           }
         }
       }
@@ -3867,6 +4670,16 @@
         }
       }
     },
+    "Use Claude's local project scope instead of shared project settings" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 Claude 的项目本地范围，而非项目共享设置"
+          }
+        }
+      }
+    },
     "Use Copies" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3883,6 +4696,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "改用链接"
+          }
+        }
+      }
+    },
+    "Use a configured catalog selector or an address supported by this host" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用已配置目录中的插件标识或此宿主支持的地址"
           }
         }
       }
@@ -5664,6 +6487,70 @@
         }
       }
     },
+    "plugin.disableLocal.warning" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move this incompatible local plugin outside discovery to disable loading. Its behavior is not repaired."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将不兼容的本地插件移出自动发现目录以停用加载。此操作不会修复其功能。"
+          }
+        }
+      }
+    },
+    "plugin.health.v1Definition" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This file exports only a named async factory in the v1 style. OpenCode v2 requires a default definition; the current host version and runtime status are not established. Prefer a producer-provided migration. Disabling stops loading and does not restore behavior."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测到仅导出具名异步工厂的 v1 风格定义。OpenCode v2 需要默认定义；尚未确认当前主机版本或运行状态。请优先采用插件作者提供的迁移方案。停用只会停止加载，不会恢复功能。"
+          }
+        }
+      }
+    },
+    "plugin.hostFailure.nextSteps" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review the recorded host error. Complete any required trust or authentication in the host, then rescan and preview a new batch. The snapshot retains the original files and any partial result."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看已记录的主机错误。如需信任授权或身份验证，请在主机中完成，然后重新扫描并预览新的批次。快照保留了操作前的文件以及部分执行结果。"
+          }
+        }
+      }
+    },
+    "plugin.preview.explanation" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preview checks the installed host's version and official command support. Trust approval stays in the host."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览会检查已安装宿主的版本和官方命令支持情况。信任审批仍由宿主处理。"
+          }
+        }
+      }
+    },
     "problem.copyInsteadOfLink.explanation" : {
       "comment" : "Health problem explanation.",
       "localizations" : {
@@ -5847,6 +6734,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "快速查看：%@"
+          }
+        }
+      }
+    },
+    "rollback.conflicts.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Files changed after execution. Choose snapshot restoration or preservation for each conflict. Unrelated later additions are preserved."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件在命令执行后发生了变化。请为每个冲突选择恢复快照或保留当前文件。后续新增的无关文件会保留。"
           }
         }
       }
@@ -6119,6 +7022,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除 %lld 个链接"
+          }
+        }
+      }
+    },
+    "summary.disablePlugin %lld" : {
+      "comment" : "Batch confirmation summary line, counted by kind.",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Disable %lld local plugin"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Disable %lld local plugins"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停用 %lld 个本地插件"
           }
         }
       }

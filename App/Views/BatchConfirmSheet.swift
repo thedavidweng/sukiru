@@ -223,7 +223,7 @@ struct BatchConfirmSheet: View {
 struct BatchSummary {
     private enum Kind: CaseIterable {
         case deleteLink, relink, relinkDiverged, materialize, deleteDirectory
-        case removeLeftover, remove, install, reinstall, pin, unpin, update
+        case removeLeftover, disablePlugin, remove, install, reinstall, pin, unpin, update
 
         init(_ command: BatchCommand) {
             if let operation = command.fileOperation {
@@ -245,6 +245,7 @@ struct BatchSummary {
             case .materialize: .materialize
             case .deleteDirectory: .deleteDirectory
             case .removeLeftoverSkillsDir: .removeLeftover
+            case .movePlugin: .disablePlugin
             }
         }
 
@@ -279,6 +280,7 @@ struct BatchSummary {
             case .materialize: String(localized: "summary.materialize \(count)")
             case .deleteDirectory: String(localized: "summary.deleteDirectory \(count)")
             case .removeLeftover: String(localized: "summary.removeLeftover \(count)")
+            case .disablePlugin: String(localized: "summary.disablePlugin \(count)")
             default: nil
             }
         }

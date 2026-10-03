@@ -142,11 +142,22 @@ func executeBatch(
 /// items are unrestorable — the record reports them honestly and stderr
 /// surfaces each one; exit 1 is reserved for refusals (unknown batch,
 /// already rolled back, execution in progress, unreadable snapshot).
-func runRollback(batchID: String, environment: SukiruEnvironment) {
+func runRollback(
+    batchID: String, environment: SukiruEnvironment, preview: Bool,
+    choices: [String: RollbackChoice]
+) {
     let record: RollbackRecord
     do {
-        record = try Rollback(environment: environment).rollback(batchID: batchID)
+        let rollback = Rollback(environment: environment)
+        if preview {
+            emitJSON(try rollback.preview(batchID: batchID).jsonData())
+            return
+        }
+        record = try rollback.rollback(batchID: batchID, choices: choices)
     } catch let error as RollbackError {
+        if case .conflicts(let review) = error, let bytes = try? review.jsonData() {
+            emitJSON(bytes)
+        }
         emitError(error.message)
         exit(1)
     } catch let error as ExecutionError {
@@ -169,15 +180,6 @@ func runRollback(batchID: String, environment: SukiruEnvironment) {
 
 let arguments = Array(CommandLine.arguments.dropFirst())
 
-let command: CLICommand
-switch CLIParser.parse(arguments) {
-case .failure(let error):
-    emitError(error.message)
-    exit(1)
-case .success(let parsed):
-    command = parsed
-}
-
 let environment = SukiruEnvironment(reader: ProcessEnvironmentReader())
 
 // A set-but-nonexistent SUKIRU_HOME is the sole fatal
@@ -186,6 +188,17 @@ let fatalProblem = environment.fatalProblem(fileSystem: DefaultFileSystemProbe()
 if case .sukiruHomeMissing(let path) = fatalProblem {
     emitError("SUKIRU_HOME is set to a path that does not exist: \(path)")
     exit(2)
+}
+
+if runPluginCommand(arguments: arguments, environment: environment) { exit(0) }
+
+let command: CLICommand
+switch CLIParser.parse(arguments) {
+case .failure(let error):
+    emitError(error.message)
+    exit(1)
+case .success(let parsed):
+    command = parsed
 }
 
 do {
@@ -206,8 +219,8 @@ do {
                 decisionsFile: decisionsFile, dryRun: dryRun, execute: execute,
                 reviewed: reviewed, commandTimeout: commandTimeout, roots: roots,
                 scope: scope, environment: environment))
-    case .rollback(let batchID, _):
-        runRollback(batchID: batchID, environment: environment)
+    case .rollback(let batchID, _, let preview, let choices):
+        runRollback(batchID: batchID, environment: environment, preview: preview, choices: choices)
     }
     exit(0)
 } catch {

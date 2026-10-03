@@ -326,19 +326,28 @@ extension AppState {
     /// Restores the batch's pre-execution state from its snapshot, then
     /// auto-refreshes every surface. Callers confirm first. Rollback takes
     /// the same cross-process execution lock as executions.
-    func rollbackBatch(_ batchID: String) {
+    func rollbackBatch(_ batchID: String, choices: [String: RollbackChoice] = [:]) {
         guard canRollback(batchID: batchID) else { return }
         batchMutationInFlight = true
         rollbackError = nil
+        rollbackReview = nil
         let environment = Self.makeEnvironment(roots: projectRoots)
         Task.detached(priority: .userInitiated) { [weak self] in
             do {
-                _ = try Rollback(environment: environment).rollback(batchID: batchID)
+                _ = try Rollback(environment: environment).rollback(
+                    batchID: batchID, choices: choices)
                 await self?.finishRollback(failure: nil)
+            } catch RollbackError.conflicts(let preview) {
+                await self?.reviewRollback(preview)
             } catch {
                 await self?.finishRollback(failure: UserFacingError.message(for: error))
             }
         }
+    }
+
+    private func reviewRollback(_ preview: RollbackPreview) {
+        batchMutationInFlight = false
+        rollbackReview = preview
     }
 
     private func finishRollback(failure: String?) {

@@ -46,15 +46,18 @@ struct SidebarView: View {
         let counts = SkillCounts(state: state)
         List(selection: selection) {
             Section("Library") {
-                row("All Skills", surface: .library, icon: "square.stack")
-                    .badge(counts.all)
-                    .tag(Destination.surface(.library))
+                row(
+                    state.libraryContent == .skills ? "All Skills" : "All Plugins",
+                    surface: .library, icon: "square.stack"
+                )
+                .badge(counts.all)
+                .tag(Destination.surface(.library))
                 HStack(spacing: 0) {
                     AXToken(token: "sukiru.sidebar.userLibrary")
                     Label("User Library", systemImage: "person.crop.circle")
                 }
                 .badge(counts.user)
-                .help("Show user-scope skills")
+                .help("Show user-scope library items")
                 .tag(Destination.userLibrary)
             }
             if !state.projectRoots.isEmpty {
@@ -68,7 +71,10 @@ struct SidebarView: View {
             }
             Section("Tools") {
                 row("Health", surface: .health, icon: "stethoscope")
-                    .badge(state.attentionFindingCount)
+                    .badge(
+                        state.attentionFindingCount
+                            + (state.report?.pluginInventory?.healthFindings.count ?? 0)
+                    )
                     .tag(Destination.surface(.health))
                 row("Pending Changes", surface: .pending, icon: "list.bullet.rectangle")
                     .badge(state.queuedChangeCount)
@@ -131,6 +137,17 @@ private struct SkillCounts {
 
     @MainActor
     init(state: AppState) {
+        if state.libraryContent == .plugins {
+            for plugin in state.report?.pluginInventory?.installations ?? [] {
+                all += 1
+                if plugin.scopeRoot == state.environment.home {
+                    user += 1
+                } else {
+                    projects[plugin.scopeRoot, default: 0] += 1
+                }
+            }
+            return
+        }
         for skill in state.report?.skills ?? [] {
             if skill.scope == .user {
                 user += 1

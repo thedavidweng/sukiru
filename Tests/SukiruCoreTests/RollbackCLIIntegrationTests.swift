@@ -274,3 +274,83 @@ struct RollbackCLIIntegrationTests {
         #expect(second.stdout.isEmpty)
     }
 }
+
+extension RollbackCLIIntegrationTests {
+    @Test("Rollback restores payloads through an unchanged shared-directory link")
+    func linkedSharedDirectoryRoundTrip() throws {
+        let tree = try TempTree()
+        let copy = try Support.copyFixture("FIX-FILES-NO-LOCK", into: tree)
+        let skills = copy + "/.agents/skills"
+        try FileManager.default.moveItem(atPath: skills, toPath: copy + "/shared")
+        try FileManager.default.createSymbolicLink(atPath: skills, withDestinationPath: "../shared")
+        let before = try Self.sandboxChecksum(root: copy)
+        let executed = try Self.executeCleanup(home: copy, tree: tree)
+        let rolledBack = try Self.runRollback(home: copy, roots: [], batchID: executed.batchID)
+        #expect(rolledBack.exitCode == 0)
+        #expect(try Self.sandboxChecksum(root: copy) == before)
+    }
+
+    @Test("Later replacement requires a choice and preserve leaves its tree unchanged")
+    func laterReplacementRequiresChoice() throws {
+        let tree = try TempTree()
+        let copy = try Support.copyFixture("FIX-FILES-NO-LOCK", into: tree)
+        let executed = try Self.executeCleanup(home: copy, tree: tree)
+        let orphan = copy + "/.agents/skills/orphan"
+        try FileManager.default.createDirectory(atPath: orphan, withIntermediateDirectories: true)
+        try Data("later edit".utf8).write(to: URL(fileURLWithPath: orphan + "/SKILL.md"))
+        let before = try Self.sandboxChecksum(root: copy)
+        let refused = try Self.runRollback(home: copy, roots: [], batchID: executed.batchID)
+        #expect(refused.exitCode == 1)
+        #expect(try Self.sandboxChecksum(root: copy) == before)
+        let preview = try #require(try refused.jsonObject())
+        let conflicts = try #require(preview["conflicts"] as? [[String: Any]])
+        #expect(conflicts.contains { $0["path"] as? String == orphan + "/SKILL.md" })
+        let environment = CLIRunner.fixtureEnvironment(home: copy, roots: [])
+        let preserved = try CLIRunner.run(
+            [
+                "rollback", "--batch", executed.batchID, "--preserve", orphan,
+                "--preserve", orphan + "/SKILL.md"
+            ], environment: environment)
+        #expect(preserved.exitCode == 0, "stderr: \(Support.stderrText(preserved))")
+        #expect(try Self.sandboxChecksum(root: copy) == before)
+    }
+
+    @Test("Mixed restoration and preservation keeps unrelated later additions")
+    func mixedChoicesKeepLaterAdditions() throws {
+        let tree = try TempTree()
+        let copy = try Support.copyFixture("FIX-FILES-NO-LOCK", into: tree)
+        let orphan = copy + "/.agents/skills/orphan"
+        let original = try TreeChecksum.manifest(root: orphan)
+        let executed = try Self.executeCleanup(home: copy, tree: tree)
+        try FileManager.default.createDirectory(atPath: orphan, withIntermediateDirectories: true)
+        try Data("later replacement".utf8).write(to: URL(fileURLWithPath: orphan + "/SKILL.md"))
+        try Data("unrelated note".utf8).write(to: URL(fileURLWithPath: orphan + "/notes.txt"))
+        let later = copy + "/.agents/skills/later"
+        try FileManager.default.createDirectory(atPath: later, withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(
+            atPath: later + "/link", withDestinationPath: "missing")
+        let environment = CLIRunner.fixtureEnvironment(home: copy, roots: [])
+        let review = try CLIRunner.run(
+            ["rollback", "--batch", executed.batchID, "--preview"], environment: environment)
+        #expect(review.exitCode == 0)
+        let object = try #require(try review.jsonObject())
+        let conflicts = try #require(object["conflicts"] as? [[String: Any]])
+        var arguments = ["rollback", "--batch", executed.batchID]
+        for conflict in conflicts {
+            let path = try #require(conflict["path"] as? String)
+            arguments += [
+                path == orphan || path == orphan + "/SKILL.md" ? "--restore" : "--preserve", path
+            ]
+        }
+        let result = try CLIRunner.run(arguments, environment: environment)
+        #expect(result.exitCode == 0, "stderr: \(Support.stderrText(result))")
+        var restored = try TreeChecksum.manifest(root: orphan)
+        restored.removeValue(forKey: "notes.txt")
+        #expect(restored == original)
+        #expect(
+            try String(contentsOfFile: orphan + "/notes.txt", encoding: .utf8) == "unrelated note")
+        #expect(
+            try FileManager.default.destinationOfSymbolicLink(atPath: later + "/link") == "missing")
+    }
+
+}

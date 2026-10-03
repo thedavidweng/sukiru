@@ -34,7 +34,7 @@ enum PayloadTree {
             default:
                 // FIFOs/sockets/devices cannot be meaningfully copied; they
                 // are not valid skill payload content either.
-                break
+                throw SnapshotError.captureFailed("unsupported file type at \(childSource)")
             }
         }
     }

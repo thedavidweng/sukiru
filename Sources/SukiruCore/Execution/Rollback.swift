@@ -10,6 +10,7 @@ public enum RollbackError: Error, Equatable, Sendable {
     case recordUnreadable(String)
     /// The batch was already rolled back; rollback is a one-time transition.
     case alreadyRolledBack(String)
+    case conflicts(RollbackPreview)
 
     /// Human-readable refusal.
     public var message: String {
@@ -22,6 +23,10 @@ public enum RollbackError: Error, Equatable, Sendable {
         case .recordUnreadable(let id):
             return "the execution record for batch '\(id)' is unreadable; "
                 + "refusing to guess at its snapshot"
+        case .conflicts:
+            return
+                "files changed after execution; choose --restore <path> where canRestore is true, "
+                + "or --preserve <path> for each conflict"
         case .alreadyRolledBack(let id):
             return "batch '\(id)' has already been rolled back; rollback is a "
                 + "one-time transition"
@@ -31,8 +36,8 @@ public enum RollbackError: Error, Equatable, Sendable {
 
 /// The persisted outcome of a one-click rollback
 /// (`executions/<batchID>/rollback.json`). Every restored/deleted/failed
-/// item is itemized in exactly three categories (restored, deleted,
-/// unrestorable-with-reason) — there is no "compensated-via-CLI" category in
+/// item is itemized as restored, deleted, preserved, or unrestorable-with-reason.
+/// There is no "compensated-via-CLI" category in
 /// v1.
 public struct RollbackRecord: Codable, Equatable, Sendable {
     public static let currentSchemaVersion = 1
@@ -69,15 +74,10 @@ public struct RollbackRecord: Codable, Equatable, Sendable {
     }
 }
 
-/// One-click rollback: restore the ledgers
-/// byte-exact, restore the payload trees, and delete whatever the batch
-/// added. Compensating CLI commands are NOT used in v1.
-///
-/// Rollback works for `succeeded` AND `failed` batches. It
-/// reruns the affected-scope rescan first so placements the batch sprayed
-/// into previously-empty host directories — invisible to the snapshot's
-/// watched-directory sweep — are found and deleted too (the Differ's
-/// post-run rescan vs the manifest's placement set).
+/// Snapshot rollback compares current files against execution's recorded
+/// post-state before changing anything. Conflicts require explicit choices;
+/// unrelated later additions remain intact. Official CLIs are never used
+/// as compensating commands.
 public struct Rollback: Sendable {
     private let environment: SukiruEnvironment
     private let dateProvider: @Sendable () -> Date
@@ -96,22 +96,24 @@ public struct Rollback: Sendable {
     ///   unsafe id), `ExecutionError.busy` while another execution holds the
     ///   lock, or `SnapshotError` when the snapshot itself is unreadable.
     @discardableResult
-    public func rollback(batchID: String) throws -> RollbackRecord {
-        do {
-            try SnapshotStore.validateSnapshotID(batchID)
-        } catch {
-            throw RollbackError.invalidBatchID(batchID)
-        }
+    public func rollback(
+        batchID: String, choices: [String: RollbackChoice] = [:]
+    ) throws -> RollbackRecord {
+        try perform(batchID: batchID, choices: choices, previewOnly: false).record!
+    }
+
+    public func preview(batchID: String) throws -> RollbackPreview {
+        try perform(batchID: batchID, choices: [:], previewOnly: true).preview
+    }
+
+    private func perform(
+        batchID: String, choices: [String: RollbackChoice], previewOnly: Bool
+    ) throws -> (preview: RollbackPreview, record: RollbackRecord?) {
         let appSupport = HostPathResolver.join(
             environment.home, "Library/Application Support/Sukiru")
         let recordDirectory = HostPathResolver.join(appSupport, "executions/" + batchID)
         let recordPath = HostPathResolver.join(recordDirectory, "record.json")
-        guard let data = FileManager.default.contents(atPath: recordPath) else {
-            throw RollbackError.unknownBatch(batchID)
-        }
-        guard let record = try? JSONDecoder().decode(ExecutionRecord.self, from: data) else {
-            throw RollbackError.recordUnreadable(batchID)
-        }
+        let record = try loadRecord(batchID: batchID, path: recordPath)
         let rollbackPath = HostPathResolver.join(recordDirectory, "rollback.json")
         let hasRollbackRecord = FileManager.default.fileExists(atPath: rollbackPath)
         if record.batchStatus == .rolledBack || hasRollbackRecord {
@@ -126,34 +128,50 @@ public struct Rollback: Sendable {
 
         let store = SnapshotStore(environment: environment)
         let manifest = try store.load(id: record.snapshotID)
-        let extraAdded = try batchAddedPaths(record: record, manifest: manifest)
-        let restore = try store.restore(
-            id: record.snapshotID, extraAddedPaths: extraAdded)
+        let snapshotDirectory = HostPathResolver.join(store.snapshotsRoot(), record.snapshotID)
+        let before = try RollbackFiles.load(from: snapshotDirectory, name: "before.json")
+        let after = try RollbackFiles.load(from: snapshotDirectory, name: "after.json")
+        let current = try RollbackFiles.capture(roots: after.roots)
+        let conflicts = after.conflicts(with: current).map { conflict in
+            RollbackConflict(
+                path: conflict.path, kind: conflict.kind,
+                canRestore: before.entries[conflict.path] != nil
+                    || after.entries[conflict.path] != nil)
+        }
+        let preview = RollbackPreview(batchID: batchID, conflicts: conflicts)
+        if previewOnly { return (preview, nil) }
+        if preview.conflicts.contains(where: {
+            choices[$0.path] == nil || (!$0.canRestore && choices[$0.path] == .restore)
+        }) {
+            throw RollbackError.conflicts(preview)
+        }
+        let items = try before.restore(
+            manifest: manifest, snapshotDirectory: snapshotDirectory,
+            after: after, current: current, choices: choices)
         let result = RollbackRecord(
             batchID: record.batchID,
             snapshotID: record.snapshotID,
             rolledBackAt: CLIExecutor.timestamp(dateProvider()),
-            items: restore.items)
+            items: items)
         try result.jsonData().write(
             to: URL(fileURLWithPath: rollbackPath), options: .atomic)
         try markRolledBack(record, recordPath: recordPath)
-        return result
+        return (preview, result)
     }
 
-    /// Placements the post-state has that the pre-batch manifest does not —
-    /// the sprayed-symlink gap: a batch can create placements in host skills
-    /// dirs that had ZERO placements pre-batch, which the snapshot's
-    /// watched-directory sweep cannot see. Computed from a fresh rescan of
-    /// the batch's affected scope, never trusted from a stored diff.
-    private func batchAddedPaths(
-        record: ExecutionRecord, manifest: SnapshotManifest
-    ) throws -> [String] {
-        let affected = AffectedScope(workspaceIDs: record.affectedWorkspaceIDs)
-        let post = try ScanEngine(environment: environment).scan(affected.scanRequest)
-        let current = Differ.placementPaths(
-            in: post, touched: Set(record.affectedWorkspaceIDs))
-        let known = Set(manifest.placements.map(\.path))
-        return current.subtracting(known).sorted()
+    private func loadRecord(batchID: String, path: String) throws -> ExecutionRecord {
+        do {
+            try SnapshotStore.validateSnapshotID(batchID)
+        } catch {
+            throw RollbackError.invalidBatchID(batchID)
+        }
+        guard let data = FileManager.default.contents(atPath: path) else {
+            throw RollbackError.unknownBatch(batchID)
+        }
+        guard let record = try? JSONDecoder().decode(ExecutionRecord.self, from: data) else {
+            throw RollbackError.recordUnreadable(batchID)
+        }
+        return record
     }
 
     /// Flips the persisted batch transcript to its terminal `rolledBack`

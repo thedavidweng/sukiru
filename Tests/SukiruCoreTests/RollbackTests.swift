@@ -166,20 +166,32 @@ struct RollbackEngineTests {
         #expect(try post.jsonData() == tree.report.jsonData())
     }
 
+    private static func executeSpray(
+        home: TempTree, refs: [FindingRef], orphan: String,
+        report: ScanReport, environment: SukiruEnvironment
+    ) throws {
+        let shim = try home.executable(
+            "bin/spray",
+            contents: """
+                #!/bin/sh
+                mkdir -p "$HOME/.qoder/skills/sprayed"
+                printf '%s' '# Sprayed skill' > "$HOME/.qoder/skills/sprayed/SKILL.md"
+                """)
+        let command = ExecutorTestSupport.command([shim], cli: .vercel)
+        let batch = ExecutorTestSupport.batch(
+            commands: [Roll.deleteCommand(path: orphan), command], refs: refs)
+        _ = try Roll.execute(batch, report: report, environment: environment)
+    }
+
     @Test("Rollback deletes placements sprayed into a previously-empty host dir")
     func rollbackDeletesSprayedPlacements() throws {
         let tree = try Support.makeTree()
         let environment = Roll.environment(home: tree.home.path, project: tree.project.path)
         let orphan = tree.home.path + "/.agents/skills/orphan"
         let refs = [Support.ref("f-orphan", skill: "orphan", workspace: "user")]
-        _ = try Roll.execute(
-            Roll.cleanupBatch(refs: refs, path: orphan),
+        try Self.executeSpray(
+            home: tree.home, refs: refs, orphan: orphan,
             report: tree.report, environment: environment)
-        // Simulate an npx symlink-spray into a fresh host layout: .qoder
-        // did not exist pre-batch, so the manifest's watched-dir sweep
-        // cannot see this placement — only the rollback-time rescan can.
-        try tree.home.file(
-            ".qoder/skills/sprayed/SKILL.md", contents: OwnershipBuilders.skillMD("sprayed"))
         let sprayed = tree.home.path + "/.qoder/skills/sprayed"
 
         let record = try Rollback(environment: environment).rollback(batchID: "batch-1")
@@ -208,12 +220,9 @@ struct RollbackEngineTests {
         let preBatch = try OwnershipBuilders.scan(home: tree.home, projectRoots: [tree.project])
         let orphan = tree.home.path + "/.agents/skills/orphan"
         let refs = [Support.ref("f-orphan", skill: "orphan", workspace: "user")]
-        _ = try Roll.execute(
-            Roll.cleanupBatch(refs: refs, path: orphan),
+        try Self.executeSpray(
+            home: tree.home, refs: refs, orphan: orphan,
             report: preBatch, environment: environment)
-        // The spray lands in the pre-existing empty host dir.
-        try tree.home.file(
-            ".qoder/skills/sprayed/SKILL.md", contents: OwnershipBuilders.skillMD("sprayed"))
         let sprayed = tree.home.path + "/.qoder/skills/sprayed"
 
         let record = try Rollback(environment: environment).rollback(batchID: "batch-1")

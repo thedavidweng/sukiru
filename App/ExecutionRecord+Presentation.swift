@@ -33,6 +33,7 @@ extension RestoreItem.Category {
         case .restoredFromSnapshot: "Restored from snapshot"
         case .deletedBatchAdded: "Removed (added by the batch)"
         case .unrestorableWithReason: "Could not restore"
+        case .preservedCurrent: "Preserved current file"
         }
     }
 }

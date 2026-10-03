@@ -15,16 +15,37 @@ A directory containing a `SKILL.md`: the portable instruction unit defined by
 the agentskills.io specification. A host activates it through its frontmatter.
 _Avoid_: plugin, capability
 
+**Agent Plugin** (插件):
+A host-recognized extension package that forms one management unit and may
+contain skills or other components. Its components are not independently
+managed unless the host exposes that granularity.
+_Avoid_: skill, Agent Skill
+
+**Plugin Installation** (插件安装实例):
+A plugin installed for one host in one concrete user or project scope. Its
+identity includes its source and the host's plugin identifier; installations
+from different sources or in different projects remain distinct.
+_Avoid_: skill placement
+
+**Plugin Enablement** (插件启用配置):
+The configured choice to enable or disable a plugin in a host and scope.
+This choice does not establish that a running session has loaded the plugin.
+_Avoid_: loaded, running
+
+**Plugin Load Status** (插件加载状态):
+Evidence of whether a plugin loaded in a particular host runtime or session.
+Without such evidence the status is unknown, even when the plugin is enabled.
+_Avoid_: installed, enabled
+
 **Agent Host** (宿主):
-A coding agent that consumes skill directories (Claude Code, Codex, Cursor,
-…). Hosts are plug-and-play: they only see the files in the directory and do
-not care who installed them.
+A coding agent that consumes Agent Skills or Agent Plugins (Claude Code,
+Codex, OpenCode, Cursor, …). A host may also manage its own plugin installations.
 _Avoid_: platform, client
 
 **Ledger** (账本):
-An installer's private install record: what was installed, from where, at
-which version, and for whom. It drives update, pin, and uninstall. Ledgers
-exist for installers, not for hosts.
+An installation manager's private install record: what was installed, from
+where, at which version, and for whom. The manager may be a standalone installer
+or an agent host; Sukiru keeps no ledger of its own.
 _Avoid_: metadata, record
 
 **Vercel Ledger** (Vercel 账本):

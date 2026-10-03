@@ -62,12 +62,14 @@ public struct ScanEngine: Sendable {
         let issues = (inventory.issues + claims.issues).sorted {
             ($0.path, $0.kind, $0.message) < ($1.path, $1.kind, $1.message)
         }
+        let plugins = PluginInventoryReader(environment: environment).read(request)
         return ScanReport(
             workspaces: workspaces.map(\.workspace),
             skills: resolution.skills,
             findings: findings,
             issues: issues,
-            lockExtras: Self.lockExtras(from: claims.claims)
+            lockExtras: Self.lockExtras(from: claims.claims),
+            pluginInventory: plugins.isEmpty ? nil : plugins
         )
     }
 

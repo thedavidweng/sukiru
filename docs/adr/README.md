@@ -13,5 +13,6 @@ are added as amendments or new records that reference the old one.
 | [0005](0005-glossary-and-legacy-disposition.md) | Unify vocabulary and dispose of legacy assets | Accepted |
 | [0006](0006-pure-swift-apple-native-feel.md) | Pure Swift and an Apple first-party feel | Accepted, amended 2026-10-01 |
 | [0007](0007-problem-first-health-and-one-click-fixes.md) | Problem-first Health, one-click fixes, one confirmation per batch | Accepted |
+| [0008](0008-host-plugin-management.md) | Independent plugin units, initial host scope, official lifecycle writes and local-file disable boundary | Accepted |
 
 Domain terms are defined in the [glossary](../../CONTEXT.md).

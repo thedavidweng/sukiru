@@ -33,6 +33,9 @@ struct RootView: View {
             }
         }
         .modifier(HistoryConfirmations())
+        .sheet(isPresented: $state.pluginManagement.showingSheet) {
+            PluginManagementSheet()
+        }
     }
 
     private var showingSourceSheet: Binding<Bool> {
@@ -81,7 +84,7 @@ struct RootView: View {
     private var content: some View {
         switch state.surface {
         case .library:
-            LibraryView()
+            LibraryContainerView()
         case .health:
             HealthView()
                 .navigationTitle("Health")
@@ -101,7 +104,11 @@ struct RootView: View {
     private var detail: some View {
         switch state.surface {
         case .library:
-            LibraryDetailView()
+            if state.libraryContent == .plugins {
+                PluginDetailView()
+            } else {
+                LibraryDetailView()
+            }
         case .snapshots:
             // Post-run diff / itemized rollback record.
             SnapshotsDetailView()

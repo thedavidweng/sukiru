@@ -13,7 +13,9 @@ public enum CLICommand: Equatable, Sendable {
         decisionsFile: String, dryRun: Bool, execute: Bool, reviewed: Bool,
         commandTimeout: TimeInterval?, roots: [String], scope: Scope,
         format: OutputFormat)
-    case rollback(batchID: String, format: OutputFormat)
+    case rollback(
+        batchID: String, format: OutputFormat, preview: Bool = false,
+        choices: [String: RollbackChoice] = [:])
 }
 
 /// A usage error (maps to exit code 1).
@@ -92,36 +94,58 @@ public enum CLIParser {
     /// `rollback --batch <batch-id> [--format json]` (one-click
     /// rollback). `--batch` is required and names the executed batch whose
     /// execution record + snapshot drive the restore.
-    private static func parseRollback(_ args: [String]) -> Result<CLICommand, CLIParseError> {
+    private struct RollbackOptions {
         var batchID: String?
-        var options = SharedOptions()
+        var preview = false
+        var choices: [String: RollbackChoice] = [:]
+        var shared = SharedOptions()
+    }
+
+    private static func parseRollback(_ args: [String]) -> Result<CLICommand, CLIParseError> {
+        var options = RollbackOptions()
         var index = 0
         while index < args.count {
-            let arg = args[index]
-            switch arg {
-            case "--batch":
-                switch requireValue(args, at: index) {
-                case .success(let value):
-                    batchID = value
-                    index += 2
-                case .failure(let error):
-                    return .failure(error)
-                }
-            case "--format":
-                switch applyShared(arg, args: args, at: index, into: &options) {
-                case .success(let next):
-                    index = next
-                case .failure(let error):
-                    return .failure(error)
-                }
-            default:
-                return .failure(.unknownFlag(command: "rollback", flag: arg))
+            switch consumeRollbackFlag(args, at: index, into: &options) {
+            case .success(let next): index = next
+            case .failure(let error): return .failure(error)
             }
         }
-        guard let batchID else {
+        guard let batchID = options.batchID else {
             return .failure(.missingFlag(command: "rollback", flag: "--batch"))
         }
-        return .success(.rollback(batchID: batchID, format: options.format))
+        return .success(
+            .rollback(
+                batchID: batchID, format: options.shared.format,
+                preview: options.preview, choices: options.choices))
+    }
+
+    private static func consumeRollbackFlag(
+        _ args: [String], at index: Int,
+        into options: inout RollbackOptions
+    ) -> Result<Int, CLIParseError> {
+        let arg = args[index]
+        switch arg {
+        case "--preview":
+            options.preview = true
+            return .success(index + 1)
+        case "--batch":
+            return requireValue(args, at: index).map { value in
+                options.batchID = value
+                return index + 2
+            }
+        case "--restore", "--preserve":
+            return requireValue(args, at: index).flatMap { value in
+                guard value.hasPrefix("/"), options.choices[value] == nil else {
+                    return .failure(.invalidValue(flag: arg, value: value))
+                }
+                options.choices[value] = arg == "--restore" ? .restore : .preserve
+                return .success(index + 2)
+            }
+        case "--format":
+            return applyShared(arg, args: args, at: index, into: &options.shared)
+        default:
+            return .failure(.unknownFlag(command: "rollback", flag: arg))
+        }
     }
 
     private static func parseScan(_ args: [String]) -> Result<CLICommand, CLIParseError> {

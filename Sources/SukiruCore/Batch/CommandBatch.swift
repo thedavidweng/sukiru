@@ -90,6 +90,9 @@ public enum OwningCLI: String, Codable, Equatable, Sendable {
     case vercel
     case github
     case file
+    case claude
+    case codex
+    case opencode
 }
 
 /// Danger flags carried on batch commands.
@@ -142,6 +145,8 @@ public struct BatchCommand: Codable, Equatable, Sendable {
     /// project-scope `npx` commands (the CLI resolves `-p` literally from
     /// cwd — research/cli-surface-npx.md); nil elsewhere.
     public let workingDirectory: String?
+    /// Verified file-backed mutation bounds of an official host operation.
+    public let captureRoots: [String]?
 
     public init(
         argv: [String],
@@ -152,7 +157,8 @@ public struct BatchCommand: Codable, Equatable, Sendable {
         warning: String?,
         atRiskSkills: [AtRiskSkill] = [],
         consequence: CommandConsequence? = nil,
-        workingDirectory: String? = nil
+        workingDirectory: String? = nil,
+        captureRoots: [String]? = nil
     ) {
         self.argv = argv
         self.displayString = displayString
@@ -164,6 +170,7 @@ public struct BatchCommand: Codable, Equatable, Sendable {
         self.consequence = consequence?.text
         self.consequenceKind = consequence
         self.workingDirectory = workingDirectory
+        self.captureRoots = captureRoots
     }
 
     /// The direct file operation this command performs, if it is one.

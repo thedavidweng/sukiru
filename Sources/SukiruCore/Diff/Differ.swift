@@ -62,8 +62,30 @@ public struct Differ: Sendable {
         var entries = placementEntries(touched: touchedWorkspaceIDs, pre: pre, post: post)
         entries += payloadFileEntries(manifest: manifest)
         entries += ledgerEntries(manifest: manifest)
+        entries += genericFileEntries(manifest: manifest)
         let sorted = entries.sorted { ($0.path, $0.kind.rawValue) < ($1.path, $1.kind.rawValue) }
         return BatchDiff(entries: sorted, summary: Self.summary(for: sorted))
+    }
+
+    private func genericFileEntries(manifest: SnapshotManifest) -> [DiffEntry] {
+        let directory = HostPathResolver.join(
+            SnapshotStore(environment: environment).snapshotsRoot(), manifest.id)
+        guard let before = try? RollbackFiles.load(from: directory, name: "before.json"),
+            let after = try? RollbackFiles.load(from: directory, name: "after.json"),
+            let generic = try? SnapshotStore.genericRoots(snapshotDirectory: directory)
+        else { return [] }
+        let roots = generic.keys.filter { path in
+            !generic.keys.contains { path.hasPrefix($0 + "/") }
+        }
+        return before.conflicts(with: after).filter { conflict in
+            roots.contains { conflict.path == $0 || conflict.path.hasPrefix($0 + "/") }
+        }.map { conflict in
+            let kind: DiffEntry.Kind =
+                conflict.kind == .added
+                ? .fileAdded
+                : conflict.kind == .deleted ? .fileRemoved : .fileChanged
+            return DiffEntry(kind: kind, path: conflict.path, detail: "captured file state changed")
+        }
     }
 
     // MARK: - placements

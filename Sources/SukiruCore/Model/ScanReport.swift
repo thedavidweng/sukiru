@@ -32,6 +32,7 @@ public struct ScanReport: Codable, Equatable, Sendable {
     /// `project:<root>`). Nil when no read lock carries unknown keys, so the
     /// key is omitted from the wire JSON (the schema stays additive).
     public let lockExtras: [String: [String: JSONValue]]?
+    public let pluginInventory: PluginInventory?
 
     public static let currentSchemaVersion = 1
 
@@ -41,7 +42,8 @@ public struct ScanReport: Codable, Equatable, Sendable {
         skills: [Skill] = [],
         findings: [Finding] = [],
         issues: [Issue] = [],
-        lockExtras: [String: [String: JSONValue]]? = nil
+        lockExtras: [String: [String: JSONValue]]? = nil,
+        pluginInventory: PluginInventory? = nil
     ) {
         self.schemaVersion = schemaVersion
         self.workspaces = workspaces
@@ -49,6 +51,7 @@ public struct ScanReport: Codable, Equatable, Sendable {
         self.findings = findings
         self.issues = issues
         self.lockExtras = lockExtras
+        self.pluginInventory = pluginInventory
     }
 
     /// Deterministic JSON encoding (sorted keys) so identical scans yield

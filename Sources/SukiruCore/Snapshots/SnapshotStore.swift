@@ -62,6 +62,8 @@ public struct SnapshotStore: Sendable {
         do {
             try FileManager.default.createDirectory(
                 atPath: staging, withIntermediateDirectories: true)
+            try captureGeneric(
+                roots: batch.commands.flatMap { $0.captureRoots ?? [] }, staging: staging)
             let ledgers = try captureLedgers(plan: plan, staging: staging)
             let payloads = try capturePayloads(plan: plan, staging: staging)
             let manifest = SnapshotManifest(

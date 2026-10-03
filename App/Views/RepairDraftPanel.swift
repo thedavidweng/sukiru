@@ -106,6 +106,14 @@ struct PendingResultBanners: View {
         }
         if let record = state.lastExecutionRecord {
             resultBanner(record)
+            let hasHostCommand = record.commands.contains {
+                ["claude", "codex", "opencode"].contains($0.argv.first ?? "")
+            }
+            if record.batchStatus != .succeeded, hasHostCommand {
+                Text("plugin.hostFailure.nextSteps")
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("sukiru.plugins.hostFailure.nextSteps")
+            }
         }
         if let error = state.repairError {
             banner(

@@ -219,7 +219,13 @@ extension CLIExecutor {
                 violations[index] = .fileOperationFailed
                 continue
             }
-            if !operation.paths.allSatisfy({ isInBounds($0, bounds: bounds) }) {
+            let operationBounds: [String]
+            if case .movePlugin = operation {
+                operationBounds = bounds + (command.captureRoots ?? [])
+            } else {
+                operationBounds = bounds
+            }
+            if !operation.paths.allSatisfy({ isInBounds($0, bounds: operationBounds) }) {
                 violations[index] = .outOfBounds
             }
         }

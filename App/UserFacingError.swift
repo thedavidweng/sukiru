@@ -71,6 +71,8 @@ enum UserFacingError {
             String(localized: "error.rollback.unknownBatch")
         case .recordUnreadable:
             String(localized: "error.rollback.recordUnreadable")
+        case .conflicts:
+            String(localized: "rollback.conflicts.message")
         case .alreadyRolledBack:
             String(localized: "error.rollback.alreadyRolledBack")
         }

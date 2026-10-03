@@ -3,9 +3,9 @@ import SwiftUI
 
 /// The Snapshots detail column: selecting a batch row reveals its post-run
 /// diff, and selecting a rollback event row reveals the
-/// itemized restore record in the exact three-category vocabulary
+/// itemized restore record in the exact four-category vocabulary
 /// (`restored-from-snapshot` / `deleted-batch-added` /
-/// `unrestorable-with-reason`; unrestorable items are
+/// `preserved-current` / `unrestorable-with-reason`; unrestorable items are
 /// surfaced, never silently dropped).
 ///
 /// An EMPTY diff is an explicit state, never an omitted section:
@@ -193,6 +193,7 @@ struct SnapshotsDetailView: View {
         switch category {
         case .restoredFromSnapshot: return "arrow.counterclockwise.circle"
         case .deletedBatchAdded: return "trash.circle"
+        case .preservedCurrent: return "hand.raised.circle"
         case .unrestorableWithReason: return "exclamationmark.triangle.fill"
         }
     }
@@ -201,6 +202,7 @@ struct SnapshotsDetailView: View {
         switch category {
         case .restoredFromSnapshot: return .green
         case .deletedBatchAdded: return .blue
+        case .preservedCurrent: return .secondary
         case .unrestorableWithReason: return .red
         }
     }

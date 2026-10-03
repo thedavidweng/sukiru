@@ -8,6 +8,15 @@ struct HistoryConfirmations: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            .sheet(
+                isPresented: Binding(
+                    get: { state.rollbackReview != nil },
+                    set: { if !$0 { state.rollbackReview = nil } })
+            ) {
+                if let preview = state.rollbackReview {
+                    RollbackConflictSheet(preview: preview)
+                }
+            }
             .confirmationDialog(
                 "Roll Back This Batch?",
                 isPresented: Binding(
