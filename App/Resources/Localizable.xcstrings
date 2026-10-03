@@ -585,17 +585,6 @@
         }
       }
     },
-    "Check Now" : {
-      "comment" : "Health surface: runs the health check.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "立即检查"
-          }
-        }
-      }
-    },
     "Check for Updates" : {
       "comment" : "Library toolbar: read-only update check through gh skill update --dry-run.",
       "localizations" : {

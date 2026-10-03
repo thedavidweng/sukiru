@@ -1,11 +1,8 @@
 import SukiruCore
 import SwiftUI
 
-/// The Health surface: one-click health check (`sukiru.health.checkNow`,
-/// non-reentrant while running — `sukiru.health.loading` + `.disabled` suffix),
-/// a summary line (`sukiru.health.summary`) counting
-/// problems and how many Fix All (`sukiru.health.fixAll`) repairs in one
-/// confirmed batch, a per-workspace filter
+/// The Health surface: a subtitle counting problems and how many Fix All
+/// (`sukiru.health.fixAll`) repairs in one confirmed batch, a per-workspace filter
 /// (`sukiru.health.filter.workspace`) with an explicit
 /// empty-filter state, findings grouped by plain-language
 /// problem (`sukiru.health.group.<problem>`, `ProblemKind`; notes collapsed)
@@ -86,11 +83,13 @@ struct HealthView: View {
         }
     }
 
+    /// Like Library: the summary is the window subtitle and the actions are
+    /// toolbar buttons beside the shared Refresh, which is the health check.
     private var loadedState: some View {
         findingsList
+            .navigationSubtitle(Text(summaryText))
+            .toolbar { healthToolbar }
             .surfaceBar {
-                header
-                Divider()
                 // A focused skill lives in one scope, so the workspace filter
                 // would only repeat the banner's count.
                 if let focus = state.healthFocus {
@@ -101,67 +100,33 @@ struct HealthView: View {
             }
     }
 
-    // MARK: - header
+    // MARK: - toolbar
 
-    private var header: some View {
-        HStack(spacing: 12) {
-            AXToken(token: "sukiru.health.title")
-            HStack(spacing: 0) {
-                AXToken(token: "sukiru.health.summary")
-                Text(summaryText)
-                    .foregroundStyle(.secondary)
-            }
-            if state.healthCheckRunning {
-                // The run state stays visible while a check
-                // is in flight, even when a previous report is on screen.
-                HStack(spacing: 6) {
-                    ProgressView()
-                        .controlSize(.small)
-                    AXToken(token: "sukiru.health.loading")
-                }
-            }
-            Spacer()
+    @ToolbarContentBuilder private var healthToolbar: some ToolbarContent {
+        let fixable = state.fixableEntries(problemEntries)
+        let fixDisabled = fixable.isEmpty || state.batchMutationInFlight
+        ToolbarItem {
             Button {
-                state.rescan()
+                state.fixAll(fixable)
             } label: {
-                Text("Check Now")
+                Label("Fix All (\(fixable.count))", systemImage: "wrench.and.screwdriver")
             }
-            .axButtonToken(
-                "sukiru.health.checkNow", disabled: state.healthCheckRunning
-            )
-            .disabled(state.healthCheckRunning)
-            let fixable = state.fixableEntries(problemEntries)
-            if state.queuedChangeCount == 0 {
-                fixAllButton(fixable)
-                    .buttonStyle(.borderedProminent)
-            } else {
-                fixAllButton(fixable)
+            .disabled(fixDisabled)
+            .axButtonToken("sukiru.health.fixAll", disabled: fixDisabled)
+            .help("Repair every problem that needs no choice, together with queued repairs")
+        }
+        if state.queuedChangeCount > 0 {
+            ToolbarItem {
                 Button {
                     state.checkout()
                 } label: {
-                    Text("Review \(state.queuedChangeCount) Changes")
+                    Label("Review \(state.queuedChangeCount) Changes", systemImage: "checklist")
                 }
-                .buttonStyle(.borderedProminent)
                 .disabled(state.batchMutationInFlight)
                 .axButtonToken("sukiru.health.review", disabled: state.batchMutationInFlight)
                 .help("Apply every queued change in one batch, with one snapshot")
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-    }
-
-    private func fixAllButton(_ fixable: [AppState.FindingEntry]) -> some View {
-        Button {
-            state.fixAll(fixable)
-        } label: {
-            Text("Fix All (\(fixable.count))")
-        }
-        .axButtonToken(
-            "sukiru.health.fixAll", disabled: fixable.isEmpty || state.batchMutationInFlight
-        )
-        .disabled(fixable.isEmpty || state.batchMutationInFlight)
-        .help("Repair every problem that needs no choice, together with queued repairs")
     }
 
     /// Findings that are problems (notes excluded), after focus and filter.

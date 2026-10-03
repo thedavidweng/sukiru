@@ -216,8 +216,8 @@ final class AppState: ObservableObject {
     /// Re-runs the scan against the current environment and project roots.
     /// The previous report stays on screen while the scan runs (no flicker);
     /// surfaces swap when the new report lands. Used by the initial load,
-    /// explicit Refresh (Settings control and ⌘R), root add/remove, and the
-    /// Health check-now control — a health check IS a scan.
+    /// explicit Refresh (toolbar, Settings control, and ⌘R) and root
+    /// add/remove — a health check IS a scan.
     ///
     /// A generation counter keeps overlapping runs coherent (only the latest
     /// run's completion applies), and the running flag is held for a minimum
