@@ -17,6 +17,7 @@ struct RootView: View {
                 .toolbar(content: refreshToolbar)
         } detail: {
             detail
+                .toolbar(content: detailToolbar)
         }
         .sheet(isPresented: $state.showingBatchConfirm, onDismiss: state.dismissBatchConfirm) {
             BatchConfirmSheet()
@@ -61,6 +62,18 @@ struct RootView: View {
             .help(
                 "Re-reads the library and snapshots from disk (⌘R). External changes appear only after Refresh."
             )
+        }
+    }
+
+    /// On macOS 26+, a detail column that declares no toolbar items lets the
+    /// content column's whole-surface actions drift to the window's trailing
+    /// edge, where they read as acting on the selected item. A flexible
+    /// spacer keeps them over the list. Library and Search detail columns
+    /// declare their own items, so they need none.
+    @ToolbarContentBuilder
+    private func detailToolbar() -> some ToolbarContent {
+        if #available(macOS 26.0, *), state.surface != .library, state.surface != .search {
+            ToolbarSpacer(.flexible)
         }
     }
 

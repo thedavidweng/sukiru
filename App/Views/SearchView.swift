@@ -35,13 +35,18 @@ struct SearchView: View {
             .onSubmit(of: .search) {
                 state.performSearch()
             }
-            .toolbar {
-                ToolbarItem {
+            // Where to search sits under the toolbar, like Finder's search
+            // scope bar, so the toolbar keeps room for the column's actions.
+            .surfaceBar {
+                HStack(spacing: 12) {
+                    backendPicker
+                    Spacer(minLength: 8)
                     ownerField
                 }
-                ToolbarItem {
-                    backendPicker
-                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            }
+            .toolbar {
                 ToolbarItem {
                     Button {
                         state.presentRepositoryInstallSheet()
@@ -71,6 +76,7 @@ struct SearchView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            .fixedSize()
             .disabled(!ghAvailable)
         }
         .accessibilityElement(children: .contain)
@@ -82,7 +88,7 @@ struct SearchView: View {
     private var ownerField: some View {
         TextField("search.ownerField", text: $state.searchOwner)
             .textFieldStyle(.roundedBorder)
-            .frame(width: 120)
+            .frame(maxWidth: 160)
             .onSubmit(state.performSearch)
             .help("Only show skills from this GitHub user or organization")
     }
