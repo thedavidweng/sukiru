@@ -17,14 +17,21 @@ extension Finding {
         case "files-without-lock": String(localized: "No known source")
         case "double-booked": String(localized: "Claimed by two installers")
         case "ambiguous-name": String(localized: "Different skills share this name")
-        case HostNameCollisionRule.ruleID:
-            String(localized: "Agent discovers this name more than once")
+        case HostNameCollisionRule.ruleID: collisionTitle
         case "lock-version-unsupported": String(localized: "Lock from a newer installer")
         case "dangerous-removal-surface": String(localized: "Removable by name")
         case LockWithoutFilesRule.companionRecordRuleID:
             String(localized: "gh record in the Vercel global lock")
         case "cross-host-duplicate": duplicateTitle
         default: ruleID
+        }
+    }
+
+    private var collisionTitle: String {
+        switch HostNameCollisionRule.subtype(of: self) {
+        case .distinct: String(localized: "Different folders share this name")
+        case .redundant: String(localized: "Listed twice through an extra link")
+        case .alias, nil: String(localized: "Same folder reached twice")
         }
     }
 

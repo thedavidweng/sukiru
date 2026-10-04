@@ -25,11 +25,13 @@ public enum DecisionAction: String, Codable, Equatable, Sendable, CaseIterable {
 /// GitHub adoption carries the user-supplied source as
 /// `{"repo": "owner/repo", "path": "repo-relative/skill/path"}`; Vercel
 /// adoption carries `{"source": "owner/repo"}` (the skill keeps its name).
+/// A name collision keeps one discovery entry as `{"keep": "/abs/path"}`.
 public enum DecisionChoice: Equatable, Sendable {
     case keepVercel
     case keepGitHub
     case adoptSource(repo: String, path: String)
     case adoptVercel(source: String)
+    case keepEntry(path: String)
 }
 
 extension DecisionChoice: Codable {
@@ -37,6 +39,7 @@ extension DecisionChoice: Codable {
         case repo
         case path
         case source
+        case keep
     }
 
     public init(from decoder: Decoder) throws {
@@ -56,6 +59,10 @@ extension DecisionChoice: Codable {
         let object = try decoder.container(keyedBy: CodingKeys.self)
         if let source = try object.decodeIfPresent(String.self, forKey: .source) {
             self = .adoptVercel(source: source)
+            return
+        }
+        if let path = try object.decodeIfPresent(String.self, forKey: .keep) {
+            self = .keepEntry(path: path)
             return
         }
         self = .adoptSource(
@@ -78,6 +85,9 @@ extension DecisionChoice: Codable {
         case .adoptVercel(let source):
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(source, forKey: .source)
+        case .keepEntry(let path):
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(path, forKey: .keep)
         }
     }
 }

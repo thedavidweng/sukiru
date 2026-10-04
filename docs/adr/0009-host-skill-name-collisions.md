@@ -39,13 +39,41 @@ Compatibility roots are combined only when the host is detected or has its
 own scanned directory; a host merely listed as a potential shared-store
 consumer does not turn unrelated project links into a conflict.
 
+## Amendment: classify by what the user can do
+
+Most collisions in a real library were entries resolving to one folder:
+`npx skills` links `~/.claude/skills/<name>` for Claude Code, and OpenCode
+also reads `~/.agents/skills`. Every host loads the same files, and no
+removal could help: Claude Code needs that link. Counting these as problems
+buried the actionable ones. Each finding now carries a `subtype`:
+
+- `distinct`: a host sees entries backed by different folders and loads
+  only one. A warning; the user keeps one entry (`arbitrate` with choice
+  `{"keep": "<entry path>"}`). Entries resolving to the kept folder stay,
+  since other hosts may load the skill through them. Every other entry is
+  deleted when Sukiru can do so safely: links, and ownerless or gh-ledger
+  folders. Agent-managed and Vercel-owned folders are refused (a name-based
+  `npx skills remove` would delete the kept entry too), and so is a deletion
+  that would leave another link dead.
+- `redundant`: every entry is one folder, but a host that reports such
+  aliases sees them. Droid does: its startup diagnostics list each one.
+  `redundantPath` lists the links in folders only that host reads, never the
+  shared store, and `cleanup` deletes them as a one-click fix. The host still
+  reads the shared entry, so nothing is lost. Such links were left by skills
+  releases before 1.5.25, which linked Droid's user-scope installs into
+  `~/.factory/skills`; vercel-labs/skills#2012 made Droid a universal agent,
+  so current installs no longer create them. Droid itself could deduplicate
+  same-target entries (Factory-AI/factory#48).
+- `alias`: every entry is one folder and no host involved reports it. Severity
+  `info`; Health lists it as a note.
+
 ## Consequences
 
-Health counts collisions as warnings under Duplicate skill names, with
-host IDs and discovery paths as evidence. Existing content and alias rules
-remain independent. No automatic repair is assigned: relinking preserves
-the duplicate discovery entry, and name-based removal may delete the wanted
-definition too. Users review the paths before renaming or removing an entry.
+Health counts `distinct` and `redundant` collisions as warnings under
+Duplicate skill names, with host IDs and discovery paths as evidence;
+`alias` collisions are notes. Existing content and alias rules remain
+independent. Repairs touch discovery entries only, never the skill as a whole,
+so the ownership-routed update and removal repairs do not apply.
 
 Coverage is limited to directories Sukiru inventories; arbitrary host
 configuration, plugin namespaces, and unscanned roots are outside this rule.

@@ -15,13 +15,17 @@ struct HostSkillNameCollisionTests {
         let finding = try #require(report.findings.first { $0.ruleID == "host-name-collision" })
         #expect(finding.skillName == "tool")
         #expect(finding.severity == .warning)
-        #expect(ProblemKind.of(finding).isProblem)
-        #expect(ProblemKind.oneClickFix(for: finding) == nil)
+        #expect(HostNameCollisionRule.subtype(of: finding) == .redundant)
+        #expect(ProblemKind.of(finding) == .duplicateName)
+        #expect(ProblemKind.oneClickFix(for: finding) == .cleanup)
         #expect(finding.evidence.contains { $0.kind == "hostID" && $0.detail == "droid" })
         #expect(finding.evidence.filter { $0.kind == "memberPath" }.count == 2)
+        let redundant = finding.evidence.filter { $0.kind == "redundantPath" }.map(\.detail)
+        #expect(redundant.count == 1)
+        #expect(redundant.allSatisfy { $0.hasSuffix("/.factory/skills/tool") })
     }
 
-    @Test("OpenCode checks Claude-compatible and shared entries without requiring its own copy")
+    @Test("OpenCode reaching one folder twice is a note: it loads the same files")
     func openCodeCompatibilityRoots() throws {
         let home = try TempTree()
         try home.dir(".config/opencode")
@@ -31,9 +35,13 @@ struct HostSkillNameCollisionTests {
         let report = try OwnershipBuilders.scan(home: home)
         let finding = try #require(report.findings.first { $0.ruleID == "host-name-collision" })
         #expect(finding.evidence.contains { $0.kind == "hostID" && $0.detail == "opencode" })
+        #expect(HostNameCollisionRule.subtype(of: finding) == .alias)
+        #expect(finding.severity == .info)
+        #expect(ProblemKind.of(finding) == .note)
+        #expect(ProblemKind.oneClickFix(for: finding) == nil)
     }
 
-    @Test("Any host reports two names within its own skills root, including aliases")
+    @Test("Any host's own-root aliases are recorded, as a note when it does not report them")
     func sameHostDuplicates() throws {
         let home = try TempTree()
         try home.file(".hermes/skills/first/SKILL.md", contents: OwnershipBuilders.skillMD("tool"))
@@ -42,6 +50,23 @@ struct HostSkillNameCollisionTests {
         let report = try OwnershipBuilders.scan(home: home)
         let finding = try #require(report.findings.first { $0.ruleID == "host-name-collision" })
         #expect(finding.evidence.contains { $0.kind == "hostID" && $0.detail == "hermes-agent" })
+        #expect(HostNameCollisionRule.subtype(of: finding) == .alias)
+    }
+
+    @Test("A Droid alias seen by OpenCode too stays a problem with only Droid's link removable")
+    func droidAndOpenCode() throws {
+        let home = try TempTree()
+        try home.dir(".config/opencode")
+        try home.file(".agents/skills/tool/SKILL.md", contents: OwnershipBuilders.skillMD("tool"))
+        try home.symlink(".claude/skills/tool", to: "../../.agents/skills/tool")
+        try home.symlink(".factory/skills/tool", to: "../../.agents/skills/tool")
+
+        let report = try OwnershipBuilders.scan(home: home)
+        let finding = try #require(report.findings.first { $0.ruleID == "host-name-collision" })
+        #expect(HostNameCollisionRule.subtype(of: finding) == .redundant)
+        let redundant = finding.evidence.filter { $0.kind == "redundantPath" }.map(\.detail)
+        #expect(redundant.count == 1)
+        #expect(redundant.allSatisfy { $0.hasSuffix("/.factory/skills/tool") })
     }
 
     @Test("Shared links for separate hosts stay informational")
@@ -86,6 +111,9 @@ struct HostSkillNameCollisionTests {
         let report = try OwnershipBuilders.scan(home: home)
         let finding = try #require(report.findings.first { $0.ruleID == "host-name-collision" })
         #expect(finding.evidence.contains { $0.kind == "hostID" && $0.detail == "cursor" })
+        #expect(HostNameCollisionRule.subtype(of: finding) == .distinct)
+        #expect(finding.severity == .warning)
+        #expect(ProblemKind.oneClickFix(for: finding) == nil)
     }
 
     @Test("A broken link is not a second loadable definition")
@@ -122,5 +150,8 @@ struct HostSkillNameCollisionTests {
         let report = try OwnershipBuilders.scan(home: home, projectRoots: [project])
         let finding = try #require(report.findings.first { $0.ruleID == "host-name-collision" })
         #expect(finding.workspaceID == "project:\(project.path)")
+        let redundant = finding.evidence.filter { $0.kind == "redundantPath" }.map(\.detail)
+        #expect(redundant.count == 1)
+        #expect(redundant.allSatisfy { $0.hasSuffix("/.factory/skills/tool") })
     }
 }

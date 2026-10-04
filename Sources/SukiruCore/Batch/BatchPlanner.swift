@@ -191,7 +191,7 @@ extension CommandBatchBuilder {
         case .keepGitHub:
             return try keepGitHubCommands(
                 skill: skill, entry: entry, finding: finding, report: report)
-        case .adoptSource, .adoptVercel:
+        case .adoptSource, .adoptVercel, .keepEntry:
             throw DecisionProblem(
                 message: "action 'arbitrate' on finding '\(entry.findingID)' requires "
                     + "choice 'keep-vercel' or 'keep-github', not an adopt source")
@@ -302,6 +302,8 @@ extension CommandBatchBuilder {
             return try leftoverHostCommands(entry: entry, finding: finding)
         case MissingSharedCopyRule.ruleID:
             return try removeLockedSkill(entry: entry, finding: finding, report: report)
+        case HostNameCollisionRule.ruleID:
+            return try redundantEntryCommands(entry: entry, finding: finding)
         default:
             break
         }

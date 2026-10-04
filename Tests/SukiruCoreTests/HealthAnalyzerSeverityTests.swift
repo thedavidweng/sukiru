@@ -53,8 +53,10 @@ struct HealthAnalyzerSeverityTests {
             "canonical-host-divergence", "dangerous-removal-surface":
             return .action
         case "ambiguous-name", "symlink-authenticity", "lock-version-unsupported",
-            "leftover-host-dir", "host-name-collision":
+            "leftover-host-dir":
             return .warning
+        case "host-name-collision":
+            return HostNameCollisionRule.subtype(of: finding) == .alias ? .info : .warning
         case "files-without-lock":
             return .info
         case "cross-host-duplicate":

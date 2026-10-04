@@ -49,7 +49,8 @@ public enum DecisionsFileError: Error, Equatable, Sendable {
             switch action {
             case .arbitrate:
                 return "arbitrate on finding '\(findingID)' requires an explicit choice: "
-                    + "'keep-vercel' or 'keep-github' (exactly two options, no default)"
+                    + "'keep-vercel' or 'keep-github' (no default), or {\"keep\": "
+                    + "\"<entry path>\"} for a name collision"
             case .adopt:
                 return "adopt on finding '\(findingID)' requires a choice object with "
                     + "'source' (Vercel install source), or 'repo' (owner/repo) and 'path' "
@@ -144,7 +145,17 @@ public enum DecisionsFile {
     private static func parseArbitrationChoice(
         findingID: String, choice: JSONValue
     ) -> Result<DecisionEntry, DecisionsFileError> {
-        let detail = "expected the string 'keep-vercel' or 'keep-github'"
+        let detail =
+            "expected the string 'keep-vercel' or 'keep-github', or {\"keep\": \"<entry path>\"}"
+        if case .object(let object) = choice {
+            guard object.count == 1, let path = object["keep"]?.stringValue, !path.isEmpty else {
+                return .failure(
+                    .invalidChoice(findingID: findingID, action: .arbitrate, detail: detail))
+            }
+            return .success(
+                DecisionEntry(
+                    findingID: findingID, action: .arbitrate, choice: .keepEntry(path: path)))
+        }
         guard let value = choice.stringValue else {
             return .failure(
                 .invalidChoice(findingID: findingID, action: .arbitrate, detail: detail))

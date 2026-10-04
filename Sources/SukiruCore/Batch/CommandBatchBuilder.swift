@@ -201,6 +201,8 @@ public struct CommandBatchBuilder: Sendable {
         case .cleanup:
             try requireNoChoice(entry: entry)
             return try cleanupCommands(entry: entry, finding: finding, report: report)
+        case .arbitrate where finding.ruleID == HostNameCollisionRule.ruleID:
+            return try keepEntryCommands(entry: entry, finding: finding, report: report)
         case .arbitrate:
             return try arbitrateCommands(entry: entry, finding: finding, report: report)
         case .adopt:

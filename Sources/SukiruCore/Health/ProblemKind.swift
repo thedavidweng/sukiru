@@ -36,6 +36,9 @@ public enum ProblemKind: String, CaseIterable, Codable, Equatable, Sendable {
 
     /// Classifies a finding by rule (and, for duplicates, by subtype).
     public static func of(_ finding: Finding) -> ProblemKind {
+        if HostNameCollisionRule.subtype(of: finding) == .alias {
+            return .note
+        }
         guard finding.ruleID == "cross-host-duplicate" else {
             return byRule[finding.ruleID] ?? .note
         }
@@ -87,7 +90,11 @@ public enum ProblemKind: String, CaseIterable, Codable, Equatable, Sendable {
             // Reinstall and removal both rewrite or delete agent copies; the
             // user picks one.
             return nil
-        case .orphan, .ownerConflict, .duplicateName, .unsupportedLock, .note:
+        case .duplicateName:
+            // Only links that alias the shared entry are removed without a
+            // choice; different folders need the user to pick a survivor.
+            return finding.evidence.contains { $0.kind == "redundantPath" } ? .cleanup : nil
+        case .orphan, .ownerConflict, .unsupportedLock, .note:
             return nil
         }
     }

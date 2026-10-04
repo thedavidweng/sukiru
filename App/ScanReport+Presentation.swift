@@ -51,6 +51,7 @@ enum EvidencePresentation {
         "lockPath": "Lock file",
         "memberPath": "Copy",
         "placementPath": "Location",
+        "redundantPath": "Extra link",
         "skillName": "Skill",
         "ownership": "Owner",
         "source": "Source",

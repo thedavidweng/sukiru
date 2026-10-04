@@ -92,8 +92,21 @@ extension AppState.CartItem {
             return String(localized: "Keep Vercel Ledger")
         case .keepGitHub:
             return String(localized: "Keep GitHub Ledger")
+        case .keepEntry(let path):
+            return String(localized: "Keep \((path as NSString).abbreviatingWithTildeInPath)")
         case nil:
-            return String(localized: action.title)
+            return finding.fixTitle(action)
         }
+    }
+}
+
+extension Finding {
+    /// The repair button's name: the action's shared name, except where
+    /// the finding narrows what the action touches.
+    func fixTitle(_ action: DecisionAction) -> String {
+        if action == .cleanup, ruleID == HostNameCollisionRule.ruleID {
+            return String(localized: "Remove Extra Link")
+        }
+        return String(localized: action.title)
     }
 }

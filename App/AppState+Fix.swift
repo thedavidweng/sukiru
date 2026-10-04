@@ -32,6 +32,31 @@ extension AppState {
         entries.filter { oneClickFix(for: $0.finding) != nil }
     }
 
+    /// The entries of a different-folders name collision that can be kept:
+    /// those whose rivals Sukiru can remove safely. The builder is the
+    /// judge, so the row never offers a choice that would fail at checkout.
+    func keepChoices(for finding: Finding) -> [String] {
+        guard HostNameCollisionRule.subtype(of: finding) == .distinct, let report,
+            let id = FindingID.assignments(for: report.findings)
+                .first(where: { $0.finding == finding })?.id
+        else { return [] }
+        let builder = CommandBatchBuilder()
+        return finding.evidence.filter { $0.kind == "memberPath" }.map(\.detail).filter { path in
+            let decision = DecisionEntry(
+                findingID: id, action: .arbitrate, choice: .keepEntry(path: path))
+            return (try? builder.build(report: report, decisions: [decision])) != nil
+        }
+    }
+
+    /// The agent managing any entry of a finding, which then has to be
+    /// repaired in that agent.
+    func managingAgent(of finding: Finding) -> String? {
+        let paths = Set(finding.evidence.filter { $0.kind == "memberPath" }.map(\.detail))
+        let placements = report?.skills.flatMap(\.placements) ?? []
+        return placements.first { paths.contains($0.path) && $0.managingAgent != nil }?
+            .managingAgent
+    }
+
     /// Fix All: queues every given one-click fix and checks out the whole
     /// cart, so repairs queued earlier join the same batch.
     func fixAll(_ entries: [FindingEntry]) {

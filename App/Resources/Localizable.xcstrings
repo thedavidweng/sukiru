@@ -417,16 +417,6 @@
         }
       }
     },
-    "Agent discovers this name more than once" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "智能体发现了多个同名技能入口"
-          }
-        }
-      }
-    },
     "Agent folder" : {
       "comment" : "Finding evidence label.",
       "localizations" : {
@@ -1264,6 +1254,17 @@
         }
       }
     },
+    "Different folders share this name" : {
+      "comment" : "Health finding title: an agent sees same-name entries backed by different folders.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不同文件夹使用了同一名称"
+          }
+        }
+      }
+    },
     "Different skills share this name" : {
       "comment" : "Health finding title: distinct copies of one name disagree, so ownership is ambiguous.",
       "localizations" : {
@@ -1555,6 +1556,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "外部管理"
+          }
+        }
+      }
+    },
+    "Extra link" : {
+      "comment" : "Evidence label: a link that duplicates an entry the agent already reads.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "多余链接"
           }
         }
       }
@@ -2387,6 +2399,17 @@
         }
       }
     },
+    "Keep %@" : {
+      "comment" : "Queued repair: the discovery entry that survives a name collision.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留 %@"
+          }
+        }
+      }
+    },
     "Keep GitHub Ledger" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2397,12 +2420,33 @@
         }
       }
     },
+    "Keep One…" : {
+      "comment" : "Menu listing the entries of a name collision; the chosen one survives.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留其中一个…"
+          }
+        }
+      }
+    },
     "Keep Vercel Ledger" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "保留 Vercel 账本"
+          }
+        }
+      }
+    },
+    "Keep one entry and queue removing the others" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留一个入口，并将移除其余入口加入待处理更改"
           }
         }
       }
@@ -2586,6 +2630,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "用所选安装器列出此仓库中的技能"
+          }
+        }
+      }
+    },
+    "Listed twice through an extra link" : {
+      "comment" : "Health finding title: an agent reports a link that reaches a folder it already reads.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "多余链接导致被列出两次"
           }
         }
       }
@@ -3948,6 +4003,17 @@
         }
       }
     },
+    "Remove Extra Link" : {
+      "comment" : "Repair button for a redundant link in an agent's skills folder.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除多余链接"
+          }
+        }
+      }
+    },
     "Remove Marketplace" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4534,6 +4600,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "与本地副本一致"
+          }
+        }
+      }
+    },
+    "Same folder reached twice" : {
+      "comment" : "Health note title: entries that resolve to one folder, which no agent reports.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同一文件夹被读取两次"
           }
         }
       }
@@ -6037,6 +6114,91 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@（可更新到 %2$@）"
+          }
+        }
+      }
+    },
+    "collision.alias.guidance" : {
+      "comment" : "Health row guidance for a same-folder name collision no agent reports.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every entry is the same folder, so each agent loads the same files. No action needed."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有入口都是同一个文件夹，各 Agent 加载的是同一份文件，无需处理。"
+          }
+        }
+      }
+    },
+    "collision.distinct.guidance" : {
+      "comment" : "Health row guidance for a name collision between different folders.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These are different folders, and the agent loads only one of them. Choose the one to keep; the others are removed with a snapshot."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些是不同的文件夹，Agent 只会加载其中一个。选择要保留的一个，其余的会在快照保护下移除。"
+          }
+        }
+      }
+    },
+    "collision.managed.guidance %@" : {
+      "comment" : "Health row guidance when an agent manages the colliding folders: the agent's name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ manages these folders through its own ledger. Remove the extra one in %1$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 通过自己的账本管理这些文件夹。请在 %1$@ 中移除多余的那个。"
+          }
+        }
+      }
+    },
+    "collision.redundant.guidance %@" : {
+      "comment" : "Health row guidance for a redundant link: the agents that report it.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ reads this skill twice and lists it in its startup diagnostics. Removing the extra link leaves the shared copy in place."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 读取到这个技能两次，并在启动诊断中列出。移除多余链接后，共享副本保持不变。"
+          }
+        }
+      }
+    },
+    "collision.review.guidance" : {
+      "comment" : "Health row guidance when no safe repair exists for a name collision.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sukiru can't remove these entries safely. Review the paths, then rename or remove the extra entry."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sukiru 无法安全地移除这些入口。请检查路径，然后重命名或移除多余的入口。"
           }
         }
       }
@@ -7613,13 +7775,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "An agent discovers multiple entries with the same skill name at one scope. Some hosts report a conflict even when links point to the same folder. Review the listed agents and paths, then rename or remove the redundant entry."
+            "value" : "An agent finds more than one entry with the same skill name at one scope. If the entries are different folders, it loads only one of them: keep the one you want. If an extra link reaches a folder the agent already reads and the agent reports it, remove the extra link. Same-folder entries that no agent reports are listed under Notes."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "智能体在同一层级发现了多个同名技能入口。部分宿主即使遇到指向同一文件夹的链接也会报告冲突。检查列出的智能体和路径，然后重命名或移除多余入口。"
+            "value" : "Agent 在同一层级发现了多个同名技能入口。如果这些入口是不同的文件夹，它只会加载其中一个：保留你需要的那个。如果多余的链接指向 Agent 已经读取的文件夹，并且 Agent 会报告它，移除这个多余链接即可。没有 Agent 报告的同一文件夹入口列在“提示”中。"
           }
         }
       }

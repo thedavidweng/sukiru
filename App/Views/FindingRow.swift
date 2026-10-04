@@ -49,6 +49,7 @@ struct FindingRow: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                    CollisionGuidance(finding: finding)
                 }
                 Spacer()
                 if let item = state.cartItem(for: finding) {
@@ -150,12 +151,27 @@ struct FindingRow: View {
             Button {
                 state.queue(fix, for: finding)
             } label: {
-                Text(fix.title)
+                Text(verbatim: finding.fixTitle(fix))
             }
             .controlSize(.small)
             .disabled(state.batchMutationInFlight)
             .axButtonToken("\(row.token).oneClickFix")
             .help("Add this repair to Pending Changes")
+        }
+        let keepChoices = state.keepChoices(for: finding)
+        if !keepChoices.isEmpty {
+            Menu("Keep One…") {
+                ForEach(keepChoices, id: \.self) { path in
+                    Button((path as NSString).abbreviatingWithTildeInPath) {
+                        state.queue(.arbitrate, choice: .keepEntry(path: path), for: finding)
+                    }
+                }
+            }
+            .controlSize(.small)
+            .fixedSize()
+            .disabled(state.batchMutationInFlight)
+            .axButtonToken("\(row.token).keepOne")
+            .help("Keep one entry and queue removing the others")
         }
         if ProblemKind.of(finding) == .missingSharedCopy {
             Button("Choose Repair…") {
@@ -250,6 +266,48 @@ struct FindingRow: View {
             state.expandedFindings.remove(row.entry.id)
         } else {
             state.expandedFindings.insert(row.entry.id)
+        }
+    }
+}
+
+/// What a name collision means and what, if anything, to do about it, so no
+/// collision row is left without a next step.
+private struct CollisionGuidance: View {
+    @EnvironmentObject private var state: AppState
+    let finding: Finding
+
+    var body: some View {
+        if let text {
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var text: LocalizedStringKey? {
+        switch HostNameCollisionRule.subtype(of: finding) {
+        case .alias:
+            return "collision.alias.guidance"
+        case .redundant where state.oneClickFix(for: finding) != nil:
+            let hosts = finding.evidence
+                .filter {
+                    $0.kind == "hostID"
+                        && HostNameCollisionRule.aliasReportingHosts.contains($0.detail)
+                }
+                .map(EvidencePresentation.detail)
+                .formatted(.list(type: .and))
+            return "collision.redundant.guidance \(hosts)"
+        case .distinct where !state.keepChoices(for: finding).isEmpty:
+            return "collision.distinct.guidance"
+        case .redundant, .distinct:
+            if let agent = state.managingAgent(of: finding) {
+                let name = HostTable.host(id: agent)?.displayName ?? agent
+                return "collision.managed.guidance \(name)"
+            }
+            return "collision.review.guidance"
+        case nil:
+            return nil
         }
     }
 }

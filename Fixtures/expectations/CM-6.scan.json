@@ -55,6 +55,10 @@
     {
       "evidence" : [
         {
+          "detail" : "distinct",
+          "kind" : "subtype"
+        },
+        {
           "detail" : "claude-code",
           "kind" : "hostID"
         },
