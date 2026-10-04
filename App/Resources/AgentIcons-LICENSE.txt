@@ -27,6 +27,12 @@ mark, both from @lobehub/icons-static-svg 1.95.1 (Lobe Icons, MIT, Copyright
 The remaining marks were taken from each product's own published artwork and
 reduced to a single color; brand marks are used only to identify the product:
 - AdaL: https://sylph.ai/adal-icon-pink.svg
+- AiderDesk: hotovo/aider-desk-connector-intellij-plugin
+  src/main/resources/META-INF/widgetIcon.svg at commit
+  5c232b1004ff3cafe010849db0a313a0a9be3ea8 (Apache-2.0)
+- Codemaker: traced as a vector silhouette from the CodeMaker logo bundled in
+  y3-editor/y3-helper resources/webview_source_code/src/assets/codemaker-logo.png
+  at commit 58c7dd7f4269c8c45435db79f6d25a4db0aa3d28
 - Continue: continuedev/continue docs/logo/light.svg (Apache-2.0)
 - Crush: redrawn as vector pixels from charmbracelet/crush
   internal/ui/notification/crush-icon-solo.png
@@ -35,6 +41,8 @@ reduced to a single color; brand marks are used only to identify the product:
 - Firebender: https://firebender.com/icon.svg
 - ForgeCode: https://forgecode.dev/images/favicon-light.svg
 - IBM Bob: https://bob.ibm.com/icon.svg
+- iFlow CLI: sst/models.dev providers/iflowcn/logo.svg at commit
+  d79178d498e9d0f3c4f67bc99a3842030fedca2b (MIT)
 - MCPJam: MCPJam/inspector mcpjam-inspector/client/public/mcp_jam.svg
 - Mux: coder/mux docs/favicon.svg
 - Neovate: https://neovate.dev/favicon.svg
