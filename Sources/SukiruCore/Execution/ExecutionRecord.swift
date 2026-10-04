@@ -127,6 +127,8 @@ public struct ExecutionRecord: Codable, Equatable, Sendable {
     public let fileEvidenceFailure: String?
     /// Non-nil when the semantic post-command scan did not complete.
     public let scanFailure: String?
+    /// Approved runtime/backend effects that captured file restoration cannot undo.
+    public let unrestorableEffects: [String]?
 
     public init(
         schemaVersion: Int = ExecutionRecord.currentSchemaVersion,
@@ -144,7 +146,8 @@ public struct ExecutionRecord: Codable, Equatable, Sendable {
         affectedScope: Scope,
         affectedWorkspaceIDs: [String],
         fileEvidenceFailure: String? = nil,
-        scanFailure: String? = nil
+        scanFailure: String? = nil,
+        unrestorableEffects: [String]? = nil
     ) {
         self.schemaVersion = schemaVersion
         self.batchID = batchID
@@ -162,6 +165,7 @@ public struct ExecutionRecord: Codable, Equatable, Sendable {
         self.affectedWorkspaceIDs = affectedWorkspaceIDs
         self.fileEvidenceFailure = fileEvidenceFailure
         self.scanFailure = scanFailure
+        self.unrestorableEffects = unrestorableEffects
     }
 
     /// Deterministic JSON encoding (sorted keys), like the batch itself.
@@ -182,7 +186,8 @@ public struct ExecutionRecord: Codable, Equatable, Sendable {
             recordDirectory: recordDirectory, commands: commands, diff: diff,
             affectedRoots: affectedRoots, affectedScope: affectedScope,
             affectedWorkspaceIDs: affectedWorkspaceIDs,
-            fileEvidenceFailure: fileEvidenceFailure, scanFailure: scanFailure)
+            fileEvidenceFailure: fileEvidenceFailure, scanFailure: scanFailure,
+            unrestorableEffects: unrestorableEffects)
         let path = HostPathResolver.join(recordDirectory, "record.json")
         try record.jsonData().write(to: URL(fileURLWithPath: path), options: .atomic)
         return record

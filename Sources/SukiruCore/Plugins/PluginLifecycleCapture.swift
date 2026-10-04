@@ -27,7 +27,10 @@ struct PluginLifecycleCapture {
         let local = try addedMarketplaceRoots(request: request)
         paths += local.paths
         approval = approval || local.requiresHostApproval
-        let acquiresPackages = ["install", "update", "marketplace-add", "marketplace-refresh"]
+        let acquiresPackages = [
+            "install", "replace", "list", "check", "update", "marketplace-add",
+            "marketplace-refresh"
+        ]
         if acquiresPackages.contains(request.action) {
             paths += try npmRoots()
         }

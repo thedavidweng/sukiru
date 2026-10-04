@@ -107,6 +107,14 @@ public enum DangerFlag: String, Codable, Equatable, Sendable {
     /// The direct file operation replaces content that differs from what
     /// replaces it (a diverged host copy relinked to the shared store).
     case discardsLocalChanges = "discards-local-changes"
+    /// The host may load plugin code with effects outside captured file roots.
+    case pluginRuntimeEffects = "plugin-runtime-effects"
+    /// The official operation changes backend state that file rollback cannot restore.
+    case backendStateChange = "backend-state-change"
+
+    public var requiresEffectsApproval: Bool {
+        self == .pluginRuntimeEffects || self == .backendStateChange
+    }
 }
 
 /// A skill endangered by a name-based `npx skills remove`, with the ledger
@@ -265,6 +273,10 @@ public struct CommandBatch: Equatable, Sendable {
     public let commands: [BatchCommand]
     public let snapshotID: String?
     public let status: BatchStatus
+
+    public var requiresEffectsApproval: Bool {
+        commands.contains { $0.dangerFlags.contains(where: \.requiresEffectsApproval) }
+    }
 
     public init(
         id: String,

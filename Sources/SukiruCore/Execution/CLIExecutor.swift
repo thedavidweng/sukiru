@@ -5,6 +5,7 @@ public enum ExecutionError: Error, Equatable, Sendable {
     /// The batch was never reviewed — execution is refused with no
     /// snapshot, no subprocess, and no writes.
     case notReviewed(current: BatchStatus)
+    case effectsNotApproved
     /// Another batch execution holds the cross-process lock
     /// (two batches never execute concurrently).
     case busy(lockPath: String)
@@ -12,6 +13,9 @@ public enum ExecutionError: Error, Equatable, Sendable {
     /// Human-readable refusal.
     public var message: String {
         switch self {
+        case .effectsNotApproved:
+            return
+                "Explicit consent to plugin runtime or backend effects is required before execution"
         case .notReviewed(let current):
             return "refusing to execute: the batch is '\(current.rawValue)', not "
                 + "'reviewed'; inspect every command and acknowledge the review first"
@@ -101,9 +105,14 @@ public struct CLIExecutor: Sendable {
     ///   lock held), or `SnapshotError` when the mandatory pre-execution
     ///   snapshot cannot be committed.
     @discardableResult
-    public func execute(batch: CommandBatch, report: ScanReport) throws -> ExecutionResult {
+    public func execute(
+        batch: CommandBatch, report: ScanReport, effectsApproved: Bool = false
+    ) throws -> ExecutionResult {
         guard batch.status == .reviewed else {
             throw ExecutionError.notReviewed(current: batch.status)
+        }
+        guard !batch.requiresEffectsApproval || effectsApproved else {
+            throw ExecutionError.effectsNotApproved
         }
         Self.processGate.lock()
         defer { Self.processGate.unlock() }
@@ -259,7 +268,12 @@ public struct CLIExecutor: Sendable {
             affectedRoots: outcome.affected.roots,
             affectedScope: outcome.affected.scope,
             affectedWorkspaceIDs: outcome.affected.workspaceIDs,
-            fileEvidenceFailure: fileEvidenceFailure, scanFailure: scanFailure)
+            fileEvidenceFailure: fileEvidenceFailure, scanFailure: scanFailure,
+            unrestorableEffects: batch.requiresEffectsApproval
+                ? batch.commands.filter {
+                    $0.dangerFlags.contains(where: \.requiresEffectsApproval)
+                }
+                .compactMap(\.warning) : nil)
         let recordPath = HostPathResolver.join(recordDirectory, "record.json")
         try record.jsonData().write(to: URL(fileURLWithPath: recordPath), options: .atomic)
         return record

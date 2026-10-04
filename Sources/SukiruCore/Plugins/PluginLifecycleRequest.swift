@@ -18,7 +18,7 @@ public struct PluginLifecycleRequest: Codable, Equatable, Sendable {
     }
 
     public static let actions = [
-        "install", "enable", "disable", "update", "remove", "check",
+        "install", "replace", "enable", "disable", "update", "remove", "check", "list",
         "marketplace-add", "marketplace-refresh", "marketplace-remove", "disable-local"
     ]
 }

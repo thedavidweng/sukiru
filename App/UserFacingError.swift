@@ -50,6 +50,8 @@ enum UserFacingError {
         switch error {
         case .notReviewed:
             String(localized: "error.execution.notReviewed")
+        case .effectsNotApproved:
+            String(localized: "error.execution.effectsNotApproved")
         case .busy:
             String(localized: "error.execution.busy")
         }

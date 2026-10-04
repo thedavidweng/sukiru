@@ -1,6 +1,6 @@
 # Host Plugin Interface Evidence
 
-Date: 2026-10-03. This note records read-only verification for plugin-management
+Date: 2026-10-03. Execution decisions updated for the user-approved explicit-effects consent amendment to ADR-0008. This note records read-only verification for plugin-management
 work. The installed host versions were checked with version/help commands only;
 no inventory command, host session, plugin code, marketplace refresh, or lifecycle
 mutation was run.
@@ -79,8 +79,8 @@ command or `headersHelper` only after explicit `-y` or a command-specific
 `--accept-command` digest. If non-interactive, `-y` is required. Claude's
 official reference explains that a command-source install may be refused when
 not run in a TTY and that `-y` has no effect when called inside a Claude Code
-session. Sukiru must not supply either acceptance flag or invoke those
-author-declared shell commands. Treat command-source and headersHelper entries
+session. Sukiru does not automatically supply either acceptance flag. Commands requiring
+native trust approval remain in the host review workflow. Treat command-source and headersHelper entries
 as instructions for the user to review and run through Claude Code's own
 approval flow. An approval refusal or missing TTY is an incomplete operation.
 Sources: [installed CLI reference](https://code.claude.com/docs/en/plugins/cli-reference#plugin-install),
@@ -313,11 +313,11 @@ data directory guarantee, or path boundary for plugin code's own storage.
   have no native delete operation.
 - Claude command-source and headersHelper operations can hand control to an
   arbitrary marketplace-declared command. Sukiru must not auto-accept them or
-  execute them as part of its own lifecycle command. Keep them as instructions
+  bypass native trust approval. Keep them as instructions
   for the user to review and run with host approval.
 - OpenCode plugin code can write arbitrary files when loaded. Codex and
   Claude plugin runtime code can also write to plugin data or other user files.
-  Official docs do not bound those runtime writes. Package acquisition itself
+  Official docs do not bound those runtime writes. Explicit runtime-effects consent permits execution without claiming those arbitrary effects are restorable. Package acquisition itself
   has constrained/ignored install scripts in some implementations, but this
   does not bound author code run in a later session.
 - Therefore a “complete affected-file capture” cannot be proven from the
@@ -338,13 +338,13 @@ to obtain this evidence.
 
 | Host and operation | Sukiru execution decision |
 | --- | --- |
-| OpenCode v1 install/replacement, including `--global` and `--force` | Instructions only: the command initializes installed plugins before its handler. |
+| OpenCode v1 install/replacement, including `--global` and `--force` | Native batch with explicit effects consent: the command initializes installed plugins before its handler. |
 | OpenCode v2 `plugin add` | Native batch candidate: package acquisition and entrypoint resolution do not load the plugin. Complete capture remains required. |
 | OpenCode v2 `plugin remove` | Native batch candidate: removes global server/TUI package configuration, not payloads or automatically discovered local files. |
-| OpenCode v2 `plugin list`, `check`, `update` | Instructions only: these routes ensure/start a server and enumerate runtime plugins. They do not satisfy the agreed passive execution boundary. |
+| OpenCode v2 `plugin list`, `check`, `update` | Explicit runtime batch with effects consent: these routes ensure/start a server and enumerate runtime plugins. Startup scanning remains passive. |
 | Codex configured-marketplace plugin `add` and `remove` | Native batch candidates: standalone plugin manager, without an agent session. |
 | Codex configured marketplace `add`, `upgrade`, `remove` | Native batch candidates with operation-specific capture and actual marketplace-wide impact. |
-| Codex `openai-curated-remote` plugin `add` and `remove` | Instructions only pending a separate ADR decision: these mutate backend installation state, which file restoration cannot undo. |
+| Codex `openai-curated-remote` plugin `add` and `remove` | Native batch with explicit backend-effects consent. File restoration cannot undo backend installation state. |
 | Codex plugin `list` | Explicit refresh only: unfiltered listing can fetch a remote catalog. Startup inventory reads local files. |
 
 ### OpenCode v1 eagerly initializes plugins
@@ -416,22 +416,23 @@ The same CLI branches specially on `openai-curated-remote`.
 [Remote mutations](https://github.com/openai/codex/blob/rust-v0.160.0/codex-rs/core-plugins/src/remote_mutations.rs)
 call backend installation/uninstallation APIs in addition to changing local
 bundles and caches. This is demonstrated non-filesystem state, not a
-hypothetical risk. ADR-0008 requires a separate decision for it. Native remote
-mutations remain instructions-only until that decision; snapshot restoration
-must not be described as reversing backend installation.
+hypothetical risk. ADR-0008 requires a separate decision for it. The explicit-effects consent amendment supplies that decision: native remote
+mutations require batch-specific agreement to backend changes. Snapshot
+restoration must not be described as reversing backend installation.
 
 ### Capability regression expectations
 
 Tests should distinguish host-exposed commands from Sukiru-executable routes:
 
-- OpenCode v1 install/force replacement remain instructions-only despite
-  matching help output.
-- OpenCode v2 list/check/update remain instructions-only, including a selected
-  TUI target; add/remove may produce native batches with complete capture.
+- OpenCode v1 install/force replacement use exact native arguments and require
+  explicit effects consent despite matching help output.
+- OpenCode v2 list/check/update require explicit runtime-effects consent, including
+  a selected TUI target; all operations capture known host roots before execution.
 - OpenCode v2 removal is global package configuration removal, never deletion
   of a local discovered plugin file or its payload.
 - Codex configured-marketplace add/remove and marketplace operations remain
-  distinct from `openai-curated-remote` backend mutations.
+  distinct from `openai-curated-remote` backend mutations, which require separate
+  effects agreement and persist their rollback limits in history.
 - Startup scanning invokes no lifecycle/list/check commands. Version/help
   detection does not infer runtime load success or promote an unverified
   operation to executable status.

@@ -924,6 +924,22 @@
         }
       }
     },
+    "Consent applies only to this batch and does not bypass host approvals" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consent applies only to this batch and does not bypass host approvals"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同意仅适用于此批次，不会绕过主机审批"
+          }
+        }
+      }
+    },
     "Content hash" : {
       "comment" : "Finding evidence label.",
       "localizations" : {
@@ -1294,6 +1310,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下载…"
+          }
+        }
+      }
+    },
+    "Effects Outside File Rollback" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effects Outside File Rollback"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件回滚范围之外的影响"
           }
         }
       }
@@ -1719,6 +1751,22 @@
         }
       }
     },
+    "I agree to the disclosed plugin and external state effects" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I agree to the disclosed plugin and external state effects"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我同意已说明的插件及外部状态影响"
+          }
+        }
+      }
+    },
     "Identical copies instead of links" : {
       "comment" : "Health finding title: several agents hold identical copies instead of links.",
       "localizations" : {
@@ -1748,6 +1796,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "信息"
+          }
+        }
+      }
+    },
+    "Inspect Runtime Plugins" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inspect Runtime Plugins"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看运行时插件"
           }
         }
       }
@@ -3454,6 +3518,22 @@
         }
       }
     },
+    "Replace Plugin Version" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replace Plugin Version"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "替换插件版本"
+          }
+        }
+      }
+    },
     "Replace the agent copies with links to one shared copy" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3572,6 +3652,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在资源库中显示所选发现对应的技能"
+          }
+        }
+      }
+    },
+    "Reveal captured stdout and stderr in Finder" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reveal captured stdout and stderr in Finder"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在访达中显示捕获的标准输出和错误输出"
           }
         }
       }
@@ -4070,6 +4166,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示下一个工作区"
+          }
+        }
+      }
+    },
+    "Show Output Files" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Output Files"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示输出文件"
           }
         }
       }
@@ -4750,12 +4862,18 @@
         }
       }
     },
-    "Use a configured catalog selector or an address supported by this host" : {
+    "Use a host-supported target; * selects all packages for OpenCode list, check or update" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use a host-supported target; * selects all packages for OpenCode list, check or update"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "使用已配置目录中的插件标识或此宿主支持的地址"
+            "value" : "使用主机支持的目标；* 在 OpenCode 列表、检查或更新操作中选择全部包"
           }
         }
       }
@@ -5385,18 +5503,17 @@
       }
     },
     "confirm.snapshot" : {
-      "comment" : "Batch confirmation sheet.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sukiru takes a snapshot before the first change. Undo here or in Snapshots restores everything."
+            "value" : "Sukiru captures files before the first change. Undo restores captured files and detects later edits."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sukiru 会在第一项更改前创建快照，之后可在此处或“快照”中撤销。"
+            "value" : "Sukiru 在首次变更前捕获文件。撤销会恢复捕获的文件，并检测后续编辑。"
           }
         }
       }
@@ -5702,6 +5819,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "另一个批次正在运行。请等待其完成后再试。"
+          }
+        }
+      }
+    },
+    "error.execution.effectsNotApproved" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agree to the disclosed plugin and external state effects before applying this batch."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "应用此批次前，请明确同意已说明的插件及外部状态影响。"
           }
         }
       }
@@ -6553,6 +6686,22 @@
         }
       }
     },
+    "plugin.effects.explanation" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This operation may load plugin code or change external state. Undo restores captured files only; it cannot reverse effects outside those files, running services, or remote installation state."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此操作可能加载插件代码或改变外部状态。撤销仅恢复捕获的文件，无法撤销这些文件之外的影响、运行中的服务或远端安装状态。"
+          }
+        }
+      }
+    },
     "plugin.health.v1Definition" : {
       "localizations" : {
         "en" : {
@@ -7017,13 +7166,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sukiru restores the files and installer records from before this batch ran, and deletes what the batch added."
+            "value" : "Sukiru restores captured files and installer records, removes batch-created files, and preserves unrelated later changes. Plugin effects outside captured files and remote state cannot be reversed."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "将从快照恢复此批次运行前的文件和安装器记录，并删除批次新增的内容。"
+            "value" : "Sukiru 会恢复捕获的文件和安装器记录，移除批次创建的文件，并保留无关的后续改动。捕获文件之外的插件影响及远端状态无法撤销。"
           }
         }
       }
@@ -7133,6 +7282,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "停用 %lld 个本地插件"
+          }
+        }
+      }
+    },
+    "summary.hostPlugin %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run %lld host plugin operations"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "执行 %lld 项主机插件操作"
           }
         }
       }

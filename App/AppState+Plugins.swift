@@ -21,7 +21,10 @@ extension AppState {
     func managePlugin(_ plugin: PluginInstallation, action: String) {
         pluginManagement.host = plugin.host
         pluginManagement.action = action
-        pluginManagement.target = action == "disable-local" ? plugin.path ?? "" : plugin.identifier
+        pluginManagement.target =
+            action == "list"
+            ? "*"
+            : (action == "disable-local" ? plugin.path ?? "" : plugin.identifier)
         pluginManagement.scope = plugin.scope
         pluginManagement.scopeRoot = plugin.scopeRoot
         pluginManagement.error = nil

@@ -26,7 +26,9 @@ struct PluginManagementSheet: View {
                     "Plugin, marketplace, package or address", text: $state.pluginManagement.target
                 )
                 .accessibilityIdentifier("sukiru.plugins.operation.target")
-                .help("Use a configured catalog selector or an address supported by this host")
+                .help(
+                    "Use a host-supported target; * selects all packages for OpenCode list, check or update"
+                )
                 Picker("Scope", selection: $state.pluginManagement.scopeRoot) {
                     Text("User Library").tag(state.environment.home)
                     ForEach(state.projectRoots, id: \.self) { root in

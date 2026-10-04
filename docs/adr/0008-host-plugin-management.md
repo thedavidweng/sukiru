@@ -83,8 +83,8 @@ or secrets are not inherently excluded from restoration.
 Snapshot restoration restores captured state rather than implementing an
 installation protocol, as in the existing skill rollback path. Existing
 skill-specific capture bounds are not sufficient for plugin commands.
-Any demonstrated effects outside the filesystem require a separate decision;
-they do not justify weakening file restoration guarantees in advance.
+Effects outside the captured filesystem are governed by the explicit-effects
+consent amendment below. They do not weaken restoration of captured files.
 
 ## Amendment (2026-10-03): state evidence and rollback conflicts
 
@@ -117,16 +117,42 @@ existing confirmation of a command batch and its local file operations.
 
 ## Amendment (2026-10-03): invocation and refresh policy
 
-The first plugin release automatically invokes only official host interfaces.
-Plugin-author installation and migration scripts are presented as instructions,
-not executed by Sukiru. No plugin-specific migration implementation is added.
+Sukiru invokes official host interfaces. It does not automatically execute
+plugin-author installation or migration scripts. Author commands requiring
+host trust approval remain in that host's review workflow; Sukiru does not
+accept or bypass those approvals. No plugin-specific migration implementation
+is added.
 
 Startup reads local state. Official refresh and remote update checks are
 explicit user actions; a completed or failed mutation is followed by a local
-rescan and file diff. There is no scheduled network activity, host-session
-startup for validation, or execution of plugin code for health checks. Read
-operations that would run a plugin or start a host session do not qualify as
-passive health checks merely because their command name says list or check.
+rescan and file diff. There is no scheduled network activity. Operations that
+start a host session or run plugin code remain separate from passive inventory
+and require the effects consent described below when they may affect results.
+
+## Amendment (2026-10-03): permit execution with explicit effects consent
+
+The user revised the boundary: execution is permitted when it does not affect
+results; operations that may affect results are also permitted with the user's
+explicit consent. Starting a host or loading plugin code is not, by itself,
+a reason to prohibit an official operation. Unknown runtime effects are not
+assumed harmless.
+
+For official operations that may run plugin code, change uncaptured files, or
+mutate backend state, show the exact command, selected scope, intended change,
+known effects and file rollback limits before execution. Require explicit
+consent for that batch. Merely opening Sukiru, scanning, requesting a preview,
+or previously consenting to a different batch does not supply consent.
+Host trust and authentication approvals still remain with the host.
+
+OpenCode v1 native installation/force replacement and v2 runtime list/check/
+update are eligible under this rule. Codex curated remote add/remove are also
+eligible when the user agrees to backend installation changes. Capture all
+known affected host/config/package/cache/data files before execution and retain
+the transcript and post-state after success or failure. Backup failure still
+prevents execution. Persist the approved limits in history: file rollback
+restores captured files, but does not undo arbitrary plugin effects, running
+services, or backend installation state. Do not describe file rollback as a
+complete reversal of these operations.
 
 ## Amendment (2026-10-03): marketplace and update scope
 

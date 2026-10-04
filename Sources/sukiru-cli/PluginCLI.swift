@@ -71,10 +71,12 @@ private func executePluginPlan(
     let dangerous = batch.commands.contains { !$0.dangerFlags.isEmpty }
     if dangerous && !flags.contains("--confirm-dangerous") {
         throw PluginLifecycleError(
-            message: "Review removal consequences, then supply --confirm-dangerous")
+            message: "Review operation effects and rollback limits, then supply --confirm-dangerous"
+        )
     }
     let result = try CLIExecutor(environment: environment).execute(
-        batch: batch.transitioned(to: .reviewed), report: report)
+        batch: batch.transitioned(to: .reviewed), report: report,
+        effectsApproved: flags.contains("--confirm-dangerous"))
     emitJSON(try result.record.jsonData())
     guard result.record.batchStatus == .succeeded else {
         throw PluginLifecycleError(

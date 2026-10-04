@@ -53,10 +53,14 @@ extension PluginLifecycleCapture {
         if let direct = environment.externalValue(for: "OPENCODE_CONFIG") {
             roots.append(direct)
         }
-        roots += environment.projectRoots.flatMap {
+        roots += ([home] + environment.projectRoots).flatMap {
             [
                 HostPathResolver.join($0, "opencode.json"),
                 HostPathResolver.join($0, "opencode.jsonc"),
+                HostPathResolver.join($0, "tui.json"),
+                HostPathResolver.join($0, "tui.jsonc"),
+                HostPathResolver.join($0, "cli.json"),
+                HostPathResolver.join($0, "cli.jsonc"),
                 HostPathResolver.join($0, ".opencode")
             ]
         }

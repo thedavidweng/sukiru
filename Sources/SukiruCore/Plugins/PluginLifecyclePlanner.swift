@@ -15,7 +15,8 @@ public struct PluginLifecyclePlanner: Sendable {
         for action in PluginLifecycleRequest.actions where action != "disable-local" {
             let request = PluginLifecycleRequest(
                 host: host, action: action,
-                target: "plugin@configured-marketplace", scope: "user", scopeRoot: environment.home)
+                target: action == "list" ? "*" : "plugin@configured-marketplace",
+                scope: "user", scopeRoot: environment.home)
             if let limit = limitation(request, version: version) {
                 limits[action] = limit
             } else {
@@ -80,12 +81,18 @@ public struct PluginLifecyclePlanner: Sendable {
                     environment: environment, hostVersion: version))
         }
         if let limit = limitation(request, version: version) { return .instructions(limit) }
-        let args = try arguments(request, inventory: inventory)
+        let args = try arguments(request, inventory: inventory, version: version)
         try probe.help(
             host: request.host,
             arguments: Array(
-                args.dropFirst().prefix(request.action.hasPrefix("marketplace-") ? 3 : 2)),
-            requiredFlags: args.filter { $0 == "--scope" || $0 == "--json" })
+                args.dropFirst().prefix(helpArgumentCount(request, version: version))),
+            requiredFlags: args.filter { ["--scope", "--json", "--global", "--force"].contains($0) }
+        )
+        let v1ConfigRoot =
+            request.host == .opencode
+                && ["v1.18.34", "1.18.34"].contains(version)
+                && request.scope != "user"
+            ? try probe.openCodeV1ConfigRoot(directory: request.scopeRoot) : nil
         let capture = try PluginLifecycleCapture(environment: environment).roots(
             request: request, inventory: inventory)
         if capture.requiresHostApproval {
@@ -94,20 +101,33 @@ public struct PluginLifecyclePlanner: Sendable {
                     + "Open \(request.host.rawValue) and run the official operation through its approval workflow; "
                     + "then refresh Sukiru. No pending request or automatic resumption is assumed.")
         }
-        let impact = try impact(request, inventory: inventory)
+        let impact =
+            try impact(request, inventory: inventory)
+            + (v1ConfigRoot.map { " Actual configuration target: \($0)." } ?? "")
+            + effectsWarning(request, version: version)
+        let extraPaths = try PluginCaptureLinks.expand(
+            v1ConfigRoot.map { [$0] } ?? [], environment: environment)
+        let capturePaths = Array(Set(capture.paths + extraPaths)).sorted()
         let destructive = request.action == "remove" || request.action == "marketplace-remove"
+        let flags: [DangerFlag] =
+            (destructive ? [.dangerousDeletion] : [])
+            + effectsFlags(request, version: version)
         return .native(
             BatchCommand(
                 argv: args, displayString: BatchCommand.display(for: args),
                 owningCLI: owner(request.host), intent: impact,
-                dangerFlags: destructive ? [.dangerousDeletion] : [], warning: impact,
-                workingDirectory: ["user", "managed"].contains(request.scope)
-                    ? nil : request.scopeRoot,
-                captureRoots: capture.paths))
+                dangerFlags: flags, warning: impact,
+                workingDirectory: request.host == .opencode
+                    ? request.scopeRoot
+                    : (["user", "managed"].contains(request.scope) ? nil : request.scopeRoot),
+                captureRoots: capturePaths))
     }
 
     private func validate(_ request: PluginLifecycleRequest) throws {
         guard PluginLifecycleRequest.actions.contains(request.action), !request.target.isEmpty,
+            request.target != "*"
+                || (request.host == .opencode
+                    && ["list", "check", "update"].contains(request.action)),
             !request.target.hasPrefix("-"), !request.target.contains("\n"),
             !request.target.contains("\0")
         else { throw PluginLifecycleError(message: "Invalid plugin action or target") }
@@ -135,6 +155,9 @@ public struct PluginLifecyclePlanner: Sendable {
         guard version == "2.1.288" else {
             return "Claude \(version) has no verified lifecycle contract; use the host."
         }
+        if ["replace", "list"].contains(request.action) {
+            return "Use Claude's install/update interfaces or passive Library inventory."
+        }
         if request.action == "check" {
             return "Claude exposes no verified passive single-plugin update check."
         }
@@ -145,16 +168,11 @@ public struct PluginLifecyclePlanner: Sendable {
         guard version == "0.160.0" else {
             return "Codex \(version) has no verified lifecycle contract; use the host."
         }
-        if request.target.hasSuffix("@openai-curated-remote") {
-            return
-                "Codex remote installation mutates backend state that file rollback cannot reverse. "
-                + "Manage \(request.target) in Codex, then refresh."
-        }
         if request.scope != "user" {
             return
                 "Codex plugin mutations support user scope only; project configuration is not rewritten."
         }
-        if ["enable", "disable", "update", "check"].contains(request.action) {
+        if ["enable", "disable", "update", "check", "replace", "list"].contains(request.action) {
             return
                 "Codex exposes no individual \(request.action) operation. "
                 + "Marketplace refresh updates the whole configured Git marketplace; "
@@ -163,39 +181,12 @@ public struct PluginLifecyclePlanner: Sendable {
         return nil
     }
 
-    private func openCodeLimitation(_ request: PluginLifecycleRequest, version: String) -> String? {
-        if version == "v1.18.34" || version == "1.18.34" {
-            return
-                "OpenCode v1 installation and force replacement initialize plugin code. "
-                + "Run the host operation yourself; Sukiru cannot execute it within passive capture bounds. "
-                + "Native removal is unavailable."
-        }
-        guard version == "v2.0.22" || version == "2.0.22" else {
-            return "OpenCode \(version) has no verified lifecycle contract; use the host."
-        }
-        if ["check", "update"].contains(request.action) {
-            return
-                "OpenCode \(request.action) starts a server and loads runtime plugins. Run it in OpenCode; "
-                + "exact versions and local files are skipped by host updates."
-        }
-        if request.scope != "user" {
-            return "OpenCode v2 add/remove manage global package configuration only."
-        }
-        if !["install", "remove"].contains(request.action) {
-            return "OpenCode has no native \(request.action) interface."
-        }
-        let localTarget = ["/", ".", "file:"].contains { request.target.hasPrefix($0) }
-        if localTarget {
-            return
-                "OpenCode local discovered files have no native package deletion/install operation; "
-                + "package removal does not delete local files."
-        }
-        return nil
-    }
-
     private func arguments(
-        _ request: PluginLifecycleRequest, inventory: PluginInventory
+        _ request: PluginLifecycleRequest, inventory: PluginInventory, version: String
     ) throws -> [String] {
+        if request.host == .opencode && ["v1.18.34", "1.18.34"].contains(version) {
+            return openCodeV1Arguments(request)
+        }
         var args = [request.host.rawValue, "plugin"]
         let marketplace = request.action.hasPrefix("marketplace-")
         if marketplace {
@@ -220,7 +211,9 @@ public struct PluginLifecyclePlanner: Sendable {
             let action =
                 request.action == "install" && request.host != .claude ? "add" : request.action
             args.append(action)
-            if request.action == "install", request.host != .opencode {
+            let curated =
+                request.host == .codex && request.target.hasSuffix("@openai-curated-remote")
+            if request.action == "install", request.host != .opencode, !curated {
                 let pieces = request.target.split(separator: "@", maxSplits: 1).map(String.init)
                 guard pieces.count == 2,
                     inventory.marketplaces.contains(where: {
@@ -233,7 +226,9 @@ public struct PluginLifecyclePlanner: Sendable {
                 }
             }
         }
-        args.append(request.target)
+        if request.host != .opencode || request.target != "*" {
+            args.append(request.target)
+        }
         if request.host == .claude && !(marketplace && request.action == "marketplace-refresh") {
             args += ["--scope", request.scope]
         }

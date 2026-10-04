@@ -42,7 +42,9 @@ struct BatchConfirmSheet: View {
                     Label(line, systemImage: "checkmark.circle")
                 }
             }
-            if !batch.commands.allSatisfy({ $0.dangerFlags.isEmpty }) {
+            if batch.requiresEffectsApproval {
+                effectsConsent(batch)
+            } else if !batch.commands.allSatisfy({ $0.dangerFlags.isEmpty }) {
                 Label {
                     Text("confirm.caution")
                         .fixedSize(horizontal: false, vertical: true)
@@ -70,6 +72,26 @@ struct BatchConfirmSheet: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             proposalButtons
+        }
+    }
+
+    private func effectsConsent(_ batch: CommandBatch) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("plugin.effects.explanation")
+                .fixedSize(horizontal: false, vertical: true)
+            ForEach(Array(batch.commands.enumerated()), id: \.offset) { _, command in
+                if command.dangerFlags.contains(where: \.requiresEffectsApproval) {
+                    Text(verbatim: command.intent).font(.caption).textSelection(.enabled)
+                }
+            }
+            Toggle(
+                "I agree to the disclosed plugin and external state effects",
+                isOn: Binding(
+                    get: { state.effectsApprovedBatchID == batch.id },
+                    set: { state.effectsApprovedBatchID = $0 ? batch.id : nil })
+            )
+            .accessibilityIdentifier("sukiru.confirm.pluginEffects")
+            .help("Consent applies only to this batch and does not bypass host approvals")
         }
     }
 
@@ -223,7 +245,8 @@ struct BatchConfirmSheet: View {
 struct BatchSummary {
     private enum Kind: CaseIterable {
         case deleteLink, relink, relinkDiverged, materialize, deleteDirectory
-        case removeLeftover, disablePlugin, remove, install, reinstall, pin, unpin, update
+        case removeLeftover, disablePlugin, hostPlugin, remove, install, reinstall, pin, unpin,
+            update
 
         init(_ command: BatchCommand) {
             if let operation = command.fileOperation {
@@ -250,6 +273,7 @@ struct BatchSummary {
         }
 
         private static func cliCommand(_ command: BatchCommand) -> Kind {
+            if [.claude, .codex, .opencode].contains(command.owningCLI) { return .hostPlugin }
             switch command.consequenceKind {
             case .pinsGitHubSkill: return .pin
             case .unpinsAndUpdates: return .unpin
@@ -281,6 +305,7 @@ struct BatchSummary {
             case .deleteDirectory: String(localized: "summary.deleteDirectory \(count)")
             case .removeLeftover: String(localized: "summary.removeLeftover \(count)")
             case .disablePlugin: String(localized: "summary.disablePlugin \(count)")
+            case .hostPlugin: String(localized: "summary.hostPlugin \(count)")
             default: nil
             }
         }

@@ -83,12 +83,12 @@ resolution of changes made after the batch.
 - Use capability detection appropriate to each installed host version and operation. Claude Code, Codex, OpenCode v1, and OpenCode v2 have different official surfaces; lack of an operation is a capability limit, not a reason to emulate it.
 - The observed baseline includes Claude plugin CRUD, update and enable/disable; Codex plugin add/list/remove and marketplace commands; OpenCode v1 plugin installation and force replacement; OpenCode v2 global package CRUD and update checks. Revalidate installed-version behavior during implementation.
 - Do not depend on official experimental methods that explicitly prohibit production-client use. The existence of an app-server method alone does not establish a production integration contract.
-- Keep passive local inventory separate from explicit official refresh and remote update checks. No scheduled network activity, host-session startup for health inspection, or plugin-code execution for health checks.
+- Keep passive local inventory separate from explicit official refresh and remote update checks. No scheduled network activity or runtime/plugin execution during passive startup inspection. Explicit official runtime checks may execute after batch-specific consent to their effects and rollback limits.
 - Extend Library with Skills/Plugins selection, common user/project scopes, host filtering for plugins, and component details. Reuse Health, Pending Changes, and Snapshots.
 - Browse, add, refresh, and remove marketplaces where supported. Use host-supported address and local-path inputs; do not create an independent plugin catalog.
 - Respect official update granularity and locking rules. Disclose actual command impact, including marketplace removal cascades.
 - Retain native deletion semantics and native enable/disable where available. For incompatible local files without an official disable interface, permit only explicitly confirmed, snapshot-protected moves outside discovery. Define the destination and restore behavior from verified discovery boundaries during implementation; do not create a new lifecycle ledger to track them.
-- Author installation or migration scripts are instructions only. Do not add plugin-specific migrations or generic JavaScript/TypeScript transformations.
+- Author installation or migration commands requiring native trust approval remain in the host review workflow; Sukiru does not automatically accept them. Do not add plugin-specific migrations or generic JavaScript/TypeScript transformations.
 - Preserve command-batch confirmation. Leave plugin trust/execution approvals to the host; do not auto-accept or recreate the approval UI. Report incomplete operations and supported next steps without inventing an automatic pending/resume mechanism.
 - Extend file snapshot bounds per operation to capture affected configuration, installation records, payloads, caches, and data. File-backed options and secrets are not inherently excluded. Capture failure blocks execution.
 - Retain serialized execution and first-error stopping behavior; subsequent commands remain not run. Rescan and calculate file differences after success or failure.
@@ -114,7 +114,7 @@ resolution of changes made after the batch.
 - Direct host configuration or installation-record mutation protocols, beyond restoring captured files during rollback.
 - Generic plugin-source migration, plugin-specific porting, or automatic execution of author scripts.
 - Automatic trust acceptance, mirrored host approval dialogs, or host UI automation.
-- Continuous runtime-session monitoring, background update checks, or executing plugin code to test health.
+- Continuous runtime-session monitoring, background update checks, or unapproved plugin execution for health inspection.
 - Additional version-lock editing or downgrade features. Snapshot rollback remains included.
 - First-release hosts beyond Claude Code, Codex, and OpenCode v1/v2.
 - Repairing the user's existing local plugins as part of implementing or publishing this specification.

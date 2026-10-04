@@ -26,6 +26,30 @@ public struct PluginLifecycleProbe: Sendable {
     }
 
     private func output(host: PluginHost, arguments: [String]) throws -> String {
+        try output(executable: host.rawValue, arguments: arguments, workingDirectory: nil)
+    }
+
+    func openCodeV1ConfigRoot(directory: String) throws -> String {
+        var ancestor = URL(fileURLWithPath: directory).standardizedFileURL
+        while ancestor.path != "/" {
+            let marker = ancestor.appendingPathComponent(".git").path
+            if FileManager.default.fileExists(atPath: marker) {
+                let root = try output(
+                    executable: "git", arguments: ["rev-parse", "--show-toplevel"],
+                    workingDirectory: directory)
+                guard root.hasPrefix("/"), root != "/", !root.contains("\n") else {
+                    throw PluginLifecycleError(message: "Invalid OpenCode Git worktree root")
+                }
+                return HostPathResolver.join(root, ".opencode")
+            }
+            ancestor.deleteLastPathComponent()
+        }
+        return HostPathResolver.join(directory, ".opencode")
+    }
+
+    private func output(
+        executable: String, arguments: [String], workingDirectory: String?
+    ) throws -> String {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(
             UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -42,15 +66,16 @@ public struct PluginLifecycleProbe: Sendable {
         }
         variables["HOME"] = environment.home
         let invocation = SubprocessInvocation(
-            argv: ["/usr/bin/env", host.rawValue] + arguments,
-            executablePath: "/usr/bin/env", environment: variables, workingDirectory: nil,
+            argv: ["/usr/bin/env", executable] + arguments,
+            executablePath: "/usr/bin/env", environment: variables,
+            workingDirectory: workingDirectory,
             stdoutPath: stdout.path, stderrPath: stderr.path)
         let result = try Subprocess.run(invocation, timeout: 10)
         if result.timedOut {
-            throw PluginLifecycleError(message: "Host version/help probe timed out")
+            throw PluginLifecycleError(message: "Lifecycle probe timed out: " + executable)
         }
         guard result.termination == .exited(0) else {
-            throw PluginLifecycleError(message: "Host version/help unavailable: " + host.rawValue)
+            throw PluginLifecycleError(message: "Lifecycle probe unavailable: " + executable)
         }
         return try String(contentsOf: stdout, encoding: .utf8).trimmingCharacters(
             in: .whitespacesAndNewlines)

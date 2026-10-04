@@ -18,7 +18,7 @@ extension BatchCommand {
     }
 
     private var localizedWarning: String? {
-        if dangerFlags.contains(.dangerousDeletion), argv.count > 3 {
+        if owningCLI == .vercel, dangerFlags.contains(.dangerousDeletion), argv.count > 3 {
             let name = argv[3]
             return atRiskSkills.isEmpty
                 ? String(localized: "command.warning.removeByName \(name)")

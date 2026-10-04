@@ -208,7 +208,8 @@ public struct Rollback: Sendable {
             affectedRoots: record.affectedRoots,
             affectedScope: record.affectedScope,
             affectedWorkspaceIDs: record.affectedWorkspaceIDs,
-            fileEvidenceFailure: record.fileEvidenceFailure, scanFailure: record.scanFailure)
+            fileEvidenceFailure: record.fileEvidenceFailure, scanFailure: record.scanFailure,
+            unrestorableEffects: record.unrestorableEffects)
         try updated.jsonData().write(
             to: URL(fileURLWithPath: recordPath), options: .atomic)
     }

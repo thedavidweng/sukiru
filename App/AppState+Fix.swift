@@ -77,6 +77,7 @@ extension AppState {
     /// Opens the batch confirmation for a freshly built batch (or for the
     /// reasons nothing could be built).
     func propose(_ batch: CommandBatch?, skipped: [String]) {
+        effectsApprovedBatchID = nil
         pendingBatch = batch
         fixSkipped = skipped
         repairDraft = nil

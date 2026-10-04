@@ -249,7 +249,9 @@ extension AppState {
     /// A batch runs only from the batch confirmation, once per batch, and
     /// never while another mutation is in flight.
     var canExecutePendingBatch: Bool {
-        pendingBatch != nil && !batchMutationInFlight
+        guard let batch = pendingBatch else { return false }
+        return !batchMutationInFlight
+            && (!batch.requiresEffectsApproval || effectsApprovedBatchID == batch.id)
     }
 
     /// Executes the reviewed batch through the serialized CLIExecutor:
@@ -264,10 +266,12 @@ extension AppState {
         lastExecutionFailure = nil
         let environment = Self.makeEnvironment(roots: projectRoots)
         let token = ProcessInfo.processInfo.environment["GH_TOKEN"]
+        let effectsApproved = effectsApprovedBatchID == batch.id
         Task.detached(priority: .userInitiated) { [weak self] in
             do {
                 let executor = CLIExecutor(environment: environment, ghToken: token)
-                let result = try executor.execute(batch: reviewed, report: report)
+                let result = try executor.execute(
+                    batch: reviewed, report: report, effectsApproved: effectsApproved)
                 await self?.finishExecution(record: result.record, failure: nil)
             } catch {
                 await self?.finishExecution(

@@ -129,7 +129,7 @@ extension PluginLifecycleCLIIntegrationTests {
         #expect((commands.first?["captureRoots"] as? [String])?.contains(home + "/.claude") == true)
     }
 
-    @Test("OpenCode runtime checks produce instructions without starting a session")
+    @Test("OpenCode runtime check previews disclose effects without starting a session")
     func runtimeCheck() throws {
         let tree = try TempTree()
         let home = try tree.dir("home")
@@ -156,7 +156,10 @@ extension PluginLifecycleCLIIntegrationTests {
                 home: home, path: tree.path + "/bin:/usr/bin:/bin"))
         #expect(result.exitCode == 0)
         let json = try #require(try result.jsonObject())
-        #expect((json["instructions"] as? [String])?.isEmpty == false)
+        #expect((json["instructions"] as? [String])?.isEmpty == true)
+        let batch = try #require(json["batch"] as? [String: Any])
+        let command = try #require((batch["commands"] as? [[String: Any]])?.first)
+        #expect((command["dangerFlags"] as? [String])?.contains("plugin-runtime-effects") == true)
         #expect(!FileManager.default.fileExists(atPath: marker))
     }
 }

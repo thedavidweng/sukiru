@@ -41,7 +41,10 @@ struct PluginDetailView: View {
                 ToolbarItem {
                     Menu("Manage Plugin") {
                         ForEach(
-                            ["enable", "disable", "update", "remove", "disable-local"], id: \.self
+                            [
+                                "enable", "disable", "check", "list", "update", "replace", "remove",
+                                "disable-local"
+                            ], id: \.self
                         ) { action in
                             Button(PluginActionTitle.title(action)) {
                                 state.managePlugin(plugin, action: action)

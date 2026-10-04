@@ -93,11 +93,11 @@ struct PluginLifecycleCLIIntegrationTests {
     }
 
     @Test(
-        "Runtime and backend mutations remain instructions only",
+        "Unsupported native operations remain instructions only",
         arguments: [
-            ["opencode", "v1.18.34", "install", "demo"],
-            ["opencode", "v2.0.22", "update", "demo@1.2.3"],
-            ["codex", "codex-cli 0.160.0", "install", "demo@openai-curated-remote"],
+            ["opencode", "v1.18.34", "remove", "demo"],
+            ["opencode", "v2.0.22", "update", "./local.ts"],
+            ["opencode", "v2.0.23", "install", "demo"],
             ["codex", "codex-cli 0.160.0", "enable", "demo@team"]
         ])
     func instructionsOnly(values: [String]) throws {
@@ -130,31 +130,41 @@ struct PluginLifecycleCLIIntegrationTests {
         #expect(!FileManager.default.fileExists(atPath: marker))
     }
 
-    @Test("Incomplete capture refuses the subprocess before any mutation")
-    func captureFailure() throws {
+    @Test(
+        "Incomplete capture refuses the subprocess even with effects consent",
+        arguments: [
+            ["claude", "2.1.288", "disable", ".claude"],
+            ["opencode", "v1.18.34", "replace", ".config/opencode"],
+            ["opencode", "v2.0.22", "update", ".config/opencode"]
+        ])
+    func captureFailure(values: [String]) throws {
         let tree = try TempTree()
         let home = try tree.dir("home")
-        try tree.dir("home/.claude")
-        let fifo = home + "/.claude/unbounded-fifo"
+        try tree.dir("home/" + values[3])
+        let fifo = home + "/" + values[3] + "/unbounded-fifo"
         #expect(mkfifo(fifo, 0o600) == 0)
         let marker = tree.path + "/mutation"
         try tree.executable(
-            "bin/claude",
+            "bin/" + values[0],
             contents: """
                 #!/bin/sh
                 case "$*" in
-                --version) echo 2.1.288;;
-                *--help*) echo '--json --scope';;
+                --version) echo '\(values[1])';;
+                *--help*) echo '--json --scope --global --force';;
                 *) touch '\(marker)';;
                 esac
                 """)
         try tree.file(
             "requests.json",
             contents: """
-                [{"host":"claude","action":"disable","target":"demo@team","scope":"user","scopeRoot":"\(home)"}]
+                [{"host":"\(values[0])","action":"\(values[2])","target":"demo@team",
+                  "scope":"user","scopeRoot":"\(home)"}]
                 """)
         let result = try CLIRunner.run(
-            ["plugins", "execute", "--requests", tree.path + "/requests.json", "--reviewed"],
+            [
+                "plugins", "execute", "--requests", tree.path + "/requests.json", "--reviewed",
+                "--confirm-dangerous"
+            ],
             environment: CLIRunner.fixtureEnvironment(
                 home: home, path: tree.path + "/bin:/usr/bin:/bin"))
         #expect(result.exitCode == 1)

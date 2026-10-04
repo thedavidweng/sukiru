@@ -36,6 +36,15 @@ struct SnapshotsDetailView: View {
         Form {
             batchMetaSection(record)
             batchCommandsSection(record)
+            if let effects = record.unrestorableEffects, !effects.isEmpty {
+                Section("Effects Outside File Rollback") {
+                    Text("plugin.effects.explanation")
+                    ForEach(Array(effects.enumerated()), id: \.offset) { _, effect in
+                        Text(verbatim: effect).textSelection(.enabled)
+                    }
+                }
+                .accessibilityIdentifier("sukiru.snapshots.pluginEffects")
+            }
             if let failure = record.fileEvidenceFailure ?? record.scanFailure {
                 Section("Execution Evidence Incomplete") {
                     Text("snapshots.evidenceIncomplete.message")
@@ -91,11 +100,21 @@ struct SnapshotsDetailView: View {
                                 .lineLimit(2)
                         }
                     }
+                    commandOutputButton(command)
                 }
                 .padding(.vertical, 2)
             }
         } header: {
             TokenSectionHeader(token: nil, title: "Commands", count: record.commands.count)
+        }
+    }
+
+    @ViewBuilder private func commandOutputButton(_ command: CommandExecution) -> some View {
+        let files = [command.stdoutFile, command.stderrFile].compactMap { $0 }
+        if !files.isEmpty {
+            Button("Show Output Files") { state.revealInFinder(files) }
+                .accessibilityIdentifier("sukiru.snapshots.commandOutput.\(command.index)")
+                .help("Reveal captured stdout and stderr in Finder")
         }
     }
 

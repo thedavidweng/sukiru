@@ -22,11 +22,11 @@ and runtime-loaded status remain separate; runtime status is unknown.
 | #20 | Claude enable/disable plans include exact scope and complete captured roots. Substitute CLI tests cover success, approval refusal, partial effects and rollback. | Exact verified version/help gating; no config writer or approval bypass. |
 | #21 | Claude catalog-selector install; separate official marketplace acquisition for supported source addresses. | Producer command sources and headersHelper sources are instructions only. |
 | #22 | Native Claude update/uninstall, pin rejection, deletion impact and protected execution. | No producer scripts or automatic pin changes. |
-| #23 | Native Codex configured-marketplace add/remove. Unsupported operations have explicit instructions. | Curated remote add/remove also change backend state and therefore remain instructions only. No independent enable/disable/update command exists in the verified CLI. |
-| #24 | Version-specific v1 capability detection and installation/replacement instructions. | Native execution is deliberately unavailable: the verified v1 command initializes plugins before its handler. Literal native-install acceptance is blocked by ADR-0008's no-plugin-execution policy. |
-| #25 | Verified v2 global add/remove with config, payload, data, npm cache/log and temporary-root capture. | List/check/update connect to or start a server and can load plugins; those paths remain instructions only. Native runtime check/update acceptance is blocked by the same policy. |
+| #23 | Native Codex configured-marketplace and curated remote add/remove. Curated operations require explicit backend-effects consent and preserve limits in history. | File rollback cannot reverse backend state. No independent enable/disable/update command exists in the verified CLI. |
+| #24 | Verified v1 install and explicit force replacement in user/project scopes, with snapshot protection and batch-specific runtime-effects consent. CLI fixtures verify native argv, consent refusal, history and file recovery. | Initialization can run plugin code; effects outside captured files are disclosed and not claimed reversible. No native removal exists. |
+| #25 | Verified v2 global add/remove and explicit runtime list/check/update in user/project scopes. Known config, payload, data, npm cache/log and temporary roots are captured. CLI fixtures cover consent refusal, preview isolation, failure diff and file recovery. | Runtime operations can start/connect to a server and load plugins; explicit consent is required. Exact locks/local update exclusions remain host-owned. |
 | #26 | Claude marketplace add/update/remove; final-scope cascade preview/capture includes registered projects outside the Library selection. | Opaque command/header sources refuse automatic execution. |
-| #27 | Codex marketplace add/upgrade/remove; local-marketplace update limits and full marketplace granularity are shown. | Curated backend installation changes remain outside filesystem rollback. |
+| #27 | Codex marketplace add/upgrade/remove; local-marketplace update limits and full marketplace granularity are shown. | Curated backend installation changes require explicit consent and remain outside filesystem rollback. |
 
 The native management sheet previews operations in shared Pending Changes.
 Deletion consequences, scopes, observed versions and capture roots appear in
@@ -41,8 +41,17 @@ identifiers/help, and English/Simplified Chinese String Catalog entries.
 `plugins capabilities --host claude|codex|opencode` explicitly probes version/help.
 `plugins plan --requests FILE` previews an array of requests with `host`,
 `action`, `target`, `scope`, and absolute `scopeRoot` fields.
+OpenCode v1 uses `install` or explicit `replace` (`--force`), with user scope
+mapping to `--global` and project/local scope to the host's actual configuration
+directory. Git subdirectories capture the worktree-root `.opencode`, which is
+shown in the preview. OpenCode v2 `list`, `check`, and `update` are explicit
+runtime operations; target `*` omits the optional target and includes all
+packages in the selected runtime. A specific check/update target is passed
+unchanged, preserving native exact-version and full-commit locks.
 `plugins execute --requests FILE --reviewed` executes only supported plans;
-dangerous operations also require `--confirm-dangerous`.
+destructive operations and runtime/backend effects also require `--confirm-dangerous`.
+This acknowledges the disclosed effects and file rollback limits for that batch.
+The shared executor independently refuses effects-bearing batches without consent.
 Instructions-only plans do not execute a partial batch.
 
 `rollback ID --preview` lists conflicts. Repeated `--restore PATH` and
@@ -67,7 +76,7 @@ Conventional `.lsp.json` accepts the direct server-name map documented under
 
 ## Final verification
 
-- 604 tests in 80 suites pass with Swift compiler warnings treated as errors.
+- 610 tests in 84 suites pass with Swift compiler warnings treated as errors.
 - Native app build, strict Swift formatting, strict SwiftLint, String Catalog
   synchronization/translation checks, and `git diff --check` pass.
 - Standards review: no remaining actionable findings. Physical targets and
@@ -77,5 +86,11 @@ Conventional `.lsp.json` accepts the direct server-name map documented under
 - Spec review: no remaining actionable findings. Local file URL references,
   explicit-reference disable refusal, and declared/conventional component
   semantics have real CLI regression coverage.
-- Literal native execution acceptance for #24 and #25 remains blocked by the
-  host behavior and ADR-0008 limits described above.
+- Effects-consent review fixes cover repeated disclosure row identities,
+  actual Git worktree configuration targets, and preservation of approved
+  runtime/backend limits after file rollback. Native history exposes captured
+  command output files. Consent refusal leaves files untouched; backup failure
+  prevents execution even after consent.
+- The later explicit-effects consent amendment removes the policy blockers
+  for #24 and #25. Execution uses verified official commands, protects known
+  captured files, and discloses effects that file restoration cannot undo.

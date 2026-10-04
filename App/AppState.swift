@@ -93,6 +93,7 @@ final class AppState: ObservableObject {
     @Published var repairDraft: RepairDraft?
     /// The proposed batch awaiting confirmation; nil when none is on the table.
     @Published var pendingBatch: CommandBatch?
+    @Published var effectsApprovedBatchID: String?
     /// The single confirmation every batch needs to run (ADR-0007) is up.
     @Published var showingBatchConfirm = false
     /// Repairs a Fix All could not include, with the reason for each.
