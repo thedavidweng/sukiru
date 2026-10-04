@@ -18,6 +18,16 @@
     "%lld" : {
       "shouldTranslate" : false
     },
+    "%lld Plugins Selected" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选择 %lld 个插件"
+          }
+        }
+      }
+    },
     "%lld installs" : {
       "localizations" : {
         "en" : {
@@ -1217,6 +1227,22 @@
         }
       }
     },
+    "Deletes only the unreferenced producer helper: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deletes only the unreferenced producer helper: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅删除未被引用的来源应用辅助文件：%@"
+          }
+        }
+      }
+    },
     "Delete…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1836,6 +1862,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "健康检查失败"
+          }
+        }
+      }
+    },
+    "Hide from Sidebar" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从边栏中隐藏"
           }
         }
       }
@@ -3522,12 +3558,32 @@
         }
       }
     },
+    "Preview removing the selected plugins" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览移除所选插件"
+          }
+        }
+      }
+    },
     "Preview the host's enable or disable command for this plugin" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "预览宿主为此插件执行的启用或停用命令"
+          }
+        }
+      }
+    },
+    "Preview the host's update command for this plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览宿主为此插件执行的更新命令"
           }
         }
       }
@@ -3882,6 +3938,16 @@
         }
       }
     },
+    "Remove %lld Plugins…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除 %lld 个插件…"
+          }
+        }
+      }
+    },
     "Remove Marketplace" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3930,16 +3996,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "从待处理更改中移除"
-          }
-        }
-      }
-    },
-    "Remove from Sidebar" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "从边栏中移除"
           }
         }
       }
@@ -4861,12 +4917,12 @@
         }
       }
     },
-    "Show this host's plugins in the sidebar" : {
+    "Show this item in the sidebar" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在边栏中显示此宿主的插件"
+            "value" : "在边栏中显示此项目"
           }
         }
       }
@@ -4892,12 +4948,12 @@
         }
       }
     },
-    "Sidebar Plugins" : {
+    "Sidebar" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "边栏插件"
+            "value" : "边栏"
           }
         }
       }
@@ -5190,12 +5246,32 @@
         }
       }
     },
+    "The plugins could not be previewed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法预览这些插件操作"
+          }
+        }
+      }
+    },
     "This hook is read-only. Manage it through its source unit or policy administrator." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "此钩子为只读。请通过所属来源或策略管理员进行管理。"
+          }
+        }
+      }
+    },
+    "This host has no command to change whether this plugin is enabled" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此宿主没有可更改此插件启用状态的命令"
           }
         }
       }
@@ -5275,12 +5351,12 @@
         }
       }
     },
-    "Turn on the hosts to show in the sidebar. Drag them to change their order." : {
+    "Turn on the items to show in the sidebar. Drag them to change their order." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "打开要在边栏中显示的宿主。拖移它们以更改顺序。"
+            "value" : "打开要在边栏中显示的项目。拖移它们以更改顺序。"
           }
         }
       }
@@ -6916,6 +6992,54 @@
         }
       }
     },
+    "hook.review.position %lld %lld %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Group %1$lld, handler %2$lld, matcher: %3$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "组 %1$lld，处理器 %2$lld，匹配器：%3$@"
+          }
+        }
+      }
+    },
+    "hook.warning.orcaDisable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disables Orca agent hooks across hosts. File rollback restores captured hook sources and helpers only; re-enable profile and runtime state in Orca if needed."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跨宿主停用 Orca 智能体钩子。文件回滚仅恢复已捕获的钩子来源和辅助文件；如有需要，请在 Orca 中重新启用配置和运行时状态。"
+          }
+        }
+      }
+    },
+    "hook.warning.remove" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Removes only the reviewed hook entries. An installed producer may recreate them; disable its integration first."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅移除已审核的钩子条目。已安装的来源应用可能重新生成钩子；请先停用其集成。"
+          }
+        }
+      }
+    },
     "install.consequence.github" : {
       "comment" : "Install sheet: consequences of choosing the gh skill installer.",
       "localizations" : {
@@ -8315,70 +8439,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未知"
-          }
-        }
-      }
-    },
-    "hook.warning.orcaDisable" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Disables Orca agent hooks across hosts. File rollback restores captured hook sources and helpers only; re-enable profile and runtime state in Orca if needed."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "跨宿主停用 Orca 智能体钩子。文件回滚仅恢复已捕获的钩子来源和辅助文件；如有需要，请在 Orca 中重新启用配置和运行时状态。"
-          }
-        }
-      }
-    },
-    "hook.warning.remove" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Removes only the reviewed hook entries. An installed producer may recreate them; disable its integration first."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "仅移除已审核的钩子条目。已安装的来源应用可能重新生成钩子；请先停用其集成。"
-          }
-        }
-      }
-    },
-    "Deletes only the unreferenced producer helper: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deletes only the unreferenced producer helper: %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "仅删除未被引用的来源应用辅助文件：%@"
-          }
-        }
-      }
-    },
-    "hook.review.position %lld %lld %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Group %1$lld, handler %2$lld, matcher: %3$@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "组 %1$lld，处理器 %2$lld，匹配器：%3$@"
           }
         }
       }

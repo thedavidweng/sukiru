@@ -83,7 +83,7 @@ struct HookActions: View {
             if let plugin = managingPlugin {
                 Button("Show Managing Plugin") {
                     state.pluginHost = plugin.host
-                    state.selectedPluginID = plugin.id
+                    state.selectedPluginIDs = [plugin.id]
                     state.surface = .plugins
                 }
                 .accessibilityIdentifier("sukiru.hooks.plugin")

@@ -17,7 +17,7 @@ struct PluginDetailView: View {
                                 ? String(localized: "User Library") : plugin.scopeRoot)
                         LabeledContent(
                             "Version", value: plugin.version ?? String(localized: "Unknown"))
-                        if plugin.offersEnabledToggle {
+                        if plugin.offersEnabledSwitch {
                             PluginEnabledToggle(plugin: plugin)
                         } else {
                             LabeledContent(
@@ -68,6 +68,10 @@ struct PluginDetailView: View {
                 }
                 .formStyle(.grouped)
                 .textSelection(.enabled)
+            } else if state.selectedPluginIDs.count > 1 {
+                ContentUnavailableView(
+                    "\(state.selectedPluginIDs.count) Plugins Selected",
+                    systemImage: "puzzlepiece.extension")
             } else {
                 ContentUnavailableView(
                     "Select a plugin to inspect it", systemImage: "puzzlepiece.extension")
@@ -76,39 +80,62 @@ struct PluginDetailView: View {
         .toolbar(content: toolbar)
     }
 
+    /// Finder-style item actions beside the inspector, each a standard
+    /// toolbar button that previews its command before anything runs. They
+    /// stay in place and dim when the selection does not support them.
     @ToolbarContentBuilder
     private func toolbar() -> some ToolbarContent {
-        let plugin = state.selectedPlugin
+        let plugins = state.selectedPlugins
+        let single = state.selectedPlugin
+        let paths = plugins.compactMap(\.path)
+        let removable = plugins.filter { $0.actions.contains("remove") }
         if #available(macOS 26.0, *) {
             ToolbarSpacer(.flexible)
         }
-        ToolbarItem {
+        ToolbarItemGroup {
             Button {
-                if let path = plugin?.path { state.revealInFinder([path]) }
+                state.revealInFinder(paths)
             } label: {
                 Label("Show in Finder", systemImage: "folder")
             }
-            .disabled(plugin?.path == nil)
+            .disabled(paths.isEmpty)
             .accessibilityIdentifier("sukiru.plugins.reveal")
             .help("Show the plugin's recorded path in Finder")
+            Button {
+                if let single { state.managePlugin(single, action: "update") }
+            } label: {
+                Label(
+                    PluginActionTitle.title("update"),
+                    systemImage: PluginActionTitle.symbol("update"))
+            }
+            .disabled(
+                state.pluginActionsBusy || single?.actions.contains("update") != true
+            )
+            .accessibilityIdentifier("sukiru.plugins.action.update")
+            .help("Preview the host's update command for this plugin")
+            Button(role: .destructive) {
+                state.removePlugins(removable)
+            } label: {
+                Label(
+                    PluginActionTitle.title("remove"),
+                    systemImage: PluginActionTitle.symbol("remove"))
+            }
+            .disabled(state.pluginActionsBusy || removable.isEmpty)
+            .accessibilityIdentifier("sukiru.plugins.action.remove")
+            .help("Preview removing the selected plugins")
         }
     }
 
-    /// Lifecycle actions as plain buttons at the end of the form, removal
-    /// last, like a Passwords entry. Each opens a reviewed preview.
+    /// Less frequent lifecycle actions as plain buttons at the end of the
+    /// form, like a Passwords entry. Each opens a reviewed preview.
     @ViewBuilder
     private func actionsSection(_ plugin: PluginInstallation) -> some View {
-        let actions =
-            plugin.secondaryActions + (plugin.actions.contains("remove") ? ["remove"] : [])
-        if !actions.isEmpty {
+        if !plugin.secondaryActions.isEmpty {
             Section {
                 HStack {
                     Spacer()
-                    ForEach(actions, id: \.self) { action in
-                        Button(
-                            PluginActionTitle.title(action) + "…",
-                            role: action == "remove" ? .destructive : nil
-                        ) {
+                    ForEach(plugin.secondaryActions, id: \.self) { action in
+                        Button(PluginActionTitle.title(action) + "…") {
                             state.managePlugin(plugin, action: action)
                         }
                         .accessibilityIdentifier("sukiru.plugins.action.\(action)")

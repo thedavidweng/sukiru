@@ -2,9 +2,11 @@ import AppKit
 import SukiruCore
 import SwiftUI
 
-/// The host's configured enablement as a switch. Flipping it only previews
-/// the host's enable/disable command; the switch follows the host's state
-/// after the reviewed batch runs and Sukiru rescans.
+/// The host's configured enablement as a switch, the same in every host's
+/// list and in the inspector. Flipping it only previews the host's command;
+/// the switch follows the host's state after the reviewed batch runs and
+/// Sukiru rescans. A host with no command for a direction shows the switch
+/// dimmed, like a setting managed elsewhere.
 struct PluginEnabledToggle: View {
     @EnvironmentObject private var state: AppState
     let plugin: PluginInstallation
@@ -12,86 +14,79 @@ struct PluginEnabledToggle: View {
     var body: some View {
         Toggle(
             isOn: Binding(
-                get: { plugin.enablement == .enabled },
-                set: { state.managePlugin(plugin, action: $0 ? "enable" : "disable") })
+                get: { plugin.switchIsOn },
+                set: { isOn in
+                    if let action = plugin.switchAction(turningOn: isOn) {
+                        state.managePlugin(plugin, action: action)
+                    }
+                })
         ) {
             Text("Enabled in Host")
         }
         .toggleStyle(.switch)
-        .disabled(state.pluginActionsBusy)
+        .disabled(state.pluginActionsBusy || !plugin.switchIsChangeable)
         .accessibilityIdentifier("sukiru.plugins.enabled.\(plugin.id)")
-        .help("Preview the host's enable or disable command for this plugin")
+        .help(
+            plugin.switchIsChangeable
+                ? "Preview the host's enable or disable command for this plugin"
+                : "This host has no command to change whether this plugin is enabled")
     }
 }
 
 extension PluginInstallation {
-    /// Enablement can be a switch only when the host toggles it and the
-    /// current state is known.
-    var offersEnabledToggle: Bool {
-        enablement != .unknown && (actions.contains("enable") || actions.contains("disable"))
+    /// The switch shows the host's configured state; an OpenCode file found
+    /// in a discovery folder is on by being there.
+    var offersEnabledSwitch: Bool {
+        enablement != .unknown || actions.contains("disable-local")
     }
 
-    /// Actions shown as row buttons: the frequent ones, destructive last.
-    var inlineActions: [String] {
-        actions.filter { ["update", "disable-local", "remove"].contains($0) }
+    var switchIsOn: Bool { enablement != .disabled }
+
+    var switchIsChangeable: Bool { switchAction(turningOn: !switchIsOn) != nil }
+
+    func switchAction(turningOn: Bool) -> String? {
+        (turningOn ? ["enable"] : ["disable", "disable-local"]).first(where: actions.contains)
     }
 
-    /// Everything not represented by the switch or the row buttons.
+    /// Everything not represented by the switch or the inspector's toolbar.
     var secondaryActions: [String] {
-        actions.filter { !["enable", "disable", "remove"].contains($0) }
+        actions.filter { !["enable", "disable", "disable-local", "update", "remove"].contains($0) }
     }
 }
 
-/// Snapshots-style trailing controls for a plugin row.
-struct PluginRowControls: View {
-    @EnvironmentObject private var state: AppState
-    let plugin: PluginInstallation
-
-    var body: some View {
-        HStack(spacing: 8) {
-            if plugin.offersEnabledToggle {
-                PluginEnabledToggle(plugin: plugin)
-                    .labelsHidden()
-                    .controlSize(.mini)
-            } else if plugin.enablement != .unknown {
-                Text(plugin.enablement.localizedTitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            ForEach(plugin.inlineActions, id: \.self) { action in
-                Button(role: action == "remove" ? .destructive : nil) {
-                    state.managePlugin(plugin, action: action)
-                } label: {
-                    Label(
-                        PluginActionTitle.title(action),
-                        systemImage: PluginActionTitle.symbol(action))
-                }
-                .labelStyle(.iconOnly)
-                .controlSize(.small)
-                .disabled(state.pluginActionsBusy)
-                .accessibilityIdentifier("sukiru.plugins.row.\(action).\(plugin.id)")
-                .help(PluginActionTitle.title(action))
-            }
-        }
-    }
-}
-
-/// A plugin row's context menu: lifecycle previews, then inspection and file
-/// actions, then removal last.
+/// The plugin list's context menu. One plugin gets lifecycle previews, then
+/// inspection and file actions, then removal last; a multiple selection gets
+/// the actions that apply to all of it.
 struct PluginContextMenu: View {
     @EnvironmentObject private var state: AppState
-    let plugin: PluginInstallation
+    let plugins: [PluginInstallation]
 
     var body: some View {
+        if plugins.count == 1, let plugin = plugins.first {
+            single(plugin)
+        } else if !plugins.isEmpty {
+            let paths = plugins.compactMap(\.path)
+            if !paths.isEmpty {
+                Button("Show in Finder") { state.revealInFinder(paths) }
+            }
+            removeSection
+        }
+    }
+
+    @ViewBuilder
+    private func single(_ plugin: PluginInstallation) -> some View {
         Section {
             if plugin.actions.contains("enable"), plugin.enablement != .enabled {
-                actionButton("enable")
+                actionButton(plugin, "enable")
             }
             if plugin.actions.contains("disable"), plugin.enablement != .disabled {
-                actionButton("disable")
+                actionButton(plugin, "disable")
             }
-            ForEach(plugin.secondaryActions, id: \.self) { action in
-                actionButton(action)
+            ForEach(
+                plugin.actions.filter { !["enable", "disable", "remove"].contains($0) },
+                id: \.self
+            ) { action in
+                actionButton(plugin, action)
             }
         }
         .disabled(state.pluginActionsBusy)
@@ -107,17 +102,29 @@ struct PluginContextMenu: View {
             }
             Button("Copy Identifier") { copy(plugin.identifier) }
         }
-        if plugin.actions.contains("remove") {
+        removeSection
+    }
+
+    @ViewBuilder
+    private var removeSection: some View {
+        let removable = plugins.filter { $0.actions.contains("remove") }
+        if !removable.isEmpty {
             Section {
-                Button(PluginActionTitle.title("remove") + "…", role: .destructive) {
-                    state.managePlugin(plugin, action: "remove")
+                Button(role: .destructive) {
+                    state.removePlugins(removable)
+                } label: {
+                    if removable.count == 1 {
+                        Text(PluginActionTitle.title("remove") + "…")
+                    } else {
+                        Text("Remove \(removable.count) Plugins…")
+                    }
                 }
             }
             .disabled(state.pluginActionsBusy)
         }
     }
 
-    private func actionButton(_ action: String) -> some View {
+    private func actionButton(_ plugin: PluginInstallation, _ action: String) -> some View {
         Button(PluginActionTitle.title(action) + "…") {
             state.managePlugin(plugin, action: action)
         }

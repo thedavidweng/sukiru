@@ -11,66 +11,8 @@ struct PluginManagementState {
     var scope = "user"
     var scopeRoot = ""
     var error: String?
-}
-
-/// The sidebar's Plugins section: every host in the user's order, some
-/// hidden. Stored with `@AppStorage` as `claude,-codex,opencode` (a leading
-/// `-` hides a host), so Settings and the sidebar stay in step.
-struct SidebarPluginHosts: RawRepresentable, Equatable {
-    static let defaultsKey = "sidebarPluginHosts"
-    static let all = SidebarPluginHosts(rawValue: "")!
-
-    private(set) var order: [PluginHost]
-    private(set) var hidden: Set<PluginHost>
-
-    init?(rawValue: String) {
-        var order: [PluginHost] = []
-        var hidden: Set<PluginHost> = []
-        for entry in rawValue.split(separator: ",") {
-            let isHidden = entry.hasPrefix("-")
-            guard let host = PluginHost(rawValue: String(entry.drop { $0 == "-" })),
-                !order.contains(host)
-            else { continue }
-            order.append(host)
-            if isHidden { hidden.insert(host) }
-        }
-        self.order = order + PluginHost.allCases.filter { !order.contains($0) }
-        self.hidden = hidden
-    }
-
-    var rawValue: String {
-        order.map { (hidden.contains($0) ? "-" : "") + $0.rawValue }.joined(separator: ",")
-    }
-
-    /// The hosts the sidebar shows, in order.
-    var hosts: [PluginHost] { order.filter { !hidden.contains($0) } }
-
-    mutating func set(_ host: PluginHost, pinned: Bool) {
-        if pinned { hidden.remove(host) } else { hidden.insert(host) }
-    }
-
-    mutating func move(from source: IndexSet, to destination: Int) {
-        order.move(fromOffsets: source, toOffset: destination)
-    }
-
-    /// Puts `host` where `target` is, shifting the hosts in between.
-    mutating func move(_ host: PluginHost, to target: PluginHost) {
-        guard let source = order.firstIndex(of: host),
-            let destination = order.firstIndex(of: target), source != destination
-        else { return }
-        order.move(
-            fromOffsets: [source], toOffset: destination > source ? destination + 1 : destination)
-    }
-
-    /// Swaps a shown host with its shown neighbour; hidden hosts keep their places.
-    mutating func move(_ host: PluginHost, by step: Int) {
-        let shown = hosts
-        guard let index = shown.firstIndex(of: host), shown.indices.contains(index + step),
-            let source = order.firstIndex(of: host),
-            let target = order.firstIndex(of: shown[index + step])
-        else { return }
-        order.swapAt(source, target)
-    }
+    /// Why a removal planned straight from the plugin list could not be previewed.
+    var removalError: String?
 }
 
 extension AppState {
@@ -108,19 +50,43 @@ extension AppState {
     }
 
     func previewPluginOperation() {
-        guard !pluginManagement.planning, !batchMutationInFlight else { return }
-        pluginManagement.planning = true
-        pluginManagement.error = nil
         let request = PluginLifecycleRequest(
             host: pluginManagement.host,
             action: pluginManagement.action, target: pluginManagement.target,
             scope: pluginManagement.scope, scopeRoot: pluginManagement.scopeRoot)
+        pluginManagement.error = nil
+        planPluginOperations([request]) { [weak self] error in
+            self?.pluginManagement.error = error
+        }
+    }
+
+    /// Removes plugins the way Finder deletes a selection: one reviewed batch
+    /// in Pending Changes, without a per-plugin sheet first.
+    func removePlugins(_ plugins: [PluginInstallation]) {
+        let requests = plugins.filter { $0.actions.contains("remove") }.map { plugin in
+            PluginLifecycleRequest(
+                host: plugin.host, action: "remove", target: plugin.identifier,
+                scope: plugin.scope, scopeRoot: plugin.scopeRoot)
+        }
+        guard !requests.isEmpty else { return }
+        pluginManagement.removalError = nil
+        planPluginOperations(requests) { [weak self] error in
+            self?.pluginManagement.removalError = error
+        }
+    }
+
+    private func planPluginOperations(
+        _ requests: [PluginLifecycleRequest],
+        onError: @escaping @MainActor @Sendable (String) -> Void
+    ) {
+        guard !pluginManagement.planning, !batchMutationInFlight else { return }
+        pluginManagement.planning = true
         let environment = Self.makeEnvironment(roots: projectRoots)
         Task.detached(priority: .userInitiated) { [weak self] in
             do {
                 let inventory = PluginInventoryReader(environment: environment).read(ScanRequest())
                 let plan = try PluginLifecyclePlanner(environment: environment).plan(
-                    requests: [request], inventory: inventory)
+                    requests: requests, inventory: inventory)
                 await MainActor.run {
                     guard let self else { return }
                     self.pluginManagement.planning = false
@@ -131,7 +97,7 @@ extension AppState {
             } catch {
                 await MainActor.run {
                     self?.pluginManagement.planning = false
-                    self?.pluginManagement.error = error.localizedDescription
+                    onError(error.localizedDescription)
                 }
             }
         }

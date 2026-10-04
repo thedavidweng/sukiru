@@ -1,8 +1,9 @@
 import SukiruCore
 import SwiftUI
 
-/// The Settings window (standard ⌘, scene), paged like Contacts. Projects
-/// edits the saved project folders; Installers checks, installs, and
+/// The Settings window (standard ⌘, scene), paged like Contacts. Sidebar
+/// orders and hides sidebar rows, like Finder's; Projects edits the saved
+/// project folders; Installers checks, installs, and
 /// updates the official CLIs Sukiru delegates to. Refresh lives in the
 /// main window toolbar (and ⌘R) because the app keeps no watchers.
 struct SettingsView: View {
@@ -10,6 +11,7 @@ struct SettingsView: View {
         if #available(macOS 15.0, *) {
             TabView {
                 Tab("General", systemImage: "gearshape") { GeneralSettingsPane() }
+                Tab("Sidebar", systemImage: "sidebar.left") { SidebarSettingsPane() }
                 Tab("Projects", systemImage: "folder") { ProjectsSettingsPane() }
                 Tab("Installers", systemImage: "shippingbox") { InstallersSettingsPane() }
             }
@@ -17,6 +19,8 @@ struct SettingsView: View {
             TabView {
                 GeneralSettingsPane()
                     .tabItem { Label("General", systemImage: "gearshape") }
+                SidebarSettingsPane()
+                    .tabItem { Label("Sidebar", systemImage: "sidebar.left") }
                 ProjectsSettingsPane()
                     .tabItem { Label("Projects", systemImage: "folder") }
                 InstallersSettingsPane()

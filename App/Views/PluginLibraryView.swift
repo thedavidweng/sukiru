@@ -32,7 +32,7 @@ struct PluginLibraryView: View {
     }
 
     var body: some View {
-        List(selection: $state.selectedPluginID) {
+        List(selection: $state.selectedPluginIDs) {
             ForEach(groups, id: \.root) { group in
                 Section {
                     ForEach(group.plugins) { plugin in
@@ -63,15 +63,20 @@ struct PluginLibraryView: View {
         }
         .listStyle(.inset)
         .contextMenu(forSelectionType: String.self) { ids in
-            if ids.count == 1, let plugin = installations.first(where: { ids.contains($0.id) }) {
-                PluginContextMenu(plugin: plugin)
-            }
+            PluginContextMenu(plugins: installations.filter { ids.contains($0.id) })
         }
         .onDeleteCommand {
-            guard let plugin = state.selectedPlugin, plugin.actions.contains("remove"),
-                !state.pluginActionsBusy
-            else { return }
-            state.managePlugin(plugin, action: "remove")
+            guard !state.pluginActionsBusy else { return }
+            state.removePlugins(state.selectedPlugins)
+        }
+        .alert(
+            "The plugins could not be previewed",
+            isPresented: Binding(
+                get: { state.pluginManagement.removalError != nil },
+                set: { if !$0 { state.pluginManagement.removalError = nil } })
+        ) {
+        } message: {
+            Text(verbatim: state.pluginManagement.removalError ?? "")
         }
         .navigationTitle(Text(verbatim: host.displayName))
         .navigationSubtitle(Text("\(installations.count) plugins"))
@@ -102,9 +107,7 @@ struct PluginLibraryView: View {
                 })
         }
         .onChange(of: installations.map(\.id)) { _, visible in
-            if let selected = state.selectedPluginID, !visible.contains(selected) {
-                state.selectedPluginID = nil
-            }
+            state.selectedPluginIDs.formIntersection(visible)
         }
         .toolbar {
             ToolbarItem {
@@ -173,7 +176,11 @@ private struct PluginRow: View {
                 .lineLimit(1)
             }
             Spacer(minLength: 8)
-            PluginRowControls(plugin: plugin)
+            if plugin.offersEnabledSwitch {
+                PluginEnabledToggle(plugin: plugin)
+                    .labelsHidden()
+                    .controlSize(.mini)
+            }
         }
         .accessibilityIdentifier("sukiru.plugins.row.\(plugin.id)")
     }
@@ -184,7 +191,12 @@ extension AppState {
         (report?.pluginInventory?.installations ?? []).filter { $0.host == host }
     }
 
+    var selectedPlugins: [PluginInstallation] {
+        pluginInstallations(for: pluginHost).filter { selectedPluginIDs.contains($0.id) }
+    }
+
+    /// The plugin the inspector shows; none while several are selected.
     var selectedPlugin: PluginInstallation? {
-        pluginInstallations(for: pluginHost).first { $0.id == selectedPluginID }
+        selectedPluginIDs.count == 1 ? selectedPlugins.first : nil
     }
 }

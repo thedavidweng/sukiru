@@ -1,11 +1,16 @@
 import SukiruCore
 import SwiftUI
 
-/// The system sidebar presents library scopes like folders, with the other
-/// surfaces grouped beneath them. One destination is selected at a time.
+/// The system sidebar presents the library and Sukiru's own tools first, then
+/// the user's projects, then each agent host's plugins and hooks. One
+/// destination is selected at a time.
 struct SidebarView: View {
     @EnvironmentObject private var state: AppState
-    @AppStorage(SidebarPluginHosts.defaultsKey) private var pluginHosts = SidebarPluginHosts.all
+    @AppStorage(SidebarArrangement.projectsKey) private var projects = SidebarArrangement.standard
+    @AppStorage(SidebarArrangement.pluginHostsKey) private var pluginHosts =
+        SidebarArrangement.standard
+    @AppStorage(SidebarArrangement.hookHostsKey) private var hookHosts =
+        SidebarArrangement.standard
     @Environment(\.openSettings) private var openSettings
 
     private enum Destination: Hashable {
@@ -47,7 +52,7 @@ struct SidebarView: View {
                 case .plugins(let host):
                     if state.pluginHost != host {
                         state.pluginHost = host
-                        state.selectedPluginID = nil
+                        state.selectedPluginIDs = []
                     }
                     state.surface = .plugins
                 case .hooks(let host):
@@ -73,24 +78,6 @@ struct SidebarView: View {
                 .help("Show user-scope library items")
                 .tag(Destination.userLibrary)
             }
-            if !state.projectRoots.isEmpty {
-                Section("Projects") {
-                    ForEach(state.projectRoots.sorted(), id: \.self) { root in
-                        projectRow(root)
-                            .badge(counts.projects[root, default: 0])
-                            .tag(Destination.project(root))
-                    }
-                }
-            }
-            if !pluginHosts.hosts.isEmpty {
-                Section("Plugins") {
-                    ForEach(pluginHosts.hosts, id: \.self) { host in
-                        pluginRow(host)
-                            .badge(state.pluginInstallations(for: host).count)
-                            .tag(Destination.plugins(host))
-                    }
-                }
-            }
             Section("Tools") {
                 row("Health", surface: .health, icon: "stethoscope")
                     .badge(
@@ -107,24 +94,54 @@ struct SidebarView: View {
                 row("Discover", surface: .search, icon: "safari")
                     .tag(Destination.surface(.search))
             }
-            Section("Hooks") {
-                ForEach([PluginHost.claude, .codex], id: \.self) { host in
-                    Label {
-                        Text(verbatim: host.displayName)
-                    } icon: {
-                        AgentLogo(hostID: host.agentID, size: 16)
+            if !shownProjects.isEmpty {
+                Section("Projects") {
+                    ForEach(shownProjects, id: \.self) { root in
+                        projectRow(root)
+                            .badge(counts.projects[root, default: 0])
+                            .tag(Destination.project(root))
                     }
-                    .badge(state.hooks(for: host).count)
-                    .tag(Destination.hooks(host))
-                    .accessibilityIdentifier("sukiru.sidebar.hooks.\(host.rawValue)")
-                    .help("Inspect lifecycle hooks configured for this host")
+                }
+            }
+            if !pluginHosts.shown(PluginHost.allCases).isEmpty {
+                Section("Plugins") {
+                    ForEach(pluginHosts.shown(PluginHost.allCases), id: \.self) { host in
+                        pluginRow(host)
+                            .badge(state.pluginInstallations(for: host).count)
+                            .tag(Destination.plugins(host))
+                    }
+                }
+            }
+            if !hookHosts.shown(PluginHost.hookHosts).isEmpty {
+                Section("Hooks") {
+                    ForEach(hookHosts.shown(PluginHost.hookHosts), id: \.self) { host in
+                        hookRow(host)
+                            .badge(state.hooks(for: host).count)
+                            .tag(Destination.hooks(host))
+                    }
                 }
             }
         }
         .listStyle(.sidebar)
-        .onChange(of: pluginHosts) { _, pinned in
-            if state.surface == .plugins && !pinned.hosts.contains(state.pluginHost) {
-                state.selectedPluginID = nil
+        .onChange(of: state.projectRoots) { _, roots in
+            // A SUKIRU_ROOTS session never rewrites the user's saved folders.
+            if state.environment.projectRoots.isEmpty { projects.retain(roots) }
+        }
+        .onChange(of: projects) { _, arrangement in
+            if case .project(let root) = state.libraryScope, !arrangement.isShown(root) {
+                state.libraryScope = .all
+                state.selectedSkillID = nil
+            }
+        }
+        .onChange(of: pluginHosts) { _, arrangement in
+            if state.surface == .plugins && !arrangement.isShown(state.pluginHost) {
+                state.selectedPluginIDs = []
+                state.surface = .library
+            }
+        }
+        .onChange(of: hookHosts) { _, arrangement in
+            if state.surface == .hooks && !arrangement.isShown(state.hookState.host) {
+                state.hookState.selectedID = nil
                 state.surface = .library
             }
         }
@@ -151,34 +168,36 @@ struct SidebarView: View {
         }
     }
 
+    private var shownProjects: [String] { projects.shown(state.projectRoots.sorted()) }
+
     /// Reordering stays in the menu and in Settings: the system's drag image
     /// for a vibrant sidebar row drops the vibrancy and renders black in Dark
     /// Mode, while Settings' plain list drags correctly.
     private func pluginRow(_ host: PluginHost) -> some View {
-        let index = pluginHosts.hosts.firstIndex(of: host) ?? 0
-        return HStack(spacing: 0) {
+        HStack(spacing: 0) {
             AXToken(token: "sukiru.sidebar.plugins.\(host.rawValue)")
-            Label {
-                Text(verbatim: host.displayName)
-            } icon: {
-                AgentLogo(hostID: host.agentID, size: 16)
-            }
+            hostLabel(host)
         }
         .help("Show plugins managed by this host")
         .contextMenu {
-            Button("Move Up") {
-                pluginHosts.move(host, by: -1)
+            arrangementMenu(host, in: PluginHost.allCases, arrangement: $pluginHosts)
+        }
+    }
+
+    private func hookRow(_ host: PluginHost) -> some View {
+        hostLabel(host)
+            .accessibilityIdentifier("sukiru.sidebar.hooks.\(host.rawValue)")
+            .help("Inspect lifecycle hooks configured for this host")
+            .contextMenu {
+                arrangementMenu(host, in: PluginHost.hookHosts, arrangement: $hookHosts)
             }
-            .disabled(index == 0)
-            Button("Move Down") {
-                pluginHosts.move(host, by: 1)
-            }
-            .disabled(index == pluginHosts.hosts.count - 1)
-            Divider()
-            Button("Remove from Sidebar") {
-                pluginHosts.set(host, pinned: false)
-            }
-            Button("Customize Sidebar…") { openSettings() }
+    }
+
+    private func hostLabel(_ host: PluginHost) -> some View {
+        Label {
+            Text(verbatim: host.displayName)
+        } icon: {
+            AgentLogo(hostID: host.agentID, size: 16)
         }
     }
 
@@ -194,10 +213,26 @@ struct SidebarView: View {
                 state.revealInFinder([root])
             }
             Divider()
+            arrangementMenu(root, in: state.projectRoots.sorted(), arrangement: $projects)
+            Divider()
             Button("Remove Project", role: .destructive) {
                 state.removeProjectRoot(root)
             }
         }
+    }
+
+    @ViewBuilder
+    private func arrangementMenu<Item: SidebarItem>(
+        _ item: Item, in items: [Item], arrangement: Binding<SidebarArrangement>
+    ) -> some View {
+        let shown = arrangement.wrappedValue.shown(items)
+        Button("Move Up") { arrangement.wrappedValue.move(item, by: -1, in: items) }
+            .disabled(shown.first == item)
+        Button("Move Down") { arrangement.wrappedValue.move(item, by: 1, in: items) }
+            .disabled(shown.last == item)
+        Divider()
+        Button("Hide from Sidebar") { arrangement.wrappedValue.set(item, shown: false) }
+        Button("Customize Sidebar…") { openSettings() }
     }
 }
 
