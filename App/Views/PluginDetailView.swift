@@ -17,10 +17,16 @@ struct PluginDetailView: View {
                                 ? String(localized: "User Library") : plugin.scopeRoot)
                         LabeledContent(
                             "Version", value: plugin.version ?? String(localized: "Unknown"))
-                        LabeledContent("Enabled in Host", value: plugin.enablement.localizedTitle)
+                        if plugin.offersEnabledToggle {
+                            PluginEnabledToggle(plugin: plugin)
+                        } else {
+                            LabeledContent(
+                                "Enabled in Host", value: plugin.enablement.localizedTitle
+                            )
                             .help(
                                 "This is the host's configured state; runtime loading has not been checked."
                             )
+                        }
                         LabeledContent("Runtime", value: String(localized: "Not Checked"))
                     } header: {
                         Text(verbatim: plugin.displayName)
@@ -58,6 +64,7 @@ struct PluginDetailView: View {
                     }), !findings.isEmpty {
                         PluginHealthSection(findings: findings)
                     }
+                    actionsSection(plugin)
                 }
                 .formStyle(.grouped)
                 .textSelection(.enabled)
@@ -68,34 +75,14 @@ struct PluginDetailView: View {
         }
         .toolbar(content: toolbar)
     }
+
     @ToolbarContentBuilder
     private func toolbar() -> some ToolbarContent {
         let plugin = state.selectedPlugin
         if #available(macOS 26.0, *) {
             ToolbarSpacer(.flexible)
         }
-        ToolbarItemGroup {
-            Menu {
-                if let plugin {
-                    ForEach(
-                        [
-                            "enable", "disable", "check", "list", "update", "replace", "remove",
-                            "disable-local"
-                        ], id: \.self
-                    ) { action in
-                        Button(PluginActionTitle.title(action)) {
-                            state.managePlugin(plugin, action: action)
-                        }
-                        .accessibilityIdentifier("sukiru.plugins.action.\(action)")
-                        .help("Preview this host's supported operation or capability limit")
-                    }
-                }
-            } label: {
-                Label("Plugin Actions", systemImage: "ellipsis.circle")
-            }
-            .disabled(plugin == nil)
-            .accessibilityIdentifier("sukiru.plugins.actions")
-            .help("Review plugin lifecycle changes before running them")
+        ToolbarItem {
             Button {
                 if let path = plugin?.path { state.revealInFinder([path]) }
             } label: {
@@ -107,4 +94,29 @@ struct PluginDetailView: View {
         }
     }
 
+    /// Lifecycle actions as plain buttons at the end of the form, removal
+    /// last, like a Passwords entry. Each opens a reviewed preview.
+    @ViewBuilder
+    private func actionsSection(_ plugin: PluginInstallation) -> some View {
+        let actions =
+            plugin.secondaryActions + (plugin.actions.contains("remove") ? ["remove"] : [])
+        if !actions.isEmpty {
+            Section {
+                HStack {
+                    Spacer()
+                    ForEach(actions, id: \.self) { action in
+                        Button(
+                            PluginActionTitle.title(action) + "…",
+                            role: action == "remove" ? .destructive : nil
+                        ) {
+                            state.managePlugin(plugin, action: action)
+                        }
+                        .accessibilityIdentifier("sukiru.plugins.action.\(action)")
+                        .help("Preview this host's supported operation or capability limit")
+                    }
+                }
+                .disabled(state.pluginActionsBusy)
+            }
+        }
+    }
 }

@@ -71,11 +71,11 @@ struct RootView: View {
     /// On macOS 26+, a detail column that declares no toolbar items lets the
     /// content column's whole-surface actions drift to the window's trailing
     /// edge, where they read as acting on the selected item. A flexible
-    /// spacer keeps them over the list. Library and Search detail columns
-    /// declare their own items, so they need none.
+    /// spacer keeps them over the list. Library, Plugins, and Search detail
+    /// columns declare their own items, so they need none.
     @ToolbarContentBuilder
     private func detailToolbar() -> some ToolbarContent {
-        if #available(macOS 26.0, *), state.surface != .library, state.surface != .search {
+        if #available(macOS 26.0, *), ![.library, .plugins, .search].contains(state.surface) {
             ToolbarSpacer(.flexible)
         }
     }
@@ -84,7 +84,9 @@ struct RootView: View {
     private var content: some View {
         switch state.surface {
         case .library:
-            LibraryContainerView()
+            LibraryView()
+        case .plugins:
+            PluginLibraryView()
         case .health:
             HealthView()
                 .navigationTitle("Health")
@@ -104,11 +106,9 @@ struct RootView: View {
     private var detail: some View {
         switch state.surface {
         case .library:
-            if state.libraryContent == .plugins {
-                PluginDetailView()
-            } else {
-                LibraryDetailView()
-            }
+            LibraryDetailView()
+        case .plugins:
+            PluginDetailView()
         case .snapshots:
             // Post-run diff / itemized rollback record.
             SnapshotsDetailView()

@@ -71,6 +71,11 @@ scopes. Plugins can be filtered by host; component inventories appear in
 plugin details and respect the host's management granularity. Health, Pending
 Changes, and Snapshots remain shared product surfaces.
 
+Each host's plugin system is proprietary, so plugins are never listed across
+hosts. The sidebar has a Plugins section with one destination per host; each
+host's list is grouped by user scope and added project, and offers only that
+host's operation families. Skills keep the Library destinations unchanged.
+
 ## Amendment (2026-10-03): preserve file snapshot and rollback guarantees
 
 Plugin commands retain the existing snapshot -> execute -> file diff ->

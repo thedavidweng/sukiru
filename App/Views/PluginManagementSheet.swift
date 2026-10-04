@@ -8,15 +8,10 @@ struct PluginManagementSheet: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Manage Host Plugins").font(.title2)
             Form {
-                Picker("Host", selection: $state.pluginManagement.host) {
-                    ForEach(PluginHost.allCases, id: \.self) { host in
-                        Text(verbatim: host.displayName).tag(host)
-                    }
-                }
-                .accessibilityIdentifier("sukiru.plugins.operation.host")
-                .help("Choose the host whose official interface manages this operation")
+                LabeledContent("Host", value: state.pluginManagement.host.displayName)
+                    .accessibilityIdentifier("sukiru.plugins.operation.host")
                 Picker("Operation", selection: $state.pluginManagement.action) {
-                    ForEach(PluginLifecycleRequest.actions, id: \.self) { action in
+                    ForEach(operations, id: \.self) { action in
                         Text(verbatim: PluginActionTitle.title(action)).tag(action)
                     }
                 }
@@ -73,6 +68,13 @@ struct PluginManagementSheet: View {
         .padding(20)
         .frame(width: 520)
         .disabled(state.pluginManagement.planning)
+    }
+
+    /// The host's own operations, plus a contextual one such as local disable.
+    private var operations: [String] {
+        let management = state.pluginManagement
+        let native = management.host.operations
+        return native.contains(management.action) ? native : native + [management.action]
     }
 
     private var localScope: Binding<Bool> {

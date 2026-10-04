@@ -1,5 +1,6 @@
 import Foundation
 import SukiruCore
+import SwiftUI
 
 struct PluginManagementState {
     var showingSheet = false
@@ -10,6 +11,51 @@ struct PluginManagementState {
     var scope = "user"
     var scopeRoot = ""
     var error: String?
+}
+
+/// Hosts pinned to the sidebar's Plugins section, in the user's order.
+/// Stored with `@AppStorage`, so Settings and the sidebar stay in step.
+struct SidebarPluginHosts: RawRepresentable, Equatable {
+    static let defaultsKey = "sidebarPluginHosts"
+    static let all = SidebarPluginHosts(hosts: PluginHost.allCases)
+
+    private(set) var hosts: [PluginHost]
+
+    init(hosts: [PluginHost]) { self.hosts = hosts }
+
+    init?(rawValue: String) {
+        var hosts: [PluginHost] = []
+        for name in rawValue.split(separator: ",") {
+            if let host = PluginHost(rawValue: String(name)), !hosts.contains(host) {
+                hosts.append(host)
+            }
+        }
+        self.hosts = hosts
+    }
+
+    var rawValue: String { hosts.map(\.rawValue).joined(separator: ",") }
+
+    var hiddenHosts: [PluginHost] { PluginHost.allCases.filter { !hosts.contains($0) } }
+
+    mutating func set(_ host: PluginHost, pinned: Bool) {
+        guard pinned != hosts.contains(host) else { return }
+        if pinned {
+            hosts.append(host)
+        } else {
+            hosts.removeAll { $0 == host }
+        }
+    }
+
+    /// Reorders pinned hosts dropped as their raw values; other text is ignored.
+    mutating func drop(_ names: [String], at offset: Int) {
+        let indices = IndexSet(
+            names.compactMap { name in hosts.firstIndex { $0.rawValue == name } })
+        if !indices.isEmpty { move(from: indices, to: offset) }
+    }
+
+    mutating func move(from source: IndexSet, to destination: Int) {
+        hosts.move(fromOffsets: source, toOffset: destination)
+    }
 }
 
 extension AppState {
@@ -41,8 +87,9 @@ extension AppState {
         pluginManagement.showingSheet = true
     }
 
-    func newPluginOperation() {
-        pluginManagement = PluginManagementState(showingSheet: true, scopeRoot: environment.home)
+    func newPluginOperation(host: PluginHost) {
+        pluginManagement = PluginManagementState(
+            showingSheet: true, host: host, scopeRoot: environment.home)
     }
 
     func previewPluginOperation() {

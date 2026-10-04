@@ -131,7 +131,10 @@ struct PluginInventoryConfigTests {
         let inventory = try #require(result["pluginInventory"] as? [String: Any])
         #expect((inventory["installations"] as? [[String: Any]] ?? []).isEmpty)
         let issues = try #require(inventory["issues"] as? [[String: Any]])
-        #expect(issues.contains { ($0["kind"] as? String) == "plugin-config" })
+        #expect(
+            issues.contains {
+                ($0["kind"] as? String) == "plugin-config" && ($0["host"] as? String) == "opencode"
+            })
     }
 
     @Test("JSONC comments, URL strings, and trailing commas are preserved")

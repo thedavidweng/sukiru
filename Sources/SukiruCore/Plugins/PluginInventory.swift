@@ -72,14 +72,30 @@ public struct PluginCatalogEntry: Codable, Equatable, Sendable {
     public let version: String?
 }
 
+/// An inventory read error attributed to the host whose files produced it.
+public struct PluginInventoryIssue: Codable, Hashable, Sendable {
+    public let host: PluginHost
+    public let kind: String
+    public let path: String
+    public let message: String
+
+    init(host: PluginHost, _ issue: Issue) {
+        self.host = host
+        self.kind = issue.kind
+        self.path = issue.path
+        self.message = issue.message
+    }
+}
+
 public struct PluginInventory: Codable, Equatable, Sendable {
     public let installations: [PluginInstallation]
     public let marketplaces: [PluginMarketplace]
-    public let issues: [Issue]
+    public let issues: [PluginInventoryIssue]
     public let healthFindings: [PluginHealthFinding]
 
     init(
-        installations: [PluginInstallation], marketplaces: [PluginMarketplace], issues: [Issue],
+        installations: [PluginInstallation], marketplaces: [PluginMarketplace],
+        issues: [PluginInventoryIssue],
         healthFindings: [PluginHealthFinding] = []
     ) {
         self.installations = installations

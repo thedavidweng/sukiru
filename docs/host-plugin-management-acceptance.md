@@ -28,6 +28,19 @@ and runtime-loaded status remain separate; runtime status is unknown.
 | #26 | Claude marketplace add/update/remove; final-scope cascade preview/capture includes registered projects outside the Library selection. | Opaque command/header sources refuse automatic execution. |
 | #27 | Codex marketplace add/upgrade/remove; local-marketplace update limits and full marketplace granularity are shown. | Curated backend installation changes require explicit consent and remain outside filesystem rollback. |
 
+Skills and Plugins are separate sidebar destinations (stories 1 and 6): the
+Library toolbar is unchanged, and the Plugins section lists Claude Code,
+Codex, and OpenCode separately with their own counts. Users choose which hosts
+the section shows and their order, by dragging or the row menu in the sidebar,
+or in General settings. A host's list groups
+User Library and each added project (stories 7 to 9) and shows only that
+host's inspection issues. Rows carry an enablement switch where the host
+toggles plugins, plus inline update, local-disable and remove buttons; the
+context menu and detail form offer the remaining operations. Every control
+opens a reviewed preview. Row, menu and management-sheet actions are limited
+to the host's operation families; version and scope limits still come from the
+reviewed preview (stories 22 and 29).
+
 The native management sheet previews operations in shared Pending Changes.
 Deletion consequences, scopes, observed versions and capture roots appear in
 the reviewed batch. Host failures retain stdout/stderr and partial file diffs;
@@ -37,7 +50,8 @@ identifiers/help, and English/Simplified Chinese String Catalog entries.
 
 ## CLI contract
 
-`scan` includes `pluginInventory` when plugin facts or inspection issues exist.
+`scan` includes `pluginInventory` when plugin facts or inspection issues exist;
+each inventory issue names the `host` whose files produced it.
 `plugins capabilities --host claude|codex|opencode` explicitly probes version/help.
 `plugins plan --requests FILE` previews an array of requests with `host`,
 `action`, `target`, `scope`, and absolute `scopeRoot` fields.

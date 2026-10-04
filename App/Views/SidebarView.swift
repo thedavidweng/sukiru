@@ -5,16 +5,19 @@ import SwiftUI
 /// surfaces grouped beneath them. One destination is selected at a time.
 struct SidebarView: View {
     @EnvironmentObject private var state: AppState
+    @AppStorage(SidebarPluginHosts.defaultsKey) private var pluginHosts = SidebarPluginHosts.all
 
     private enum Destination: Hashable {
         case surface(AppState.Surface)
         case userLibrary
         case project(String)
+        case plugins(PluginHost)
     }
 
     private var selection: Binding<Destination?> {
         Binding(
             get: {
+                if state.surface == .plugins { return .plugins(state.pluginHost) }
                 guard state.surface == .library else { return .surface(state.surface) }
                 switch state.libraryScope {
                 case .all: return .surface(.library)
@@ -38,6 +41,12 @@ struct SidebarView: View {
                     state.libraryScope = .project(root)
                     state.selectedSkillID = nil
                     state.surface = .library
+                case .plugins(let host):
+                    if state.pluginHost != host {
+                        state.pluginHost = host
+                        state.selectedPluginID = nil
+                    }
+                    state.surface = .plugins
                 }
             })
     }
@@ -46,12 +55,9 @@ struct SidebarView: View {
         let counts = SkillCounts(state: state)
         List(selection: selection) {
             Section("Library") {
-                row(
-                    state.libraryContent == .skills ? "All Skills" : "All Plugins",
-                    surface: .library, icon: "square.stack"
-                )
-                .badge(counts.all)
-                .tag(Destination.surface(.library))
+                row("All Skills", surface: .library, icon: "square.stack")
+                    .badge(counts.all)
+                    .tag(Destination.surface(.library))
                 HStack(spacing: 0) {
                     AXToken(token: "sukiru.sidebar.userLibrary")
                     Label("User Library", systemImage: "person.crop.circle")
@@ -67,6 +73,17 @@ struct SidebarView: View {
                             .badge(counts.projects[root, default: 0])
                             .tag(Destination.project(root))
                     }
+                }
+            }
+            if !pluginHosts.hosts.isEmpty {
+                Section("Plugins") {
+                    ForEach(pluginHosts.hosts, id: \.self) { host in
+                        pluginRow(host)
+                            .badge(state.pluginInstallations(for: host).count)
+                            .tag(Destination.plugins(host))
+                            .pluginHostDraggable(host)
+                    }
+                    .dropDestination(for: String.self) { pluginHosts.drop($0, at: $1) }
                 }
             }
             Section("Tools") {
@@ -86,6 +103,12 @@ struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
+        .onChange(of: pluginHosts) { _, pinned in
+            if state.surface == .plugins && !pinned.hosts.contains(state.pluginHost) {
+                state.selectedPluginID = nil
+                state.surface = .library
+            }
+        }
         .sidebarFooter {
             Button {
                 state.addProjectRootViaPanel()
@@ -106,6 +129,38 @@ struct SidebarView: View {
         HStack(spacing: 0) {
             AXToken(token: "sukiru.sidebar.\(surface.rawValue)")
             Label(title, systemImage: icon)
+        }
+    }
+
+    /// Drag reorders the section; the menu offers the same moves for
+    /// keyboard and VoiceOver users, and Settings restores hidden hosts.
+    private func pluginRow(_ host: PluginHost) -> some View {
+        let index = pluginHosts.hosts.firstIndex(of: host) ?? 0
+        return HStack(spacing: 0) {
+            AXToken(token: "sukiru.sidebar.plugins.\(host.rawValue)")
+            Label {
+                Text(verbatim: host.displayName)
+            } icon: {
+                AgentLogo(hostID: host.agentID, size: 16)
+            }
+        }
+        .help("Show plugins managed by this host")
+        .contextMenu {
+            Button("Move Up") {
+                pluginHosts.move(from: [index], to: index - 1)
+            }
+            .disabled(index == 0)
+            Button("Move Down") {
+                pluginHosts.move(from: [index], to: index + 2)
+            }
+            .disabled(index == pluginHosts.hosts.count - 1)
+            Divider()
+            Button("Remove from Sidebar") {
+                pluginHosts.set(host, pinned: false)
+            }
+            SettingsLink {
+                Text("Customize Sidebar…")
+            }
         }
     }
 
@@ -137,17 +192,6 @@ private struct SkillCounts {
 
     @MainActor
     init(state: AppState) {
-        if state.libraryContent == .plugins {
-            for plugin in state.report?.pluginInventory?.installations ?? [] {
-                all += 1
-                if plugin.scopeRoot == state.environment.home {
-                    user += 1
-                } else {
-                    projects[plugin.scopeRoot, default: 0] += 1
-                }
-            }
-            return
-        }
         for skill in state.report?.skills ?? [] {
             if skill.scope == .user {
                 user += 1
@@ -169,6 +213,22 @@ extension View {
             safeAreaBar(edge: .bottom, spacing: 0, content: footer)
         } else {
             safeAreaInset(edge: .bottom, spacing: 0, content: footer)
+        }
+    }
+
+    /// Drags a plugin host row by its raw value. The system's snapshot of a
+    /// sidebar row loses its vibrant styling and renders as a black
+    /// silhouette, so the preview draws the label on a semantic background.
+    func pluginHostDraggable(_ host: PluginHost) -> some View {
+        draggable(host.rawValue) {
+            Label {
+                Text(verbatim: host.displayName)
+            } icon: {
+                AgentLogo(hostID: host.agentID, size: 16)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(.background, in: .rect(cornerRadius: 6))
         }
     }
 }

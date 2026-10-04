@@ -451,26 +451,6 @@
         }
       }
     },
-    "All Hosts" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "所有宿主"
-          }
-        }
-      }
-    },
-    "All Plugins" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "所有插件"
-          }
-        }
-      }
-    },
     "All Skills" : {
       "comment" : "Sidebar row and Library filter option: every skill in every scope.",
       "localizations" : {
@@ -649,16 +629,6 @@
         }
       }
     },
-    "Change the host filter or search to see other plugins." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "调整主机筛选或搜索条件以查看其他插件。"
-          }
-        }
-      }
-    },
     "Changed since it was installed" : {
       "comment" : "Health finding title: a project skill whose content no longer matches its lock hash.",
       "localizations" : {
@@ -760,26 +730,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择回滚如何处理此已更改文件。"
-          }
-        }
-      }
-    },
-    "Choose skills or host plugins" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "选择技能或宿主插件"
-          }
-        }
-      }
-    },
-    "Choose the host whose official interface manages this operation" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "选择通过官方接口管理此操作的宿主"
           }
         }
       }
@@ -1014,6 +964,16 @@
         }
       }
     },
+    "Copy Identifier" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷贝标识符"
+          }
+        }
+      }
+    },
     "Copy Path" : {
       "comment" : "Library row context menu: copy the skill folder's path.",
       "localizations" : {
@@ -1064,6 +1024,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法检查部分技能的更新"
+          }
+        }
+      }
+    },
+    "Customize Sidebar…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自定义边栏…"
           }
         }
       }
@@ -1314,6 +1284,16 @@
         }
       }
     },
+    "Drag hosts here or in the sidebar to change their order." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在此处或边栏中拖移宿主以更改顺序。"
+          }
+        }
+      }
+    },
     "Effects Outside File Rollback" : {
       "localizations" : {
         "en" : {
@@ -1520,16 +1500,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "筛选插件"
-          }
-        }
-      }
-    },
-    "Filter plugin installations by host" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按宿主筛选插件安装实例"
           }
         }
       }
@@ -2207,16 +2177,6 @@
         }
       }
     },
-    "Library content" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "资料库内容"
-          }
-        }
-      }
-    },
     "Library root not found" : {
       "comment" : "Library error state title when SUKIRU_HOME does not exist.",
       "localizations" : {
@@ -2582,6 +2542,26 @@
         }
       }
     },
+    "Move Down" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下移"
+          }
+        }
+      }
+    },
+    "Move Up" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上移"
+          }
+        }
+      }
+    },
     "Needs Attention" : {
       "comment" : "Library filter option: only skills with action or warning findings.",
       "localizations" : {
@@ -2731,16 +2711,6 @@
         }
       }
     },
-    "No matching plugins" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "没有匹配的插件"
-          }
-        }
-      }
-    },
     "No pending changes" : {
       "comment" : "Pending Changes placeholder title.",
       "localizations" : {
@@ -2748,6 +2718,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有待处理的更改"
+          }
+        }
+      }
+    },
+    "No plugins found" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到插件"
           }
         }
       }
@@ -3080,16 +3060,6 @@
         }
       }
     },
-    "Plugin Actions" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "插件操作"
-          }
-        }
-      }
-    },
     "Plugin Compatibility" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3218,6 +3188,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "预览从此已配置市场安装插件"
+          }
+        }
+      }
+    },
+    "Preview the host's enable or disable command for this plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览宿主为此插件执行的启用或停用命令"
           }
         }
       }
@@ -3574,6 +3554,16 @@
         }
       }
     },
+    "Remove from Sidebar" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从边栏中移除"
+          }
+        }
+      }
+    },
     "Remove the leftover folder %@" : {
       "comment" : "Direct file operation summary.",
       "localizations" : {
@@ -3884,16 +3874,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "执行前审查确切命令、受影响文件及后果"
-          }
-        }
-      }
-    },
-    "Review plugin lifecycle changes before running them" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "执行前审查插件生命周期变更"
           }
         }
       }
@@ -4370,6 +4350,16 @@
         }
       }
     },
+    "Show plugins managed by this host" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示由此宿主管理的插件"
+          }
+        }
+      }
+    },
     "Show the plugin's recorded path in Finder" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4391,6 +4381,16 @@
         }
       }
     },
+    "Show this host's plugins in the sidebar" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在边栏中显示此宿主的插件"
+          }
+        }
+      }
+    },
     "Show user-scope library items" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4408,6 +4408,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "只列出仓库中的技能，不会安装任何内容。"
+          }
+        }
+      }
+    },
+    "Sidebar Plugins" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "边栏插件"
           }
         }
       }
@@ -4452,16 +4462,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已移除技能文件夹"
-          }
-        }
-      }
-    },
-    "Skills" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "技能"
           }
         }
       }
@@ -4676,6 +4676,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "资源库根目录（SUKIRU_HOME）不存在。请修正路径后按“刷新”，或使用有效的根目录重新启动。"
+          }
+        }
+      }
+    },
+    "This host has no plugins in the user library or added projects." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此宿主在用户范围和已添加的项目中都没有插件。"
           }
         }
       }

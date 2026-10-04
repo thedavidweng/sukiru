@@ -1,107 +1,49 @@
 import SukiruCore
 import SwiftUI
 
-struct LibraryContainerView: View {
-    @EnvironmentObject private var state: AppState
-
-    var body: some View {
-        Group {
-            if state.libraryContent == .skills {
-                LibraryView()
-            } else {
-                PluginLibraryView()
-            }
-        }
-        .toolbar {
-            ToolbarItem {
-                Picker("Library content", selection: $state.libraryContent) {
-                    Text("Skills").tag(AppState.LibraryContent.skills)
-                    Text("Plugins").tag(AppState.LibraryContent.plugins)
-                }
-                .pickerStyle(.segmented)
-                .accessibilityIdentifier("sukiru.library.content")
-                .help("Choose skills or host plugins")
-            }
-        }
-    }
-}
-
+/// One host's plugins. Each host's plugin system is proprietary, so the list
+/// never mixes hosts; it groups that host's installations by scope.
 struct PluginLibraryView: View {
     @EnvironmentObject private var state: AppState
-    @State private var host: PluginHost?
     @State private var filter = ""
     @State private var showingMarketplaces = false
     @State private var catalogAction: (() -> Void)?
 
+    private var host: PluginHost { state.pluginHost }
+
     private var installations: [PluginInstallation] {
-        (state.report?.pluginInventory?.installations ?? []).filter {
-            state.includesPluginScope($0.scopeRoot) && (host == nil || $0.host == host)
-                && (filter.isEmpty || $0.identifier.localizedCaseInsensitiveContains(filter)
-                    || $0.sourceTitle.localizedCaseInsensitiveContains(filter))
+        state.pluginInstallations(for: host).filter {
+            filter.isEmpty || $0.identifier.localizedCaseInsensitiveContains(filter)
+                || $0.sourceTitle.localizedCaseInsensitiveContains(filter)
         }.sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
     }
 
+    /// User scope first, then each added project, matching the Skills Library.
+    private var groups: [(root: String, plugins: [PluginInstallation])] {
+        let home = state.environment.home
+        let byRoot = Dictionary(grouping: installations, by: \.scopeRoot)
+        return byRoot.keys.sorted { lhs, rhs in
+            lhs == home || (rhs != home && lhs < rhs)
+        }.map { ($0, byRoot[$0] ?? []) }
+    }
+
     private var marketplaces: [PluginMarketplace] {
-        (state.report?.pluginInventory?.marketplaces ?? []).filter {
-            state.includesPluginScope($0.scopeRoot) && (host == nil || $0.host == host)
-        }
+        (state.report?.pluginInventory?.marketplaces ?? []).filter { $0.host == host }
     }
 
     var body: some View {
         List(selection: $state.selectedPluginID) {
-            Section {
-                ForEach(installations) { plugin in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(verbatim: plugin.displayName)
-                                .font(.body.weight(.semibold))
-                                .lineLimit(1)
-                            HStack(spacing: 6) {
-                                Text(verbatim: plugin.sourceTitle)
-                                if plugin.scopeRoot != state.environment.home {
-                                    Text(
-                                        verbatim: URL(fileURLWithPath: plugin.scopeRoot)
-                                            .lastPathComponent
-                                    )
-                                    .help(plugin.scopeRoot)
-                                }
-                                if plugin.scope == "local" {
-                                    Text("Local project settings")
-                                }
-                            }
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                        }
-                        Spacer()
-                        VStack(alignment: .trailing, spacing: 3) {
-                            AgentLogo(hostID: plugin.host.agentID, size: 14)
-                            if plugin.enablement != .unknown {
-                                Text(plugin.enablement.localizedTitle)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel(
-                            Text(
-                                verbatim:
-                                    "\(plugin.host.displayName), \(plugin.enablement.localizedTitle)"
-                            )
-                        )
-                        .help(plugin.host.displayName)
+            ForEach(groups, id: \.root) { group in
+                Section {
+                    ForEach(group.plugins) { plugin in
+                        PluginRow(plugin: plugin)
+                            .tag(plugin.id)
                     }
-                    .tag(plugin.id)
-                    .accessibilityIdentifier("sukiru.plugins.row.\(plugin.id)")
-                }
-            } header: {
-                HStack {
-                    Text("Plugins")
-                    Spacer()
-                    Text(installations.count, format: .number)
+                } header: {
+                    header(root: group.root, count: group.plugins.count)
                 }
             }
-            if let issues = state.report?.pluginInventory?.issues, !issues.isEmpty {
+            if !issues.isEmpty {
                 Section {
                     DisclosureGroup("Inspection Issues") {
                         ForEach(issues, id: \.self) { issue in
@@ -120,15 +62,30 @@ struct PluginLibraryView: View {
             }
         }
         .listStyle(.inset)
-        .navigationTitle("Plugins")
+        .contextMenu(forSelectionType: String.self) { ids in
+            if ids.count == 1, let plugin = installations.first(where: { ids.contains($0.id) }) {
+                PluginContextMenu(plugin: plugin)
+            }
+        }
+        .onDeleteCommand {
+            guard let plugin = state.selectedPlugin, plugin.actions.contains("remove"),
+                !state.pluginActionsBusy
+            else { return }
+            state.managePlugin(plugin, action: "remove")
+        }
+        .navigationTitle(Text(verbatim: host.displayName))
         .navigationSubtitle(Text("\(installations.count) plugins"))
         .searchable(text: $filter, placement: .toolbar, prompt: Text("Filter Plugins"))
         .overlay {
             if installations.isEmpty {
-                ContentUnavailableView {
-                    Label("No matching plugins", systemImage: "puzzlepiece.extension")
-                } description: {
-                    Text("Change the host filter or search to see other plugins.")
+                if filter.isEmpty {
+                    ContentUnavailableView {
+                        Label("No plugins found", systemImage: "puzzlepiece.extension")
+                    } description: {
+                        Text("This host has no plugins in the user library or added projects.")
+                    }
+                } else {
+                    ContentUnavailableView.search(text: filter)
                 }
             }
         }
@@ -152,32 +109,40 @@ struct PluginLibraryView: View {
         .toolbar {
             ToolbarItem {
                 Menu {
-                    Button("Install Plugin…") { state.newPluginOperation() }
+                    Button("Install Plugin…") { state.newPluginOperation(host: host) }
                         .accessibilityIdentifier("sukiru.plugins.manage")
                         .help("Preview a plugin installation")
-                    Button("Marketplaces…") { showingMarketplaces = true }
-                        .accessibilityIdentifier("sukiru.plugins.catalog")
-                        .help("Browse configured marketplaces")
+                    if host.hasMarketplaces {
+                        Button("Marketplaces…") { showingMarketplaces = true }
+                            .accessibilityIdentifier("sukiru.plugins.catalog")
+                            .help("Browse configured marketplaces")
+                    }
                 } label: {
                     Label("Add Plugin", systemImage: "plus")
                 }
                 .accessibilityIdentifier("sukiru.plugins.add")
                 .help("Install a plugin or browse configured marketplaces")
             }
-            ToolbarItem {
-                Menu {
-                    Picker("Host", selection: $host) {
-                        Text("All Hosts").tag(PluginHost?.none)
-                        ForEach(PluginHost.allCases, id: \.self) { host in
-                            Text(verbatim: host.displayName).tag(PluginHost?.some(host))
-                        }
-                    }
-                } label: {
-                    Label("Filter Plugins", systemImage: "line.3.horizontal.decrease.circle")
-                }
-                .accessibilityIdentifier("sukiru.plugins.host")
-                .help("Filter plugin installations by host")
+        }
+    }
+
+    private var issues: [PluginInventoryIssue] {
+        (state.report?.pluginInventory?.issues ?? []).filter { $0.host == host }
+    }
+
+    private func header(root: String, count: Int) -> some View {
+        HStack(spacing: 6) {
+            if root == state.environment.home {
+                Text("User Library")
+            } else {
+                Text(verbatim: URL(fileURLWithPath: root).lastPathComponent)
+                    .lineLimit(1)
+                    .help(root)
             }
+            Spacer(minLength: 8)
+            Text(count, format: .number)
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -188,18 +153,38 @@ struct PluginLibraryView: View {
     }
 }
 
-extension AppState {
-    func includesPluginScope(_ root: String) -> Bool {
-        switch libraryScope {
-        case .all: true
-        case .user: root == environment.home
-        case .project(let project): root == project
+private struct PluginRow: View {
+    let plugin: PluginInstallation
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(verbatim: plugin.displayName)
+                    .font(.body.weight(.semibold))
+                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    Text(verbatim: plugin.sourceTitle)
+                    if plugin.scope == "local" {
+                        Text("Local project settings")
+                    }
+                }
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+            }
+            Spacer(minLength: 8)
+            PluginRowControls(plugin: plugin)
         }
+        .accessibilityIdentifier("sukiru.plugins.row.\(plugin.id)")
+    }
+}
+
+extension AppState {
+    func pluginInstallations(for host: PluginHost) -> [PluginInstallation] {
+        (report?.pluginInventory?.installations ?? []).filter { $0.host == host }
     }
 
     var selectedPlugin: PluginInstallation? {
-        report?.pluginInventory?.installations.first {
-            $0.id == selectedPluginID && includesPluginScope($0.scopeRoot)
-        }
+        pluginInstallations(for: pluginHost).first { $0.id == selectedPluginID }
     }
 }

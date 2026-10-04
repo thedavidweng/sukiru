@@ -33,7 +33,7 @@ final class AppState: ObservableObject {
 
     @Published var surface: Surface = .library
     @Published var libraryScope: LibraryScope = .all
-    @Published var libraryContent: LibraryContent = .skills
+    @Published var pluginHost: PluginHost = .claude
     @Published var selectedPluginID: String?
     @Published var pluginManagement = PluginManagementState()
     @Published private(set) var scanPhase: ScanPhase = .loading

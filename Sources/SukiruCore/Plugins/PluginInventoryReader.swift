@@ -10,10 +10,16 @@ public struct PluginInventoryReader: Sendable {
 
     public func read(_ request: ScanRequest) -> PluginInventory {
         let roots = request.explicitRoots.isEmpty ? environment.projectRoots : request.explicitRoots
-        var issues: [Issue] = []
-        let claude = readClaude(roots: roots, scope: request.scope, issues: &issues)
-        let codex = readCodex(roots: roots, scope: request.scope, issues: &issues)
-        let openCode = readOpenCode(roots: roots, scope: request.scope, issues: &issues)
+        var claudeIssues: [Issue] = []
+        var codexIssues: [Issue] = []
+        var openCodeIssues: [Issue] = []
+        let claude = readClaude(roots: roots, scope: request.scope, issues: &claudeIssues)
+        let codex = readCodex(roots: roots, scope: request.scope, issues: &codexIssues)
+        let openCode = readOpenCode(roots: roots, scope: request.scope, issues: &openCodeIssues)
+        let issues =
+            claudeIssues.map { PluginInventoryIssue(host: .claude, $0) }
+            + codexIssues.map { PluginInventoryIssue(host: .codex, $0) }
+            + openCodeIssues.map { PluginInventoryIssue(host: .opencode, $0) }
         let installations = (claude.installations + codex.installations + openCode).sorted {
             $0.id < $1.id
         }

@@ -1,11 +1,9 @@
 extension AppState {
-    enum LibraryContent: String, CaseIterable {
-        case skills
-        case plugins
-    }
     /// Sidebar surfaces. Settings lives in the standard macOS Settings scene.
     enum Surface: String, CaseIterable, Identifiable, Hashable {
         case library
+        /// One host's plugins (`pluginHost`); each host's plugin system is its own.
+        case plugins
         case health
         case pending
         case snapshots
