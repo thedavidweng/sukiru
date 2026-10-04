@@ -9,6 +9,7 @@ public struct PluginLifecyclePlanner: Sendable {
     public func capabilities(host: PluginHost) throws -> PluginLifecycleCapabilities {
         let probe = PluginLifecycleProbe(environment: environment)
         let version = try probe.version(host: host)
+        if host == .cursor { return try cursorCapabilities(probe: probe, version: version) }
         try probe.help(host: host, arguments: ["plugin"], requiredFlags: [])
         var native: [String] = []
         var limits: [String: String] = [:]
@@ -37,7 +38,12 @@ public struct PluginLifecyclePlanner: Sendable {
         for request in requests {
             try validate(request)
             let version: String
-            if let known = versions[request.host] {
+            let localCursor =
+                request.host == .cursor
+                && (request.action == "disable-local" || cursorLimitation(request) != nil)
+            if localCursor {
+                version = "not probed"
+            } else if let known = versions[request.host] {
                 version = known
             } else {
                 version = try probe.version(host: request.host)
@@ -81,13 +87,8 @@ public struct PluginLifecyclePlanner: Sendable {
                     environment: environment, hostVersion: version))
         }
         if let limit = limitation(request, version: version) { return .instructions(limit) }
-        let args = try arguments(request, inventory: inventory, version: version)
-        try probe.help(
-            host: request.host,
-            arguments: Array(
-                args.dropFirst().prefix(helpArgumentCount(request, version: version))),
-            requiredFlags: args.filter { ["--scope", "--json", "--global", "--force"].contains($0) }
-        )
+        let args = try verifiedArguments(
+            request, inventory: inventory, version: version, probe: probe)
         let v1ConfigRoot =
             request.host == .opencode
                 && ["v1.18.34", "1.18.34"].contains(version)
@@ -123,6 +124,20 @@ public struct PluginLifecyclePlanner: Sendable {
                 captureRoots: capturePaths))
     }
 
+    private func verifiedArguments(
+        _ request: PluginLifecycleRequest, inventory: PluginInventory,
+        version: String, probe: PluginLifecycleProbe
+    ) throws -> [String] {
+        if request.host == .cursor { return try cursorArguments(request) }
+        let args = try arguments(request, inventory: inventory, version: version)
+        try probe.help(
+            host: request.host,
+            arguments: Array(args.dropFirst().prefix(helpArgumentCount(request, version: version))),
+            requiredFlags: args.filter { ["--scope", "--json", "--global", "--force"].contains($0) }
+        )
+        return args
+    }
+
     private func validate(_ request: PluginLifecycleRequest) throws {
         guard PluginLifecycleRequest.actions.contains(request.action), !request.target.isEmpty,
             request.target != "*"
@@ -148,6 +163,7 @@ public struct PluginLifecyclePlanner: Sendable {
         case .claude: claudeLimitation(request, version: version)
         case .codex: codexLimitation(request, version: version)
         case .opencode: openCodeLimitation(request, version: version)
+        case .cursor: cursorLimitation(request)
         }
     }
 
@@ -241,6 +257,7 @@ public struct PluginLifecyclePlanner: Sendable {
         case .claude: .claude
         case .codex: .codex
         case .opencode: .opencode
+        case .cursor: .cursor
         }
     }
 

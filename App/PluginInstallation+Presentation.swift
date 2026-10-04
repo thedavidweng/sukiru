@@ -7,6 +7,7 @@ extension PluginHost {
         case .claude: "Claude Code"
         case .codex: "Codex"
         case .opencode: "OpenCode"
+        case .cursor: "Cursor"
         }
     }
 
@@ -23,6 +24,8 @@ extension PluginHost {
             ]
         case .codex:
             ["install", "remove", "marketplace-add", "marketplace-refresh", "marketplace-remove"]
+        case .cursor:
+            ["install", "marketplace-add", "marketplace-refresh", "marketplace-remove"]
         case .opencode:
             ["install", "replace", "update", "check", "list", "remove"]
         }
@@ -34,7 +37,7 @@ extension PluginHost {
 extension PluginInstallation {
     var displayName: String {
         switch host {
-        case .claude, .codex:
+        case .claude, .codex, .cursor:
             String(identifier.prefix { $0 != "@" })
         case .opencode:
             identifier.hasPrefix("./") ? String(identifier.dropFirst(2)) : identifier
@@ -55,6 +58,8 @@ extension PluginInstallation {
                 + (enablement == .disabled ? [] : ["disable"]) + ["update", "remove"]
         case .codex:
             ["remove"]
+        case .cursor:
+            installationStatus == "discovered" ? ["disable-local"] : []
         case .opencode:
             installationStatus == "discovered"
                 ? ["disable-local", "remove"] : ["update", "check", "replace", "remove"]
@@ -65,7 +70,13 @@ extension PluginInstallation {
         switch installationStatus {
         case "installed": String(localized: "Installed payload")
         case "configured": String(localized: "Configured reference")
-        case "discovered": String(localized: "Discovered local file")
+        case "discovered":
+            if host == .cursor {
+                String(localized: "Discovered local plugin")
+            } else {
+                String(localized: "Discovered local file")
+            }
+        case "cached": String(localized: "Cached payload; installation unknown")
         default: String(localized: "Recorded by host")
         }
     }

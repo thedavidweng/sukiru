@@ -56,6 +56,11 @@ struct PluginMarketplacesSheet: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(verbatim: marketplace.name)
+                                if marketplace.evidence == "cached-catalog" {
+                                    Text("Cached catalog; registration scope unknown")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                                 Text(verbatim: marketplace.source)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)

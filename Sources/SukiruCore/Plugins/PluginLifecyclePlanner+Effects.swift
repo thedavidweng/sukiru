@@ -13,6 +13,7 @@ extension PluginLifecyclePlanner {
         if request.host == .opencode && ["list", "check", "update"].contains(request.action) {
             return [.pluginRuntimeEffects]
         }
+        if request.host == .cursor { return [.backendStateChange] }
         if request.host == .codex && request.target.hasSuffix("@openai-curated-remote") {
             return [.backendStateChange]
         }
@@ -21,6 +22,12 @@ extension PluginLifecyclePlanner {
 
     func effectsWarning(_ request: PluginLifecycleRequest, version: String) -> String {
         guard !effectsFlags(request, version: version).isEmpty else { return "" }
+        if request.host == .cursor {
+            return
+                " Cursor may change server-side indexing and account sync. "
+                + "File rollback restores local files only; it cannot reverse these external effects. "
+                + "Explicit consent is required. A successful exit does not establish an observed content advance."
+        }
         if request.host == .codex {
             return " This operation changes remote backend installation state. "
                 + "File rollback restores captured local files only; it does not reverse backend installation changes. "

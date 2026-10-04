@@ -37,7 +37,7 @@ extension PluginInstallation {
     /// The switch shows the host's configured state; an OpenCode file found
     /// in a discovery folder is on by being there.
     var offersEnabledSwitch: Bool {
-        enablement != .unknown || actions.contains("disable-local")
+        enablement != .unknown || (host != .cursor && actions.contains("disable-local"))
     }
 
     var switchIsOn: Bool { enablement != .disabled }
@@ -50,7 +50,10 @@ extension PluginInstallation {
 
     /// Everything not represented by the switch or the inspector's toolbar.
     var secondaryActions: [String] {
-        actions.filter { !["enable", "disable", "disable-local", "update", "remove"].contains($0) }
+        actions.filter {
+            !["enable", "disable", "disable-local", "update", "remove"].contains($0)
+                || ($0 == "disable-local" && host == .cursor)
+        }
     }
 }
 

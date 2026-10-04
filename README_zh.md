@@ -156,6 +156,13 @@ sukiru fix --yes                   # 审阅后执行
 （例如 `claude-code`）。安装和插件变更必须选择具体的用户或项目作用域，
 `--root` 会替代 `SUKIRU_ROOTS`。
 
+
+Cursor 插件清单只读取本地状态：显示本地开发插件、缓存内容、格式和组件；缓存不代表
+已安装、已启用或已加载。个人市场变更通过已验证帮助接口的 Cursor `agent` 执行，
+并要求单独确认外部影响。单插件操作返回 Cursor Customize 或交互式 `/plugin` 的
+操作指引。市场刷新记录独立报告实际观察到的目录和内容变化，不把退出码 0 当作
+内容已更新的证明。
+
 ```bash
 sukiru skills list --json
 sukiru skills update --all --dry-run

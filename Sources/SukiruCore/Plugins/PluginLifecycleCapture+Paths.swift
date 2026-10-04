@@ -25,6 +25,7 @@ extension PluginLifecycleCapture {
             }
             return roots
         case .opencode: return openCodeRoots()
+        case .cursor: return [HostPathResolver.join(home, ".cursor")]
         }
     }
 

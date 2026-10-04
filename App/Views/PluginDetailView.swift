@@ -10,6 +10,13 @@ struct PluginDetailView: View {
                 Form {
                     Section {
                         LabeledContent("Host", value: plugin.host.displayName)
+                        if let format = plugin.format {
+                            LabeledContent(
+                                "Format",
+                                value: format == "agent-plugin"
+                                    ? String(localized: "Agent Plugin")
+                                    : String(localized: "Cursor Plugin"))
+                        }
                         LabeledContent("Source", value: plugin.sourceTitle)
                         LabeledContent(
                             "Scope",

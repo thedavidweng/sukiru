@@ -177,13 +177,16 @@ public struct ExecutionRecord: Codable, Equatable, Sendable {
     func recordPostState(
         diff: BatchDiff, fileEvidenceFailure: String? = nil, scanFailure: String? = nil
     ) throws -> ExecutionRecord {
+        let observedCommands =
+            fileEvidenceFailure == nil && scanFailure == nil
+            ? commands.map { $0.observingCursorRefresh(diff: diff) } : commands
         let record = ExecutionRecord(
             schemaVersion: schemaVersion, batchID: batchID, snapshotID: snapshotID,
             batchStatus: fileEvidenceFailure != nil || scanFailure != nil
                 || !commands.allSatisfy({ $0.status == .succeeded }) ? .failed : .succeeded,
             commandTimeoutSeconds: commandTimeoutSeconds,
             startedAt: startedAt, endedAt: endedAt, durationSeconds: durationSeconds,
-            recordDirectory: recordDirectory, commands: commands, diff: diff,
+            recordDirectory: recordDirectory, commands: observedCommands, diff: diff,
             affectedRoots: affectedRoots, affectedScope: affectedScope,
             affectedWorkspaceIDs: affectedWorkspaceIDs,
             fileEvidenceFailure: fileEvidenceFailure, scanFailure: scanFailure,

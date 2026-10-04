@@ -13,19 +13,27 @@ public struct PluginInventoryReader: Sendable {
         var claudeIssues: [Issue] = []
         var codexIssues: [Issue] = []
         var openCodeIssues: [Issue] = []
+        var cursorIssues: [Issue] = []
         let claude = readClaude(roots: roots, scope: request.scope, issues: &claudeIssues)
         let codex = readCodex(roots: roots, scope: request.scope, issues: &codexIssues)
         let openCode = readOpenCode(roots: roots, scope: request.scope, issues: &openCodeIssues)
+        let cursor = readCursor(scope: request.scope, issues: &cursorIssues)
+        let cursorMarketplaces =
+            request.scope.includes(.user) ? cursorCatalogs(issues: &cursorIssues) : []
         let issues =
             claudeIssues.map { PluginInventoryIssue(host: .claude, $0) }
             + codexIssues.map { PluginInventoryIssue(host: .codex, $0) }
             + openCodeIssues.map { PluginInventoryIssue(host: .opencode, $0) }
-        let installations = (claude.installations + codex.installations + openCode).sorted {
+            + cursorIssues.map { PluginInventoryIssue(host: .cursor, $0) }
+        let discovered = claude.installations + codex.installations + openCode + cursor
+        let installations = discovered.sorted {
             $0.id < $1.id
         }
         return PluginInventory(
             installations: installations,
-            marketplaces: (claude.marketplaces + codex.marketplaces).sorted { $0.id < $1.id },
+            marketplaces: (claude.marketplaces + codex.marketplaces + cursorMarketplaces).sorted {
+                $0.id < $1.id
+            },
             issues: issues.sorted { ($0.path, $0.kind) < ($1.path, $1.kind) },
             healthFindings: PluginHealthAnalyzer.analyze(installations, environment: environment))
     }

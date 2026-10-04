@@ -225,6 +225,14 @@ and `--host HOST` use the same selectors throughout the CLI (for example
 `--host claude-code`). Installation and Plugin mutations require one concrete
 user or project scope. `--root` replaces `SUKIRU_ROOTS`.
 
+
+Cursor Plugin inventory is passive: local development plugins, cached payloads,
+formats and components are visible; cache presence does not establish installation,
+enablement, or runtime loading. Personal marketplace commands delegate to a verified
+Cursor `agent` help surface and require effects consent. Single-plugin operations
+return Cursor Customize or interactive `/plugin` instructions. Refresh records report
+observed catalog/payload changes independently of the command's exit status.
+
 ```bash
 sukiru skills list --json
 sukiru skills update --all --dry-run

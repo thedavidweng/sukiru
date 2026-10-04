@@ -28,6 +28,7 @@ struct PluginList: ParsableCommand {
             installations,
             lines: installations.map {
                 "\($0.host.rawValue) / \($0.scope) / \($0.scopeRoot): \($0.identifier) [\($0.source)] "
+                    + "status=\($0.installationStatus) format=\($0.format ?? "host-specific") "
                     + "enabled=\($0.enablement.rawValue) loaded=\($0.loadStatus)"
             })
         for issue in inventory.issues { emitError(issue.message) }
@@ -58,7 +59,7 @@ struct PluginHealth: ParsableCommand {
 struct PluginCapabilities: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "capabilities", abstract: "Explicitly probe the host-supported operations.")
-    @Option(help: "Agent Host: claude-code, codex, or opencode.") var host: String
+    @Option(help: "Agent Host: claude-code, codex, opencode, or cursor.") var host: String
     @OptionGroup var output: OutputOptions
     func run() throws {
         guard let pluginHost = resolvedPluginHost(for: host) else {
@@ -87,7 +88,7 @@ struct PluginOperationOptions: ParsableArguments {
     func run(action: String) throws {
         let environment = try cliEnvironment(roots: inputs.roots)
         guard let hostName = inputs.host, let host = resolvedPluginHost(for: hostName) else {
-            throw CLIError("Choose --host claude-code, codex, or opencode")
+            throw CLIError("Choose --host claude-code, codex, opencode, or cursor")
         }
         let targetScope = try inputs.installTarget(environment: environment)
         let root: String
@@ -146,7 +147,7 @@ struct PluginMarketplaceList: ParsableCommand {
         try output.render(
             marketplaces,
             lines: marketplaces.map {
-                "\($0.host.rawValue) / \($0.scopeRoot): \($0.name) \($0.source)"
+                "\($0.host.rawValue) / \($0.scopeRoot): \($0.name) \($0.source) [\($0.evidence ?? "configured")]"
             })
     }
 }
@@ -244,6 +245,7 @@ func resolvedPluginHost(for host: String) -> PluginHost? {
     case "claude-code": .claude
     case "codex": .codex
     case "opencode": .opencode
+    case "cursor": .cursor
     default: nil
     }
 }

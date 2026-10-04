@@ -18,6 +18,12 @@ extension PluginLifecyclePlanner {
                 + "Payloads, saved options, secrets and data may be deleted; "
                 + "complete captured file state can be restored."
         }
+        if request.host == .cursor {
+            return
+                "\(request.action) \(request.target) for the personal Cursor marketplace. "
+                + "Removal may uninstall its plugins. "
+                + "Catalog/payload changes will be inspected after execution; runtime loading remains unknown."
+        }
         if request.action == "marketplace-refresh" {
             return
                 "Refresh the entire marketplace \(request.target), including its catalog and fetched versions. "

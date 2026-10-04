@@ -4,6 +4,9 @@ public enum PluginHost: String, Codable, CaseIterable, Sendable {
     case claude
     case codex
     case opencode
+    case cursor
+
+    public var executable: String { self == .cursor ? "agent" : rawValue }
 }
 
 public enum PluginEnablement: String, Codable, Sendable {
@@ -25,13 +28,15 @@ public struct PluginInstallation: Codable, Equatable, Sendable, Identifiable {
     public let loadStatus: String
     public let components: [PluginComponent]
     public let installationStatus: String
+    public let format: String?
 
     public let id: String
 
     init(
         host: PluginHost, source: String, identifier: String, scope: String, scopeRoot: String,
         version: String?, path: String?, enablement: PluginEnablement, loadStatus: String,
-        components: [PluginComponent], installationStatus: String = "recorded"
+        components: [PluginComponent], installationStatus: String = "recorded",
+        format: String? = nil
     ) {
         self.host = host
         self.source = source
@@ -43,8 +48,11 @@ public struct PluginInstallation: Codable, Equatable, Sendable, Identifiable {
         self.enablement = enablement
         self.loadStatus = loadStatus
         self.components = components
+        self.format = format
         self.installationStatus = installationStatus
-        self.id = [host.rawValue, source, identifier, scope, scopeRoot]
+        self.id =
+            ([host.rawValue, source, identifier, scope, scopeRoot]
+            + (host == .cursor ? [path ?? ""] : []))
             .map { "\($0.utf8.count):\($0)" }.joined()
     }
 }
@@ -62,8 +70,11 @@ public struct PluginMarketplace: Codable, Equatable, Sendable, Identifiable {
     public let scopeRoot: String
     public let path: String?
     public let plugins: [PluginCatalogEntry]
+    public var evidence: String?
 
-    public var id: String { "\(host.rawValue):\(scopeRoot):\(name)" }
+    public var id: String {
+        "\(host.rawValue):\(scopeRoot):\(name)" + (host == .cursor ? ":" + (path ?? "") : "")
+    }
 }
 
 public struct PluginCatalogEntry: Codable, Equatable, Sendable {

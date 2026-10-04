@@ -31,7 +31,7 @@ struct PluginLifecycleCapture {
             "install", "replace", "list", "check", "update", "marketplace-add",
             "marketplace-refresh"
         ]
-        if acquiresPackages.contains(request.action) {
+        if request.host != .cursor, acquiresPackages.contains(request.action) {
             paths += try npmRoots()
         }
         for path in paths {
@@ -78,7 +78,10 @@ struct PluginLifecycleCapture {
             if let path = marketplace.path { paths.append(path) }
             if marketplace.source.hasPrefix("/") { paths.append(marketplace.source) }
             guard let path = marketplace.path else { continue }
-            let manifests = [".claude-plugin/marketplace.json", ".agents/plugins/marketplace.json"]
+            let manifests = [
+                ".claude-plugin/marketplace.json", ".agents/plugins/marketplace.json",
+                ".cursor-plugin/marketplace.json"
+            ]
             for relative in manifests {
                 let manifest = HostPathResolver.join(path, relative)
                 if let object = try json(at: manifest) {

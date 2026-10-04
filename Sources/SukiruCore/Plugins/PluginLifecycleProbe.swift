@@ -8,6 +8,16 @@ public struct PluginLifecycleProbe: Sendable {
 
     public func version(host: PluginHost) throws -> String {
         let output = try output(host: host, arguments: ["--version"])
+        if host == .cursor {
+            guard !output.lowercased().contains("grok"),
+                output.lowercased().contains("cursor")
+                    || output.range(
+                        of: #"^\d{4}\.\d{2}\.\d{2}(?:-|$)"#, options: .regularExpression) != nil
+            else {
+                throw PluginLifecycleError(message: "agent does not identify a Cursor CLI")
+            }
+            return output
+        }
         guard
             let version = output.split(whereSeparator: { $0.isWhitespace }).first(where: {
                 let value = $0.hasPrefix("v") ? $0.dropFirst() : $0[...]
@@ -25,8 +35,8 @@ public struct PluginLifecycleProbe: Sendable {
         }
     }
 
-    private func output(host: PluginHost, arguments: [String]) throws -> String {
-        try output(executable: host.rawValue, arguments: arguments, workingDirectory: nil)
+    func output(host: PluginHost, arguments: [String]) throws -> String {
+        try output(executable: host.executable, arguments: arguments, workingDirectory: nil)
     }
 
     func openCodeV1ConfigRoot(directory: String) throws -> String {

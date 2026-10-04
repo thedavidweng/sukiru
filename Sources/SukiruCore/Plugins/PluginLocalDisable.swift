@@ -22,6 +22,10 @@ public enum PluginLocalDisable {
         request: PluginLifecycleRequest, inventory: PluginInventory,
         environment: SukiruEnvironment, hostVersion: String
     ) throws -> BatchCommand {
+        if request.host == .cursor {
+            return try CursorLocalDisable.command(
+                request: request, inventory: inventory, environment: environment)
+        }
         guard request.host == .opencode, hostVersion == "2.0.22",
             let plugin = inventory.installations.first(where: {
                 $0.host == .opencode && $0.path == request.target

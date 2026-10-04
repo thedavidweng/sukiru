@@ -417,6 +417,16 @@
         }
       }
     },
+    "Agent Plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent 插件"
+          }
+        }
+      }
+    },
     "Agent folder" : {
       "comment" : "Finding evidence label.",
       "localizations" : {
@@ -655,6 +665,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "浏览已配置的市场"
+          }
+        }
+      }
+    },
+    "Cached catalog; registration scope unknown" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缓存目录；注册作用域未知"
+          }
+        }
+      }
+    },
+    "Cached payload; installation unknown" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缓存内容；安装状态未知"
           }
         }
       }
@@ -1108,6 +1138,16 @@
         }
       }
     },
+    "Cursor Plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cursor 插件"
+          }
+        }
+      }
+    },
     "Customize Sidebar…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1343,6 +1383,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "发现的本地文件"
+          }
+        }
+      }
+    },
+    "Discovered local plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发现的本地插件"
           }
         }
       }
@@ -1766,6 +1816,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "修复选中的发现项…"
+          }
+        }
+      }
+    },
+    "Format" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "格式"
           }
         }
       }

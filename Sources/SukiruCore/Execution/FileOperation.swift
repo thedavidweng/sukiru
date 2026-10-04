@@ -112,7 +112,7 @@ public enum FileOperation: Equatable, Sendable {
         case .removeLeftoverSkillsDir(let path):
             try Self.removeLeftoverSkillsDir(path, probe: probe)
         case .movePlugin(let path, let destination):
-            try Self.movePlugin(path, destination: destination)
+            try Self.movePlugin(path, destination: destination, environment: environment)
         }
     }
 
@@ -124,11 +124,27 @@ public enum FileOperation: Equatable, Sendable {
         }
     }
 
+    private static func movePlugin(
+        _ path: String, destination: String, environment: SukiruEnvironment?
+    ) throws {
+        if DefaultFileSystemProbe().entryKind(atPath: path) == .directory, let environment {
+            try CursorLocalDisable.validate(
+                path: path, destination: destination, environment: environment)
+            try moveOutsideDiscovery(path, destination: destination)
+        } else {
+            try movePlugin(path, destination: destination)
+        }
+    }
+
     private static func movePlugin(_ path: String, destination: String) throws {
         guard PluginLocalDisable.hasLegacyDefinition(at: path) else {
             throw FileOperationError(
                 "The local plugin definition changed; inspect it again before disabling")
         }
+        try moveOutsideDiscovery(path, destination: destination)
+    }
+
+    private static func moveOutsideDiscovery(_ path: String, destination: String) throws {
         let discovery = URL(fileURLWithPath: path).deletingLastPathComponent()
             .resolvingSymlinksInPath().path
         let resolvedDestination = URL(fileURLWithPath: destination).resolvingSymlinksInPath().path

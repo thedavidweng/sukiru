@@ -103,6 +103,7 @@ public enum OwningCLI: String, Codable, Equatable, Sendable {
     case claude
     case codex
     case opencode
+    case cursor
     case orca
 }
 

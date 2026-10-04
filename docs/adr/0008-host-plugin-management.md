@@ -171,3 +171,48 @@ Confirmation states whether the operation affects one plugin, a marketplace,
 or a wider set; a bulk update is not presented as a single-plugin action.
 The first release adds no version-lock editing or downgrade feature. Rollback
 continues to restore captured files rather than asking the host to downgrade.
+
+## Amendment (2026-10-04): Cursor evidence and supported writes
+
+Issue #31 adds Cursor to the existing Plugin model and presentation. Passive
+inventory recognizes root `plugin.json` (Agent Plugins) and
+`.cursor-plugin/plugin.json` (Cursor Plugins). Cursor rules and declared variable
+names are component metadata; variable defaults and configured secret values
+are not inventory. Cache payloads and cached catalogs are labelled as such,
+with installation, enablement, runtime loading and registration scope unknown.
+No uncalibrated SQLite key is interpreted as installation or enablement truth.
+In particular, a same-name cached payload cannot prove marketplace precedence
+or establish a project installation. Added projects remain separate scope
+selectors; interactive install instructions identify the selected project.
+
+Cursor's local discovery boundary is `~/.cursor/plugins/local`. Escaping
+symlinks are skipped. A physical local development plugin can be explicitly
+moved outside discovery with the existing snapshot-protected local-disable
+exception, without launching Cursor or writing an installation ledger. This
+exception covers local development directories as well as incompatible local
+files; cache/marketplace payloads and symlink aliases are ineligible.
+
+Explicit personal marketplace previews verify `agent` identity and installed
+operation help. Registration targeting comes from an explicit official
+`agent plugin marketplace list` call, never from cached catalog names. Duplicate
+names/URLs, unknown list formats and global/team scope block targeting. Add,
+update and remove run through command review, effects consent, snapshots,
+serialized execution, local diff and conflict-aware rollback. Server indexing
+and account sync cannot be reversed by file rollback. Refresh diagnostics
+report observed catalog/payload changes separately from exit status and retain
+the transcript; a multi-command batch cannot attribute its changes to one
+refresh. Single-plugin install/uninstall/enable/disable/update stay interactive
+Cursor Customize or `/plugin` instructions, followed by an explicit refresh.
+Standalone Hook discovery and cleanup remain governed by ADR-0010.
+
+The installed `agent` observed during implementation identifies itself as Grok;
+it is rejected for Cursor writes. This is not authority to route Cursor through
+another alias. Cursor state-store reads require a future behavioral calibration
+against supported host states before any internal key becomes inventory evidence.
+
+Reference evidence:
+- [Cursor Plugins](https://cursor.com/docs/plugins)
+- [Cursor component and manifest reference](https://cursor.com/docs/reference/plugins)
+- [Documented Agent CLI executable](https://cursor.com/docs/cli/installation)
+- [Cursor support: marketplace refresh can report false success](https://forum.cursor.com/t/cli-added-git-marketplace-never-reindexes-plugin-marketplace-update-reports-0-plugins-indexed-and-cache-stays-pinned-to-the-first-commit/169587)
+- [Enabled state and retained cache observations](https://github.com/cursor/plugins/issues/136)
