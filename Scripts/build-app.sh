@@ -27,7 +27,10 @@ fi
 
 swift build --product sukiru
 cli_bin_dir="$(swift build --show-bin-path)"
-cp "$cli_bin_dir/sukiru" "$APP_PATH/Contents/MacOS/sukiru"
-codesign --force --sign - "$APP_PATH/Contents/MacOS/sukiru"
+# Contents/MacOS would collide with the app executable "Sukiru" on a
+# case-insensitive volume, so the CLI ships as a helper tool.
+mkdir -p "$APP_PATH/Contents/Helpers"
+cp "$cli_bin_dir/sukiru" "$APP_PATH/Contents/Helpers/sukiru"
+codesign --force --sign - "$APP_PATH/Contents/Helpers/sukiru"
 codesign --force --sign - "$APP_PATH"
 echo "APP_PATH=$APP_PATH"

@@ -38,11 +38,14 @@ fi
 echo "==> Building size-optimized release CLI..."
 swift build -c release --product sukiru -Xswiftc -Osize
 cli_bin_dir="$(swift build -c release --show-bin-path)"
-cp "$cli_bin_dir/sukiru" "$application/Contents/MacOS/sukiru"
+# Contents/MacOS would collide with the app executable "Sukiru" on a
+# case-insensitive volume, so the CLI ships as a helper tool.
+mkdir -p "$application/Contents/Helpers"
+cp "$cli_bin_dir/sukiru" "$application/Contents/Helpers/sukiru"
 # Embedding a second executable changes the app signature.
-codesign --force --sign - "$application/Contents/MacOS/sukiru"
+codesign --force --sign - "$application/Contents/Helpers/sukiru"
 codesign --force --sign - "$application"
-shipped_cli_version="$("$application/Contents/MacOS/sukiru" --version)"
+shipped_cli_version="$("$application/Contents/Helpers/sukiru" --version)"
 if [ "$shipped_cli_version" != "$MARKETING_VERSION" ]; then
   echo "error: app and CLI versions differ ($MARKETING_VERSION / $shipped_cli_version)" >&2
   exit 1
