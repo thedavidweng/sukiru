@@ -36,6 +36,13 @@ struct SnapshotsDetailView: View {
         Form {
             batchMetaSection(record)
             batchCommandsSection(record)
+            if let failure = record.fileEvidenceFailure ?? record.scanFailure {
+                Section("Execution Evidence Incomplete") {
+                    Text("snapshots.evidenceIncomplete.message")
+                    Text(verbatim: failure).textSelection(.enabled)
+                }
+                .accessibilityIdentifier("sukiru.snapshots.evidenceIncomplete")
+            }
             diffSection(record)
         }
         .formStyle(.grouped)
@@ -96,7 +103,11 @@ struct SnapshotsDetailView: View {
     /// and an explicit "No changes" line when empty.
     @ViewBuilder
     private func diffSection(_ record: ExecutionRecord) -> some View {
-        if record.diff.isEmpty {
+        if record.fileEvidenceFailure != nil {
+            Section("Post-run diff") {
+                Text("The file diff is unavailable because post-execution evidence failed.")
+            }
+        } else if record.diff.isEmpty {
             Section {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     AXToken(token: "sukiru.snapshots.diff.empty")

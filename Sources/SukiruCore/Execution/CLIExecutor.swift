@@ -137,30 +137,53 @@ public struct CLIExecutor: Sendable {
             bounds: workspaceBounds(batch: batch, report: report),
             recordDirectory: recordDirectory)
 
-        let afterFiles = try RollbackFiles.capture(roots: fileRoots)
-        try afterFiles.write(to: snapshotDirectory, name: "after.json")
-        // File evidence and the transcript commit before the semantic rescan:
-        // even a failed rescan leaves an executable rollback entry in history.
-        _ = try persistRecord(
+        let pending = try persistRecord(
             batch: batch, snapshotID: manifest.id, started: batchStart,
             outcome: ExecutionOutcome(
-                commands: records, diff: beforeFiles.diff(to: afterFiles), affected: affected),
-            recordDirectory: recordDirectory)
+                commands: records, diff: BatchDiff(entries: [], summary: []), affected: affected),
+            recordDirectory: recordDirectory,
+            fileEvidenceFailure: "Post-execution file evidence has not completed.")
+        let record = try completePostExecution(
+            pending: pending, before: beforeFiles, manifest: manifest, report: report,
+            affected: affected)
+        return executionResult(batch: batch, record: record)
+    }
 
-        // Post-run diff: rescan the batch's
-        // affected roots and measure against the pre-run scan + snapshot.
-        // Computed for succeeded AND failed batches alike — a failed batch's
-        // diff documents the partial state.
-        let postReport = try ScanEngine(environment: environment).scan(affected.scanRequest)
+    /// Command outcomes stay persisted even when evidence or the rescan fails.
+    private func completePostExecution(
+        pending: ExecutionRecord, before: RollbackFiles, manifest: SnapshotManifest,
+        report: ScanReport, affected: AffectedScope
+    ) throws -> ExecutionRecord {
+        let directory = HostPathResolver.join(
+            SnapshotStore(environment: environment).snapshotsRoot(), manifest.id)
+        let after: RollbackFiles
+        do {
+            after = try RollbackFiles.capture(roots: before.roots)
+            try after.write(to: directory, name: "after.json")
+        } catch {
+            _ = try pending.recordPostState(
+                diff: pending.diff, fileEvidenceFailure: String(describing: error))
+            throw error
+        }
+        let fileDiff = before.diff(to: after)
+        _ = try pending.recordPostState(
+            diff: fileDiff, scanFailure: "Post-execution scan has not completed.")
+        let postReport: ScanReport
+        let genericRoots: [String: String]
+        do {
+            genericRoots = try SnapshotStore.genericRoots(snapshotDirectory: directory)
+            postReport = try ScanEngine(environment: environment).scan(affected.scanRequest)
+        } catch {
+            _ = try pending.recordPostState(diff: fileDiff, scanFailure: String(describing: error))
+            throw error
+        }
         let diff = Differ(environment: environment).diff(
             touchedWorkspaceIDs: Set(affected.workspaceIDs),
-            pre: report, post: postReport, manifest: manifest)
-
-        let record = try persistRecord(
-            batch: batch, snapshotID: manifest.id, started: batchStart,
-            outcome: ExecutionOutcome(commands: records, diff: diff, affected: affected),
-            recordDirectory: recordDirectory)
-        return executionResult(batch: batch, record: record)
+            pre: report, post: postReport, manifest: manifest,
+            capturedFileEntries: fileDiff.entries.filter { entry in
+                genericRoots.keys.contains { entry.path == $0 || entry.path.hasPrefix($0 + "/") }
+            })
+        return try pending.recordPostState(diff: diff)
     }
 
     private func executionResult(batch: CommandBatch, record: ExecutionRecord) -> ExecutionResult {
@@ -214,12 +237,14 @@ public struct CLIExecutor: Sendable {
     /// Assembles the batch record and writes `record.json` atomically.
     private func persistRecord(
         batch: CommandBatch, snapshotID: String, started: Date,
-        outcome: ExecutionOutcome, recordDirectory: String
+        outcome: ExecutionOutcome, recordDirectory: String,
+        fileEvidenceFailure: String? = nil, scanFailure: String? = nil
     ) throws -> ExecutionRecord {
         let ended = Date()
         let records = outcome.commands
         let status: BatchStatus =
-            records.allSatisfy { $0.status == .succeeded } ? .succeeded : .failed
+            fileEvidenceFailure == nil && scanFailure == nil
+                && records.allSatisfy { $0.status == .succeeded } ? .succeeded : .failed
         let record = ExecutionRecord(
             batchID: batch.id,
             snapshotID: snapshotID,
@@ -233,7 +258,8 @@ public struct CLIExecutor: Sendable {
             diff: outcome.diff,
             affectedRoots: outcome.affected.roots,
             affectedScope: outcome.affected.scope,
-            affectedWorkspaceIDs: outcome.affected.workspaceIDs)
+            affectedWorkspaceIDs: outcome.affected.workspaceIDs,
+            fileEvidenceFailure: fileEvidenceFailure, scanFailure: scanFailure)
         let recordPath = HostPathResolver.join(recordDirectory, "record.json")
         try record.jsonData().write(to: URL(fileURLWithPath: recordPath), options: .atomic)
         return record

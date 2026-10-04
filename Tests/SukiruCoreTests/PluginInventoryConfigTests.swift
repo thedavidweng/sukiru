@@ -60,6 +60,65 @@ struct PluginInventoryConfigTests {
         #expect(discovered["installationStatus"] as? String == "discovered")
     }
 
+    @Test("OpenCode file URLs resolve to their local discovery path and block local disable")
+    func openCodeFileURLReference() throws {
+        let tree = try TempTree()
+        let home = tree.path + "/home"
+        let project = "home/.config/opencode/plugins/local plugin.ts"
+        let plugin = try tree.file(project, contents: "export const Legacy = async () => ({})\n")
+        let fileURL = URL(fileURLWithPath: plugin).absoluteString
+        try tree.executable(
+            "bin/opencode",
+            contents: "#!/bin/sh\ncase \"$*\" in --version) echo v2.0.22;; *) exit 91;; esac\n")
+
+        let result = try scan(
+            home: home,
+            extra: ["OPENCODE_CONFIG_CONTENT": #"{"plugins":["\#(fileURL)"]}"#])
+        let installations = try self.installations(from: result)
+        let samePath = installations.filter { $0["path"] as? String == plugin }
+        #expect(samePath.count == 2)
+        #expect(samePath.contains { $0["installationStatus"] as? String == "configured" })
+        #expect(samePath.contains { $0["installationStatus"] as? String == "discovered" })
+
+        let requestsPath = try tree.file(
+            "requests.json",
+            contents: """
+                [{"host":"opencode","action":"disable-local","target":"\(plugin)",
+                  "scope":"user","scopeRoot":"\(home)"}]
+                """)
+        let plan = try CLIRunner.run(
+            ["plugins", "plan", "--requests", requestsPath],
+            environment: fixtureEnvironment(
+                home: home, path: tree.path + "/bin:/usr/bin:/bin",
+                extra: ["OPENCODE_CONFIG_CONTENT": #"{"plugins":["\#(fileURL)"]}"#]))
+        #expect(plan.exitCode == 1)
+        #expect(
+            String(data: plan.stderr, encoding: .utf8)?.contains(
+                "explicit or alternate discovery reference")
+                == true)
+        #expect(FileManager.default.fileExists(atPath: plugin))
+    }
+
+    @Test("OpenCode remote file URLs are reported and have no local path")
+    func invalidOpenCodeFileURL() throws {
+        let tree = try TempTree()
+        let home = tree.path + "/home"
+        let result = try scan(
+            home: home,
+            extra: [
+                "OPENCODE_CONFIG_CONTENT": #"{"plugins":["file://remote.invalid/tmp/plugin.ts"]}"#
+            ])
+        let installations = try self.installations(from: result)
+        #expect(
+            installations.contains {
+                $0["identifier"] as? String == "file://remote.invalid/tmp/plugin.ts"
+                    && $0["path"] == nil
+            })
+        let inventory = try #require(result["pluginInventory"] as? [String: Any])
+        let issues = try #require(inventory["issues"] as? [[String: Any]])
+        #expect(issues.contains { $0["path"] as? String == "file://remote.invalid/tmp/plugin.ts" })
+    }
+
     @Test("CLI scan reports malformed JSONC instead of partial config state")
     func malformedJSONC() throws {
         let tree = try TempTree()
@@ -126,7 +185,7 @@ struct PluginInventoryConfigTests {
         try tree.file(
             plugin + "/plugin.json",
             contents:
-                #"{"$schema":"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json","hooks":{}}"#
+                #"{"$schema":"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json","hooks":{"SessionStart":[]}}"#
         )
         try tree.file(plugin + "/.codex-plugin/plugin.json", contents: #"{"mcpServers":{}}"#)
         try tree.file(plugin + "/.claude-plugin/plugin.json", contents: #"{"lspServers":{}}"#)
@@ -167,10 +226,21 @@ struct PluginInventoryConfigTests {
         #expect(!kinds.contains("hooks"))
     }
 
-    private func scan(
-        home: String, roots: [String] = [], extra: [String: String] = [:]
+    func scan(
+        home: String, roots: [String] = [], extra: [String: String] = [:],
+        path: String = "/usr/bin:/bin"
     ) throws -> [String: Any] {
-        var environment = CLIRunner.fixtureEnvironment(home: home, roots: roots)
+        let environment = fixtureEnvironment(home: home, roots: roots, path: path, extra: extra)
+        let result = try CLIRunner.run(["scan", "--format", "json"], environment: environment)
+        #expect(result.exitCode == 0)
+        return try #require(try result.jsonObject())
+    }
+
+    private func fixtureEnvironment(
+        home: String, roots: [String] = [], path: String = "/usr/bin:/bin",
+        extra: [String: String] = [:]
+    ) -> [String: String] {
+        var environment = CLIRunner.fixtureEnvironment(home: home, roots: roots, path: path)
         environment.removeValue(forKey: SukiruEnvironment.sukiruHomeKey)
         environment[SukiruEnvironment.homeKey] = home
         environment[SukiruEnvironment.xdgConfigHomeKey] = home + "/.config"
@@ -179,12 +249,10 @@ struct PluginInventoryConfigTests {
             environment.removeValue(forKey: key)
         }
         environment.merge(extra) { _, new in new }
-        let result = try CLIRunner.run(["scan", "--format", "json"], environment: environment)
-        #expect(result.exitCode == 0)
-        return try #require(try result.jsonObject())
+        return environment
     }
 
-    private func installations(from report: [String: Any]) throws -> [[String: Any]] {
+    func installations(from report: [String: Any]) throws -> [[String: Any]] {
         let inventory = try #require(report["pluginInventory"] as? [String: Any])
         return inventory["installations"] as? [[String: Any]] ?? []
     }

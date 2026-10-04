@@ -5,6 +5,84 @@ import Testing
 
 @Suite("Explicit file bounds rollback", .serialized)
 struct RollbackGenericIntegrationTests {
+    @Test(
+        "Incomplete post-state keeps history and recovers only chosen snapshot files",
+        arguments: [false, true])
+    func incompleteEvidenceRecovery(replaceWithDirectory: Bool) throws {
+        let tree = try TempTree()
+        let root = try tree.dir("host")
+        let config = try tree.file("host/config", contents: "snapshot config")
+        let kept = try tree.file("host/kept", contents: "snapshot kept")
+        let script = try tree.executable(
+            "bin/mutate",
+            contents: """
+                #!/bin/sh
+                printf '%s' 'batch config' > "$HOME/host/config"
+                printf '%s' 'batch kept' > "$HOME/host/kept"
+                mkfifo "$HOME/host/unsupported"
+                printf '%s' 'unknown addition' > "$HOME/host/added"
+                """)
+        let command = BatchCommand(
+            argv: [script], displayString: script, owningCLI: .vercel,
+            intent: "Create unsupported post-state in isolated fixture", dangerFlags: [],
+            warning: nil,
+            captureRoots: [root])
+        let environment = ExecutorTestSupport.environment(home: tree.path)
+        #expect(throws: (any Error).self) {
+            try CLIExecutor(environment: environment).execute(
+                batch: ExecutorTestSupport.batch(commands: [command]),
+                report: ExecutorTestSupport.userReport(home: tree.path))
+        }
+        let recordPath =
+            tree.path + "/Library/Application Support/Sukiru/executions/batch-1/record.json"
+        let record = try JSONDecoder().decode(
+            ExecutionRecord.self, from: Data(contentsOf: URL(fileURLWithPath: recordPath)))
+        #expect(record.commands.first?.status == .succeeded)
+        #expect(record.fileEvidenceFailure?.contains("unsupported") == true)
+        let snapshot =
+            tree.path + "/Library/Application Support/Sukiru/snapshots/" + record.snapshotID
+        #expect(!FileManager.default.fileExists(atPath: snapshot + "/after.json"))
+        if replaceWithDirectory {
+            try FileManager.default.removeItem(atPath: config)
+            try tree.file("host/config/unknown", contents: "must survive")
+        }
+        let cliEnvironment = CLIRunner.fixtureEnvironment(home: tree.path, roots: [])
+        let refused = try CLIRunner.run(
+            ["rollback", "--batch", "batch-1"], environment: cliEnvironment)
+        #expect(refused.exitCode == 1)
+        let preview = try #require(try refused.jsonObject())
+        #expect(preview["fileEvidenceFailure"] as? String == record.fileEvidenceFailure)
+        let conflicts = try #require(preview["conflicts"] as? [[String: Any]])
+        #expect(Set(conflicts.compactMap { $0["path"] as? String }) == [config, kept])
+        let recovered = try CLIRunner.run(
+            ["rollback", "--batch", "batch-1", "--restore", config, "--preserve", kept],
+            environment: cliEnvironment)
+        try verifyRecovery(
+            recovered, root: root, config: config, kept: kept, replacement: replaceWithDirectory)
+    }
+
+    private func verifyRecovery(
+        _ recovered: CLIRunner.Result, root: String, config: String, kept: String, replacement: Bool
+    ) throws {
+        #expect(recovered.exitCode == 0)
+        #expect(try String(contentsOfFile: kept, encoding: .utf8) == "batch kept")
+        #expect(try String(contentsOfFile: root + "/added", encoding: .utf8) == "unknown addition")
+        #expect(DefaultFileSystemProbe().entryKind(atPath: root + "/unsupported") != nil)
+        if replacement {
+            #expect(
+                try String(contentsOfFile: config + "/unknown", encoding: .utf8) == "must survive")
+            let result = try #require(try recovered.jsonObject())
+            let items = try #require(result["items"] as? [[String: Any]])
+            #expect(
+                items.contains {
+                    $0["path"] as? String == config
+                        && $0["category"] as? String == "unrestorable-with-reason"
+                })
+        } else {
+            #expect(try String(contentsOfFile: config, encoding: .utf8) == "snapshot config")
+        }
+    }
+
     @Test("Recorded post-state protects mixed file edits, deletions, additions and links")
     func mixedFileConflicts() throws {
         let tree = try TempTree()

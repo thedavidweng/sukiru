@@ -10,6 +10,10 @@ struct RollbackConflictSheet: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Review Rollback Conflicts").font(.headline)
             Text("rollback.conflicts.message").fixedSize(horizontal: false, vertical: true)
+            if let failure = preview.fileEvidenceFailure {
+                Text("rollback.recovery.message").fixedSize(horizontal: false, vertical: true)
+                Text(verbatim: failure).font(.caption).foregroundStyle(.secondary)
+            }
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(preview.conflicts, id: \.path) { conflict in

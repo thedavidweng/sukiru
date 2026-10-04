@@ -36,7 +36,8 @@ struct PluginLifecycleCapture {
                 throw PluginLifecycleError(message: "Unbounded capture root: " + path)
             }
         }
-        return Result(paths: Array(Set(paths)).sorted(), requiresHostApproval: approval)
+        let complete = try PluginCaptureLinks.expand(paths, environment: environment)
+        return Result(paths: complete, requiresHostApproval: approval)
     }
 
     private func claudeRecordRoots() throws -> [String] {

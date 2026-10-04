@@ -1,12 +1,26 @@
 import Foundation
 
 extension RollbackFiles {
+    func recoveryConflicts(
+        manifest: SnapshotManifest, snapshotDirectory: String
+    ) throws -> [RollbackConflict] {
+        let sources = try snapshotSources(manifest: manifest, snapshotDirectory: snapshotDirectory)
+        return entries.keys.sorted().compactMap { path in
+            guard entries[path]?.kind != "directory" else { return nil }
+            let available =
+                entries[path]?.kind == "link"
+                || sources[path].map { FileManager.default.fileExists(atPath: $0) } == true
+            return RollbackConflict(path: path, kind: .modified, canRestore: available)
+        }
+    }
+
     private struct RestorePlan {
         let sources: [String: String]
         let links: [String: String]
         let added: Set<String>
         let directories: Set<String>
         let preserved: Set<String>
+        let evidenceIncomplete: Bool
 
         var restoredPaths: [String] {
             Set(sources.keys).union(links.keys).union(directories).subtracting(added)
@@ -18,14 +32,15 @@ extension RollbackFiles {
     func restore(
         manifest: SnapshotManifest, snapshotDirectory: String,
         after: RollbackFiles, current: RollbackFiles,
-        choices: [String: RollbackChoice]
+        choices: [String: RollbackChoice], evidenceIncomplete: Bool = false
     ) throws -> [RestoreItem] {
         let plan = try restorePlan(
             manifest: manifest, snapshotDirectory: snapshotDirectory,
-            after: after, current: current, choices: choices)
+            after: after, current: current, choices: choices, evidenceIncomplete: evidenceIncomplete
+        )
         var items = deleteAdded(plan: plan, current: current)
         items += restoreEntries(plan: plan)
-        items += try pruneContainers(roots: after.roots)
+        if !evidenceIncomplete { items += try pruneContainers(roots: after.roots) }
         items = reportPayloadFailures(manifest: manifest, items: items)
         items += plan.preserved.sorted().map {
             RestoreItem(path: $0, category: .preservedCurrent, reason: nil)
@@ -36,21 +51,9 @@ extension RollbackFiles {
     private func restorePlan(
         manifest: SnapshotManifest, snapshotDirectory: String,
         after: RollbackFiles, current: RollbackFiles,
-        choices: [String: RollbackChoice]
+        choices: [String: RollbackChoice], evidenceIncomplete: Bool = false
     ) throws -> RestorePlan {
-        var sources = try SnapshotStore.genericSources(snapshotDirectory: snapshotDirectory)
-        for payload in manifest.payloads {
-            let stored = HostPathResolver.join(snapshotDirectory, payload.storedDir)
-            for path in entries.keys
-            where path == payload.path || path.hasPrefix(payload.path + "/") {
-                sources[path] = stored + path.dropFirst(payload.path.count)
-            }
-        }
-        for ledger in manifest.ledgers {
-            if let stored = ledger.storedFile {
-                sources[ledger.path] = HostPathResolver.join(snapshotDirectory, stored)
-            }
-        }
+        let sources = try snapshotSources(manifest: manifest, snapshotDirectory: snapshotDirectory)
         var links = Dictionary(
             uniqueKeysWithValues: manifest.placements.compactMap { placement in
                 placement.linkTarget.map { (placement.path, $0) }
@@ -65,7 +68,26 @@ extension RollbackFiles {
             sources: sources, links: links, added: added,
             directories: Set(
                 manifest.preExistingDirectories.filter { entries[$0]?.kind == "directory" }),
-            preserved: preserved)
+            preserved: preserved, evidenceIncomplete: evidenceIncomplete)
+    }
+
+    private func snapshotSources(
+        manifest: SnapshotManifest, snapshotDirectory: String
+    ) throws -> [String: String] {
+        var sources = try SnapshotStore.genericSources(snapshotDirectory: snapshotDirectory)
+        for payload in manifest.payloads {
+            let stored = HostPathResolver.join(snapshotDirectory, payload.storedDir)
+            for path in entries.keys
+            where path == payload.path || path.hasPrefix(payload.path + "/") {
+                sources[path] = stored + path.dropFirst(payload.path.count)
+            }
+        }
+        for ledger in manifest.ledgers {
+            if let stored = ledger.storedFile {
+                sources[ledger.path] = HostPathResolver.join(snapshotDirectory, stored)
+            }
+        }
+        return sources
     }
 
     private func deleteAdded(plan: RestorePlan, current: RollbackFiles) -> [RestoreItem] {
@@ -105,12 +127,26 @@ extension RollbackFiles {
 
     private func restoreEntry(_ path: String, plan: RestorePlan) throws {
         let manager = FileManager.default
+        let kind = DefaultFileSystemProbe().entryKind(atPath: path)
+        if let target = plan.links[path], case .symlink(let current) = kind, current == target {
+            return
+        }
         if entries[path]?.kind == "directory" || plan.directories.contains(path) {
+            if plan.evidenceIncomplete, kind != nil, kind != .directory {
+                throw SnapshotError.captureFailed(
+                    "recovery cannot replace an uncaptured entry at \(path)")
+            }
             if DefaultFileSystemProbe().entryKind(atPath: path) != .directory {
                 try replace(path, preserved: plan.preserved)
                 try manager.createDirectory(atPath: path, withIntermediateDirectories: true)
             }
             return
+        }
+        if plan.evidenceIncomplete, kind == .directory {
+            if !(try manager.contentsOfDirectory(atPath: path)).isEmpty {
+                throw SnapshotError.captureFailed(
+                    "recovery cannot remove uncaptured children at \(path)")
+            }
         }
         if let source = plan.sources[path], entries[path]?.kind == "file" {
             _ = try Data(contentsOf: URL(fileURLWithPath: source))
@@ -166,8 +202,15 @@ extension RollbackFiles {
 
     private func checkParents(_ path: String) throws {
         var parent = URL(fileURLWithPath: path).deletingLastPathComponent().path
-        while roots.contains(where: { parent == $0 || parent.hasPrefix($0 + "/") }) {
-            if case .symlink = DefaultFileSystemProbe().entryKind(atPath: parent) {
+        while parent != "/" {
+            let insideBounds = roots.contains { parent == $0 || parent.hasPrefix($0 + "/") }
+            let kind = DefaultFileSystemProbe().entryKind(atPath: parent)
+            let isLink = if case .symlink = kind { true } else { false }
+            if entries[parent]?.kind == "link", !isLink {
+                throw SnapshotError.captureFailed(
+                    "restore would traverse changed link at \(parent)")
+            }
+            if insideBounds || entries[parent]?.kind == "link", isLink {
                 let target = try FileManager.default.destinationOfSymbolicLink(atPath: parent)
                 guard entries[parent] == Entry(kind: "link", detail: target) else {
                     throw SnapshotError.captureFailed(

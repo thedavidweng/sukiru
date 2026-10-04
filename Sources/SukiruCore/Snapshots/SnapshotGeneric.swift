@@ -10,6 +10,9 @@ extension SnapshotStore {
             stored[path] = relative
             let captured = try RollbackFiles.capture(roots: [path])
             guard captured.entries[path] != nil else { continue }
+            // Raw link targets are stored in before.json; copying protected
+            // system-link metadata is unnecessary for byte/identity restoration.
+            if captured.entries[path]?.kind == "link" { continue }
             let destination = HostPathResolver.join(staging, relative)
             // Validate every entry before copying: unsupported file kinds
             // and read failures must stop the batch before execution.
@@ -38,7 +41,9 @@ extension SnapshotStore {
         for (path, relative) in roots {
             try Self.validateStoredPath(relative, snapshotID: snapshotDirectory)
             let stored = HostPathResolver.join(snapshotDirectory, relative)
-            for entry in before.entries.keys where entry == path || entry.hasPrefix(path + "/") {
+            let directory = before.entries[path]?.kind == "directory"
+            for entry in before.entries.keys
+            where entry == path || (directory && entry.hasPrefix(path + "/")) {
                 sources[entry] = stored + entry.dropFirst(path.count)
             }
         }

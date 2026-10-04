@@ -46,26 +46,4 @@ public struct PluginInventoryReader: Sendable {
         }
     }
 
-    func components(at path: String?, manifest: [String: Any]?) -> [PluginComponent] {
-        guard let path else { return [] }
-        var result: [PluginComponent] = []
-        for kind in ["skills", "commands", "agents"] {
-            let directory = HostPathResolver.join(path, kind)
-            guard let names = try? FileManager.default.contentsOfDirectory(atPath: directory) else {
-                continue
-            }
-            for name in names.sorted() where !name.hasPrefix(".") {
-                let componentPath = HostPathResolver.join(directory, name)
-                let hasSkill = FileManager.default.fileExists(
-                    atPath: HostPathResolver.join(componentPath, "SKILL.md"))
-                if kind != "skills" || hasSkill {
-                    result.append(PluginComponent(kind: kind, name: name, path: componentPath))
-                }
-            }
-        }
-        for key in ["hooks", "mcpServers", "lspServers"] where manifest?[key] != nil {
-            result.append(PluginComponent(kind: key, name: key, path: nil))
-        }
-        return result
-    }
 }

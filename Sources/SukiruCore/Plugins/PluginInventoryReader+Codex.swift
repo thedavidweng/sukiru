@@ -44,7 +44,8 @@ extension PluginInventoryReader {
                     scope: root == environment.home ? "user" : "project", scopeRoot: root,
                     version: version, path: path,
                     enablement: fields["enabled"] == "false" ? .disabled : .enabled,
-                    loadStatus: "unknown", components: components(at: path, manifest: manifest),
+                    loadStatus: "unknown",
+                    components: components(at: path, manifest: manifest, issues: &issues),
                     installationStatus: path == nil ? "configured" : "installed"))
         }
         return installations

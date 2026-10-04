@@ -51,6 +51,8 @@ public struct RollbackRecord: Codable, Equatable, Sendable {
     public let batchStatus: BatchStatus
     /// Itemized outcome, sorted by path (SnapshotStore.restore).
     public let items: [RestoreItem]
+    /// Recovery preserved unknown paths because no complete post-state exists.
+    public let fileEvidenceFailure: String?
 
     public init(
         schemaVersion: Int = RollbackRecord.currentSchemaVersion,
@@ -58,7 +60,7 @@ public struct RollbackRecord: Codable, Equatable, Sendable {
         snapshotID: String,
         rolledBackAt: String,
         batchStatus: BatchStatus = .rolledBack,
-        items: [RestoreItem]
+        items: [RestoreItem], fileEvidenceFailure: String? = nil
     ) {
         self.schemaVersion = schemaVersion
         self.batchID = batchID
@@ -66,6 +68,7 @@ public struct RollbackRecord: Codable, Equatable, Sendable {
         self.rolledBackAt = rolledBackAt
         self.batchStatus = batchStatus
         self.items = items
+        self.fileEvidenceFailure = fileEvidenceFailure
     }
 
     /// Deterministic JSON encoding (sorted keys).
@@ -130,33 +133,46 @@ public struct Rollback: Sendable {
         let manifest = try store.load(id: record.snapshotID)
         let snapshotDirectory = HostPathResolver.join(store.snapshotsRoot(), record.snapshotID)
         let before = try RollbackFiles.load(from: snapshotDirectory, name: "before.json")
-        let after = try RollbackFiles.load(from: snapshotDirectory, name: "after.json")
-        let current = try RollbackFiles.capture(roots: after.roots)
-        let conflicts = after.conflicts(with: current).map { conflict in
-            RollbackConflict(
-                path: conflict.path, kind: conflict.kind,
-                canRestore: before.entries[conflict.path] != nil
-                    || after.entries[conflict.path] != nil)
-        }
-        let preview = RollbackPreview(batchID: batchID, conflicts: conflicts)
+        let incomplete = record.fileEvidenceFailure != nil
+        let after =
+            incomplete
+            ? before : try RollbackFiles.load(from: snapshotDirectory, name: "after.json")
+        let current = incomplete ? before : try RollbackFiles.capture(roots: after.roots)
+        let conflicts =
+            try incomplete
+            ? before.recoveryConflicts(manifest: manifest, snapshotDirectory: snapshotDirectory)
+            : after.conflicts(with: current).map { conflict in
+                RollbackConflict(
+                    path: conflict.path, kind: conflict.kind,
+                    canRestore: before.entries[conflict.path] != nil
+                        || after.entries[conflict.path] != nil)
+            }
+        let preview = RollbackPreview(
+            batchID: batchID, conflicts: conflicts, fileEvidenceFailure: record.fileEvidenceFailure)
         if previewOnly { return (preview, nil) }
+        try validateChoices(choices, preview: preview)
+        let items = try before.restore(
+            manifest: manifest, snapshotDirectory: snapshotDirectory,
+            after: after, current: current, choices: choices, evidenceIncomplete: incomplete)
+        let result = RollbackRecord(
+            batchID: record.batchID,
+            snapshotID: record.snapshotID,
+            rolledBackAt: CLIExecutor.timestamp(dateProvider()),
+            items: items, fileEvidenceFailure: record.fileEvidenceFailure)
+        try result.jsonData().write(
+            to: URL(fileURLWithPath: rollbackPath), options: .atomic)
+        try markRolledBack(record, recordPath: recordPath)
+        return (preview, result)
+    }
+
+    private func validateChoices(
+        _ choices: [String: RollbackChoice], preview: RollbackPreview
+    ) throws {
         if preview.conflicts.contains(where: {
             choices[$0.path] == nil || (!$0.canRestore && choices[$0.path] == .restore)
         }) {
             throw RollbackError.conflicts(preview)
         }
-        let items = try before.restore(
-            manifest: manifest, snapshotDirectory: snapshotDirectory,
-            after: after, current: current, choices: choices)
-        let result = RollbackRecord(
-            batchID: record.batchID,
-            snapshotID: record.snapshotID,
-            rolledBackAt: CLIExecutor.timestamp(dateProvider()),
-            items: items)
-        try result.jsonData().write(
-            to: URL(fileURLWithPath: rollbackPath), options: .atomic)
-        try markRolledBack(record, recordPath: recordPath)
-        return (preview, result)
     }
 
     private func loadRecord(batchID: String, path: String) throws -> ExecutionRecord {
@@ -191,7 +207,8 @@ public struct Rollback: Sendable {
             diff: record.diff,
             affectedRoots: record.affectedRoots,
             affectedScope: record.affectedScope,
-            affectedWorkspaceIDs: record.affectedWorkspaceIDs)
+            affectedWorkspaceIDs: record.affectedWorkspaceIDs,
+            fileEvidenceFailure: record.fileEvidenceFailure, scanFailure: record.scanFailure)
         try updated.jsonData().write(
             to: URL(fileURLWithPath: recordPath), options: .atomic)
     }

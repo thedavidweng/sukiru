@@ -21,6 +21,15 @@ public struct RollbackConflict: Codable, Equatable, Sendable {
 public struct RollbackPreview: Codable, Equatable, Sendable {
     public let batchID: String
     public let conflicts: [RollbackConflict]
+    /// Recovery has no complete post-state: only explicitly chosen captured
+    /// entries can be restored, and unknown paths are never deleted.
+    public let fileEvidenceFailure: String?
+
+    init(batchID: String, conflicts: [RollbackConflict], fileEvidenceFailure: String? = nil) {
+        self.batchID = batchID
+        self.conflicts = conflicts
+        self.fileEvidenceFailure = fileEvidenceFailure
+    }
 
     public func jsonData() throws -> Data {
         try deterministicJSONData(self)

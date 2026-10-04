@@ -122,6 +122,11 @@ public struct ExecutionRecord: Codable, Equatable, Sendable {
     public let affectedRoots: [String]
     public let affectedScope: Scope
     public let affectedWorkspaceIDs: [String]
+    /// Non-nil when post-command file identities could not be committed.
+    /// Commands and the pre-execution snapshot remain available in history.
+    public let fileEvidenceFailure: String?
+    /// Non-nil when the semantic post-command scan did not complete.
+    public let scanFailure: String?
 
     public init(
         schemaVersion: Int = ExecutionRecord.currentSchemaVersion,
@@ -137,7 +142,9 @@ public struct ExecutionRecord: Codable, Equatable, Sendable {
         diff: BatchDiff,
         affectedRoots: [String],
         affectedScope: Scope,
-        affectedWorkspaceIDs: [String]
+        affectedWorkspaceIDs: [String],
+        fileEvidenceFailure: String? = nil,
+        scanFailure: String? = nil
     ) {
         self.schemaVersion = schemaVersion
         self.batchID = batchID
@@ -153,10 +160,31 @@ public struct ExecutionRecord: Codable, Equatable, Sendable {
         self.affectedRoots = affectedRoots
         self.affectedScope = affectedScope
         self.affectedWorkspaceIDs = affectedWorkspaceIDs
+        self.fileEvidenceFailure = fileEvidenceFailure
+        self.scanFailure = scanFailure
     }
 
     /// Deterministic JSON encoding (sorted keys), like the batch itself.
     public func jsonData() throws -> Data {
         try deterministicJSONData(self)
+    }
+
+    /// Updates only post-command evidence; the command outcome stays intact.
+    func recordPostState(
+        diff: BatchDiff, fileEvidenceFailure: String? = nil, scanFailure: String? = nil
+    ) throws -> ExecutionRecord {
+        let record = ExecutionRecord(
+            schemaVersion: schemaVersion, batchID: batchID, snapshotID: snapshotID,
+            batchStatus: fileEvidenceFailure != nil || scanFailure != nil
+                || !commands.allSatisfy({ $0.status == .succeeded }) ? .failed : .succeeded,
+            commandTimeoutSeconds: commandTimeoutSeconds,
+            startedAt: startedAt, endedAt: endedAt, durationSeconds: durationSeconds,
+            recordDirectory: recordDirectory, commands: commands, diff: diff,
+            affectedRoots: affectedRoots, affectedScope: affectedScope,
+            affectedWorkspaceIDs: affectedWorkspaceIDs,
+            fileEvidenceFailure: fileEvidenceFailure, scanFailure: scanFailure)
+        let path = HostPathResolver.join(recordDirectory, "record.json")
+        try record.jsonData().write(to: URL(fileURLWithPath: path), options: .atomic)
+        return record
     }
 }

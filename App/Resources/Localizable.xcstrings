@@ -1370,6 +1370,16 @@
         }
       }
     },
+    "Execution Evidence Incomplete" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "执行证据不完整"
+          }
+        }
+      }
+    },
     "Expected hash" : {
       "comment" : "Finding evidence label.",
       "localizations" : {
@@ -1738,6 +1748,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "信息"
+          }
+        }
+      }
+    },
+    "Inspect static compatibility evidence and historical errors" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看静态兼容性证据及历史错误"
           }
         }
       }
@@ -2737,6 +2757,16 @@
         }
       }
     },
+    "Open the official producer migration guide" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开官方作者迁移指南"
+          }
+        }
+      }
+    },
     "Operation" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2892,6 +2922,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "插件安装实例"
+          }
+        }
+      }
+    },
+    "Plugin compatibility checks need review" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "插件兼容性检查需要复核"
           }
         }
       }
@@ -4352,6 +4392,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "批次已执行，资源库没有任何改动。"
+          }
+        }
+      }
+    },
+    "The file diff is unavailable because post-execution evidence failed." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "执行后取证失败，文件差异不可用。"
           }
         }
       }
@@ -6754,6 +6804,22 @@
         }
       }
     },
+    "rollback.recovery.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Post-execution file evidence is incomplete. Choose an action for each captured file. Recovery restores only chosen snapshot files and preserves all unknown paths; directories containing unknown files cannot be replaced."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "执行后的文件证据不完整。请为每个已捕获文件选择操作。恢复仅还原明确选择的快照文件，并保留所有未知路径；包含未知文件的目录不能被替换。"
+          }
+        }
+      }
+    },
     "search.noOwnerResults %@" : {
       "comment" : "Search empty state title: the owner filter (a GitHub login) matched no skills.",
       "localizations" : {
@@ -6926,6 +6992,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无变更"
+          }
+        }
+      }
+    },
+    "snapshots.evidenceIncomplete.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commands ran, but post-execution evidence is incomplete. Inspect the recorded error before choosing recovery. Unknown paths are preserved."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "命令已执行，但执行后的证据不完整。选择恢复操作前，请查看记录的错误。未知路径将被保留。"
           }
         }
       }

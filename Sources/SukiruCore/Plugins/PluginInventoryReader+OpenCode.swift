@@ -63,7 +63,8 @@ extension PluginInventoryReader {
         for layer in scope.layers {
             for (file, object) in openCodeObjects(in: layer, issues: &issues) {
                 let plugins = configuredPlugins(
-                    in: object, file: file, layer: layer, scopeRoot: scope.root)
+                    in: object, file: file, layer: layer, scopeRoot: scope.root,
+                    issues: &issues)
                 for plugin in plugins {
                     configured[plugin.id] = plugin
                 }
@@ -100,15 +101,14 @@ extension PluginInventoryReader {
     }
 
     private func configuredPlugins(
-        in object: [String: Any], file: String, layer: OpenCodeLayer, scopeRoot: String
+        in object: [String: Any], file: String, layer: OpenCodeLayer, scopeRoot: String,
+        issues: inout [Issue]
     ) -> [PluginInstallation] {
         ["plugin", "plugins"].flatMap { key in
             packages(in: object[key])
                 .filter { !isControlDirective($0) }
                 .map { package in
-                    let path =
-                        isLocal(package)
-                        ? resolvePluginPath(package, relativeTo: layer.directory) : nil
+                    let path = localPath(package, relativeTo: layer.directory, issues: &issues)
                     return PluginInstallation(
                         host: .opencode, source: package, identifier: package,
                         scope: scopeRoot == environment.home ? "user" : "project",
@@ -175,8 +175,28 @@ extension PluginInventoryReader {
         package == "*" || package == ".*" || package.hasPrefix("-")
     }
 
-    private func isLocal(_ package: String) -> Bool {
-        package.hasPrefix(".") || package.hasPrefix("/") || package.hasPrefix("file:")
+    private func localPath(
+        _ package: String, relativeTo directory: String, issues: inout [Issue]
+    ) -> String? {
+        if package.hasPrefix("file:") {
+            guard let components = URLComponents(string: package),
+                components.scheme?.lowercased() == "file",
+                components.host == nil || components.host?.isEmpty == true
+                    || components.host?.lowercased() == "localhost",
+                components.query == nil, components.fragment == nil,
+                let path = components.percentEncodedPath.removingPercentEncoding,
+                path.hasPrefix("/"), !path.contains("\0")
+            else {
+                issues.append(
+                    Issue(
+                        kind: "plugin-config", path: package,
+                        message: "Expected a local absolute file URL"))
+                return nil
+            }
+            return URL(fileURLWithPath: path).standardizedFileURL.path
+        }
+        guard package.hasPrefix(".") || package.hasPrefix("/") else { return nil }
+        return resolvePluginPath(package, relativeTo: directory)
     }
 
     private func openCodeLocal(_ directory: String, root: String) -> [PluginInstallation] {

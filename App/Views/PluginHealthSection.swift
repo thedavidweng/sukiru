@@ -24,7 +24,10 @@ struct PluginHealthSection: View {
                     }
                     Link(
                         "Producer Migration Instructions",
-                        destination: URL(string: PluginLocalDisable.migrationURL)!)
+                        destination: URL(string: PluginLocalDisable.migrationURL)!
+                    )
+                    .accessibilityIdentifier("sukiru.plugins.health.migration.\(finding.id)")
+                    .help("Open the official producer migration guide")
                     if let plugin = state.report?.pluginInventory?.installations.first(where: {
                         $0.id == finding.pluginID
                     }) {
@@ -39,6 +42,7 @@ struct PluginHealthSection: View {
                     Label("Legacy Plugin Definition", systemImage: "exclamationmark.triangle")
                 }
                 .accessibilityIdentifier("sukiru.plugins.health.\(finding.id)")
+                .help("Inspect static compatibility evidence and historical errors")
             }
         }
     }

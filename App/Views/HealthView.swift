@@ -137,9 +137,12 @@ struct HealthView: View {
     /// Counts problems, not notes; the full row count (notes included)
     /// still equals the rendered rows.
     private var summaryText: String {
-        let problems = problemEntries.count + state.visiblePluginFindings.count
+        let problems = problemEntries.count
         let fixable = state.fixableEntries(problemEntries).count
         if problems == 0 {
+            if !state.visiblePluginFindings.isEmpty {
+                return String(localized: "Plugin compatibility checks need review")
+            }
             return String(localized: "No problems")
         }
         return String(localized: "\(problems) problems, \(fixable) fixable in one click")

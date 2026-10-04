@@ -73,7 +73,8 @@ extension PluginInventoryReader {
                         scope: installationScope, scopeRoot: root,
                         version: entry["version"] as? String, path: path,
                         enablement: enabled.map { $0 ? .enabled : .disabled } ?? .unknown,
-                        loadStatus: "unknown", components: components(at: path, manifest: manifest))
+                        loadStatus: "unknown",
+                        components: components(at: path, manifest: manifest, issues: &issues))
                 )
             }
         }
