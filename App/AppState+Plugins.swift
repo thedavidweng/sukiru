@@ -13,48 +13,63 @@ struct PluginManagementState {
     var error: String?
 }
 
-/// Hosts pinned to the sidebar's Plugins section, in the user's order.
-/// Stored with `@AppStorage`, so Settings and the sidebar stay in step.
+/// The sidebar's Plugins section: every host in the user's order, some
+/// hidden. Stored with `@AppStorage` as `claude,-codex,opencode` (a leading
+/// `-` hides a host), so Settings and the sidebar stay in step.
 struct SidebarPluginHosts: RawRepresentable, Equatable {
     static let defaultsKey = "sidebarPluginHosts"
-    static let all = SidebarPluginHosts(hosts: PluginHost.allCases)
+    static let all = SidebarPluginHosts(rawValue: "")!
 
-    private(set) var hosts: [PluginHost]
-
-    init(hosts: [PluginHost]) { self.hosts = hosts }
+    private(set) var order: [PluginHost]
+    private(set) var hidden: Set<PluginHost>
 
     init?(rawValue: String) {
-        var hosts: [PluginHost] = []
-        for name in rawValue.split(separator: ",") {
-            if let host = PluginHost(rawValue: String(name)), !hosts.contains(host) {
-                hosts.append(host)
-            }
+        var order: [PluginHost] = []
+        var hidden: Set<PluginHost> = []
+        for entry in rawValue.split(separator: ",") {
+            let isHidden = entry.hasPrefix("-")
+            guard let host = PluginHost(rawValue: String(entry.drop { $0 == "-" })),
+                !order.contains(host)
+            else { continue }
+            order.append(host)
+            if isHidden { hidden.insert(host) }
         }
-        self.hosts = hosts
+        self.order = order + PluginHost.allCases.filter { !order.contains($0) }
+        self.hidden = hidden
     }
 
-    var rawValue: String { hosts.map(\.rawValue).joined(separator: ",") }
+    var rawValue: String {
+        order.map { (hidden.contains($0) ? "-" : "") + $0.rawValue }.joined(separator: ",")
+    }
 
-    var hiddenHosts: [PluginHost] { PluginHost.allCases.filter { !hosts.contains($0) } }
+    /// The hosts the sidebar shows, in order.
+    var hosts: [PluginHost] { order.filter { !hidden.contains($0) } }
 
     mutating func set(_ host: PluginHost, pinned: Bool) {
-        guard pinned != hosts.contains(host) else { return }
-        if pinned {
-            hosts.append(host)
-        } else {
-            hosts.removeAll { $0 == host }
-        }
-    }
-
-    /// Reorders pinned hosts dropped as their raw values; other text is ignored.
-    mutating func drop(_ names: [String], at offset: Int) {
-        let indices = IndexSet(
-            names.compactMap { name in hosts.firstIndex { $0.rawValue == name } })
-        if !indices.isEmpty { move(from: indices, to: offset) }
+        if pinned { hidden.remove(host) } else { hidden.insert(host) }
     }
 
     mutating func move(from source: IndexSet, to destination: Int) {
-        hosts.move(fromOffsets: source, toOffset: destination)
+        order.move(fromOffsets: source, toOffset: destination)
+    }
+
+    /// Puts `host` where `target` is, shifting the hosts in between.
+    mutating func move(_ host: PluginHost, to target: PluginHost) {
+        guard let source = order.firstIndex(of: host),
+            let destination = order.firstIndex(of: target), source != destination
+        else { return }
+        order.move(
+            fromOffsets: [source], toOffset: destination > source ? destination + 1 : destination)
+    }
+
+    /// Swaps a shown host with its shown neighbour; hidden hosts keep their places.
+    mutating func move(_ host: PluginHost, by step: Int) {
+        let shown = hosts
+        guard let index = shown.firstIndex(of: host), shown.indices.contains(index + step),
+            let source = order.firstIndex(of: host),
+            let target = order.firstIndex(of: shown[index + step])
+        else { return }
+        order.swapAt(source, target)
     }
 }
 

@@ -1284,12 +1284,12 @@
         }
       }
     },
-    "Drag hosts here or in the sidebar to change their order." : {
+    "Drag to change the order" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在此处或边栏中拖移宿主以更改顺序。"
+            "value" : "拖移以更改顺序"
           }
         }
       }
@@ -4350,6 +4350,16 @@
         }
       }
     },
+    "Show in Sidebar" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在边栏中显示"
+          }
+        }
+      }
+    },
     "Show plugins managed by this host" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4751,6 +4761,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "工具"
+          }
+        }
+      }
+    },
+    "Turn on the hosts to show in the sidebar. Drag them to change their order." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开要在边栏中显示的宿主。拖移它们以更改顺序。"
           }
         }
       }

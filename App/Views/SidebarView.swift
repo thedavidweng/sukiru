@@ -6,6 +6,7 @@ import SwiftUI
 struct SidebarView: View {
     @EnvironmentObject private var state: AppState
     @AppStorage(SidebarPluginHosts.defaultsKey) private var pluginHosts = SidebarPluginHosts.all
+    @Environment(\.openSettings) private var openSettings
 
     private enum Destination: Hashable {
         case surface(AppState.Surface)
@@ -81,9 +82,7 @@ struct SidebarView: View {
                         pluginRow(host)
                             .badge(state.pluginInstallations(for: host).count)
                             .tag(Destination.plugins(host))
-                            .pluginHostDraggable(host)
                     }
-                    .dropDestination(for: String.self) { pluginHosts.drop($0, at: $1) }
                 }
             }
             Section("Tools") {
@@ -132,8 +131,9 @@ struct SidebarView: View {
         }
     }
 
-    /// Drag reorders the section; the menu offers the same moves for
-    /// keyboard and VoiceOver users, and Settings restores hidden hosts.
+    /// Reordering stays in the menu and in Settings: the system's drag image
+    /// for a vibrant sidebar row drops the vibrancy and renders black in Dark
+    /// Mode, while Settings' plain list drags correctly.
     private func pluginRow(_ host: PluginHost) -> some View {
         let index = pluginHosts.hosts.firstIndex(of: host) ?? 0
         return HStack(spacing: 0) {
@@ -147,20 +147,18 @@ struct SidebarView: View {
         .help("Show plugins managed by this host")
         .contextMenu {
             Button("Move Up") {
-                pluginHosts.move(from: [index], to: index - 1)
+                pluginHosts.move(host, by: -1)
             }
             .disabled(index == 0)
             Button("Move Down") {
-                pluginHosts.move(from: [index], to: index + 2)
+                pluginHosts.move(host, by: 1)
             }
             .disabled(index == pluginHosts.hosts.count - 1)
             Divider()
             Button("Remove from Sidebar") {
                 pluginHosts.set(host, pinned: false)
             }
-            SettingsLink {
-                Text("Customize Sidebar…")
-            }
+            Button("Customize Sidebar…") { openSettings() }
         }
     }
 
@@ -213,22 +211,6 @@ extension View {
             safeAreaBar(edge: .bottom, spacing: 0, content: footer)
         } else {
             safeAreaInset(edge: .bottom, spacing: 0, content: footer)
-        }
-    }
-
-    /// Drags a plugin host row by its raw value. The system's snapshot of a
-    /// sidebar row loses its vibrant styling and renders as a black
-    /// silhouette, so the preview draws the label on a semantic background.
-    func pluginHostDraggable(_ host: PluginHost) -> some View {
-        draggable(host.rawValue) {
-            Label {
-                Text(verbatim: host.displayName)
-            } icon: {
-                AgentLogo(hostID: host.agentID, size: 16)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(.background, in: .rect(cornerRadius: 6))
         }
     }
 }

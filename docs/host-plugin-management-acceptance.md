@@ -31,8 +31,11 @@ and runtime-loaded status remain separate; runtime status is unknown.
 Skills and Plugins are separate sidebar destinations (stories 1 and 6): the
 Library toolbar is unchanged, and the Plugins section lists Claude Code,
 Codex, and OpenCode separately with their own counts. Users choose which hosts
-the section shows and their order, by dragging or the row menu in the sidebar,
-or in General settings. A host's list groups
+the section shows and their order in General settings (a native reorderable
+list with a switch per host, plus Move Up/Down in the row menu), or with Move Up/Down in
+the sidebar row menu. The sidebar
+itself does not drag: the system drag image of a vibrant sidebar row renders
+black in Dark Mode. A host's list groups
 User Library and each added project (stories 7 to 9) and shows only that
 host's inspection issues. Rows carry an enablement switch where the host
 toggles plugins, plus inline update, local-disable and remove buttons; the

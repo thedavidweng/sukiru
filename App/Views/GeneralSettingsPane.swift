@@ -33,40 +33,76 @@ struct GeneralSettingsPane: View {
                 }
             }
             Section {
-                ForEach(pluginHosts.hosts, id: \.self) { host in
-                    pluginHostRow(host)
-                        .pluginHostDraggable(host)
+                // A grouped Form is not table-backed, so its rows cannot use
+                // the system reordering (insertion line, row drag image). A
+                // plain List inside the section can, and blends into the card.
+                List {
+                    ForEach(pluginHosts.order, id: \.self) { host in
+                        SidebarPluginHostRow(host: host, hosts: $pluginHosts)
+                    }
+                    .onMove { pluginHosts.move(from: $0, to: $1) }
                 }
-                .dropDestination(for: String.self) { pluginHosts.drop($0, at: $1) }
-                ForEach(pluginHosts.hiddenHosts, id: \.self) { pluginHostRow($0) }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .scrollDisabled(true)
+                .frame(height: CGFloat(PluginHost.allCases.count) * 32)
             } header: {
                 Text("Sidebar Plugins")
             } footer: {
-                Text("Drag hosts here or in the sidebar to change their order.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                Text(
+                    "Turn on the hosts to show in the sidebar. Drag them to change their order."
+                )
+                .font(.callout)
+                .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
-        .frame(width: 560, height: 360)
+        .frame(width: 560, height: 320)
         .onChange(of: language) { _, newValue in
             AppLanguage.override = newValue
         }
     }
+}
 
-    private func pluginHostRow(_ host: PluginHost) -> some View {
-        Toggle(
-            isOn: Binding(
-                get: { pluginHosts.hosts.contains(host) },
-                set: { pluginHosts.set(host, pinned: $0) })
-        ) {
+/// One host in Sidebar Plugins. The whole row drags through the List's
+/// native reordering; the handle only signals that it can.
+private struct SidebarPluginHostRow: View {
+    let host: PluginHost
+    @Binding var hosts: SidebarPluginHosts
+
+    var body: some View {
+        let index = hosts.order.firstIndex(of: host) ?? 0
+        HStack(spacing: 12) {
             Label {
                 Text(verbatim: host.displayName)
             } icon: {
                 AgentLogo(hostID: host.agentID, size: 16)
             }
+            Spacer()
+            Toggle("Show in Sidebar", isOn: shown)
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .accessibilityIdentifier("sukiru.settings.sidebarPlugins.\(host.rawValue)")
+                .help("Show this host's plugins in the sidebar")
+            Image(systemName: "line.3.horizontal")
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
+                .help("Drag to change the order")
         }
-        .accessibilityIdentifier("sukiru.settings.sidebarPlugins.\(host.rawValue)")
-        .help("Show this host's plugins in the sidebar")
+        .padding(.vertical, 4)
+        .contextMenu {
+            Button("Move Up") { hosts.move(host, to: hosts.order[index - 1]) }
+                .disabled(index == 0)
+            Button("Move Down") { hosts.move(host, to: hosts.order[index + 1]) }
+                .disabled(index == hosts.order.count - 1)
+            Divider()
+            Toggle("Show in Sidebar", isOn: shown)
+        }
+    }
+
+    private var shown: Binding<Bool> {
+        Binding(
+            get: { !hosts.hidden.contains(host) },
+            set: { hosts.set(host, pinned: $0) })
     }
 }
