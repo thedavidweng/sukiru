@@ -1,89 +1,249 @@
+import ArgumentParser
 import Foundation
 import SukiruCore
 
-func runPluginCommand(arguments: [String], environment: SukiruEnvironment) -> Bool {
-    guard arguments.first == "plugins" else { return false }
-    do {
-        guard arguments.count >= 2 else {
-            throw PluginLifecycleError(
-                message:
-                    "Use plugins plan|execute --requests FILE or plugins capabilities --host HOST")
+struct Plugins: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Agent Plugin inventory, health, lifecycle, and host-owned marketplaces.",
+        subcommands: [
+            PluginList.self, PluginHealth.self, PluginCapabilities.self, PluginInstall.self,
+            PluginUpdate.self, PluginEnable.self, PluginDisable.self, PluginUninstall.self,
+            PluginMarketplaces.self, PluginPlan.self, PluginExecute.self
+        ])
+}
+
+struct PluginList: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "list",
+        abstract: "List distinct Plugin Installations by host and concrete scope.")
+    @OptionGroup var inputs: ScopeOptions
+    @OptionGroup var output: OutputOptions
+    func run() throws {
+        let inventory = PluginInventoryReader(environment: try cliEnvironment(roots: inputs.roots))
+            .read(inputs.request)
+        let installations = inventory.installations.filter {
+            inputs.host == nil || $0.host == inputs.pluginHost
         }
-        if arguments[1] == "capabilities" {
-            guard arguments.count == 4, arguments[2] == "--host",
-                let host = PluginHost(rawValue: arguments[3])
-            else {
-                throw PluginLifecycleError(
-                    message: "Use plugins capabilities --host claude|codex|opencode")
-            }
-            let capabilities = try PluginLifecyclePlanner(environment: environment).capabilities(
-                host: host)
-            emitJSON(try JSONEncoder().encode(capabilities))
-            return true
-        }
-        try runPluginLifecycle(arguments: arguments, environment: environment)
-        return true
-    } catch {
-        emitError(error.localizedDescription)
-        exit(1)
+        try output.render(
+            installations,
+            lines: installations.map {
+                "\($0.host.rawValue) / \($0.scope) / \($0.scopeRoot): \($0.identifier) [\($0.source)] "
+                    + "enabled=\($0.enablement.rawValue) loaded=\($0.loadStatus)"
+            })
+        for issue in inventory.issues { emitError(issue.message) }
     }
 }
 
-private func runPluginLifecycle(arguments: [String], environment: SukiruEnvironment) throws {
-    guard ["plan", "execute"].contains(arguments[1]), arguments.count >= 4,
-        arguments[2] == "--requests"
-    else {
-        throw PluginLifecycleError(message: "Use plugins plan|execute --requests FILE")
+struct PluginHealth: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "health",
+        abstract: "Inspect plugin enablement, load status, and diagnosed Problems passively.")
+    @OptionGroup var inputs: ScopeOptions
+    @OptionGroup var output: OutputOptions
+    func run() throws {
+        let inventory = PluginInventoryReader(environment: try cliEnvironment(roots: inputs.roots))
+            .read(inputs.request)
+        try output.render(
+            inputs.selectedPlugins(inventory),
+            lines: inventory.installations.filter {
+                inputs.host == nil || $0.host == inputs.pluginHost
+            }.map {
+                "\($0.host.rawValue) / \($0.scopeRoot): \($0.identifier) "
+                    + "enabled=\($0.enablement.rawValue), loaded=\($0.loadStatus)"
+            } + inputs.selectedPlugins(inventory).healthFindings.map { "\($0.kind): \($0.path)" })
+        for issue in inventory.issues { emitError(issue.message) }
     }
-    let flags = Array(arguments.dropFirst(4))
-    guard flags.allSatisfy({ ["--reviewed", "--confirm-dangerous"].contains($0) }) else {
-        throw PluginLifecycleError(message: "Unknown plugin command flag")
+}
+
+struct PluginCapabilities: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "capabilities", abstract: "Explicitly probe the host-supported operations.")
+    @Option(help: "Agent Host: claude-code, codex, or opencode.") var host: String
+    @OptionGroup var output: OutputOptions
+    func run() throws {
+        guard let pluginHost = resolvedPluginHost(for: host) else {
+            throw CLIError("No Plugin interface for Agent Host \(host)")
+        }
+        let capabilities = try PluginLifecyclePlanner(environment: cliEnvironment()).capabilities(
+            host: pluginHost)
+        try output.render(
+            capabilities,
+            lines: [
+                "\(host) \(capabilities.version)",
+                "Supported: \(capabilities.nativeCandidates.joined(separator: ", "))"
+            ]
+                + capabilities.limits.keys.sorted().map {
+                    "\($0): \(capabilities.limits[$0] ?? "")"
+                })
     }
-    let requests = try JSONDecoder().decode(
-        [PluginLifecycleRequest].self,
-        from: Data(contentsOf: URL(fileURLWithPath: arguments[3])))
-    let report = try ScanEngine(environment: environment).scan(
-        ScanRequest(explicitRoots: environment.projectRoots, scope: .all))
-    let inventory = PluginInventoryReader(environment: environment).read(
-        ScanRequest(explicitRoots: environment.projectRoots, scope: .all))
+}
+
+struct PluginOperationOptions: ParsableArguments {
+    @Argument(help: "Host-recognized plugin or marketplace identifier/source.") var target: String
+    @OptionGroup var inputs: ScopeOptions
+    @OptionGroup var output: OutputOptions
+    @OptionGroup var mutation: MutationOptions
+
+    func run(action: String) throws {
+        let environment = try cliEnvironment(roots: inputs.roots)
+        guard let hostName = inputs.host, let host = resolvedPluginHost(for: hostName) else {
+            throw CLIError("Choose --host claude-code, codex, or opencode")
+        }
+        let targetScope = try inputs.installTarget(environment: environment)
+        let root: String
+        switch targetScope {
+        case .user: root = environment.home
+        case .project(let path): root = path
+        }
+        let request = PluginLifecycleRequest(
+            host: host, action: action, target: target,
+            scope: inputs.scope.rawValue, scopeRoot: root)
+        try runPluginRequests([request], inputs: inputs, output: output, mutation: mutation)
+    }
+}
+
+func runPluginRequests(
+    _ requests: [PluginLifecycleRequest], inputs: ScopeOptions,
+    output: OutputOptions, mutation: MutationOptions
+) throws {
+    let environment = try cliEnvironment(roots: inputs.roots)
+    let report = try ScanEngine(environment: environment).scan(inputs.mutationRequest)
+    let inventory = PluginInventoryReader(environment: environment).read(inputs.request)
     let plan = try PluginLifecyclePlanner(environment: environment).plan(
         requests: requests, inventory: inventory)
-    if arguments[1] == "plan" {
-        emitJSON(try JSONEncoder().encode(plan))
+    if mutation.dryRun || !plan.instructions.isEmpty || plan.batch == nil {
+        try output.render(
+            plan, lines: (plan.batch?.reviewLines ?? []) + plan.impacts + plan.instructions)
+        if !mutation.dryRun && !plan.instructions.isEmpty {
+            throw CLIError(
+                "Operation requires the official host workflow; follow the reported instructions")
+        }
         return
     }
-    try executePluginPlan(plan, flags: flags, report: report, environment: environment)
+    try mutation.apply(plan.batch, report: report, environment: environment, output: output)
 }
 
-private func executePluginPlan(
-    _ plan: PluginLifecyclePlan, flags: [String], report: ScanReport,
-    environment: SukiruEnvironment
-) throws {
-    guard plan.instructions.isEmpty, let batch = plan.batch else {
-        emitJSON(try JSONEncoder().encode(plan))
-        throw PluginLifecycleError(
-            message: "Operation incomplete; follow the host instructions and refresh afterwards"
-        )
+struct PluginMarketplaces: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "marketplaces", abstract: "Host-owned marketplace operations.",
+        subcommands: [
+            PluginMarketplaceList.self, PluginMarketplaceAdd.self, PluginMarketplaceRefresh.self,
+            PluginMarketplaceRemove.self
+        ])
+}
+
+struct PluginMarketplaceList: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "list", abstract: "Read locally configured marketplaces.")
+    @OptionGroup var inputs: ScopeOptions
+    @OptionGroup var output: OutputOptions
+    func run() throws {
+        let inventory = PluginInventoryReader(environment: try cliEnvironment(roots: inputs.roots))
+            .read(inputs.request)
+        let marketplaces = inventory.marketplaces.filter {
+            inputs.host == nil || $0.host == inputs.pluginHost
+        }
+        try output.render(
+            marketplaces,
+            lines: marketplaces.map {
+                "\($0.host.rawValue) / \($0.scopeRoot): \($0.name) \($0.source)"
+            })
     }
-    guard flags.contains("--reviewed") else {
-        throw PluginLifecycleError(message: "Review plugins plan, then supply --reviewed")
+}
+
+struct PluginPlan: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "plan", abstract: "Advanced: build a Plugin plan from explicit requests.")
+    @Option var requests: String
+    @OptionGroup var inputs: ScopeOptions
+    @OptionGroup var output: OutputOptions
+    func run() throws {
+        var mutation = MutationOptions()
+        mutation.dryRun = true
+        try runPluginRequests(
+            readJSON([PluginLifecycleRequest].self, from: requests), inputs: inputs, output: output,
+            mutation: mutation)
     }
-    let dangerous = batch.commands.contains { !$0.dangerFlags.isEmpty }
-    if dangerous && !flags.contains("--confirm-dangerous") {
-        throw PluginLifecycleError(
-            message: "Review operation effects and rollback limits, then supply --confirm-dangerous"
-        )
+}
+
+struct PluginExecute: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "execute",
+        abstract: "Advanced: execute explicit Plugin requests with the shared safety gates.")
+    @Option var requests: String
+    @OptionGroup var inputs: ScopeOptions
+    @OptionGroup var output: OutputOptions
+    @OptionGroup var mutation: MutationOptions
+    func run() throws {
+        try runPluginRequests(
+            readJSON([PluginLifecycleRequest].self, from: requests), inputs: inputs, output: output,
+            mutation: mutation)
     }
-    let result = try CLIExecutor(environment: environment).execute(
-        batch: batch.transitioned(to: .reviewed), report: report,
-        effectsApproved: flags.contains("--confirm-dangerous"))
-    emitJSON(try result.record.jsonData())
-    guard result.record.batchStatus == .succeeded else {
-        throw PluginLifecycleError(
-            message:
-                "Operation incomplete; inspect the captured command diagnostics. "
-                + "If approval was refused, re-run in the host approval workflow, then refresh. "
-                + "No pending request or automatic resumption is assumed. Snapshot rollback is available."
-        )
+}
+
+struct PluginInstall: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "install", abstract: "Plan or perform install through the official host.")
+    @OptionGroup var options: PluginOperationOptions
+    func run() throws { try options.run(action: "install") }
+}
+
+struct PluginUpdate: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "update", abstract: "Plan or perform update through the official host.")
+    @OptionGroup var options: PluginOperationOptions
+    func run() throws { try options.run(action: "update") }
+}
+
+struct PluginEnable: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "enable", abstract: "Plan or perform enable through the official host.")
+    @OptionGroup var options: PluginOperationOptions
+    func run() throws { try options.run(action: "enable") }
+}
+
+struct PluginDisable: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "disable", abstract: "Plan or perform disable through the official host.")
+    @OptionGroup var options: PluginOperationOptions
+    func run() throws { try options.run(action: "disable") }
+}
+
+struct PluginUninstall: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "uninstall", abstract: "Plan or perform remove through the official host.")
+    @OptionGroup var options: PluginOperationOptions
+    func run() throws { try options.run(action: "remove") }
+}
+
+struct PluginMarketplaceAdd: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "add", abstract: "Plan or perform marketplace-add through the official host.")
+    @OptionGroup var options: PluginOperationOptions
+    func run() throws { try options.run(action: "marketplace-add") }
+}
+
+struct PluginMarketplaceRefresh: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "refresh",
+        abstract: "Plan or perform marketplace-refresh through the official host.")
+    @OptionGroup var options: PluginOperationOptions
+    func run() throws { try options.run(action: "marketplace-refresh") }
+}
+
+struct PluginMarketplaceRemove: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "remove",
+        abstract: "Plan or perform marketplace-remove through the official host.")
+    @OptionGroup var options: PluginOperationOptions
+    func run() throws { try options.run(action: "marketplace-remove") }
+}
+
+func resolvedPluginHost(for host: String) -> PluginHost? {
+    switch host {
+    case "claude-code": .claude
+    case "codex": .codex
+    case "opencode": .opencode
+    default: nil
     }
 }

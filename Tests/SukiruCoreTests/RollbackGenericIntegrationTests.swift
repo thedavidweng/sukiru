@@ -48,14 +48,14 @@ struct RollbackGenericIntegrationTests {
         }
         let cliEnvironment = CLIRunner.fixtureEnvironment(home: tree.path, roots: [])
         let refused = try CLIRunner.run(
-            ["rollback", "--batch", "batch-1"], environment: cliEnvironment)
+            ["rollback", "--yes", "--batch", "batch-1"], environment: cliEnvironment)
         #expect(refused.exitCode == 1)
         let preview = try #require(try refused.jsonObject())
         #expect(preview["fileEvidenceFailure"] as? String == record.fileEvidenceFailure)
         let conflicts = try #require(preview["conflicts"] as? [[String: Any]])
         #expect(Set(conflicts.compactMap { $0["path"] as? String }) == [config, kept])
         let recovered = try CLIRunner.run(
-            ["rollback", "--batch", "batch-1", "--restore", config, "--preserve", kept],
+            ["rollback", "--yes", "--batch", "batch-1", "--restore", config, "--preserve", kept],
             environment: cliEnvironment)
         try verifyRecovery(
             recovered, root: root, config: config, kept: kept, replacement: replaceWithDirectory)
@@ -109,7 +109,7 @@ struct RollbackGenericIntegrationTests {
         try tree.file("batch-created/later", contents: "keep this")
         let cliEnvironment = CLIRunner.fixtureEnvironment(home: tree.path, roots: [])
         let refused = try CLIRunner.run(
-            ["rollback", "--batch", "batch-1"], environment: cliEnvironment)
+            ["rollback", "--yes", "--batch", "batch-1"], environment: cliEnvironment)
         #expect(refused.exitCode == 1)
         let preview = try #require(try refused.jsonObject())
         let conflicts = try #require(preview["conflicts"] as? [[String: Any]])
@@ -121,7 +121,7 @@ struct RollbackGenericIntegrationTests {
             })
         let rollback = try CLIRunner.run(
             [
-                "rollback", "--batch", "batch-1", "--preserve", root + "/config",
+                "rollback", "--yes", "--batch", "batch-1", "--preserve", root + "/config",
                 "--restore", root + "/removed", "--preserve", root + "/later",
                 "--preserve", addedRoot + "/later"
             ], environment: cliEnvironment)

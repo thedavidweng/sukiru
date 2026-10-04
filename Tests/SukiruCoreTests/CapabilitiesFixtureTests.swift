@@ -31,7 +31,7 @@ struct CapabilitiesFixtureTests {
             extra["SUKIRU_STUB_TRANSCRIPT"] = transcript
         }
         return try CLIRunner.run(
-            ["capabilities", "--format", "json"],
+            ["capabilities", "--json"],
             environment: CLIRunner.fixtureEnvironment(home: inputs.home, path: path, extra: extra)
         )
     }
@@ -119,7 +119,7 @@ struct CapabilitiesFixtureTests {
         for environmentPath in [path(["cap-gh-absent"]), path(["cap-gh-old"])] {
             let inputs = FixturePaths.homeAndRoots("own-github")
             let scan = try CLIRunner.run(
-                ["scan", "--format", "json"],
+                ["scan", "--json"],
                 environment: CLIRunner.fixtureEnvironment(
                     home: inputs.home, roots: inputs.roots, path: environmentPath)
             )
@@ -186,12 +186,12 @@ struct CapabilitiesFixtureTests {
     func neitherCliScanMatchesFullScan() throws {
         let inputs = FixturePaths.homeAndRoots("CM-3")
         let neither = try CLIRunner.run(
-            ["scan", "--format", "json"],
+            ["scan", "--json"],
             environment: CLIRunner.fixtureEnvironment(
                 home: inputs.home, roots: inputs.roots, path: path(["cap-neither"]))
         )
         let full = try CLIRunner.run(
-            ["scan", "--format", "json"],
+            ["scan", "--json"],
             environment: CLIRunner.fixtureEnvironment(
                 home: inputs.home, roots: inputs.roots,
                 path: path(["cap-gh-ok", "cap-npx-ok"]))

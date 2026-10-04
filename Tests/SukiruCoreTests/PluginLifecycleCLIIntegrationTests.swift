@@ -36,7 +36,7 @@ struct PluginLifecycleCLIIntegrationTests {
                 [{"host":"claude","action":"install","target":"demo@team","scope":"user","scopeRoot":"\(home)"}]
                 """)
         let result = try CLIRunner.run(
-            ["plugins", "execute", "--requests", tree.path + "/requests.json", "--reviewed"],
+            ["plugins", "execute", "--requests", tree.path + "/requests.json", "--yes"],
             environment: CLIRunner.fixtureEnvironment(
                 home: home, path: tree.path + "/bin:/usr/bin:/bin"))
         #expect(result.exitCode == 1)
@@ -122,7 +122,7 @@ struct PluginLifecycleCLIIntegrationTests {
                 """)
         let env = CLIRunner.fixtureEnvironment(home: home, path: tree.path + "/bin:/usr/bin:/bin")
         let result = try CLIRunner.run(
-            ["plugins", "execute", "--requests", tree.path + "/requests.json", "--reviewed"],
+            ["plugins", "execute", "--requests", tree.path + "/requests.json", "--yes"],
             environment: env)
         #expect(result.exitCode == 1)
         let record = try #require(try result.jsonObject())
@@ -162,7 +162,7 @@ struct PluginLifecycleCLIIntegrationTests {
                 """)
         let result = try CLIRunner.run(
             [
-                "plugins", "execute", "--requests", tree.path + "/requests.json", "--reviewed",
+                "plugins", "execute", "--requests", tree.path + "/requests.json", "--yes",
                 "--confirm-dangerous"
             ],
             environment: CLIRunner.fixtureEnvironment(
@@ -204,7 +204,7 @@ struct PluginLifecycleCLIIntegrationTests {
                 """)
         let env = CLIRunner.fixtureEnvironment(home: home, path: tree.path + "/bin:/usr/bin:/bin")
         let result = try CLIRunner.run(
-            ["plugins", "execute", "--requests", tree.path + "/requests.json", "--reviewed"],
+            ["plugins", "execute", "--requests", tree.path + "/requests.json", "--yes"],
             environment: env)
         #expect(
             result.exitCode == (exitCode == 0 ? 0 : 1),
@@ -217,7 +217,8 @@ struct PluginLifecycleCLIIntegrationTests {
             (diff["entries"] as? [[String: Any]])?.contains { $0["path"] as? String == payload }
                 == true)
         #expect(try Data(contentsOf: URL(fileURLWithPath: payload)) == Data("changed".utf8))
-        let rollback = try CLIRunner.run(["rollback", "--batch", batchID], environment: env)
+        let rollback = try CLIRunner.run(
+            ["rollback", "--yes", "--batch", batchID], environment: env)
         #expect(
             rollback.exitCode == 0,
             "\(String(bytes: rollback.stderr, encoding: .utf8) ?? "non-UTF8 stderr")")

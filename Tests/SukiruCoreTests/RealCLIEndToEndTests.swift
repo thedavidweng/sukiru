@@ -181,7 +181,7 @@ struct RealCLIEndToEndTests {
 
         // The capability surface says what the repair surface will do.
         let capabilities = try CLIRunner.run(
-            ["capabilities", "--format", "json"],
+            ["capabilities", "--json"],
             environment: CLIRunner.fixtureEnvironment(home: inputs.home, roots: inputs.roots))
         #expect(capabilities.exitCode == 0)
         let caps = try #require(try capabilities.jsonObject())
@@ -196,7 +196,7 @@ struct RealCLIEndToEndTests {
             [findingID: ["action": "update"]], into: tree)
         let result = try Batch.runBatch(
             home: inputs.home, roots: inputs.roots, decisionsPath: decisions,
-            arguments: ["--execute", "--reviewed"])
+            arguments: ["--execute", "--yes", "--confirm-dangerous"])
         #expect(result.exitCode == 1)
         let record = try #require(try result.jsonObject())
         #expect(record["batchStatus"] as? String == "failed")

@@ -208,18 +208,73 @@ Details in [PRIVACY.md](PRIVACY.md).
 
 ## 💻 Command-Line Interface
 
-The `sukiru-cli` tool exposes the same engine for scripting and testing:
+The app bundles a first-class `sukiru` executable. The Homebrew cask links it
+onto PATH; source checkouts can use `swift run sukiru`.
 
 ```bash
-swift run sukiru-cli scan           # JSON health report
-swift run sukiru-cli capabilities   # detected installers and versions
-swift run sukiru-cli batch …        # build or run a repair batch from a decisions file
-swift run sukiru-cli rollback …     # restore a batch snapshot
+sukiru health                     # passive local Health summary
+sukiru clean --dry-run             # preview cleanup-class repairs
+sukiru fix --dry-run               # preview deterministic one-click fixes
+sukiru fix --yes                   # execute after reviewing the plan
 ```
 
+Human-readable output is the default. Add `--json` for structured stdout;
+diagnostics go to stderr. `health --check` exits 0 when healthy, 1 for Problems,
+and 2 when scanning fails. `--scope user|project|all`, repeatable `--root PATH`,
+and `--host HOST` use the same selectors throughout the CLI (for example
+`--host claude-code`). Installation and Plugin mutations require one concrete
+user or project scope. `--root` replaces `SUKIRU_ROOTS`.
+
+```bash
+sukiru skills list --json
+sukiru skills update --all --dry-run
+sukiru skills pin NAME --ref v1 --dry-run
+sukiru skills mode NAME --mode link --dry-run
+sukiru skills adopt NAME --installer vercel --source OWNER/REPO --dry-run
+sukiru skills check-updates --json   # explicit official remote check
+sukiru search swift --backend github --json
+sukiru install OWNER/REPO --skill NAME --installer vercel --scope user --dry-run
+sukiru plugins list --json
+sukiru plugins health
+sukiru plugins capabilities --host claude-code
+sukiru plugins install NAME@MARKET --host claude-code --scope user --dry-run
+sukiru plugins marketplaces list
+sukiru snapshots --json
+sukiru rollback --batch ID --dry-run
+sukiru rollback --batch ID --yes --preserve /absolute/conflict/path
+sukiru capabilities --json          # explicit manager probes
+```
+
+Use generated `--help` on any family to discover update, uninstall, pin,
+unpin, restore, enable/disable, and marketplace operations. Generate shell
+completion with `sukiru --generate-completion-script zsh` (also bash and fish).
+`--version` reads the bundled app version, so shipped CLI and GUI agree.
+
+All mutations share `--dry-run`, `--yes` (`-y`), and `--confirm-dangerous`.
+A dry-run renders the exact Command Batch and writes nothing. Without `--yes`,
+execution prompts on a terminal and refuses non-interactive use. **`--yes`
+never acknowledges danger**: dangerous plans separately require
+`--confirm-dangerous`. Snapshots must succeed before commands run. Execution
+stops at the first failure and retains the rescan, differences, and rollback
+record. Rollback conflicts require explicit `--restore PATH` or `--preserve PATH`;
+no automatic merge or ownership/source guessing is performed.
+
+Advanced machine interfaces retain the unique explicit plan contracts:
+
+```bash
+sukiru scan --json
+sukiru batch --decisions decisions.json --dry-run --json
+sukiru batch --decisions decisions.json --execute --yes --confirm-dangerous --json
+sukiru plugins plan --requests requests.json --json
+sukiru plugins execute --requests requests.json --yes --confirm-dangerous --json
+```
+
+The former `sukiru-cli`, `--format json`, `--reviewed`, and rollback `--preview`
+spellings have been replaced by the public command and shared options.
 `SUKIRU_HOME` replaces `$HOME` for all path resolution, and `SUKIRU_ROOTS`
 adds colon-separated project roots. See [CONTRIBUTING.md](CONTRIBUTING.md)
-for details.
+for sandbox testing and [docs/hook-hygiene-cli.md](docs/hook-hygiene-cli.md)
+for the existing advanced hook contracts.
 
 ---
 

@@ -16,7 +16,7 @@ extension HookCLIIntegrationTests {
         let config = fixture.config
         let env = CLIRunner.fixtureEnvironment(
             home: home, roots: [project], extra: ["SUKIRU_SYSTEM_ROOT": system])
-        let result = try CLIRunner.run(["scan", "--format", "json"], environment: env)
+        let result = try CLIRunner.run(["scan", "--json"], environment: env)
         #expect(result.exitCode == 0)
         let report = try JSONDecoder().decode(ScanReport.self, from: result.stdout)
         let inventory = try #require(report.hookInventory)
@@ -126,7 +126,7 @@ extension HookCLIIntegrationTests {
         try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
             .write(to: URL(fileURLWithPath: path))
         let result = try CLIRunner.run(
-            ["scan", "--format", "json"],
+            ["scan", "--json"],
             environment: CLIRunner.fixtureEnvironment(
                 home: home, extra: ["SUKIRU_SYSTEM_ROOT": system]))
         let report = try JSONDecoder().decode(ScanReport.self, from: result.stdout)
@@ -147,7 +147,7 @@ extension HookCLIIntegrationTests {
         try tree.file("home/.codex/hooks.json", contents: "{not json")
         try tree.file("home/.codex/config.toml", contents: toml)
         let result = try CLIRunner.run(
-            ["scan", "--format", "json"], environment: CLIRunner.fixtureEnvironment(home: home))
+            ["scan", "--json"], environment: CLIRunner.fixtureEnvironment(home: home))
         #expect(result.exitCode == 0)
         let report = try JSONDecoder().decode(ScanReport.self, from: result.stdout)
         #expect(report.hookInventory?.issues.count == 3)

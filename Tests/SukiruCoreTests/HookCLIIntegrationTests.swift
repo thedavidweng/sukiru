@@ -56,7 +56,7 @@ struct HookCLIIntegrationTests {
     }
 
     func planFirstHook(tree: TempTree, environment: [String: String]) throws -> String {
-        let scan = try CLIRunner.run(["scan", "--format", "json"], environment: environment)
+        let scan = try CLIRunner.run(["scan", "--json"], environment: environment)
         let object = try #require(try scan.jsonObject())
         let inventory = try #require(object["hookInventory"] as? [String: Any])
         let hooks = try #require(inventory["hooks"] as? [[String: Any]])
@@ -74,7 +74,7 @@ struct HookCLIIntegrationTests {
 
     func executePlan(_ path: String, environment: [String: String]) throws -> CLIRunner.Result {
         try CLIRunner.run(
-            ["hooks", "execute", "--plan", path, "--reviewed", "--confirm-dangerous"],
+            ["hooks", "execute", "--plan", path, "--yes", "--confirm-dangerous"],
             environment: environment)
     }
 
@@ -90,7 +90,7 @@ struct HookCLIIntegrationTests {
             """
         try tree.file("home/.claude/settings.json", contents: original)
         let env = CLIRunner.fixtureEnvironment(home: home)
-        let scan = try CLIRunner.run(["scan", "--format", "json"], environment: env)
+        let scan = try CLIRunner.run(["scan", "--json"], environment: env)
         let object = try #require(try scan.jsonObject())
         let inventory = try #require(object["hookInventory"] as? [String: Any])
         let hooks = try #require(inventory["hooks"] as? [[String: Any]])
@@ -107,7 +107,7 @@ struct HookCLIIntegrationTests {
         )
         let result = try CLIRunner.run(
             [
-                "hooks", "execute", "--plan", tree.path + "/plan.json", "--reviewed",
+                "hooks", "execute", "--plan", tree.path + "/plan.json", "--yes",
                 "--confirm-dangerous"
             ], environment: env)
         #expect(result.exitCode == 0, "\(String(bytes: result.stderr, encoding: .utf8)!)")
@@ -119,7 +119,8 @@ struct HookCLIIntegrationTests {
         let diff = try #require(record["diff"] as? [String: Any])
         #expect((diff["entries"] as? [[String: Any]])?.isEmpty == false)
         let batchID = try #require(record["batchID"] as? String)
-        let rollback = try CLIRunner.run(["rollback", "--batch", batchID], environment: env)
+        let rollback = try CLIRunner.run(
+            ["rollback", "--yes", "--batch", batchID], environment: env)
         #expect(rollback.exitCode == 0)
         #expect(
             try String(contentsOfFile: home + "/.claude/settings.json", encoding: .utf8) == original
@@ -158,7 +159,7 @@ struct HookCLIIntegrationTests {
                 command = "${DYNAMIC}/hook"
                 """)
         let result = try CLIRunner.run(
-            ["scan", "--format", "json"],
+            ["scan", "--json"],
             environment: CLIRunner.fixtureEnvironment(home: home, roots: [project]))
         #expect(result.exitCode == 0)
         let report = try JSONDecoder().decode(ScanReport.self, from: result.stdout)

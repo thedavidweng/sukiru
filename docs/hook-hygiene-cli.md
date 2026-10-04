@@ -1,6 +1,6 @@
 # Hook hygiene CLI
 
-`scan --format json` includes optional `hookInventory` with configured handlers,
+`scan --json` includes optional `hookInventory` with configured handlers,
 source tiers, exact source positions, producer evidence, health, and inspection
 issues. `hooks inventory` emits the same shared report. Multiple Claude/Codex
 sources are additive; OpenCode remains in `pluginInventory`.
@@ -17,9 +17,9 @@ disable applies across hosts, not to one handler. Source-managed definitions
 return instructions rather than independently executable mutations.
 
 ```sh
-sukiru-cli hooks plan --requests requests.json > hook-plan.json
-sukiru-cli hooks execute --plan hook-plan.json --reviewed --confirm-dangerous
-sukiru-cli rollback --batch <execution batchID>
+sukiru hooks plan --requests requests.json --json > hook-plan.json
+sukiru hooks execute --plan hook-plan.json --yes --confirm-dangerous --json
+sukiru rollback --batch <execution batchID> --yes --json
 ```
 
 Review the plan's `hooks`, `helperPaths`, `instructions`, and every batch command

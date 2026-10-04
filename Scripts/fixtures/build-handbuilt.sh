@@ -2106,7 +2106,7 @@ note "$d" <<'EOF'
 Contents: `bin/gh` — a stub reporting `gh version 2.100.0 (2026-01-15)` whose
 `gh skill --help` exits 0. No npx stub here (compose with `cap-npx-ok`).
 
-Use: `PATH="<this>/bin[:<cap-npx-ok>/bin]:/usr/bin:/bin" sukiru-cli capabilities --format json`.
+Use: `PATH="<this>/bin[:<cap-npx-ok>/bin]:/usr/bin:/bin" sukiru capabilities --json`.
 
 A correct capabilities report MUST exit 0 and report gh available=true,
 present=true, meetsMinimum=true, version="2.100.0", with NO `reason` key.
@@ -2125,11 +2125,11 @@ detector never probes a below-minimum gh). The date string comes from the
 shared `gh_stub` heredoc in Scripts/fixtures/build-handbuilt.sh (the
 generator is the source of truth); version parsing reads only the number.
 
-Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
+Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru capabilities --json`.
 
 A correct capabilities report MUST exit 0 and report gh available=false,
 present=true, version="2.80.0", meetsMinimum=false, reason="too-old". Scans
-in this environment MUST be unaffected: `sukiru-cli scan` over the
+in this environment MUST be unaffected: `sukiru scan` over the
 `own-github` fixture still exits 0 and surfaces `metadata.github-*`
 provenance from disk.
 EOF
@@ -2143,7 +2143,7 @@ Contents: `bin/gh` — a stub reporting `gh version 2.100.0 (2026-01-15)`
 (meets the 2.90.0 floor) whose `gh skill --help` EXITS 1: the version is new
 enough but the skill surface does not work (the `gh skill --help` probe).
 
-Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
+Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru capabilities --json`.
 
 A correct capabilities report MUST exit 0 and report gh available=false,
 present=true, version="2.100.0", meetsMinimum=true, reason="probe-failed".
@@ -2160,11 +2160,11 @@ Contents: an EMPTY `bin/` (only a .gitkeep) — no gh on PATH. Compose with
 other cap-* bins as needed (e.g. `<this>/bin:<cap-npx-ok>/bin` for
 "gh absent, npx fine").
 
-Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
+Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru capabilities --json`.
 
 A correct capabilities report MUST exit 0 and report gh available=false,
 present=false, meetsMinimum=false, no version, reason="absent". Scans in
-this environment MUST be unaffected: `sukiru-cli scan` over the
+this environment MUST be unaffected: `sukiru scan` over the
 `own-github` fixture still exits 0 and surfaces `metadata.github-*`
 provenance from disk.
 EOF
@@ -2178,7 +2178,7 @@ Contents: `bin/npx` — a stub answering the capability probe
 (`npx --offline skills --version`) with `1.5.26`. No gh stub here (compose
 with `cap-gh-ok`).
 
-Use: `PATH="<this>/bin[:<cap-gh-ok>/bin]:/usr/bin:/bin" sukiru-cli capabilities --format json`.
+Use: `PATH="<this>/bin[:<cap-gh-ok>/bin]:/usr/bin:/bin" sukiru capabilities --json`.
 
 A correct capabilities report MUST exit 0 and report npx resolvable=true,
 skillsVersion="1.5.26".
@@ -2191,7 +2191,7 @@ note "$d" <<'EOF'
 
 Contents: an EMPTY `bin/` (only a .gitkeep) — no npx on PATH.
 
-Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
+Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru capabilities --json`.
 
 A correct capabilities report MUST exit 0 and report npx resolvable=false
 with no skillsVersion. Unresolvable npx NEVER blocks anything: exit stays 0
@@ -2207,7 +2207,7 @@ Contents: an EMPTY `bin/` (only a .gitkeep) — neither gh nor npx on PATH.
 Sukiru degrades to the full read-only diagnostician: capability absence
 degrades repair features, never scanning.
 
-Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli {capabilities,scan} ...`.
+Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru {capabilities,scan} ...`.
 
 A correct capabilities report MUST exit 0 with gh reason="absent" and npx
 resolvable=false. A scan over a rich fixture (CM-3) in this environment MUST

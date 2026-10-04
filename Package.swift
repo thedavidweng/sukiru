@@ -6,10 +6,11 @@ let package = Package(
     platforms: [.macOS(.v14)],
     products: [
         .library(name: "SukiruCore", targets: ["SukiruCore"]),
-        .executable(name: "sukiru-cli", targets: ["sukiru-cli"]),
+        .executable(name: "sukiru", targets: ["sukiru-cli"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/jpsim/Yams.git", from: "6.2.2")
+        .package(url: "https://github.com/jpsim/Yams.git", from: "6.2.2"),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.7.0")
     ],
     targets: [
         .target(
@@ -18,7 +19,10 @@ let package = Package(
         ),
         .executableTarget(
             name: "sukiru-cli",
-            dependencies: ["SukiruCore"]
+            dependencies: [
+                "SukiruCore",
+                .product(name: "ArgumentParser", package: "swift-argument-parser")
+            ]
         ),
         .testTarget(
             name: "SukiruCoreTests",

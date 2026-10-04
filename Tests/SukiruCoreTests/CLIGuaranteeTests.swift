@@ -18,7 +18,7 @@ struct CLIGuaranteeTests {
     func exitCode2ForMissingHome() throws {
         let missing = "/tmp/sukiru-nonexistent-\(UUID().uuidString)"
         let env = ["PATH": "/usr/bin:/bin", "SUKIRU_HOME": missing]
-        let scan = try CLIRunner.run(["scan", "--format", "json"], environment: env)
+        let scan = try CLIRunner.run(["scan", "--json"], environment: env)
         #expect(scan.exitCode == 2)
         // No healthy-looking report on stdout.
         #expect(scan.stdout.isEmpty)
@@ -29,16 +29,16 @@ struct CLIGuaranteeTests {
         #expect(capabilities.exitCode == 2)
     }
 
-    @Test("Unknown flag exits 1; garbage fixtures still exit 0")
+    @Test("Unknown flag exits 64; garbage fixtures still exit 0")
     func exitCodesUsageAndGarbage() throws {
         let inputs = FixturePaths.homeAndRoots("FIX-EMPTY")
         let env = CLIRunner.fixtureEnvironment(home: inputs.home)
         let badFlag = try CLIRunner.run(["scan", "--bogus"], environment: env)
-        #expect(badFlag.exitCode == 1)
+        #expect(badFlag.exitCode == 64)
         let badCommand = try CLIRunner.run(["frobnicate"], environment: env)
-        #expect(badCommand.exitCode == 1)
+        #expect(badCommand.exitCode == 64)
         let badScope = try CLIRunner.run(["scan", "--scope", "everything"], environment: env)
-        #expect(badScope.exitCode == 1)
+        #expect(badScope.exitCode == 64)
 
         let garbage = try CLIRunner.scanFixture("FIX-GARBAGE")
         #expect(garbage.exitCode == 0)
@@ -56,14 +56,14 @@ struct CLIGuaranteeTests {
         let env = CLIRunner.fixtureEnvironment(home: perProject.home, roots: [rootA, rootB])
 
         // SUKIRU_ROOTS alone → a and b present.
-        let fromEnv = try CLIRunner.run(["scan", "--format", "json"], environment: env)
+        let fromEnv = try CLIRunner.run(["scan", "--json"], environment: env)
         let envIDs = try workspaceIDs(fromEnv)
         #expect(envIDs.contains("project:\(rootA)"))
         #expect(envIDs.contains("project:\(rootB)"))
 
         // --root c REPLACES the env roots: only c's project workspace appears.
         let fromFlag = try CLIRunner.run(
-            ["scan", "--root", rootC, "--format", "json"], environment: env)
+            ["scan", "--root", rootC, "--json"], environment: env)
         let flagIDs = try workspaceIDs(fromFlag)
         #expect(flagIDs.contains("project:\(rootC)"))
         #expect(!flagIDs.contains("project:\(rootA)"))
@@ -71,7 +71,7 @@ struct CLIGuaranteeTests {
 
         // Neither --root nor SUKIRU_ROOTS → default discovery (user scope only).
         let noRoots = try CLIRunner.run(
-            ["scan", "--format", "json"],
+            ["scan", "--json"],
             environment: CLIRunner.fixtureEnvironment(home: perProject.home))
         let defaultIDs = try workspaceIDs(noRoots)
         #expect(defaultIDs.allSatisfy { !$0.hasPrefix("project:") })
@@ -101,7 +101,7 @@ struct CLIGuaranteeTests {
 
         let inputs = FixturePaths.homeAndRoots("clean-copy-mode")
         let result = try CLIRunner.run(
-            ["scan", "--format", "json"],
+            ["scan", "--json"],
             environment: CLIRunner.fixtureEnvironment(
                 home: inputs.home,
                 roots: inputs.roots,
@@ -127,11 +127,11 @@ struct CLIGuaranteeTests {
         let before = try TreeChecksum.manifest(root: fixture)
 
         let env = CLIRunner.fixtureEnvironment(home: inputs.home, roots: inputs.roots)
-        let scan = try CLIRunner.run(["scan", "--format", "json"], environment: env)
+        let scan = try CLIRunner.run(["scan", "--json"], environment: env)
         #expect(scan.exitCode == 0)
         // Base PATH holds no gh/npx stubs, so capabilities spawns nothing.
         let capabilities = try CLIRunner.run(
-            ["capabilities", "--format", "json"], environment: env)
+            ["capabilities", "--json"], environment: env)
         #expect(capabilities.exitCode == 0)
 
         let after = try TreeChecksum.manifest(root: fixture)
@@ -154,10 +154,10 @@ struct CLIGuaranteeTests {
             + FixturePaths.tree("cap-npx-ok") + "/bin:/usr/bin:/bin"
         let env = CLIRunner.fixtureEnvironment(
             home: inputs.home, roots: inputs.roots, path: stubPath)
-        let scan = try CLIRunner.run(["scan", "--format", "json"], environment: env)
+        let scan = try CLIRunner.run(["scan", "--json"], environment: env)
         #expect(scan.exitCode == 0)
         let capabilities = try CLIRunner.run(
-            ["capabilities", "--format", "json"], environment: env)
+            ["capabilities", "--json"], environment: env)
         #expect(capabilities.exitCode == 0)
         // Proof the probes really ran: the stubs report gh available.
         let object = try #require(try capabilities.jsonObject())

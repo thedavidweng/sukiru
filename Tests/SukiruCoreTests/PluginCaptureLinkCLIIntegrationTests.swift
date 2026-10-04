@@ -23,7 +23,7 @@ struct PluginCaptureLinkCLIIntegrationTests {
         let env = CLIRunner.fixtureEnvironment(home: home, path: tree.path + "/bin:/usr/bin:/bin")
         let execute = try CLIRunner.run(
             [
-                "plugins", "execute", "--requests", tree.path + "/requests.json", "--reviewed",
+                "plugins", "execute", "--requests", tree.path + "/requests.json", "--yes",
                 "--confirm-dangerous"
             ], environment: env)
         #expect(
@@ -33,12 +33,12 @@ struct PluginCaptureLinkCLIIntegrationTests {
         try FileManager.default.removeItem(atPath: link)
         try FileManager.default.createSymbolicLink(atPath: link, withDestinationPath: newTarget)
         try "later unrelated edit".write(toFile: unrelated, atomically: true, encoding: .utf8)
-        let refused = try CLIRunner.run(["rollback", "--batch", batchID], environment: env)
+        let refused = try CLIRunner.run(["rollback", "--yes", "--batch", batchID], environment: env)
         #expect(refused.exitCode != 0)
         #expect(try String(contentsOfFile: newFile, encoding: .utf8) == "new target bytes")
         let rollback = try CLIRunner.run(
             [
-                "rollback", "--batch", batchID, "--preserve", link, "--preserve",
+                "rollback", "--yes", "--batch", batchID, "--preserve", link, "--preserve",
                 link + "/plugins/demo"
             ], environment: env)
         #expect(
@@ -80,13 +80,14 @@ struct PluginCaptureLinkCLIIntegrationTests {
                 """)
         let env = CLIRunner.fixtureEnvironment(home: home, path: tree.path + "/bin:/usr/bin:/bin")
         let execute = try CLIRunner.run(
-            ["plugins", "execute", "--requests", tree.path + "/requests.json", "--reviewed"],
+            ["plugins", "execute", "--requests", tree.path + "/requests.json", "--yes"],
             environment: env)
         #expect(
             execute.exitCode == 0)
         let record = try #require(try execute.jsonObject())
         let batchID = try #require(record["batchID"] as? String)
-        let rollback = try CLIRunner.run(["rollback", "--batch", batchID], environment: env)
+        let rollback = try CLIRunner.run(
+            ["rollback", "--yes", "--batch", batchID], environment: env)
         #expect(
             rollback.exitCode == 0)
         #expect(try String(contentsOfFile: settings, encoding: .utf8) == original)

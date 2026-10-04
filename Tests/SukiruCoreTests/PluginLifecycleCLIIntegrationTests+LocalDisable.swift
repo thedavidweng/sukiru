@@ -27,11 +27,11 @@ extension PluginLifecycleCLIIntegrationTests {
         let command = try #require((batch["commands"] as? [[String: Any]])?.first)
         #expect((command["warning"] as? String)?.contains("does not restore behavior") == true)
         let refused = try CLIRunner.run(
-            ["plugins", "execute"] + request + ["--reviewed"], environment: env)
+            ["plugins", "execute"] + request + ["--yes"], environment: env)
         #expect(refused.exitCode == 1)
         #expect(try String(contentsOfFile: plugin, encoding: .utf8) == source)
         let executed = try CLIRunner.run(
-            ["plugins", "execute"] + request + ["--reviewed", "--confirm-dangerous"],
+            ["plugins", "execute"] + request + ["--yes", "--confirm-dangerous"],
             environment: env)
         #expect(executed.exitCode == 0)
         let record = try #require(try executed.jsonObject())
@@ -55,7 +55,8 @@ extension PluginLifecycleCLIIntegrationTests {
         disabled: String, batchID: String, env: [String: String]
     ) throws {
         try "later edit".write(toFile: disabled, atomically: true, encoding: .utf8)
-        let conflict = try CLIRunner.run(["rollback", "--batch", batchID], environment: env)
+        let conflict = try CLIRunner.run(
+            ["rollback", "--yes", "--batch", batchID], environment: env)
         #expect(conflict.exitCode == 1)
         let conflictJSON = try #require(try conflict.jsonObject())
         #expect(
@@ -63,7 +64,7 @@ extension PluginLifecycleCLIIntegrationTests {
                 $0["path"] as? String == disabled
             } == true)
         let restored = try CLIRunner.run(
-            ["rollback", "--batch", batchID, "--restore", disabled], environment: env)
+            ["rollback", "--yes", "--batch", batchID, "--restore", disabled], environment: env)
         #expect(restored.exitCode == 0)
     }
 
@@ -87,7 +88,7 @@ extension PluginLifecycleCLIIntegrationTests {
         let result = try CLIRunner.run(
             [
                 "plugins", "execute", "--requests", tree.path + "/requests.json",
-                "--reviewed", "--confirm-dangerous"
+                "--yes", "--confirm-dangerous"
             ],
             environment: CLIRunner.fixtureEnvironment(
                 home: home, path: tree.path + "/bin:/usr/bin:/bin"))

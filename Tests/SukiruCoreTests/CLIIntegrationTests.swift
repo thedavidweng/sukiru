@@ -51,7 +51,7 @@ struct CLIIntegrationTests {
             + FixturePaths.tree("cap-npx-ok") + "/bin:/usr/bin:/bin"
         let inputs = FixturePaths.homeAndRoots("FIX-EMPTY")
         let result = try CLIRunner.run(
-            ["capabilities", "--format", "json"],
+            ["capabilities", "--json"],
             environment: CLIRunner.fixtureEnvironment(home: inputs.home, path: stubPath)
         )
         #expect(result.exitCode == 0, "stderr: \(stderrText(result))")
@@ -72,7 +72,7 @@ struct CLIIntegrationTests {
         let inputs = FixturePaths.homeAndRoots("FIX-EMPTY")
         let neitherPath = FixturePaths.tree("cap-neither") + "/bin:/usr/bin:/bin"
         let result = try CLIRunner.run(
-            ["capabilities", "--format", "json"],
+            ["capabilities", "--json"],
             environment: CLIRunner.fixtureEnvironment(home: inputs.home, path: neitherPath)
         )
         #expect(result.exitCode == 0)
@@ -97,14 +97,14 @@ struct CLIIntegrationTests {
         #expect(roots.count == 3)
         let base = CLIRunner.fixtureEnvironment(home: inputs.home, roots: roots)
 
-        let first = try CLIRunner.run(["scan", "--format", "json"], environment: base)
-        let second = try CLIRunner.run(["scan", "--format", "json"], environment: base)
+        let first = try CLIRunner.run(["scan", "--json"], environment: base)
+        let second = try CLIRunner.run(["scan", "--json"], environment: base)
         #expect(first.exitCode == 0 && second.exitCode == 0)
         #expect(first.stdout == second.stdout)
 
         var permuted = base
         permuted["SUKIRU_ROOTS"] = roots.reversed().joined(separator: ":")
-        let third = try CLIRunner.run(["scan", "--format", "json"], environment: permuted)
+        let third = try CLIRunner.run(["scan", "--json"], environment: permuted)
         #expect(third.exitCode == 0)
         #expect(first.stdout == third.stdout)
     }
@@ -125,7 +125,7 @@ struct CLIIntegrationTests {
             atPath: FixturePaths.tree("scope-isolation"), toPath: copy)
         let inputs = FixturePaths.homeAndRoots(atPath: copy)
         let result = try CLIRunner.run(
-            ["scan", "--format", "json"],
+            ["scan", "--json"],
             environment: CLIRunner.fixtureEnvironment(home: inputs.home, roots: inputs.roots)
         )
         #expect(result.exitCode == 0)

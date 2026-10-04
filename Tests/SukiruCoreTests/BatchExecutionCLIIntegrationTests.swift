@@ -27,7 +27,7 @@ enum BatchExecutionSupport {
     /// Scans a copy and returns the parsed report object.
     static func scanObject(home: String, roots: [String]) throws -> [String: Any] {
         let environment = CLIRunner.fixtureEnvironment(home: home, roots: roots)
-        let result = try CLIRunner.run(["scan", "--format", "json"], environment: environment)
+        let result = try CLIRunner.run(["scan", "--json"], environment: environment)
         #expect(result.exitCode == 0, "stderr: \(stderrText(result))")
         return try #require(try result.jsonObject())
     }
@@ -122,7 +122,7 @@ struct BatchExecutionCLIIntegrationTests {
 
         let result = try Support.runBatch(
             home: copy, roots: [], decisionsPath: decisions,
-            arguments: ["--execute", "--reviewed"])
+            arguments: ["--execute", "--yes", "--confirm-dangerous"])
         #expect(result.exitCode == 0, "stderr: \(Support.stderrText(result))")
         let record = try #require(try result.jsonObject())
         #expect(record["batchStatus"] as? String == "succeeded")
@@ -167,7 +167,7 @@ struct BatchExecutionCLIIntegrationTests {
             [findingID: ["action": "update"]], into: tree)
         let result = try Support.runBatch(
             home: inputs.home, roots: inputs.roots, decisionsPath: decisions,
-            arguments: ["--execute", "--reviewed"], path: bin + ":/usr/bin:/bin")
+            arguments: ["--execute", "--yes", "--confirm-dangerous"], path: bin + ":/usr/bin:/bin")
         #expect(result.exitCode == 0, "stderr: \(Support.stderrText(result))")
         let record = try #require(try result.jsonObject())
         #expect(record["batchStatus"] as? String == "succeeded")
@@ -217,7 +217,7 @@ struct BatchExecutionCLIIntegrationTests {
             [findingID: ["action": "arbitrate", "choice": "keep-github"]], into: tree)
         let result = try Support.runBatch(
             home: copy, roots: [], decisionsPath: decisions,
-            arguments: ["--execute", "--reviewed"], path: bin + ":/usr/bin:/bin")
+            arguments: ["--execute", "--yes", "--confirm-dangerous"], path: bin + ":/usr/bin:/bin")
         #expect(result.exitCode == 1)
         let record = try #require(try result.jsonObject())
         #expect(record["batchStatus"] as? String == "failed")
@@ -255,7 +255,7 @@ struct BatchExecutionCLIIntegrationTests {
             [findingID: ["action": "update"]], into: tree)
         let result = try Support.runBatch(
             home: copy, roots: inputs.roots, decisionsPath: decisions,
-            arguments: ["--execute", "--reviewed", "--command-timeout", "1"],
+            arguments: ["--execute", "--yes", "--confirm-dangerous", "--command-timeout", "1"],
             path: bin + ":/usr/bin:/bin")
         #expect(result.exitCode == 1)
         let record = try #require(try result.jsonObject())
@@ -285,7 +285,7 @@ struct BatchExecutionCLIIntegrationTests {
             [findingID: ["action": "cleanup"]], into: tree)
         let result = try Support.runBatch(
             home: copy, roots: [], decisionsPath: decisions,
-            arguments: ["--execute", "--reviewed"])
+            arguments: ["--execute", "--yes", "--confirm-dangerous"])
         #expect(result.exitCode == 1)
         #expect(Support.stderrText(result).contains("another batch execution"))
         #expect(result.stdout.isEmpty)
@@ -314,7 +314,7 @@ struct BatchExecutionCLIIntegrationTests {
         let token = "changeme"
         let result = try Support.runBatch(
             home: copy, roots: [], decisionsPath: decisions,
-            arguments: ["--execute", "--reviewed"], path: bin + ":/usr/bin:/bin",
+            arguments: ["--execute", "--yes", "--confirm-dangerous"], path: bin + ":/usr/bin:/bin",
             extraEnv: ["GH_TOKEN": token])
         #expect(result.exitCode == 0, "stderr: \(Support.stderrText(result))")
         let npxEnv = try ExecutorTestSupport.parseDump(npxDump)
@@ -338,13 +338,13 @@ struct BatchExecutionCLIIntegrationTests {
         let decisions = try Support.writeDecisions(
             [findingID: ["action": "cleanup"]], into: tree)
         let reviewedOnly = try Support.runBatch(
-            home: copy, roots: [], decisionsPath: decisions, arguments: ["--reviewed"])
-        #expect(reviewedOnly.exitCode == 1)
+            home: copy, roots: [], decisionsPath: decisions, arguments: ["--yes"])
+        #expect(reviewedOnly.exitCode == 64)
         #expect(Support.stderrText(reviewedOnly).contains("--execute"))
         let both = try Support.runBatch(
             home: copy, roots: [], decisionsPath: decisions,
             arguments: ["--dry-run", "--execute"])
-        #expect(both.exitCode == 1)
+        #expect(both.exitCode == 64)
         #expect(Support.stderrText(both).contains("mutually exclusive"))
     }
 }

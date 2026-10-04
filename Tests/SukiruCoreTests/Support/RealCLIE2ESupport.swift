@@ -167,7 +167,7 @@ enum RealCLIE2ESupport {
         }
         let result = try BatchExecutionSupport.runBatch(
             home: home, roots: roots, decisionsPath: path,
-            arguments: ["--execute", "--reviewed"],
+            arguments: ["--execute", "--yes", "--confirm-dangerous"],
             path: (bin.map { $0 + ":" } ?? "") + "/usr/bin:/bin",
             extraEnv: extra, timeout: batchTimeout)
         #expect(

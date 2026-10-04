@@ -39,7 +39,7 @@ body:
     id: capabilities
     attributes:
       label: Installer versions
-      description: Output of `sukiru-cli capabilities`, or the versions of `gh` and `npx skills` you use.
+      description: Output of `sukiru capabilities --json`, or the versions of `gh` and `npx skills` you use.
       render: json
   - type: textarea
     id: logs

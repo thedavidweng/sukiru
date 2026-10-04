@@ -93,7 +93,7 @@ public struct PluginInventory: Codable, Equatable, Sendable {
     public let issues: [PluginInventoryIssue]
     public let healthFindings: [PluginHealthFinding]
 
-    init(
+    public init(
         installations: [PluginInstallation], marketplaces: [PluginMarketplace],
         issues: [PluginInventoryIssue],
         healthFindings: [PluginHealthFinding] = []

@@ -43,11 +43,12 @@ extension HookCLIIntegrationTests {
         try tree.file("home/.orca/agent-hooks/claude-hook.sh", contents: "later")
         let record = try #require(try executed.jsonObject())
         let id = try #require(record["batchID"] as? String)
-        #expect(try CLIRunner.run(["rollback", "--batch", id], environment: env).exitCode == 1)
+        #expect(
+            try CLIRunner.run(["rollback", "--yes", "--batch", id], environment: env).exitCode == 1)
         #expect(try String(contentsOfFile: helper, encoding: .utf8) == "later")
         #expect(
             try CLIRunner.run(
-                ["rollback", "--batch", id, "--preserve", helper], environment: env
+                ["rollback", "--yes", "--batch", id, "--preserve", helper], environment: env
             ).exitCode == 0)
         #expect(try String(contentsOfFile: helper, encoding: .utf8) == "later")
     }
@@ -142,7 +143,7 @@ extension HookCLIIntegrationTests {
         } else {
             try tree.file("home/.claude/settings.json", contents: "{\"later\":true}")
         }
-        let result = try CLIRunner.run(["rollback", "--batch", id], environment: env)
+        let result = try CLIRunner.run(["rollback", "--yes", "--batch", id], environment: env)
         #expect(result.exitCode == 1)
         let object = try #require(try result.jsonObject())
         let conflicts = try #require(object["conflicts"] as? [[String: Any]])

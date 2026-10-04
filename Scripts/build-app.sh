@@ -25,4 +25,9 @@ if [ ! -d "$APP_PATH" ]; then
   exit 1
 fi
 
+swift build --product sukiru
+cli_bin_dir="$(swift build --show-bin-path)"
+cp "$cli_bin_dir/sukiru" "$APP_PATH/Contents/MacOS/sukiru"
+codesign --force --sign - "$APP_PATH/Contents/MacOS/sukiru"
+codesign --force --sign - "$APP_PATH"
 echo "APP_PATH=$APP_PATH"

@@ -234,7 +234,7 @@ struct PluginInventoryConfigTests {
         path: String = "/usr/bin:/bin"
     ) throws -> [String: Any] {
         let environment = fixtureEnvironment(home: home, roots: roots, path: path, extra: extra)
-        let result = try CLIRunner.run(["scan", "--format", "json"], environment: environment)
+        let result = try CLIRunner.run(["scan", "--json"], environment: environment)
         #expect(result.exitCode == 0)
         return try #require(try result.jsonObject())
     }

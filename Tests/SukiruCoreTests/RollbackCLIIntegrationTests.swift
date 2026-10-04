@@ -28,7 +28,8 @@ struct RollbackCLIIntegrationTests {
         home: String, roots: [String], batchID: String
     ) throws -> CLIRunner.Result {
         let environment = CLIRunner.fixtureEnvironment(home: home, roots: roots)
-        return try CLIRunner.run(["rollback", "--batch", batchID], environment: environment)
+        return try CLIRunner.run(
+            ["rollback", "--yes", "--batch", batchID], environment: environment)
     }
 
     /// The items array of a rollback record JSON object.
@@ -53,7 +54,7 @@ struct RollbackCLIIntegrationTests {
             [findingID: ["action": "cleanup"]], into: tree)
         let result = try Support.runBatch(
             home: home, roots: [], decisionsPath: decisions,
-            arguments: ["--execute", "--reviewed"])
+            arguments: ["--execute", "--yes", "--confirm-dangerous"])
         #expect(result.exitCode == 0, "stderr: \(Support.stderrText(result))")
         let record = try #require(try result.jsonObject())
         let batchID = try #require(record["batchID"] as? String)
@@ -67,7 +68,7 @@ struct RollbackCLIIntegrationTests {
         let tree = try TempTree()
         let copy = try Support.copyFixture("FIX-FILES-NO-LOCK", into: tree)
         let preScan = try CLIRunner.run(
-            ["scan", "--format", "json"],
+            ["scan", "--json"],
             environment: CLIRunner.fixtureEnvironment(home: copy, roots: []))
         #expect(preScan.exitCode == 0)
         let checksumBefore = try Self.sandboxChecksum(root: copy)
@@ -101,7 +102,7 @@ struct RollbackCLIIntegrationTests {
         // pre-batch state exactly.
         #expect(try Self.sandboxChecksum(root: copy) == checksumBefore)
         let postScan = try CLIRunner.run(
-            ["scan", "--format", "json"],
+            ["scan", "--json"],
             environment: CLIRunner.fixtureEnvironment(home: copy, roots: []))
         #expect(postScan.exitCode == 0)
         #expect(postScan.stdout == preScan.stdout)
@@ -132,7 +133,7 @@ struct RollbackCLIIntegrationTests {
             [findingID: ["action": "update"]], into: tree)
         let result = try Support.runBatch(
             home: inputs.home, roots: inputs.roots, decisionsPath: decisions,
-            arguments: ["--execute", "--reviewed"], path: bin + ":/usr/bin:/bin")
+            arguments: ["--execute", "--yes", "--confirm-dangerous"], path: bin + ":/usr/bin:/bin")
         #expect(result.exitCode == 0, "stderr: \(Support.stderrText(result))")
         let record = try #require(try result.jsonObject())
         #expect(record["batchStatus"] as? String == "succeeded")
@@ -150,7 +151,7 @@ struct RollbackCLIIntegrationTests {
         let tree = try TempTree()
         let copy = try Support.copyFixture("FIX-DOUBLE-BOOKED", into: tree)
         let preScan = try CLIRunner.run(
-            ["scan", "--format", "json"],
+            ["scan", "--json"],
             environment: CLIRunner.fixtureEnvironment(home: copy, roots: []))
         #expect(preScan.exitCode == 0)
         let checksumBefore = try Self.sandboxChecksum(root: copy)
@@ -162,7 +163,7 @@ struct RollbackCLIIntegrationTests {
             [findingID: ["action": "arbitrate", "choice": "keep-github"]], into: tree)
         let executed = try Support.runBatch(
             home: copy, roots: [], decisionsPath: decisions,
-            arguments: ["--execute", "--reviewed"], path: bin + ":/usr/bin:/bin")
+            arguments: ["--execute", "--yes", "--confirm-dangerous"], path: bin + ":/usr/bin:/bin")
         #expect(executed.exitCode == 1)
         let record = try #require(try executed.jsonObject())
         #expect(record["batchStatus"] as? String == "failed")
@@ -187,7 +188,7 @@ struct RollbackCLIIntegrationTests {
         // The lock is restored byte-exactly and the sandbox checksum matches.
         #expect(try Self.sandboxChecksum(root: copy) == checksumBefore)
         let postScan = try CLIRunner.run(
-            ["scan", "--format", "json"],
+            ["scan", "--json"],
             environment: CLIRunner.fixtureEnvironment(home: copy, roots: []))
         #expect(postScan.stdout == preScan.stdout)
     }
@@ -308,7 +309,7 @@ extension RollbackCLIIntegrationTests {
         let environment = CLIRunner.fixtureEnvironment(home: copy, roots: [])
         let preserved = try CLIRunner.run(
             [
-                "rollback", "--batch", executed.batchID, "--preserve", orphan,
+                "rollback", "--yes", "--batch", executed.batchID, "--preserve", orphan,
                 "--preserve", orphan + "/SKILL.md"
             ], environment: environment)
         #expect(preserved.exitCode == 0, "stderr: \(Support.stderrText(preserved))")
@@ -331,11 +332,12 @@ extension RollbackCLIIntegrationTests {
             atPath: later + "/link", withDestinationPath: "missing")
         let environment = CLIRunner.fixtureEnvironment(home: copy, roots: [])
         let review = try CLIRunner.run(
-            ["rollback", "--batch", executed.batchID, "--preview"], environment: environment)
+            ["rollback", "--yes", "--batch", executed.batchID, "--dry-run"],
+            environment: environment)
         #expect(review.exitCode == 0)
         let object = try #require(try review.jsonObject())
         let conflicts = try #require(object["conflicts"] as? [[String: Any]])
-        var arguments = ["rollback", "--batch", executed.batchID]
+        var arguments = ["rollback", "--yes", "--batch", executed.batchID]
         for conflict in conflicts {
             let path = try #require(conflict["path"] as? String)
             arguments += [

@@ -56,6 +56,11 @@ public struct HookInventoryIssue: Codable, Equatable, Sendable, Identifiable {
 public struct HookInventory: Codable, Equatable, Sendable {
     public let hooks: [AgentHook]
     public let issues: [HookInventoryIssue]
+    public init(hooks: [AgentHook], issues: [HookInventoryIssue]) {
+        self.hooks = hooks
+        self.issues = issues
+    }
+
     public var problems: [AgentHook] { hooks.filter { $0.health.isProblem } }
     public var isEmpty: Bool { hooks.isEmpty && issues.isEmpty }
 }

@@ -141,16 +141,67 @@ Sukiru 没有账户、分析或遥测。它读取本地文件，并在你的 Mac
 
 ## 💻 命令行工具
 
-`sukiru-cli` 提供同一套引擎，便于编写脚本和测试：
+应用内置 `sukiru` 命令，Homebrew cask 会将它链接到 PATH。源码环境可以使用 `swift run sukiru`。
 
 ```bash
-swift run sukiru-cli scan           # 输出 JSON 格式的健康报告
-swift run sukiru-cli capabilities   # 检测到的安装器及其版本
-swift run sukiru-cli batch …        # 根据决策文件生成或执行修复批次
-swift run sukiru-cli rollback …     # 恢复某个批次的快照
+sukiru health                     # 被动检查本地健康状态
+sukiru clean --dry-run             # 预览清理类修复
+sukiru fix --dry-run               # 预览确定性的一键修复
+sukiru fix --yes                   # 审阅后执行
 ```
 
-`SUKIRU_HOME` 会在所有路径解析中替代 `$HOME`，`SUKIRU_ROOTS` 用于添加以冒号分隔的项目根目录。详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+默认输出可读文本；`--json` 将结构化数据写入 stdout，诊断写入 stderr。
+`health --check` 的退出码为：健康 0、存在问题 1、扫描失败 2。
+各命令共用 `--scope user|project|all`、可重复的 `--root PATH` 和 `--host HOST`
+（例如 `claude-code`）。安装和插件变更必须选择具体的用户或项目作用域，
+`--root` 会替代 `SUKIRU_ROOTS`。
+
+```bash
+sukiru skills list --json
+sukiru skills update --all --dry-run
+sukiru skills pin NAME --ref v1 --dry-run
+sukiru skills mode NAME --mode link --dry-run
+sukiru skills adopt NAME --installer vercel --source OWNER/REPO --dry-run
+sukiru skills check-updates --json
+sukiru search swift --backend github --json
+sukiru install OWNER/REPO --skill NAME --installer vercel --scope user --dry-run
+sukiru plugins list --json
+sukiru plugins health
+sukiru plugins capabilities --host claude-code
+sukiru plugins install NAME@MARKET --host claude-code --scope user --dry-run
+sukiru plugins marketplaces list
+sukiru snapshots --json
+sukiru rollback --batch ID --dry-run
+sukiru rollback --batch ID --yes --preserve /absolute/conflict/path
+sukiru capabilities --json
+```
+
+通过各层 `--help` 查看更新、卸载、固定/取消固定版本、恢复文件、启用/禁用和市场操作。
+搜索、检查更新和能力探测是显式操作；普通 Health 不联网、不启动宿主会话。
+`sukiru --generate-completion-script zsh` 生成补全脚本，也支持 bash 和 fish。
+发布版的 `--version` 读取应用版本，CLI 与 GUI 使用同一版本号。
+
+所有变更共用 `--dry-run`、`--yes`（`-y`）和 `--confirm-dangerous`。
+预演生成精确的命令批次且不写入文件；执行前必须成功创建快照。
+未传入 `--yes` 时，终端会询问确认，非交互执行会被拒绝。
+**`--yes` 不能代替危险操作确认**，危险批次仍需单独传入 `--confirm-dangerous`。
+执行在首个失败处停止，并保留重新扫描、差异和回滚记录。
+回滚冲突必须用 `--restore PATH` 或 `--preserve PATH` 明确选择；
+不会自动合并，也不会猜测归属或来源。
+
+需要显式计划文件的高级机器接口仍然可用：
+
+```bash
+sukiru scan --json
+sukiru batch --decisions decisions.json --dry-run --json
+sukiru batch --decisions decisions.json --execute --yes --confirm-dangerous --json
+sukiru plugins plan --requests requests.json --json
+sukiru plugins execute --requests requests.json --yes --confirm-dangerous --json
+```
+
+原 `sukiru-cli`、`--format json`、`--reviewed` 和回滚 `--preview` 已替换为新命令及共用选项。
+`SUKIRU_HOME` 在所有路径解析中替代 `$HOME`，`SUKIRU_ROOTS` 添加以冒号分隔的项目根目录。
+详见 [CONTRIBUTING.md](CONTRIBUTING.md) 和 [钩子高级 CLI 文档](docs/hook-hygiene-cli.md)。
 
 ---
 

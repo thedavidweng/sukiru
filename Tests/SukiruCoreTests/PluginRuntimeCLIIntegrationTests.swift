@@ -23,7 +23,7 @@ struct PluginRuntimeCLIIntegrationTests {
                 """)
         let env = CLIRunner.fixtureEnvironment(
             home: home, roots: [project], path: tree.path + "/bin:/usr/bin:/bin")
-        let scan = try CLIRunner.run(["scan", "--format", "json"], environment: env)
+        let scan = try CLIRunner.run(["scan", "--json"], environment: env)
         #expect(scan.exitCode == 0)
         #expect(try String(contentsOfFile: state, encoding: .utf8) == original)
         let plan = try CLIRunner.run(["plugins", "plan", "--requests", request], environment: env)
@@ -34,18 +34,18 @@ struct PluginRuntimeCLIIntegrationTests {
         #expect((command["warning"] as? String)?.contains("all package plugins") == true)
         #expect(try String(contentsOfFile: state, encoding: .utf8) == original)
         let refused = try CLIRunner.run(
-            ["plugins", "execute", "--requests", request, "--reviewed"], environment: env)
+            ["plugins", "execute", "--requests", request, "--yes"], environment: env)
         #expect(refused.exitCode == 1)
         #expect(try String(contentsOfFile: state, encoding: .utf8) == original)
         let execute = try CLIRunner.run(
-            ["plugins", "execute", "--requests", request, "--reviewed", "--confirm-dangerous"],
+            ["plugins", "execute", "--requests", request, "--yes", "--confirm-dangerous"],
             environment: env)
         #expect(execute.exitCode == (exitCode == 0 ? 0 : 1))
         #expect(try String(contentsOfFile: state, encoding: .utf8) == root + ":plugin " + action)
         let record = try #require(try execute.jsonObject())
         #expect((record["unrestorableEffects"] as? [String])?.isEmpty == false)
         let id = try #require(record["batchID"] as? String)
-        let rollback = try CLIRunner.run(["rollback", "--batch", id], environment: env)
+        let rollback = try CLIRunner.run(["rollback", "--yes", "--batch", id], environment: env)
         #expect(rollback.exitCode == 0)
         #expect(try String(contentsOfFile: state, encoding: .utf8) == original)
         try verifyEffectsHistory(record)

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Locates and runs the built `sukiru-cli` executable for end-to-end CLI
+/// Locates and runs the built `sukiru` executable for end-to-end CLI
 /// contract tests.
 ///
 /// `swift test` builds every target of the package, so the executable sits
@@ -28,10 +28,10 @@ enum CLIRunner {
             return override
         }
         let repoRoot = FixturePaths.root.deletingLastPathComponent()
-        var candidates = [repoRoot.appendingPathComponent(".build/debug/sukiru-cli").path]
+        var candidates = [repoRoot.appendingPathComponent(".build/debug/sukiru").path]
         candidates.append(
             Bundle.main.bundleURL.deletingLastPathComponent()
-                .appendingPathComponent("sukiru-cli").path
+                .appendingPathComponent("sukiru").path
         )
         return candidates.first { fileManager.isExecutableFile(atPath: $0) }
     }
@@ -52,7 +52,7 @@ enum CLIRunner {
         return env
     }
 
-    /// Runs `scan --format json` against a named fixture with extra CLI
+    /// Runs `scan --json` against a named fixture with extra CLI
     /// arguments and environment entries.
     static func scanFixture(
         _ fixture: String,
@@ -61,7 +61,7 @@ enum CLIRunner {
     ) throws -> Result {
         let inputs = FixturePaths.homeAndRoots(fixture)
         return try run(
-            ["scan", "--format", "json"] + arguments,
+            ["scan", "--json"] + arguments,
             environment: fixtureEnvironment(home: inputs.home, roots: inputs.roots, extra: extraEnv)
         )
     }
@@ -72,7 +72,8 @@ enum CLIRunner {
     static func run(
         _ arguments: [String],
         environment: [String: String],
-        timeout: TimeInterval = 60
+        timeout: TimeInterval = 60,
+        json: Bool = true
     ) throws -> Result {
         guard let binary = binaryPath else {
             throw NSError(
@@ -80,13 +81,13 @@ enum CLIRunner {
                 code: 1,
                 userInfo: [
                     NSLocalizedDescriptionKey:
-                        "sukiru-cli binary not found; run `swift build` first "
+                        "sukiru binary not found; run `swift build` first "
                         + "(or set SUKIRU_CLI_BINARY)"
                 ]
             )
         }
         let scratch = FileManager.default.temporaryDirectory
-            .appendingPathComponent("sukiru-cli-test-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("sukiru-test-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: scratch) }
 
@@ -99,7 +100,10 @@ enum CLIRunner {
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: binary)
-        process.arguments = arguments
+        process.arguments =
+            !json || arguments.contains("--json") || arguments.contains("--help")
+                || arguments.contains("--version")
+            ? arguments : arguments + ["--json"]
         process.environment = environment
         process.standardOutput = stdoutHandle
         process.standardError = stderrHandle

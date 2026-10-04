@@ -31,11 +31,11 @@ struct PluginBackendCLIIntegrationTests {
             (command["warning"] as? String)?.contains("does not reverse backend installation")
                 == true)
         let refused = try CLIRunner.run(
-            ["plugins", "execute", "--requests", request, "--reviewed"], environment: env)
+            ["plugins", "execute", "--requests", request, "--yes"], environment: env)
         #expect(refused.exitCode == 1)
         #expect(!FileManager.default.fileExists(atPath: marker))
         let execute = try CLIRunner.run(
-            ["plugins", "execute", "--requests", request, "--reviewed", "--confirm-dangerous"],
+            ["plugins", "execute", "--requests", request, "--yes", "--confirm-dangerous"],
             environment: env)
         #expect(execute.exitCode == 0)
         let record = try #require(try execute.jsonObject())
@@ -44,7 +44,8 @@ struct PluginBackendCLIIntegrationTests {
             try String(contentsOfFile: marker, encoding: .utf8)
                 == "plugin \(native) demo@openai-curated-remote --json")
         let id = try #require(record["batchID"] as? String)
-        #expect(try CLIRunner.run(["rollback", "--batch", id], environment: env).exitCode == 0)
+        #expect(
+            try CLIRunner.run(["rollback", "--yes", "--batch", id], environment: env).exitCode == 0)
         let directory = try #require(record["recordDirectory"] as? String)
         let saved =
             try JSONSerialization.jsonObject(

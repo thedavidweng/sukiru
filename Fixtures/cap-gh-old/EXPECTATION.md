@@ -6,10 +6,10 @@ detector never probes a below-minimum gh). The date string comes from the
 shared `gh_stub` heredoc in Scripts/fixtures/build-handbuilt.sh (the
 generator is the source of truth); version parsing reads only the number.
 
-Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru-cli capabilities --format json`.
+Use: `PATH="<this>/bin:/usr/bin:/bin" sukiru capabilities --json`.
 
 A correct capabilities report MUST exit 0 and report gh available=false,
 present=true, version="2.80.0", meetsMinimum=false, reason="too-old". Scans
-in this environment MUST be unaffected: `sukiru-cli scan` over the
+in this environment MUST be unaffected: `sukiru scan` over the
 `own-github` fixture still exits 0 and surfaces `metadata.github-*`
 provenance from disk.

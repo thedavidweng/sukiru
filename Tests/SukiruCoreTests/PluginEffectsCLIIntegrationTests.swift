@@ -34,11 +34,11 @@ struct PluginEffectsCLIIntegrationTests {
             #expect(command["argv"] as? [String] == expected)
             #expect((command["warning"] as? String)?.contains("outside captured roots") == true)
             let refused = try CLIRunner.run(
-                ["plugins", "execute", "--requests", request, "--reviewed"], environment: env)
+                ["plugins", "execute", "--requests", request, "--yes"], environment: env)
             #expect(refused.exitCode == 1)
             #expect(!FileManager.default.fileExists(atPath: marker))
             let execute = try CLIRunner.run(
-                ["plugins", "execute", "--requests", request, "--reviewed", "--confirm-dangerous"],
+                ["plugins", "execute", "--requests", request, "--yes", "--confirm-dangerous"],
                 environment: env)
             #expect(execute.exitCode == 0)
             let record = try #require(try execute.jsonObject())
@@ -47,7 +47,7 @@ struct PluginEffectsCLIIntegrationTests {
                 try String(contentsOfFile: marker, encoding: .utf8)
                     == expected.dropFirst().joined(separator: " "))
             let id = try #require(record["batchID"] as? String)
-            let rollback = try CLIRunner.run(["rollback", "--batch", id], environment: env)
+            let rollback = try CLIRunner.run(["rollback", "--yes", "--batch", id], environment: env)
             #expect(rollback.exitCode == 0)
             #expect(!FileManager.default.fileExists(atPath: marker))
         }
@@ -101,12 +101,13 @@ struct PluginEffectsCLIIntegrationTests {
         #expect((command["warning"] as? String)?.contains(physicalRoot) == true)
         #expect(try String(contentsOfFile: marker, encoding: .utf8) == "original")
         let result = try CLIRunner.run(
-            ["plugins", "execute", "--requests", request, "--reviewed", "--confirm-dangerous"],
+            ["plugins", "execute", "--requests", request, "--yes", "--confirm-dangerous"],
             environment: env)
         #expect(result.exitCode == 0)
         let record = try #require(try result.jsonObject())
         let id = try #require(record["batchID"] as? String)
-        #expect(try CLIRunner.run(["rollback", "--batch", id], environment: env).exitCode == 0)
+        #expect(
+            try CLIRunner.run(["rollback", "--yes", "--batch", id], environment: env).exitCode == 0)
         #expect(try String(contentsOfFile: marker, encoding: .utf8) == "original")
     }
 
@@ -132,7 +133,7 @@ struct PluginEffectsCLIIntegrationTests {
                   "scope":"user","scopeRoot":"\(home)"}]
                 """)
         let result = try CLIRunner.run(
-            ["plugins", "execute", "--requests", request, "--reviewed", "--confirm-dangerous"],
+            ["plugins", "execute", "--requests", request, "--yes", "--confirm-dangerous"],
             environment: CLIRunner.fixtureEnvironment(
                 home: home, path: tree.path + "/bin:/usr/bin:/bin"))
         #expect(result.exitCode == 1)

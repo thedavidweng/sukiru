@@ -165,7 +165,7 @@ struct CorpusExpectationTests {
         }
 
         let result = try CLIRunner.run(
-            ["scan", "--format", "json"],
+            ["scan", "--json"],
             environment: CLIRunner.fixtureEnvironment(home: copy)
         )
         let stderr = String(bytes: result.stderr, encoding: .utf8) ?? ""

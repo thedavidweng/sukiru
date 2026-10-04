@@ -58,7 +58,7 @@ extension PluginLifecycleCLIIntegrationTests {
                   "scope":"user","scopeRoot":"\(home)"}]
                 """)
         let result = try CLIRunner.run(
-            ["plugins", "execute", "--requests", tree.path + "/requests.json", "--reviewed"],
+            ["plugins", "execute", "--requests", tree.path + "/requests.json", "--yes"],
             environment: CLIRunner.fixtureEnvironment(
                 home: home, path: tree.path + "/bin:/usr/bin:/bin"))
         #expect(result.exitCode == 1)
@@ -87,7 +87,7 @@ extension PluginLifecycleCLIIntegrationTests {
                 [{"host":"claude","action":"disable","target":"demo@team","scope":"user","scopeRoot":"\(home)"}]
                 """)
         let result = try CLIRunner.run(
-            ["plugins", "execute", "--requests", tree.path + "/requests.json", "--reviewed"],
+            ["plugins", "execute", "--requests", tree.path + "/requests.json", "--yes"],
             environment: CLIRunner.fixtureEnvironment(
                 home: home, path: tree.path + "/bin:/usr/bin:/bin"))
         #expect(result.exitCode == 1)

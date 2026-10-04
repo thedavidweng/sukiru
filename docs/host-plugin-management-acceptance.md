@@ -65,13 +65,13 @@ shown in the preview. OpenCode v2 `list`, `check`, and `update` are explicit
 runtime operations; target `*` omits the optional target and includes all
 packages in the selected runtime. A specific check/update target is passed
 unchanged, preserving native exact-version and full-commit locks.
-`plugins execute --requests FILE --reviewed` executes only supported plans;
+`plugins execute --requests FILE --yes` executes only supported plans;
 destructive operations and runtime/backend effects also require `--confirm-dangerous`.
 This acknowledges the disclosed effects and file rollback limits for that batch.
 The shared executor independently refuses effects-bearing batches without consent.
 Instructions-only plans do not execute a partial batch.
 
-`rollback ID --preview` lists conflicts. Repeated `--restore PATH` and
+`rollback ID --dry-run` lists conflicts. Repeated `--restore PATH` and
 `--preserve PATH` resolve them explicitly; unrelated later additions support
 preservation only. Unresolved conflicts mutate nothing.
 

@@ -203,7 +203,7 @@ struct BatchCLIDryRunTests {
 
     // MARK: - Leave produces no batch
 
-    @Test("leave-only decisions: exit 0, no batch JSON, sandbox unchanged")
+    @Test("leave-only decisions: exit 0, JSON null, sandbox unchanged")
     func leaveNoBatch() throws {
         let scan = try Support.scanObject("FIX-FILES-NO-LOCK")
         let findingID = try Support.findingID(scan, ruleID: "files-without-lock", skill: "orphan")
@@ -212,7 +212,7 @@ struct BatchCLIDryRunTests {
             fixture: "FIX-FILES-NO-LOCK", decisions: [findingID: ["action": "leave"]],
             extraArguments: ["--dry-run"])
         #expect(result.exitCode == 0, "stderr: \(Support.stderrText(result))")
-        #expect(result.stdout.isEmpty, "leave must not render a batch")
+        #expect(String(bytes: result.stdout, encoding: .utf8) == "null\n", "leave renders no batch")
         let after = try TreeChecksum.manifest(root: FixturePaths.tree("FIX-FILES-NO-LOCK"))
         #expect(before == after)
     }
@@ -314,11 +314,11 @@ struct BatchCLIRefusalTests {
         let inputs = FixturePaths.homeAndRoots("CM-1")
         let environment = CLIRunner.fixtureEnvironment(home: inputs.home, roots: inputs.roots)
         let missing = try CLIRunner.run(["batch", "--dry-run"], environment: environment)
-        #expect(missing.exitCode == 1)
+        #expect(missing.exitCode == 64)
         #expect(Support.stderrText(missing).contains("--decisions"))
         let unknownFlag = try CLIRunner.run(
             ["batch", "--decisions", "/tmp/x.json", "--frobnicate"], environment: environment)
-        #expect(unknownFlag.exitCode == 1)
+        #expect(unknownFlag.exitCode == 64)
         #expect(Support.stderrText(unknownFlag).contains("--frobnicate"))
     }
 

@@ -35,6 +35,18 @@ if [ ! -d "$application" ]; then
   echo "error: build reported success but $application is missing" >&2
   exit 1
 fi
+echo "==> Building size-optimized release CLI..."
+swift build -c release --product sukiru -Xswiftc -Osize
+cli_bin_dir="$(swift build -c release --show-bin-path)"
+cp "$cli_bin_dir/sukiru" "$application/Contents/MacOS/sukiru"
+# Embedding a second executable changes the app signature.
+codesign --force --sign - "$application/Contents/MacOS/sukiru"
+codesign --force --sign - "$application"
+shipped_cli_version="$("$application/Contents/MacOS/sukiru" --version)"
+if [ "$shipped_cli_version" != "$MARKETING_VERSION" ]; then
+  echo "error: app and CLI versions differ ($MARKETING_VERSION / $shipped_cli_version)" >&2
+  exit 1
+fi
 xattr -cr "$application"
 
 dist_dir="$REPO_ROOT/dist"

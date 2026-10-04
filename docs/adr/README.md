@@ -18,3 +18,5 @@ are added as amendments or new records that reference the old one.
 | [0010](0010-agent-hook-hygiene.md) | Passive hook inventory, evidenced attribution, and protected structural cleanup | Accepted |
 
 Domain terms are defined in the [glossary](../../CONTEXT.md).
+
+- [0011: First-class Sukiru CLI](0011-first-class-cli.md)

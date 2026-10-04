@@ -76,7 +76,7 @@ dirs onto PATH:
 
 ```
 PATH="$PWD/Fixtures/cap-gh-ok/bin:$PWD/Fixtures/cap-npx-ok/bin:/usr/bin:/bin" \
-  sukiru-cli capabilities --format json
+  sukiru capabilities --json
 ```
 
 An "absent" fixture contributes an empty `bin/`; combine freely (e.g.
@@ -111,7 +111,7 @@ plus npm/mise/gh caches in it.
 ## Expectation snapshots (checked in)
 
 `expectations/<fixture>.scan.json` holds the path-normalized
-(`<FIXTURE>/...`) `sukiru-cli scan --format json` stdout for every FIX-* and
+(`<FIXTURE>/...`) `sukiru scan --json` stdout for every FIX-* and
 CM-* tree plus `scope-isolation`. `CorpusExpectationTests` compares fresh
 scans byte-for-byte against them; refresh after intentional engine or corpus
 changes with:

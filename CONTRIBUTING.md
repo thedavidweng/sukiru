@@ -61,7 +61,7 @@ inherited. Do not launch a freshly built debug app with `open -F`.
 
 ```bash
 SUKIRU_HOME="$PWD/Fixtures/own-vercel/.home" \
-  SUKIRU_ROOTS="$PWD/Fixtures/own-vercel/proj" swift run sukiru-cli scan
+  SUKIRU_ROOTS="$PWD/Fixtures/own-vercel/proj" swift run sukiru scan --json
 SUKIRU_E2E=1 swift test
 ```
 

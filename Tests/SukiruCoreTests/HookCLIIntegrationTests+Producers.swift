@@ -63,7 +63,7 @@ extension HookCLIIntegrationTests {
         try tree.file("home/.claude/settings.json", contents: config)
         try tree.file("project/.codex/hooks.json", contents: config)
         let env = CLIRunner.fixtureEnvironment(home: home, roots: [project])
-        let scan = try CLIRunner.run(["scan", "--format", "json"], environment: env)
+        let scan = try CLIRunner.run(["scan", "--json"], environment: env)
         let report = try JSONDecoder().decode(ScanReport.self, from: scan.stdout)
         let hooks = try #require(report.hookInventory?.hooks)
         #expect(hooks.count == 2)
@@ -163,6 +163,7 @@ extension HookCLIIntegrationTests {
         let diff = try #require(record["diff"] as? [String: Any])
         #expect((diff["entries"] as? [[String: Any]])?.isEmpty == false)
         let id = try #require(record["batchID"] as? String)
-        #expect(try CLIRunner.run(["rollback", "--batch", id], environment: env).exitCode == 0)
+        #expect(
+            try CLIRunner.run(["rollback", "--yes", "--batch", id], environment: env).exitCode == 0)
     }
 }
