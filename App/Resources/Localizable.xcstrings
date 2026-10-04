@@ -397,6 +397,16 @@
         }
       }
     },
+    "Agent discovers this name more than once" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "智能体发现了多个同名技能入口"
+          }
+        }
+      }
+    },
     "Agent folder" : {
       "comment" : "Finding evidence label.",
       "localizations" : {
@@ -1290,6 +1300,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拖移以更改顺序"
+          }
+        }
+      }
+    },
+    "Duplicate skill names" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重复的技能名称"
           }
         }
       }
@@ -6960,6 +6980,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这些链接指向已不存在的文件夹，智能体无法加载。“移除”只删除链接本身。"
+          }
+        }
+      }
+    },
+    "problem.duplicateName.explanation" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An agent discovers multiple entries with the same skill name at one scope. Some hosts report a conflict even when links point to the same folder. Review the listed agents and paths, then rename or remove the redundant entry."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "智能体在同一层级发现了多个同名技能入口。部分宿主即使遇到指向同一文件夹的链接也会报告冲突。检查列出的智能体和路径，然后重命名或移除多余入口。"
           }
         }
       }

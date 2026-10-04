@@ -57,7 +57,11 @@ public struct ScanEngine: Sendable {
         let health = HealthAnalyzer(fileSystem: fileSystem).analyze(
             groups: groups, locks: claims.claims)
         let leftovers = LeftoverHostRule.findings(workspaces: workspaces, fileSystem: fileSystem)
-        let findings = (inventory.findings + resolution.findings + health + leftovers)
+        let detector = HostDetector(environment: environment, fileSystem: fileSystem)
+        let collisions = HostNameCollisionRule.findings(
+            groups: groups, workspaces: workspaces,
+            detectedHosts: Set(HostTable.hosts.filter(detector.isDetected).map(\.id)))
+        let findings = (inventory.findings + resolution.findings + health + leftovers + collisions)
             .sorted(by: Self.findingOrder)
         let issues = (inventory.issues + claims.issues).sorted {
             ($0.path, $0.kind, $0.message) < ($1.path, $1.kind, $1.message)

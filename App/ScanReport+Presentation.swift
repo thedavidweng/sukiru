@@ -41,6 +41,7 @@ enum EvidencePresentation {
         "supportedVersion": "Supported version",
         "githubRepo": "GitHub repository",
         "hostPath": "Agent folder",
+        "hostID": "Agent",
         "hosts": "Agents",
         "linkCount": "Links",
         "skillsDir": "Skills folder",
@@ -65,6 +66,9 @@ enum EvidencePresentation {
     /// Ownership verdicts are wire tokens and show as their Library label;
     /// every other detail (paths, hashes, names) shows as-is.
     static func detail(of evidence: Evidence) -> String {
+        if evidence.kind == "hostID", let host = HostTable.host(id: evidence.detail) {
+            return host.displayName
+        }
         guard evidence.kind == "ownership", let ownership = Ownership(rawValue: evidence.detail)
         else { return evidence.detail }
         return String(localized: ownership.title)

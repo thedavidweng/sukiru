@@ -14,6 +14,7 @@ extension ProblemKind {
         case .leftoverHostDir: "Leftover folders of uninstalled agents"
         case .orphan: "Skills with no known source"
         case .ownerConflict: "Conflicting owners"
+        case .duplicateName: "Duplicate skill names"
         case .unsupportedLock: "Lock from a newer installer"
         case .note: "Notes"
         }
@@ -37,6 +38,8 @@ extension ProblemKind {
             "problem.orphan.explanation"
         case .ownerConflict:
             "problem.ownerConflict.explanation"
+        case .duplicateName:
+            "problem.duplicateName.explanation"
         case .unsupportedLock:
             "problem.unsupportedLock.explanation"
         case .note:
@@ -54,6 +57,7 @@ extension ProblemKind {
         case .leftoverHostDir: "folder.badge.minus"
         case .orphan: "questionmark.folder"
         case .ownerConflict: "person.2"
+        case .duplicateName: "doc.on.doc"
         case .unsupportedLock: "lock.trianglebadge.exclamationmark"
         case .note: "note.text"
         }

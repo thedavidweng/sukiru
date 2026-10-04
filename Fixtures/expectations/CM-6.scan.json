@@ -51,6 +51,26 @@
       "severity" : "action",
       "skillName" : "stale-docs-cleanup",
       "workspaceID" : "project:<FIXTURE>/proj"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "claude-code",
+          "kind" : "hostID"
+        },
+        {
+          "detail" : "<FIXTURE>/proj/.claude/skills/orphaned-copy",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/proj/.claude/skills/stale-docs-cleanup",
+          "kind" : "memberPath"
+        }
+      ],
+      "ruleID" : "host-name-collision",
+      "severity" : "warning",
+      "skillName" : "stale-docs-cleanup",
+      "workspaceID" : "project:<FIXTURE>/proj"
     }
   ],
   "issues" : [

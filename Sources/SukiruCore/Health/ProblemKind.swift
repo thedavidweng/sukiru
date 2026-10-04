@@ -27,6 +27,8 @@ public enum ProblemKind: String, CaseIterable, Codable, Equatable, Sendable {
     case orphan
     /// Two ledgers (or unexplained copies) claim the same name.
     case ownerConflict = "owner-conflict"
+    /// One host discovers multiple entries for the same skill name.
+    case duplicateName = "duplicate-name"
     /// A lock file written by a newer installer than Sukiru reads.
     case unsupportedLock = "unsupported-lock"
     /// Informational: expected layout or standing advisories.
@@ -58,6 +60,7 @@ public enum ProblemKind: String, CaseIterable, Codable, Equatable, Sendable {
         "files-without-lock": .orphan,
         "double-booked": .ownerConflict,
         "ambiguous-name": .ownerConflict,
+        HostNameCollisionRule.ruleID: .duplicateName,
         "lock-version-unsupported": .unsupportedLock
     ]
 
@@ -84,7 +87,7 @@ public enum ProblemKind: String, CaseIterable, Codable, Equatable, Sendable {
             // Reinstall and removal both rewrite or delete agent copies; the
             // user picks one.
             return nil
-        case .orphan, .ownerConflict, .unsupportedLock, .note:
+        case .orphan, .ownerConflict, .duplicateName, .unsupportedLock, .note:
             return nil
         }
     }
