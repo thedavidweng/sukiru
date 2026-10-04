@@ -63,6 +63,16 @@
         }
       }
     },
+    "%lld plugins" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 个插件"
+          }
+        }
+      }
+    },
     "%lld problems, %lld fixable in one click" : {
       "comment" : "Health summary line.",
       "localizations" : {
@@ -231,6 +241,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加插件市场"
+          }
+        }
+      }
+    },
+    "Add Plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加插件"
           }
         }
       }
@@ -599,12 +619,12 @@
         }
       }
     },
-    "Browse this host's locally configured catalog" : {
+    "Browse configured marketplaces" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "浏览此宿主在本地配置的目录"
+            "value" : "浏览已配置的市场"
           }
         }
       }
@@ -625,6 +645,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消回滚并保留当前文件。"
+          }
+        }
+      }
+    },
+    "Change the host filter or search to see other plugins." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调整主机筛选或搜索条件以查看其他插件。"
           }
         }
       }
@@ -812,6 +842,16 @@
         }
       }
     },
+    "Close marketplace browsing" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭市场浏览"
+          }
+        }
+      }
+    },
     "Close without creating a command batch" : {
       "localizations" : {
         "zh-Hans" : {
@@ -849,46 +889,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "组件"
-          }
-        }
-      }
-    },
-    "Components follow the host's plugin management granularity." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "组件的管理粒度由宿主决定。"
-          }
-        }
-      }
-    },
-    "Configured Enablement" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "启用配置"
-          }
-        }
-      }
-    },
-    "Configured Marketplaces" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已配置的插件市场"
-          }
-        }
-      }
-    },
-    "Configured enablement does not establish that a host session loaded this plugin." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "启用配置不能证明宿主会话已加载此插件。"
           }
         }
       }
@@ -1350,6 +1350,16 @@
         }
       }
     },
+    "Enabled in Host" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主机启用配置"
+          }
+        }
+      }
+    },
     "Environment problem: library root not found" : {
       "comment" : "Health surface environment notice (D4).",
       "localizations" : {
@@ -1778,6 +1788,16 @@
         }
       }
     },
+    "Identifier" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标识符"
+          }
+        }
+      }
+    },
     "If none are checked, npx skills chooses the agents." : {
       "comment" : "Install sheet: footnote under the Vercel agent checkboxes.",
       "localizations" : {
@@ -1816,12 +1836,32 @@
         }
       }
     },
+    "Inspect plugin inventory errors" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看插件清单读取错误"
+          }
+        }
+      }
+    },
     "Inspect static compatibility evidence and historical errors" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "查看静态兼容性证据及历史错误"
+          }
+        }
+      }
+    },
+    "Inspect the plugin identifier and recorded path" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看插件标识符和记录的路径"
           }
         }
       }
@@ -1857,6 +1897,16 @@
         }
       }
     },
+    "Install Plugin…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装插件…"
+          }
+        }
+      }
+    },
     "Install Selected Skill…" : {
       "comment" : "Search menu: install command (⌘⇧I).",
       "localizations" : {
@@ -1875,6 +1925,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安装技能"
+          }
+        }
+      }
+    },
+    "Install a plugin or browse configured marketplaces" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装插件或浏览已配置的市场"
           }
         }
       }
@@ -1907,16 +1967,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "以副本形式安装新技能"
-          }
-        }
-      }
-    },
-    "Install plugins or manage configured marketplaces using official host commands" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "通过宿主官方命令安装插件或管理已配置的插件市场"
           }
         }
       }
@@ -2265,16 +2315,6 @@
         }
       }
     },
-    "Load Status" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "加载状态"
-          }
-        }
-      }
-    },
     "Loading SKILL.md…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2292,6 +2332,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在加载资源库…"
+          }
+        }
+      }
+    },
+    "Local Plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地插件"
           }
         }
       }
@@ -2455,22 +2505,32 @@
         }
       }
     },
-    "Manage Plugin" : {
+    "Marketplace Actions" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "管理插件"
+            "value" : "市场操作"
           }
         }
       }
     },
-    "Manage Plugins…" : {
+    "Marketplaces" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "管理插件…"
+            "value" : "市场"
+          }
+        }
+      }
+    },
+    "Marketplaces…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "市场…"
           }
         }
       }
@@ -2586,6 +2646,16 @@
         }
       }
     },
+    "No configured marketplaces" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未配置市场"
+          }
+        }
+      }
+    },
     "No findings implicate this skill" : {
       "comment" : "Health surface: empty state while focused on one skill via the D16 deep-link.",
       "localizations" : {
@@ -2647,6 +2717,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有与本地副本一致的来源，请用「查找来源…」手动选择。"
+          }
+        }
+      }
+    },
+    "No locally cached plugins" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有本地缓存的插件"
+          }
+        }
+      }
+    },
+    "No matching plugins" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有匹配的插件"
           }
         }
       }
@@ -2744,6 +2834,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这里的技能都无法在此更新。选择一个技能查看原因。"
+          }
+        }
+      }
+    },
+    "Not Checked" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未检查"
           }
         }
       }
@@ -2883,6 +2983,16 @@
         }
       }
     },
+    "Path" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "路径"
+          }
+        }
+      }
+    },
     "Path in Repository" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2970,22 +3080,22 @@
         }
       }
     },
+    "Plugin Actions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "插件操作"
+          }
+        }
+      }
+    },
     "Plugin Compatibility" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "插件兼容性"
-          }
-        }
-      }
-    },
-    "Plugin Installations" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "插件安装实例"
           }
         }
       }
@@ -3072,6 +3182,26 @@
         }
       }
     },
+    "Preview a plugin installation" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览插件安装"
+          }
+        }
+      }
+    },
+    "Preview an operation for this marketplace" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览对此市场的操作"
+          }
+        }
+      }
+    },
     "Preview in Pending Changes" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3088,16 +3218,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "预览从此已配置市场安装插件"
-          }
-        }
-      }
-    },
-    "Preview the official marketplace operation and its full impact" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "预览官方插件市场操作及其完整影响"
           }
         }
       }
@@ -3901,6 +4021,16 @@
         }
       }
     },
+    "Runtime" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "运行时"
+          }
+        }
+      }
+    },
     "SKILL.md is unavailable" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3972,6 +4102,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "搜索失败"
+          }
+        }
+      }
+    },
+    "Search plugin names in configured marketplaces" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在已配置的市场中搜索插件名称"
           }
         }
       }
@@ -4536,6 +4676,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "资源库根目录（SUKIRU_HOME）不存在。请修正路径后按“刷新”，或使用有效的根目录重新启动。"
+          }
+        }
+      }
+    },
+    "This is the host's configured state; runtime loading has not been checked." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这是主机配置中的状态，尚未检查运行时加载情况。"
           }
         }
       }

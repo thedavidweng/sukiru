@@ -10,7 +10,7 @@ struct PluginManagementSheet: View {
             Form {
                 Picker("Host", selection: $state.pluginManagement.host) {
                     ForEach(PluginHost.allCases, id: \.self) { host in
-                        Text(verbatim: host.rawValue).tag(host)
+                        Text(verbatim: host.displayName).tag(host)
                     }
                 }
                 .accessibilityIdentifier("sukiru.plugins.operation.host")

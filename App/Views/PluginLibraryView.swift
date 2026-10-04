@@ -30,12 +30,15 @@ struct PluginLibraryView: View {
     @EnvironmentObject private var state: AppState
     @State private var host: PluginHost?
     @State private var filter = ""
+    @State private var showingMarketplaces = false
+    @State private var catalogAction: (() -> Void)?
 
     private var installations: [PluginInstallation] {
         (state.report?.pluginInventory?.installations ?? []).filter {
             state.includesPluginScope($0.scopeRoot) && (host == nil || $0.host == host)
-                && (filter.isEmpty || $0.identifier.localizedCaseInsensitiveContains(filter))
-        }
+                && (filter.isEmpty || $0.identifier.localizedCaseInsensitiveContains(filter)
+                    || $0.sourceTitle.localizedCaseInsensitiveContains(filter))
+        }.sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
     }
 
     private var marketplaces: [PluginMarketplace] {
@@ -46,36 +49,101 @@ struct PluginLibraryView: View {
 
     var body: some View {
         List(selection: $state.selectedPluginID) {
-            Section("Plugin Installations") {
+            Section {
                 ForEach(installations) { plugin in
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(verbatim: plugin.identifier)
-                        Text(
-                            verbatim:
-                                "\(plugin.host.rawValue) · \(plugin.scope) · \(plugin.scopeRoot)"
+                    HStack {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(verbatim: plugin.displayName)
+                                .font(.body.weight(.semibold))
+                                .lineLimit(1)
+                            HStack(spacing: 6) {
+                                Text(verbatim: plugin.sourceTitle)
+                                if plugin.scopeRoot != state.environment.home {
+                                    Text(
+                                        verbatim: URL(fileURLWithPath: plugin.scopeRoot)
+                                            .lastPathComponent
+                                    )
+                                    .help(plugin.scopeRoot)
+                                }
+                                if plugin.scope == "local" {
+                                    Text("Local project settings")
+                                }
+                            }
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                        }
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 3) {
+                            AgentLogo(hostID: plugin.host.agentID, size: 14)
+                            if plugin.enablement != .unknown {
+                                Text(plugin.enablement.localizedTitle)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(
+                            Text(
+                                verbatim:
+                                    "\(plugin.host.displayName), \(plugin.enablement.localizedTitle)"
+                            )
                         )
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .help(plugin.host.displayName)
                     }
                     .tag(plugin.id)
                     .accessibilityIdentifier("sukiru.plugins.row.\(plugin.id)")
                 }
-            }
-            Section("Configured Marketplaces") {
-                ForEach(marketplaces) { marketplace in
-                    marketplaceRow(marketplace)
+            } header: {
+                HStack {
+                    Text("Plugins")
+                    Spacer()
+                    Text(installations.count, format: .number)
                 }
             }
             if let issues = state.report?.pluginInventory?.issues, !issues.isEmpty {
-                Section("Inspection Issues") {
-                    ForEach(issues, id: \.self) { issue in
-                        Text(verbatim: "\(issue.path): \(issue.message)")
+                Section {
+                    DisclosureGroup("Inspection Issues") {
+                        ForEach(issues, id: \.self) { issue in
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(verbatim: issue.message)
+                                Text(verbatim: issue.path)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .textSelection(.enabled)
+                            }
+                        }
                     }
+                    .accessibilityIdentifier("sukiru.plugins.inspectionIssues")
+                    .help("Inspect plugin inventory errors")
                 }
             }
         }
+        .listStyle(.inset)
         .navigationTitle("Plugins")
-        .searchable(text: $filter, prompt: Text("Filter Plugins"))
+        .navigationSubtitle(Text("\(installations.count) plugins"))
+        .searchable(text: $filter, placement: .toolbar, prompt: Text("Filter Plugins"))
+        .overlay {
+            if installations.isEmpty {
+                ContentUnavailableView {
+                    Label("No matching plugins", systemImage: "puzzlepiece.extension")
+                } description: {
+                    Text("Change the host filter or search to see other plugins.")
+                }
+            }
+        }
+        .sheet(isPresented: $showingMarketplaces, onDismiss: runCatalogAction) {
+            PluginMarketplacesSheet(
+                marketplaces: marketplaces,
+                onInstall: { entry, marketplace in
+                    catalogAction = { state.manageCatalogEntry(entry, marketplace: marketplace) }
+                    showingMarketplaces = false
+                },
+                onManage: { marketplace, action in
+                    catalogAction = { state.manageMarketplace(marketplace, action: action) }
+                    showingMarketplaces = false
+                })
+        }
         .onChange(of: installations.map(\.id)) { _, visible in
             if let selected = state.selectedPluginID, !visible.contains(selected) {
                 state.selectedPluginID = nil
@@ -83,18 +151,29 @@ struct PluginLibraryView: View {
         }
         .toolbar {
             ToolbarItem {
-                Button("Manage Plugins…") { state.newPluginOperation() }
-                    .accessibilityIdentifier("sukiru.plugins.manage")
-                    .help(
-                        "Install plugins or manage configured marketplaces using official host commands"
-                    )
+                Menu {
+                    Button("Install Plugin…") { state.newPluginOperation() }
+                        .accessibilityIdentifier("sukiru.plugins.manage")
+                        .help("Preview a plugin installation")
+                    Button("Marketplaces…") { showingMarketplaces = true }
+                        .accessibilityIdentifier("sukiru.plugins.catalog")
+                        .help("Browse configured marketplaces")
+                } label: {
+                    Label("Add Plugin", systemImage: "plus")
+                }
+                .accessibilityIdentifier("sukiru.plugins.add")
+                .help("Install a plugin or browse configured marketplaces")
             }
             ToolbarItem {
-                Picker("Host", selection: $host) {
-                    Text("All Hosts").tag(PluginHost?.none)
-                    ForEach(PluginHost.allCases, id: \.self) { host in
-                        Text(verbatim: host.rawValue).tag(PluginHost?.some(host))
+                Menu {
+                    Picker("Host", selection: $host) {
+                        Text("All Hosts").tag(PluginHost?.none)
+                        ForEach(PluginHost.allCases, id: \.self) { host in
+                            Text(verbatim: host.displayName).tag(PluginHost?.some(host))
+                        }
                     }
+                } label: {
+                    Label("Filter Plugins", systemImage: "line.3.horizontal.decrease.circle")
                 }
                 .accessibilityIdentifier("sukiru.plugins.host")
                 .help("Filter plugin installations by host")
@@ -102,32 +181,10 @@ struct PluginLibraryView: View {
         }
     }
 
-    private func marketplaceRow(_ marketplace: PluginMarketplace) -> some View {
-        DisclosureGroup {
-            ForEach(marketplace.plugins, id: \.name) { entry in
-                HStack {
-                    LabeledContent(entry.name, value: entry.version ?? entry.source)
-                    Button("Install…") {
-                        state.manageCatalogEntry(entry, marketplace: marketplace)
-                    }
-                    .accessibilityIdentifier("sukiru.plugins.catalog.install.\(entry.name)")
-                    .help("Preview installation from this configured marketplace")
-                }
-            }
-        } label: {
-            LabeledContent(marketplace.name, value: marketplace.source)
-        }
-        .accessibilityIdentifier("sukiru.plugins.marketplace.\(marketplace.id)")
-        .help("Browse this host's locally configured catalog")
-        .contextMenu {
-            ForEach(["marketplace-refresh", "marketplace-remove"], id: \.self) { action in
-                Button(PluginActionTitle.title(action)) {
-                    state.manageMarketplace(marketplace, action: action)
-                }
-                .accessibilityIdentifier("sukiru.plugins.marketplace.\(action)")
-                .help("Preview the official marketplace operation and its full impact")
-            }
-        }
+    private func runCatalogAction() {
+        let action = catalogAction
+        catalogAction = nil
+        action?()
     }
 }
 
