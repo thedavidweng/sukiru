@@ -42,6 +42,24 @@ A coding agent that consumes Agent Skills or Agent Plugins (Claude Code,
 Codex, OpenCode, Cursor, …). A host may also manage its own plugin installations.
 _Avoid_: platform, client
 
+**Agent Hook** (智能体钩子):
+A persistent lifecycle handler configured for a host: a command, HTTP endpoint,
+MCP tool, prompt, or agent. Inventory does not claim it ran successfully.
+_Avoid_: skill, plugin, runtime monitor
+
+**Hook Source** (钩子来源):
+The concrete host configuration file or managing plugin, skill, subagent, or
+policy unit that defines a hook, including its source tier and scope.
+
+**Hook Attribution** (钩子来源归属):
+A producer or managing source unit established by current deterministic local
+evidence. Unknown is valid. This is distinct from installer-ledger Ownership.
+
+**Hook Health** (钩子健康状态):
+Passive evidence of a configured hook's target and lifecycle state. Broken
+targets, leftovers, and invalid definitions are Problems; healthy/source-managed
+definitions are inventory, not runtime success claims.
+
 **Ledger** (账本):
 An installation manager's private install record: what was installed, from
 where, at which version, and for whom. The manager may be a standalone installer

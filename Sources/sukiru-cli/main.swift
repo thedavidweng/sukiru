@@ -191,6 +191,7 @@ if case .sukiruHomeMissing(let path) = fatalProblem {
 }
 
 if runPluginCommand(arguments: arguments, environment: environment) { exit(0) }
+if runHookCommand(arguments: arguments, environment: environment) { exit(0) }
 
 let command: CLICommand
 switch CLIParser.parse(arguments) {

@@ -15,5 +15,6 @@ are added as amendments or new records that reference the old one.
 | [0007](0007-problem-first-health-and-one-click-fixes.md) | Problem-first Health, one-click fixes, one confirmation per batch | Accepted |
 | [0008](0008-host-plugin-management.md) | Independent plugin units, initial host scope, official lifecycle writes and local-file disable boundary | Accepted |
 | [0009](0009-host-skill-name-collisions.md) | Detect same-name discovery entries within each host's loading scope | Accepted |
+| [0010](0010-agent-hook-hygiene.md) | Passive hook inventory, evidenced attribution, and protected structural cleanup | Accepted |
 
 Domain terms are defined in the [glossary](../../CONTEXT.md).

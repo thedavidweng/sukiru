@@ -17,6 +17,8 @@ public struct SukiruEnvironment: Equatable, Sendable {
     public let home: String
     /// True when a non-empty `SUKIRU_HOME` supplied the home.
     public let homeIsOverridden: Bool
+    /// Explicit mounted system tree for policy inspection; fixture homes never read live policy.
+    public let systemRoot: String?
     /// Extra project roots from `SUKIRU_ROOTS`, in the order given.
     public let projectRoots: [String]
     /// XDG config base override, or nil when unset/empty.
@@ -63,6 +65,9 @@ public struct SukiruEnvironment: Equatable, Sendable {
         } else {
             self.projectRoots = []
         }
+        self.systemRoot =
+            Self.nonEmpty(reader.value(for: "SUKIRU_SYSTEM_ROOT"))
+            ?? (homeIsOverridden ? nil : "/")
 
         self.xdgConfigHome = Self.nonEmpty(reader.value(for: Self.xdgConfigHomeKey))
         self.xdgStateHome = Self.nonEmpty(reader.value(for: Self.xdgStateHomeKey))

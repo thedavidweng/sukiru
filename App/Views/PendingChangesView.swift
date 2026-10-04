@@ -96,6 +96,15 @@ struct PendingChangesView: View {
                     Divider()
                 }
             }
+            ForEach(state.hookState.queue) { item in
+                CartRow(
+                    name: item.request.producer ?? item.hooks.first?.event ?? "",
+                    change: String(localized: "Hook Cleanup"),
+                    detail: Set(item.hooks.map(\.source.path)).sorted().joined(separator: ", ")
+                ) {
+                    state.hookState.queue.removeAll { $0.id == item.id }
+                }
+            }
         }
     }
 

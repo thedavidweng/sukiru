@@ -13,12 +13,14 @@ struct SidebarView: View {
         case userLibrary
         case project(String)
         case plugins(PluginHost)
+        case hooks(PluginHost)
     }
 
     private var selection: Binding<Destination?> {
         Binding(
             get: {
                 if state.surface == .plugins { return .plugins(state.pluginHost) }
+                if state.surface == .hooks { return .hooks(state.hookState.host) }
                 guard state.surface == .library else { return .surface(state.surface) }
                 switch state.libraryScope {
                 case .all: return .surface(.library)
@@ -48,6 +50,10 @@ struct SidebarView: View {
                         state.selectedPluginID = nil
                     }
                     state.surface = .plugins
+                case .hooks(let host):
+                    state.hookState.host = host
+                    state.hookState.selectedID = nil
+                    state.surface = .hooks
                 }
             })
     }
@@ -90,6 +96,7 @@ struct SidebarView: View {
                     .badge(
                         state.attentionFindingCount
                             + (state.report?.pluginInventory?.healthFindings.count ?? 0)
+                            + state.hookProblemCount
                     )
                     .tag(Destination.surface(.health))
                 row("Pending Changes", surface: .pending, icon: "list.bullet.rectangle")
@@ -99,6 +106,19 @@ struct SidebarView: View {
                     .tag(Destination.surface(.snapshots))
                 row("Discover", surface: .search, icon: "safari")
                     .tag(Destination.surface(.search))
+            }
+            Section("Hooks") {
+                ForEach([PluginHost.claude, .codex], id: \.self) { host in
+                    Label {
+                        Text(verbatim: host.displayName)
+                    } icon: {
+                        AgentLogo(hostID: host.agentID, size: 16)
+                    }
+                    .badge(state.hooks(for: host).count)
+                    .tag(Destination.hooks(host))
+                    .accessibilityIdentifier("sukiru.sidebar.hooks.\(host.rawValue)")
+                    .help("Inspect lifecycle hooks configured for this host")
+                }
             }
         }
         .listStyle(.sidebar)

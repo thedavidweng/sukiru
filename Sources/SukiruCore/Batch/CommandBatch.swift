@@ -93,6 +93,7 @@ public enum OwningCLI: String, Codable, Equatable, Sendable {
     case claude
     case codex
     case opencode
+    case orca
 }
 
 /// Danger flags carried on batch commands.
@@ -155,6 +156,7 @@ public struct BatchCommand: Codable, Equatable, Sendable {
     public let workingDirectory: String?
     /// Verified file-backed mutation bounds of an official host operation.
     public let captureRoots: [String]?
+    public let hookPreconditions: [HookFilePrecondition]?
 
     public init(
         argv: [String],
@@ -166,7 +168,8 @@ public struct BatchCommand: Codable, Equatable, Sendable {
         atRiskSkills: [AtRiskSkill] = [],
         consequence: CommandConsequence? = nil,
         workingDirectory: String? = nil,
-        captureRoots: [String]? = nil
+        captureRoots: [String]? = nil,
+        hookPreconditions: [HookFilePrecondition]? = nil
     ) {
         self.argv = argv
         self.displayString = displayString
@@ -179,6 +182,7 @@ public struct BatchCommand: Codable, Equatable, Sendable {
         self.consequenceKind = consequence
         self.workingDirectory = workingDirectory
         self.captureRoots = captureRoots
+        self.hookPreconditions = hookPreconditions
     }
 
     /// The direct file operation this command performs, if it is one.

@@ -18,6 +18,11 @@ extension BatchCommand {
     }
 
     private var localizedWarning: String? {
+        if owningCLI == .orca {
+            return String(
+                localized: "hook.warning.orcaDisable"
+            )
+        }
         if owningCLI == .vercel, dangerFlags.contains(.dangerousDeletion), argv.count > 3 {
             let name = argv[3]
             return atRiskSkills.isEmpty
@@ -44,6 +49,12 @@ extension BatchCommand {
                 localized:
                     "plugin.disableLocal.warning"
             )
+        case .replaceHookSource:
+            return String(
+                localized: "hook.warning.remove"
+            )
+        case .deleteHookHelper(let path, _):
+            return String(localized: "Deletes only the unreferenced producer helper: \(path)")
         case nil:
             return nil
         }
@@ -81,6 +92,10 @@ extension FileOperation {
             return String(
                 localized:
                     "Move \(Self.display(path)) to \(Self.display(destination)) to disable loading")
+        case .replaceHookSource(let path, _, _):
+            return String(localized: "Remove selected hooks from \(Self.display(path))")
+        case .deleteHookHelper(let path, _):
+            return String(localized: "Delete unreferenced hook helper \(Self.display(path))")
         }
     }
 

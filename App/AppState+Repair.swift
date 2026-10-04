@@ -284,6 +284,10 @@ extension AppState {
         batchMutationInFlight = false
         if let pendingBatch {
             dequeueLifecycle(completedBy: pendingBatch, status: record?.batchStatus)
+            if record?.batchStatus == .succeeded {
+                let completed = Set(pendingBatch.findingRefs.map(\.findingID))
+                hookState.queue.removeAll { $0.hooks.allSatisfy { completed.contains($0.id) } }
+            }
         }
         pendingBatch = nil
         lastExecutionRecord = record

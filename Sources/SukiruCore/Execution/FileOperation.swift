@@ -22,6 +22,8 @@ public enum FileOperation: Equatable, Sendable {
     case removeLeftoverSkillsDir(String)
     /// ADR-0008's confirmed local-plugin disable exception.
     case movePlugin(path: String, destination: String)
+    case replaceHookSource(path: String, hash: String, contents: String)
+    case deleteHookHelper(path: String, hash: String)
 
     static let executable = "sukiru-fileop"
 
@@ -30,6 +32,10 @@ public enum FileOperation: Equatable, Sendable {
             return nil
         }
         switch (argv[1], argv.count) {
+        case ("replace-hook-source", 5):
+            self = .replaceHookSource(path: argv[2], hash: argv[3], contents: argv[4])
+        case ("delete-hook-helper", 4):
+            self = .deleteHookHelper(path: argv[2], hash: argv[3])
         case ("delete-directory", 3):
             self = .deleteDirectory(argv[2])
         case ("delete-link", 3):
@@ -49,6 +55,10 @@ public enum FileOperation: Equatable, Sendable {
 
     var argv: [String] {
         switch self {
+        case .replaceHookSource(let path, let hash, let contents):
+            return [Self.executable, "replace-hook-source", path, hash, contents]
+        case .deleteHookHelper(let path, let hash):
+            return [Self.executable, "delete-hook-helper", path, hash]
         case .deleteDirectory(let path):
             return [Self.executable, "delete-directory", path]
         case .deleteLink(let path):
@@ -66,24 +76,27 @@ public enum FileOperation: Equatable, Sendable {
 
     /// Every path the operation reads or writes (workspace-boundary check).
     var paths: [String] {
-        Array(argv.dropFirst(2))
+        switch self {
+        case .replaceHookSource(let path, _, _), .deleteHookHelper(let path, _): [path]
+        default: Array(argv.dropFirst(2))
+        }
     }
 
-    func perform() throws {
+    func perform(environment: SukiruEnvironment? = nil) throws {
         let fileManager = FileManager.default
         let probe = DefaultFileSystemProbe()
         switch self {
+        case .replaceHookSource(let path, let hash, let contents):
+            try HookFileMutation.replace(path: path, hash: hash, contents: contents)
+        case .deleteHookHelper(let path, let hash):
+            guard let environment else {
+                throw HookError("Hook helper cleanup requires a scoped inventory")
+            }
+            try HookFileMutation.deleteHelper(path: path, hash: hash, environment: environment)
         case .deleteDirectory(let path):
             try fileManager.removeItem(atPath: path)
         case .deleteLink(let path):
-            switch probe.entryKind(atPath: path) {
-            case nil:
-                return
-            case .symlink?:
-                try fileManager.removeItem(atPath: path)
-            default:
-                throw FileOperationError("'\(path)' is not a symlink; refusing to delete it")
-            }
+            try Self.deleteLink(path, probe: probe)
         case .relink(let path, let target):
             try Self.relink(path, to: target, probe: probe)
         case .materialize(let path):
@@ -100,6 +113,14 @@ public enum FileOperation: Equatable, Sendable {
             try Self.removeLeftoverSkillsDir(path, probe: probe)
         case .movePlugin(let path, let destination):
             try Self.movePlugin(path, destination: destination)
+        }
+    }
+
+    private static func deleteLink(_ path: String, probe: DefaultFileSystemProbe) throws {
+        switch probe.entryKind(atPath: path) {
+        case nil: return
+        case .symlink?: try FileManager.default.removeItem(atPath: path)
+        default: throw FileOperationError("'\(path)' is not a symlink; refusing to delete it")
         }
     }
 

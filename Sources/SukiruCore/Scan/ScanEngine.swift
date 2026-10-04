@@ -67,13 +67,15 @@ public struct ScanEngine: Sendable {
             ($0.path, $0.kind, $0.message) < ($1.path, $1.kind, $1.message)
         }
         let plugins = PluginInventoryReader(environment: environment).read(request)
+        let hooks = HookInventoryReader(environment: environment).read(request, plugins: plugins)
         return ScanReport(
             workspaces: workspaces.map(\.workspace),
             skills: resolution.skills,
             findings: findings,
             issues: issues,
             lockExtras: Self.lockExtras(from: claims.claims),
-            pluginInventory: plugins.isEmpty ? nil : plugins
+            pluginInventory: plugins.isEmpty ? nil : plugins,
+            hookInventory: hooks.isEmpty ? nil : hooks
         )
     }
 

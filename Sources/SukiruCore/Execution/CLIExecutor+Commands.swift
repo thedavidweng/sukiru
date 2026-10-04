@@ -65,7 +65,8 @@ extension CLIExecutor {
             guard let operation = FileOperation(argv: command.argv) else {
                 throw FileOperationError("unsupported file operation")
             }
-            try operation.perform()
+            for condition in command.hookPreconditions ?? [] { try condition.validate() }
+            try operation.perform(environment: environment)
         } catch {
             let failure = CommandVerdict(
                 status: .failed, exitCode: 1, failureKind: .fileOperationFailed,
@@ -221,6 +222,8 @@ extension CLIExecutor {
             }
             let operationBounds: [String]
             if case .movePlugin = operation {
+                operationBounds = bounds + (command.captureRoots ?? [])
+            } else if command.hookPreconditions != nil {
                 operationBounds = bounds + (command.captureRoots ?? [])
             } else {
                 operationBounds = bounds

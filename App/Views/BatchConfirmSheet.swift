@@ -154,6 +154,9 @@ struct BatchConfirmSheet: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            ForEach(state.reviewedHooks(for: command)) { hook in
+                HookReviewEntry(hook: hook)
+            }
             if !command.atRiskSkills.isEmpty {
                 Text("command.atRisk \(command.atRiskList)")
                     .font(.caption)
@@ -246,7 +249,7 @@ struct BatchSummary {
     private enum Kind: CaseIterable {
         case deleteLink, relink, relinkDiverged, materialize, deleteDirectory
         case removeLeftover, disablePlugin, hostPlugin, remove, install, reinstall, pin, unpin,
-            update
+            update, hookCleanup
 
         init(_ command: BatchCommand) {
             if let operation = command.fileOperation {
@@ -269,10 +272,12 @@ struct BatchSummary {
             case .deleteDirectory: .deleteDirectory
             case .removeLeftoverSkillsDir: .removeLeftover
             case .movePlugin: .disablePlugin
+            case .replaceHookSource, .deleteHookHelper: .hookCleanup
             }
         }
 
         private static func cliCommand(_ command: BatchCommand) -> Kind {
+            if command.owningCLI == .orca { return .hookCleanup }
             if [.claude, .codex, .opencode].contains(command.owningCLI) { return .hostPlugin }
             switch command.consequenceKind {
             case .pinsGitHubSkill: return .pin
@@ -298,6 +303,7 @@ struct BatchSummary {
 
         private func fileOperationLine(_ count: Int) -> String? {
             switch self {
+            case .hookCleanup: String(localized: "Clean up \(count) hook sources or helpers")
             case .deleteLink: String(localized: "summary.deleteLink \(count)")
             case .relink: String(localized: "summary.relink \(count)")
             case .relinkDiverged: String(localized: "summary.relinkDiverged \(count)")

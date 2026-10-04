@@ -36,6 +36,7 @@ final class AppState: ObservableObject {
     @Published var pluginHost: PluginHost = .claude
     @Published var selectedPluginID: String?
     @Published var pluginManagement = PluginManagementState()
+    @Published var hookState = HookNavigationState()
     @Published private(set) var scanPhase: ScanPhase = .loading
     @Published private(set) var report: ScanReport? {
         didSet { reportRevision &+= 1 }
@@ -353,8 +354,7 @@ final class AppState: ObservableObject {
         rescan()
     }
 
-    /// Drops selection/disclosure/focus state that no longer resolves after
-    /// a rescan (e.g. the skill's directory was deleted).
+    /// Drops selection and focus state that no longer resolves after a rescan.
     private func pruneSelection(using report: ScanReport) {
         let selectionAlive =
             selectedSkillID.map { id in

@@ -33,6 +33,7 @@ public struct ScanReport: Codable, Equatable, Sendable {
     /// key is omitted from the wire JSON (the schema stays additive).
     public let lockExtras: [String: [String: JSONValue]]?
     public let pluginInventory: PluginInventory?
+    public let hookInventory: HookInventory?
 
     public static let currentSchemaVersion = 1
 
@@ -43,7 +44,8 @@ public struct ScanReport: Codable, Equatable, Sendable {
         findings: [Finding] = [],
         issues: [Issue] = [],
         lockExtras: [String: [String: JSONValue]]? = nil,
-        pluginInventory: PluginInventory? = nil
+        pluginInventory: PluginInventory? = nil,
+        hookInventory: HookInventory? = nil
     ) {
         self.schemaVersion = schemaVersion
         self.workspaces = workspaces
@@ -52,6 +54,7 @@ public struct ScanReport: Codable, Equatable, Sendable {
         self.issues = issues
         self.lockExtras = lockExtras
         self.pluginInventory = pluginInventory
+        self.hookInventory = hookInventory
     }
 
     /// Deterministic JSON encoding (sorted keys) so identical scans yield

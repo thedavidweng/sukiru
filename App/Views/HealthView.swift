@@ -137,7 +137,8 @@ struct HealthView: View {
     /// Counts problems, not notes; the full row count (notes included)
     /// still equals the rendered rows.
     private var summaryText: String {
-        let problems = problemEntries.count
+        let problems =
+            problemEntries.count + state.visibleHookProblems.count + state.visibleHookIssues.count
         let fixable = state.fixableEntries(problemEntries).count
         if problems == 0 {
             if !state.visiblePluginFindings.isEmpty {
@@ -154,6 +155,9 @@ struct HealthView: View {
         let entries = state.visibleHealthEntries()
         let issues = state.visibleIssues()
         return List(selection: $state.selectedFindingID) {
+            if !state.visibleHookProblems.isEmpty || !state.visibleHookIssues.isEmpty {
+                HookHealthSection()
+            }
             if !state.visiblePluginFindings.isEmpty {
                 PluginHealthSection(findings: state.visiblePluginFindings)
             }
@@ -176,7 +180,8 @@ struct HealthView: View {
         }
         .listStyle(.inset)
         .overlay {
-            if entries.isEmpty && issues.isEmpty && state.visiblePluginFindings.isEmpty {
+            let noHooks = state.visibleHookProblems.isEmpty && state.visibleHookIssues.isEmpty
+            if entries.isEmpty && issues.isEmpty && state.visiblePluginFindings.isEmpty && noHooks {
                 emptyState
             }
         }

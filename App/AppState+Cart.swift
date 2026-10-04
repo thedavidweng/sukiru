@@ -49,11 +49,12 @@ extension AppState {
     func clearCart() {
         cart = []
         lifecycleQueue = []
+        hookState.queue = []
     }
 
     /// Queued repairs plus queued Library changes.
     var queuedChangeCount: Int {
-        cart.count + lifecycleQueue.count
+        cart.count + lifecycleQueue.count + hookState.queue.count
     }
 
     /// Builds every queued repair and Library change into one batch and
@@ -70,7 +71,21 @@ extension AppState {
         }
         let built = CommandBatchBuilder().buildApplicable(
             report: report, decisions: decisions, lifecycle: lifecycleQueue)
-        propose(built.batch, skipped: built.skipped)
+        do {
+            guard let hookPlan = try hookBatch() else {
+                propose(built.batch, skipped: built.skipped)
+                return
+            }
+            let batch = CommandBatch(
+                id: hookPlan.batch.id, createdAt: hookPlan.batch.createdAt,
+                findingRefs: (built.batch?.findingRefs ?? []) + hookPlan.batch.findingRefs,
+                decisions: built.batch?.decisions ?? [],
+                commands: (built.batch?.commands ?? []) + hookPlan.batch.commands,
+                snapshotID: nil, status: .proposed)
+            propose(batch, skipped: built.skipped + hookPlan.instructions)
+        } catch {
+            propose(nil, skipped: [error.localizedDescription])
+        }
     }
 
     /// Keeps queued repairs attached to the same findings after a rescan,

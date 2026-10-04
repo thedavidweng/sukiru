@@ -4,6 +4,7 @@ extension AppState {
         case library
         /// One host's plugins (`pluginHost`); each host's plugin system is its own.
         case plugins
+        case hooks
         case health
         case pending
         case snapshots

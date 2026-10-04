@@ -122,6 +122,11 @@ public struct CLIExecutor: Sendable {
         try lock.acquire()
         defer { lock.release() }
 
+        for condition in batch.commands.flatMap({ $0.hookPreconditions ?? [] }) {
+            try condition.validate()
+        }
+        try HookExecutionPreflight.validate(batch, environment: environment)
+
         let recordDirectory = HostPathResolver.join(executionsRoot(), batch.id)
         try FileManager.default.createDirectory(
             atPath: recordDirectory, withIntermediateDirectories: true)
