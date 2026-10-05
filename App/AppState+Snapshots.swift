@@ -62,6 +62,32 @@ extension AppState {
         revealInFinder([exists ? snapshot : record.recordDirectory])
     }
 
+    /// Deletes batches' snapshots and records. The skills on disk stay as
+    /// they are; the batches just can no longer be rolled back.
+    func deleteHistory(batchIDs: Set<String>) {
+        guard !batchMutationInFlight, !batchIDs.isEmpty else { return }
+        batchMutationInFlight = true
+        rollbackError = nil
+        let environment = Self.makeEnvironment(roots: projectRoots)
+        Task.detached(priority: .userInitiated) { [weak self] in
+            var failure: String?
+            let history = ExecutionHistory(environment: environment)
+            for batchID in batchIDs.sorted() {
+                do {
+                    try history.delete(batchID: batchID)
+                } catch {
+                    failure = UserFacingError.message(for: error)
+                }
+            }
+            await MainActor.run { [failure] in
+                guard let self else { return }
+                self.batchMutationInFlight = false
+                self.rollbackError = failure
+                self.loadHistory()
+            }
+        }
+    }
+
     /// Reloads the batch history from the on-disk execution records.
     func loadHistory() {
         let environment = Self.makeEnvironment(roots: projectRoots)

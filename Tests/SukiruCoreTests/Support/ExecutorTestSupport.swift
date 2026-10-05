@@ -130,6 +130,7 @@ enum ExecutorTestSupport {
           echo "HOME=$HOME"
           echo "CI=$CI"
           echo "SKILLS_TELEMETRY=$SKILLS_TELEMETRY"
+          echo "NO_COLOR=${NO_COLOR:-}"
           echo "npm_config_prefer_offline=${npm_config_prefer_offline:-}"
           echo "npm_config_yes=${npm_config_yes:-}"
           if [ -n "${GH_TOKEN:-}" ]; then echo "GH_TOKEN=present"; else echo "GH_TOKEN=absent"; fi

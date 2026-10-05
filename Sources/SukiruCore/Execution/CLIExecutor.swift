@@ -38,6 +38,15 @@ public struct ExecutionResult: Equatable, Sendable {
     }
 }
 
+/// A batch command about to run, with the files its output is written to
+/// while it runs.
+public struct CommandStart: Equatable, Sendable {
+    public let index: Int
+    public let displayString: String
+    public let stdoutFile: String
+    public let stderrFile: String
+}
+
 /// The serialized subprocess runner for Command Batches.
 ///
 /// Invariants enforced here:
@@ -48,7 +57,8 @@ public struct ExecutionResult: Equatable, Sendable {
 /// - **Snapshot before the first command**, always.
 /// - **stdout/stderr to FILES, never pipes** (the 65 536-byte `npx --json`
 ///   pipe-truncation trap); stdin is `/dev/null` (no TTY).
-/// - **Environment contract**: `CI=1`, `SKILLS_TELEMETRY=0`, `HOME` is
+/// - **Environment contract**: `CI=1`, `SKILLS_TELEMETRY=0`, `NO_COLOR=1`
+///   (`CI` alone turns colors on in the skills CLI), `HOME` is
 ///   always the Sukiru-resolved home (= `SUKIRU_HOME` in sandboxes);
 ///   `GH_TOKEN` is stripped from every child and injected
 ///   only into gh (github-ledger) commands, never persisted;
@@ -101,12 +111,16 @@ public struct CLIExecutor: Sendable {
 
     /// Executes a reviewed batch: snapshot → serialized commands → record.
     ///
+    /// `onCommandStart` is called on the executing thread just before each
+    /// command runs.
+    ///
     /// - Throws: `ExecutionError` for pre-command refusals (unreviewed,
     ///   lock held), or `SnapshotError` when the mandatory pre-execution
     ///   snapshot cannot be committed.
     @discardableResult
     public func execute(
-        batch: CommandBatch, report: ScanReport, effectsApproved: Bool = false
+        batch: CommandBatch, report: ScanReport, effectsApproved: Bool = false,
+        onCommandStart: (@Sendable (CommandStart) -> Void)? = nil
     ) throws -> ExecutionResult {
         guard batch.status == .reviewed else {
             throw ExecutionError.notReviewed(current: batch.status)
@@ -149,7 +163,8 @@ public struct CLIExecutor: Sendable {
         let records = runCommands(
             batch.commands,
             bounds: workspaceBounds(batch: batch, report: report),
-            recordDirectory: recordDirectory)
+            recordDirectory: recordDirectory,
+            onCommandStart: onCommandStart)
 
         let pending = try persistRecord(
             batch: batch, snapshotID: manifest.id, started: batchStart,
@@ -215,7 +230,8 @@ public struct CLIExecutor: Sendable {
     /// Runs every command in order, stopping on the first failure;
     /// unreached commands are recorded `.notRun`.
     private func runCommands(
-        _ commands: [BatchCommand], bounds: [String], recordDirectory: String
+        _ commands: [BatchCommand], bounds: [String], recordDirectory: String,
+        onCommandStart: (@Sendable (CommandStart) -> Void)?
     ) -> [CommandExecution] {
         let violations = preflightFileOperations(commands, bounds: bounds)
         var halted = false
@@ -228,10 +244,16 @@ public struct CLIExecutor: Sendable {
             let record: CommandExecution
             if let violation = violations[index] {
                 record = Self.preflightFailure(command, index: index, kind: violation)
-            } else if command.owningCLI == .file {
-                record = runFileOperation(command, index: index, recordDir: recordDirectory)
             } else {
-                record = runCLICommand(command, index: index, recordDir: recordDirectory)
+                let files = outputFiles(index: index, recordDir: recordDirectory)
+                onCommandStart?(
+                    CommandStart(
+                        index: index, displayString: command.displayString,
+                        stdoutFile: files.stdout, stderrFile: files.stderr))
+                record =
+                    command.owningCLI == .file
+                    ? runFileOperation(command, index: index, recordDir: recordDirectory)
+                    : runCLICommand(command, index: index, recordDir: recordDirectory)
             }
             records.append(record)
             if record.status != .succeeded {
@@ -294,6 +316,7 @@ public struct CLIExecutor: Sendable {
         environment["GH_TOKEN"] = nil
         environment["CI"] = "1"
         environment["SKILLS_TELEMETRY"] = "0"
+        environment["NO_COLOR"] = "1"
         if self.environment.homeIsOverridden {
             for key in SukiruEnvironment.externalEnvKeys { environment[key] = nil }
             for key in environment.keys where key.lowercased().hasPrefix("npm_config_") {

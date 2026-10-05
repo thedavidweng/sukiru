@@ -933,6 +933,16 @@
         }
       }
     },
+    "Command output" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "命令输出"
+          }
+        }
+      }
+    },
     "Command-Line Tools" : {
       "comment" : "Settings > Installers: section header.",
       "localizations" : {
@@ -2764,6 +2774,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在列出技能…"
+          }
+        }
+      }
+    },
+    "Live output of the commands being applied" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在应用的命令的实时输出"
           }
         }
       }

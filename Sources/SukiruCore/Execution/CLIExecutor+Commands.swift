@@ -196,11 +196,15 @@ extension CLIExecutor {
             durationSeconds: nil)
     }
 
+    func outputFiles(index: Int, recordDir: String) -> OutputFiles {
+        let stem = HostPathResolver.join(recordDir, String(format: "cmd-%02d", index))
+        return OutputFiles(stdout: stem + ".stdout", stderr: stem + ".stderr")
+    }
+
     /// Creates the (empty) capture files before spawning, so the paths in
     /// the record always exist.
     func createOutputFiles(index: Int, recordDir: String) -> OutputFiles {
-        let stem = HostPathResolver.join(recordDir, String(format: "cmd-%02d", index))
-        let files = OutputFiles(stdout: stem + ".stdout", stderr: stem + ".stderr")
+        let files = outputFiles(index: index, recordDir: recordDir)
         FileManager.default.createFile(atPath: files.stdout, contents: nil)
         FileManager.default.createFile(atPath: files.stderr, contents: nil)
         return files

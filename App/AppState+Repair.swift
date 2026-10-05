@@ -272,11 +272,14 @@ extension AppState {
         let environment = Self.makeEnvironment(roots: projectRoots)
         let token = ProcessInfo.processInfo.environment["GH_TOKEN"]
         let effectsApproved = effectsApprovedBatchID == batch.id
+        batchOutput.reset()
+        let onCommandStart = batchOutput.onCommandStart
         Task.detached(priority: .userInitiated) { [weak self] in
             do {
                 let executor = CLIExecutor(environment: environment, ghToken: token)
                 let result = try executor.execute(
-                    batch: reviewed, report: report, effectsApproved: effectsApproved)
+                    batch: reviewed, report: report, effectsApproved: effectsApproved,
+                    onCommandStart: onCommandStart)
                 await self?.finishExecution(record: result.record, failure: nil)
             } catch {
                 await self?.finishExecution(
@@ -286,6 +289,7 @@ extension AppState {
     }
 
     private func finishExecution(record: ExecutionRecord?, failure: String?) {
+        batchOutput.finish()
         batchMutationInFlight = false
         if let pendingBatch {
             dequeueLifecycle(completedBy: pendingBatch, status: record?.batchStatus)
@@ -368,33 +372,5 @@ extension AppState {
         rollbackError = failure
         loadHistory()
         rescan()
-    }
-
-    // MARK: - history deletion
-
-    /// Deletes batches' snapshots and records. The skills on disk stay as
-    /// they are; the batches just can no longer be rolled back.
-    func deleteHistory(batchIDs: Set<String>) {
-        guard !batchMutationInFlight, !batchIDs.isEmpty else { return }
-        batchMutationInFlight = true
-        rollbackError = nil
-        let environment = Self.makeEnvironment(roots: projectRoots)
-        Task.detached(priority: .userInitiated) { [weak self] in
-            var failure: String?
-            let history = ExecutionHistory(environment: environment)
-            for batchID in batchIDs.sorted() {
-                do {
-                    try history.delete(batchID: batchID)
-                } catch {
-                    failure = UserFacingError.message(for: error)
-                }
-            }
-            await MainActor.run { [failure] in
-                guard let self else { return }
-                self.batchMutationInFlight = false
-                self.rollbackError = failure
-                self.loadHistory()
-            }
-        }
     }
 }

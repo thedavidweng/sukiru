@@ -195,7 +195,7 @@ struct CLIExecutorTests {
 
     // MARK: - Environment contract + GH_TOKEN scoping
 
-    @Test("Subprocess env: CI=1, SKILLS_TELEMETRY=0, HOME=sandbox, no TTY, cwd honored")
+    @Test("Subprocess env: CI=1, SKILLS_TELEMETRY=0, NO_COLOR=1, HOME=sandbox, no TTY, cwd honored")
     func subprocessEnvironmentContract() throws {
         let tree = try TempTree()
         let bin = try tree.dir("bin")
@@ -215,6 +215,7 @@ struct CLIExecutorTests {
         #expect(env["HOME"] == tree.path)
         #expect(env["CI"] == "1")
         #expect(env["SKILLS_TELEMETRY"] == "0")
+        #expect(env["NO_COLOR"] == "1")
         #expect(env["npm_config_prefer_offline"] == "true")
         #expect(env["npm_config_yes"] == "true")
         #expect(env["STDIN_TTY"] == "no")

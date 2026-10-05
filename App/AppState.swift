@@ -125,6 +125,7 @@ final class AppState: ObservableObject {
     @Published var lastExecutionRecord: ExecutionRecord?
     /// A pre-command execution refusal (lock busy, snapshot failure).
     @Published var lastExecutionFailure: String?
+    let batchOutput = BatchOutputLog()
     /// Snapshots history rows (batch executions + rollback events) from the
     /// on-disk records — persisted across relaunches.
     @Published var historyRows: [HistoryRow] = []
@@ -247,12 +248,9 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// Monotonic counter identifying the latest requested scan; stale
-    /// completions are dropped instead of clobbering newer state.
+    /// Monotonic counters identifying the latest requested scan and search;
+    /// stale completions are dropped instead of clobbering newer state.
     var scanGeneration = 0
-
-    /// Monotonic counter identifying the latest requested search; stale
-    /// completions are dropped instead of clobbering newer state.
     var searchGeneration = 0
     /// Minimum time the running state stays visible once a scan starts.
     private static let minimumRunVisibility: Duration = .milliseconds(600)

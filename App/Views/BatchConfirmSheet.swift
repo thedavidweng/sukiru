@@ -189,14 +189,16 @@ struct BatchConfirmSheet: View {
     // MARK: - running / result
 
     private var running: some View {
-        HStack(spacing: 10) {
-            ProgressView()
-                .controlSize(.small)
-            AXToken(token: "sukiru.confirm.running")
-            Text("Applying changes…")
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                ProgressView()
+                    .controlSize(.small)
+                AXToken(token: "sukiru.confirm.running")
+                Text("Applying changes…")
+                    .foregroundStyle(.secondary)
+            }
+            BatchOutputView(log: state.batchOutput)
         }
-        .frame(maxWidth: .infinity, minHeight: 80)
     }
 
     private var result: some View {
