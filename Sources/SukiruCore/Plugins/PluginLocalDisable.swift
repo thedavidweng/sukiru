@@ -26,7 +26,8 @@ public enum PluginLocalDisable {
             return try CursorLocalDisable.command(
                 request: request, inventory: inventory, environment: environment)
         }
-        guard request.host == .opencode, hostVersion == "2.0.22",
+        if request.host == .opencode { try requireV2(hostVersion) }
+        guard request.host == .opencode,
             let plugin = inventory.installations.first(where: {
                 $0.host == .opencode && $0.path == request.target
                     && $0.scopeRoot == request.scopeRoot
@@ -69,6 +70,15 @@ public enum PluginLocalDisable {
                 "Moves the local file outside discovery. This disables loading; it does not restore behavior. "
                 + "Producer migration instructions: \(migrationURL). Author scripts are not executed.",
             workingDirectory: request.scopeRoot, captureRoots: [path, container])
+    }
+
+    private static func requireV2(_ hostVersion: String) throws {
+        guard PluginHostContract(host: .opencode, version: hostVersion) == .openCodeV2 else {
+            throw PluginLifecycleError(
+                message:
+                    "OpenCode \(hostVersion) is not a verified v2 host; "
+                    + "v1 hosts load factory-style local files, so there is nothing to disable")
+        }
     }
 
     private static func exclusivelyDiscovered(

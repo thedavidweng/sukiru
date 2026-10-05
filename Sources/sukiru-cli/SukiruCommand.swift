@@ -116,12 +116,27 @@ func runRepairs(
     let report = try ScanEngine(environment: environment).scan(inputs.mutationRequest)
     let findings = inputs.findings(in: report)
     let assignments = FindingID.assignments(for: report.findings)
+    // Probed only when a fix would need `npx skills`, matching the app's Fix All.
+    var capabilities: CapabilityReport?
     let decisions = assignments.compactMap { entry -> DecisionEntry? in
         guard findings.contains(entry.finding),
-            let action = ProblemKind.oneClickFix(for: entry.finding),
-            !cleanupOnly || action == .cleanup
+            let candidate = ProblemKind.oneClickFix(for: entry.finding),
+            !cleanupOnly || candidate == .cleanup
         else { return nil }
-        return DecisionEntry(findingID: entry.id, action: action)
+        if ProblemKind.oneClickFix(for: entry.finding, capabilities: .pending()) == nil {
+            if capabilities == nil {
+                capabilities = CapabilityDetector(environment: environment).detect()
+            }
+            guard ProblemKind.oneClickFix(for: entry.finding, capabilities: capabilities) != nil
+            else {
+                emitError(
+                    "Skipped \(ProblemKind.of(entry.finding).rawValue): "
+                        + "\(entry.finding.skillName ?? entry.finding.workspaceID); "
+                        + "the fix needs npx skills, which is not available")
+                return nil
+            }
+        }
+        return DecisionEntry(findingID: entry.id, action: candidate)
     }
     let built = CommandBatchBuilder().buildApplicable(report: report, decisions: decisions)
     for skipped in built.skipped { emitError(skipped) }

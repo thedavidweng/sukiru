@@ -87,6 +87,8 @@ struct PluginDetailView: View {
         .toolbar(content: toolbar)
     }
 
+    private let updateHelp: LocalizedStringKey = "Preview the host's update command for this plugin"
+
     /// Finder-style item actions beside the inspector, each a standard
     /// toolbar button that previews its command before anything runs. They
     /// stay in place and dim when the selection does not support them.
@@ -119,7 +121,9 @@ struct PluginDetailView: View {
                 state.pluginActionsBusy || single?.actions.contains("update") != true
             )
             .accessibilityIdentifier("sukiru.plugins.action.update")
-            .help("Preview the host's update command for this plugin")
+            .help(
+                single.map { $0.actions.contains("update") ? updateHelp : $0.noUpdateReason }
+                    ?? updateHelp)
             Button(role: .destructive) {
                 state.removePlugins(removable)
             } label: {

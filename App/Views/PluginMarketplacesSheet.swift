@@ -60,6 +60,10 @@ struct PluginMarketplacesSheet: View {
                                     Text("Cached catalog; registration scope unknown")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
+                                } else {
+                                    scopeLabel(marketplace)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
                                 }
                                 Text(verbatim: marketplace.source)
                                     .font(.caption)
@@ -110,5 +114,13 @@ struct PluginMarketplacesSheet: View {
         }
         .padding(20)
         .frame(minWidth: 520, idealWidth: 620, minHeight: 420, idealHeight: 540)
+    }
+
+    private func scopeLabel(_ marketplace: PluginMarketplace) -> Text {
+        switch marketplace.scope {
+        case "user": Text("User Library")
+        case "local": Text("Local project settings: \(marketplace.scopeRoot)")
+        default: Text(verbatim: marketplace.scopeRoot)
+        }
     }
 }

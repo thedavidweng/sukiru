@@ -7,8 +7,8 @@ struct Plugins: ParsableCommand {
         abstract: "Agent Plugin inventory, health, lifecycle, and host-owned marketplaces.",
         subcommands: [
             PluginList.self, PluginHealth.self, PluginCapabilities.self, PluginInstall.self,
-            PluginUpdate.self, PluginEnable.self, PluginDisable.self, PluginUninstall.self,
-            PluginMarketplaces.self, PluginPlan.self, PluginExecute.self
+            PluginUpdate.self, PluginEnable.self, PluginDisable.self, PluginDisableLocal.self,
+            PluginUninstall.self, PluginMarketplaces.self, PluginPlan.self, PluginExecute.self
         ])
 }
 
@@ -31,7 +31,7 @@ struct PluginList: ParsableCommand {
                     + "status=\($0.installationStatus) format=\($0.format ?? "host-specific") "
                     + "enabled=\($0.enablement.rawValue) loaded=\($0.loadStatus)"
             })
-        for issue in inventory.issues { emitError(issue.message) }
+        for issue in inputs.selectedPlugins(inventory).issues { emitError(issue.message) }
     }
 }
 
@@ -52,7 +52,7 @@ struct PluginHealth: ParsableCommand {
                 "\($0.host.rawValue) / \($0.scopeRoot): \($0.identifier) "
                     + "enabled=\($0.enablement.rawValue), loaded=\($0.loadStatus)"
             } + inputs.selectedPlugins(inventory).healthFindings.map { "\($0.kind): \($0.path)" })
-        for issue in inventory.issues { emitError(issue.message) }
+        for issue in inputs.selectedPlugins(inventory).issues { emitError(issue.message) }
     }
 }
 
@@ -82,6 +82,8 @@ struct PluginCapabilities: ParsableCommand {
 struct PluginOperationOptions: ParsableArguments {
     @Argument(help: "Host-recognized plugin or marketplace identifier/source.") var target: String
     @OptionGroup var inputs: ScopeOptions
+    @Option(help: "Claude Code settings scope instead of --scope: local (with --root) or managed.")
+    var settingsScope: String?
     @OptionGroup var output: OutputOptions
     @OptionGroup var mutation: MutationOptions
 
@@ -96,9 +98,15 @@ struct PluginOperationOptions: ParsableArguments {
         case .user: root = environment.home
         case .project(let path): root = path
         }
+        let scope: String
+        switch (settingsScope, targetScope) {
+        case (nil, _): scope = inputs.scope.rawValue
+        case ("local", .project), ("managed", .user): scope = settingsScope ?? ""
+        default:
+            throw CLIError("--settings-scope local needs a project; managed needs user scope")
+        }
         let request = PluginLifecycleRequest(
-            host: host, action: action, target: target,
-            scope: inputs.scope.rawValue, scopeRoot: root)
+            host: host, action: action, target: target, scope: scope, scopeRoot: root)
         try runPluginRequests([request], inputs: inputs, output: output, mutation: mutation)
     }
 }
@@ -147,7 +155,8 @@ struct PluginMarketplaceList: ParsableCommand {
         try output.render(
             marketplaces,
             lines: marketplaces.map {
-                "\($0.host.rawValue) / \($0.scopeRoot): \($0.name) \($0.source) [\($0.evidence ?? "configured")]"
+                "\($0.host.rawValue) / \($0.scope) / \($0.scopeRoot): \($0.name) \($0.source) "
+                    + "[\($0.evidence ?? "configured")]"
             })
     }
 }
@@ -208,6 +217,15 @@ struct PluginDisable: ParsableCommand {
         commandName: "disable", abstract: "Plan or perform disable through the official host.")
     @OptionGroup var options: PluginOperationOptions
     func run() throws { try options.run(action: "disable") }
+}
+
+struct PluginDisableLocal: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "disable-local",
+        abstract:
+            "Move an incompatible local plugin file out of host discovery (snapshot-protected).")
+    @OptionGroup var options: PluginOperationOptions
+    func run() throws { try options.run(action: "disable-local") }
 }
 
 struct PluginUninstall: ParsableCommand {

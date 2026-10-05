@@ -29,7 +29,7 @@ struct PluginEnabledToggle: View {
         .help(
             plugin.switchIsChangeable
                 ? "Preview the host's enable or disable command for this plugin"
-                : "This host has no command to change whether this plugin is enabled")
+                : plugin.fixedEnablementReason)
     }
 }
 

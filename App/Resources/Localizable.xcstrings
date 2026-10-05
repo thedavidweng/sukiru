@@ -913,6 +913,26 @@
         }
       }
     },
+    "Codex has no command to enable or disable one plugin; its feature flags are not plugin enablement" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex 没有启用或停用单个插件的命令；它的功能开关不等于插件启用状态"
+          }
+        }
+      }
+    },
+    "Codex updates plugins only by refreshing their whole marketplace" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex 只能通过刷新整个插件市场来更新插件"
+          }
+        }
+      }
+    },
     "Command-Line Tools" : {
       "comment" : "Settings > Installers: section header.",
       "localizations" : {
@@ -1155,6 +1175,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cursor 插件"
+          }
+        }
+      }
+    },
+    "Cursor updates plugins in Customize or the Agent /plugin flow" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cursor 在“自定义”或 Agent 的 /plugin 流程中更新插件"
           }
         }
       }
@@ -2769,12 +2799,32 @@
         }
       }
     },
+    "Local plugin files have no package update" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地插件文件没有可用的包更新"
+          }
+        }
+      }
+    },
     "Local project settings" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "项目本地设置"
+          }
+        }
+      }
+    },
+    "Local project settings: %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地项目设置：%@"
           }
         }
       }
@@ -2944,6 +2994,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "受管理的钩子"
+          }
+        }
+      }
+    },
+    "Managed settings control this plugin; change it where your organization manages Claude Code" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此插件由托管设置控制；请在你的组织管理 Claude Code 的位置进行更改"
           }
         }
       }
@@ -5517,6 +5577,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此资源库中没有已安装的技能。请使用官方 CLI 安装技能，或在“设置”中添加项目根目录。"
+          }
+        }
+      }
+    },
+    "This plugin has no update the host can run here" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "宿主无法在此处为该插件执行更新"
           }
         }
       }

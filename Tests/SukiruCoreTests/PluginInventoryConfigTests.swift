@@ -150,7 +150,7 @@ struct PluginInventoryConfigTests {
         #expect(object["plugins"] == ["https://example.test/a,b", "@scope/plugin"])
     }
 
-    @Test("Claude project marketplace declarations work without a known catalog and deduplicate")
+    @Test("Claude project and local marketplace declarations stay distinct without a known catalog")
     func claudeProjectMarketplaces() throws {
         let tree = try TempTree()
         let home = tree.path + "/home"
@@ -169,8 +169,10 @@ struct PluginInventoryConfigTests {
         let inventory = try #require(result["pluginInventory"] as? [String: Any])
         let marketplaces = try #require(inventory["marketplaces"] as? [[String: Any]])
         let projectMarketplaces = marketplaces.filter { $0["scopeRoot"] as? String == project }
-        #expect(projectMarketplaces.count == 1)
-        #expect(projectMarketplaces.first?["name"] as? String == "local")
+        #expect(projectMarketplaces.count == 2)
+        #expect(
+            Set(projectMarketplaces.compactMap { $0["scope"] as? String }) == ["project", "local"])
+        #expect(projectMarketplaces.allSatisfy { $0["name"] as? String == "local" })
         #expect(projectMarketplaces.first?["source"] as? String == "./catalog")
         #expect(
             (projectMarketplaces.first?["plugins"] as? [[String: Any]])?.first?["name"] as? String

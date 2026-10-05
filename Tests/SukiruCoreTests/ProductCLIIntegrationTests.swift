@@ -166,7 +166,9 @@ struct ProductCLIIntegrationTests {
         try FileManager.default.copyItem(
             atPath: FixturePaths.tree("FIX-LOCK-NO-FILES"), toPath: copy)
         let home = FixturePaths.homeAndRoots(atPath: copy).home
-        let env = CLIRunner.fixtureEnvironment(home: home)
+        // The lock-only cleanup runs `npx skills`, so the probe must find npx.
+        try tree.executable("bin/npx", contents: "#!/bin/sh\necho 1.7.0\n")
+        let env = CLIRunner.fixtureEnvironment(home: home, path: tree.path + "/bin:/usr/bin:/bin")
         let refused = try CLIRunner.run(["clean", "--yes"], environment: env)
         #expect(refused.exitCode == 1)
         #expect(refused.stdout.isEmpty)

@@ -98,4 +98,15 @@ public enum ProblemKind: String, CaseIterable, Codable, Equatable, Sendable {
             return nil
         }
     }
+
+    /// `oneClickFix(for:)`, minus repairs that need `npx skills` when the
+    /// probe found Node missing. Unprobed capabilities (nil) block nothing.
+    public static func oneClickFix(
+        for finding: Finding, capabilities: CapabilityReport?
+    ) -> DecisionAction? {
+        guard let action = oneClickFix(for: finding) else { return nil }
+        let needsNpx =
+            action == .update || (action == .cleanup && finding.ruleID == "lock-without-files")
+        return needsNpx && capabilities?.npx.canRunSkills == false ? nil : action
+    }
 }

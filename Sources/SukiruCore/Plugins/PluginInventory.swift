@@ -71,9 +71,18 @@ public struct PluginMarketplace: Codable, Equatable, Sendable, Identifiable {
     public let path: String?
     public let plugins: [PluginCatalogEntry]
     public var evidence: String?
+    /// The settings scope that declares the marketplace (`user`, `project`,
+    /// or Claude's `local`); a declaration in each scope is its own entry.
+    public var scope: String = "user"
+    /// The Git ref a host records for the marketplace source, when any.
+    public var ref: String?
+    /// A local directory used in place; hosts do not fetch or upgrade it.
+    public var localSource = false
 
     public var id: String {
-        "\(host.rawValue):\(scopeRoot):\(name)" + (host == .cursor ? ":" + (path ?? "") : "")
+        "\(host.rawValue):\(scopeRoot):\(name)"
+            + (scope == "local" ? ":local" : "")
+            + (host == .cursor ? ":" + (path ?? "") : "")
     }
 }
 

@@ -19,13 +19,7 @@ extension AppState {
     /// The fix one click applies to a finding here: nil when the repair
     /// needs a choice, or needs `npx skills` and Node is missing.
     func oneClickFix(for finding: Finding) -> DecisionAction? {
-        guard let action = ProblemKind.oneClickFix(for: finding) else { return nil }
-        let needsNpx =
-            action == .update || (action == .cleanup && finding.ruleID == "lock-without-files")
-        if needsNpx && capabilities?.npx.canRunSkills == false {
-            return nil
-        }
-        return action
+        ProblemKind.oneClickFix(for: finding, capabilities: capabilities)
     }
 
     func fixableEntries(_ entries: [FindingEntry]) -> [FindingEntry] {

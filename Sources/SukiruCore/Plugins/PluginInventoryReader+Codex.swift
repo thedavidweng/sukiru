@@ -111,7 +111,9 @@ extension PluginInventoryReader {
             marketplaces.append(
                 PluginMarketplace(
                     host: .codex, name: name, source: source,
-                    scopeRoot: root, path: path, plugins: catalog))
+                    scopeRoot: root, path: path, plugins: catalog,
+                    scope: root == environment.home ? "user" : "project", ref: fields["ref"],
+                    localSource: fields["source_type"] == "local"))
         }
         return marketplaces
     }

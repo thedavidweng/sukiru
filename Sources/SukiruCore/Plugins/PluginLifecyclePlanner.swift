@@ -13,12 +13,13 @@ public struct PluginLifecyclePlanner: Sendable {
         try probe.help(host: host, arguments: ["plugin"], requiredFlags: [])
         var native: [String] = []
         var limits: [String: String] = [:]
+        let noInventory = PluginInventory(installations: [], marketplaces: [], issues: [])
         for action in PluginLifecycleRequest.actions where action != "disable-local" {
             let request = PluginLifecycleRequest(
                 host: host, action: action,
                 target: action == "list" ? "*" : "plugin@configured-marketplace",
                 scope: "user", scopeRoot: environment.home)
-            if let limit = limitation(request, version: version) {
+            if let limit = limitation(request, version: version, inventory: noInventory) {
                 limits[action] = limit
             } else {
                 native.append(action)
@@ -86,12 +87,13 @@ public struct PluginLifecyclePlanner: Sendable {
                     request: request, inventory: inventory,
                     environment: environment, hostVersion: version))
         }
-        if let limit = limitation(request, version: version) { return .instructions(limit) }
+        if let limit = limitation(request, version: version, inventory: inventory) {
+            return .instructions(limit)
+        }
         let args = try verifiedArguments(
             request, inventory: inventory, version: version, probe: probe)
         let v1ConfigRoot =
-            request.host == .opencode
-                && ["v1.18.34", "1.18.34"].contains(version)
+            PluginHostContract(host: request.host, version: version) == .openCodeV1
                 && request.scope != "user"
             ? try probe.openCodeV1ConfigRoot(directory: request.scopeRoot) : nil
         let capture = try PluginLifecycleCapture(environment: environment).roots(
@@ -158,49 +160,21 @@ public struct PluginLifecyclePlanner: Sendable {
         }
     }
 
-    private func limitation(_ request: PluginLifecycleRequest, version: String) -> String? {
+    private func limitation(
+        _ request: PluginLifecycleRequest, version: String, inventory: PluginInventory
+    ) -> String? {
         switch request.host {
         case .claude: claudeLimitation(request, version: version)
-        case .codex: codexLimitation(request, version: version)
-        case .opencode: openCodeLimitation(request, version: version)
+        case .codex: codexLimitation(request, version: version, inventory: inventory)
+        case .opencode: openCodeLimitation(request, version: version, inventory: inventory)
         case .cursor: cursorLimitation(request)
         }
-    }
-
-    private func claudeLimitation(_ request: PluginLifecycleRequest, version: String) -> String? {
-        guard version == "2.1.288" else {
-            return "Claude \(version) has no verified lifecycle contract; use the host."
-        }
-        if ["replace", "list"].contains(request.action) {
-            return "Use Claude's install/update interfaces or passive Library inventory."
-        }
-        if request.action == "check" {
-            return "Claude exposes no verified passive single-plugin update check."
-        }
-        return nil
-    }
-
-    private func codexLimitation(_ request: PluginLifecycleRequest, version: String) -> String? {
-        guard version == "0.160.0" else {
-            return "Codex \(version) has no verified lifecycle contract; use the host."
-        }
-        if request.scope != "user" {
-            return
-                "Codex plugin mutations support user scope only; project configuration is not rewritten."
-        }
-        if ["enable", "disable", "update", "check", "replace", "list"].contains(request.action) {
-            return
-                "Codex exposes no individual \(request.action) operation. "
-                + "Marketplace refresh updates the whole configured Git marketplace; "
-                + "feature flags are not plugin enablement."
-        }
-        return nil
     }
 
     private func arguments(
         _ request: PluginLifecycleRequest, inventory: PluginInventory, version: String
     ) throws -> [String] {
-        if request.host == .opencode && ["v1.18.34", "1.18.34"].contains(version) {
+        if PluginHostContract(host: request.host, version: version) == .openCodeV1 {
             return openCodeV1Arguments(request)
         }
         var args = [request.host.rawValue, "plugin"]
@@ -214,14 +188,7 @@ public struct PluginLifecyclePlanner: Sendable {
             args.append(
                 action == "refresh" ? (request.host == .codex ? "upgrade" : "update") : action)
             if action != "add" {
-                guard
-                    inventory.marketplaces.contains(where: {
-                        $0.host == request.host && $0.name == request.target
-                    })
-                else {
-                    throw PluginLifecycleError(
-                        message: "Marketplace is not configured: " + request.target)
-                }
+                try validateMarketplaceTarget(request, action: action, inventory: inventory)
             }
         } else {
             let action =

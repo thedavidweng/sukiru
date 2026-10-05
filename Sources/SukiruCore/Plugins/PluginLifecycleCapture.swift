@@ -152,7 +152,8 @@ struct PluginLifecycleCapture {
             let absolute = request.target.hasPrefix("/") ? request.target : path
             paths.append(absolute)
             for manifest in [
-                absolute, HostPathResolver.join(absolute, ".claude-plugin/marketplace.json")
+                absolute, HostPathResolver.join(absolute, ".claude-plugin/marketplace.json"),
+                HostPathResolver.join(absolute, ".agents/plugins/marketplace.json")
             ] {
                 if manifest.hasSuffix(".json"), let object = try json(at: manifest) {
                     approval = approval || containsApproval(object)

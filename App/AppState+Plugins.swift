@@ -38,7 +38,7 @@ extension AppState {
         pluginManagement.host = marketplace.host
         pluginManagement.action = action
         pluginManagement.target = marketplace.name
-        pluginManagement.scope = marketplace.scopeRoot == environment.home ? "user" : "project"
+        pluginManagement.scope = marketplace.scope
         pluginManagement.scopeRoot = marketplace.scopeRoot
         pluginManagement.error = nil
         pluginManagement.showingSheet = true

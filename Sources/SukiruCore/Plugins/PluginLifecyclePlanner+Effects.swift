@@ -2,12 +2,12 @@ import Foundation
 
 extension PluginLifecyclePlanner {
     func helpArgumentCount(_ request: PluginLifecycleRequest, version: String) -> Int {
-        if request.host == .opencode && ["1.18.34", "v1.18.34"].contains(version) { return 1 }
+        if PluginHostContract(host: request.host, version: version) == .openCodeV1 { return 1 }
         return request.action.hasPrefix("marketplace-") ? 3 : 2
     }
 
     func effectsFlags(_ request: PluginLifecycleRequest, version: String) -> [DangerFlag] {
-        if request.host == .opencode && ["1.18.34", "v1.18.34"].contains(version) {
+        if PluginHostContract(host: request.host, version: version) == .openCodeV1 {
             return [.pluginRuntimeEffects]
         }
         if request.host == .opencode && ["list", "check", "update"].contains(request.action) {

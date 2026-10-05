@@ -13,19 +13,31 @@ extension PluginInventoryReader {
         let installations = claudeInstallations(
             records, roots: roots, scope: scope,
             userSettings: userSettings, issues: &issues)
-        var marketplaces = scope.includes(.user) ? claudeMarketplaces(config, issues: &issues) : []
+        // Registered catalogs come first so their install location wins over a
+        // bare user-settings declaration of the same name.
+        var marketplaces: [PluginMarketplace] = []
+        if scope.includes(.user) {
+            marketplaces += claudeMarketplaces(config, issues: &issues)
+            marketplaces += claudeDeclarations(
+                userSettings, root: environment.home, scope: "user", config: config,
+                issues: &issues)
+        }
         if scope.includes(.project) {
             for root in roots {
-                for file in ["settings.json", "settings.local.json"] {
+                for (file, fileScope) in [
+                    ("settings.json", "project"), ("settings.local.json", "local")
+                ] {
                     let settings = json(
                         HostPathResolver.join(root, ".claude/" + file), issues: &issues)
                     marketplaces += claudeDeclarations(
-                        settings, root: root, config: config, issues: &issues)
+                        settings, root: root, scope: fileScope, config: config, issues: &issues)
                 }
             }
         }
         var uniqueMarketplaces: [String: PluginMarketplace] = [:]
-        for marketplace in marketplaces { uniqueMarketplaces[marketplace.id] = marketplace }
+        for marketplace in marketplaces where uniqueMarketplaces[marketplace.id] == nil {
+            uniqueMarketplaces[marketplace.id] = marketplace
+        }
         return PluginInventory(
             installations: installations,
             marketplaces: uniqueMarketplaces.values.sorted { $0.id < $1.id }, issues: [])
@@ -99,17 +111,12 @@ extension PluginInventoryReader {
                         HostPathResolver.join($0, ".claude-plugin/marketplace.json"),
                         issues: &issues)
                 }
-                let entries = manifest?["plugins"] as? [[String: Any]] ?? []
-                let catalog = entries.compactMap { entry -> PluginCatalogEntry? in
-                    guard let pluginName = entry["name"] as? String else { return nil }
-                    return PluginCatalogEntry(
-                        name: pluginName, source: entry["source"] as? String ?? "inline",
-                        version: entry["version"] as? String)
-                }
                 marketplaces.append(
                     PluginMarketplace(
                         host: .claude, name: name, source: address, scopeRoot: environment.home,
-                        path: path, plugins: catalog))
+                        path: path, plugins: claudeCatalog(manifest),
+                        ref: source?["ref"] as? String,
+                        localSource: Self.claudeLocalSource(source)))
             }
         }
         return marketplaces
@@ -120,8 +127,40 @@ extension PluginInventoryReader {
             ?? HostPathResolver.join(config, "plugins")
     }
 
+    private func claudeCatalog(_ manifest: [String: Any]?) -> [PluginCatalogEntry] {
+        let entries = manifest?["plugins"] as? [[String: Any]] ?? []
+        return entries.compactMap { entry -> PluginCatalogEntry? in
+            guard let name = entry["name"] as? String else { return nil }
+            return PluginCatalogEntry(
+                name: name, source: Self.claudeSourceLabel(entry["source"]),
+                version: entry["version"] as? String)
+        }
+    }
+
+    /// A catalog entry's source is a relative path string or a typed object
+    /// such as `{"source": "github", "repo": "owner/name"}`.
+    static func claudeSourceLabel(_ value: Any?) -> String {
+        if let path = value as? String { return path }
+        guard let object = value as? [String: Any] else { return "inline" }
+        let kind = object["source"] as? String
+        let address =
+            object["repo"] as? String ?? object["url"] as? String
+            ?? object["package"] as? String ?? object["path"] as? String
+        switch (kind, address) {
+        case (let kind?, let address?): return kind + ":" + address
+        case (let kind?, nil): return kind
+        case (nil, let address?): return address
+        case (nil, nil): return "inline"
+        }
+    }
+
+    static func claudeLocalSource(_ source: [String: Any]?) -> Bool {
+        ["directory", "file"].contains(source?["source"] as? String ?? "")
+    }
+
     private func claudeDeclarations(
-        _ settings: [String: Any]?, root: String, config: String, issues: inout [Issue]
+        _ settings: [String: Any]?, root: String, scope: String, config: String,
+        issues: inout [Issue]
     ) -> [PluginMarketplace] {
         let entries = settings?["extraKnownMarketplaces"] as? [String: [String: Any]] ?? [:]
         return entries.compactMap { name, entry in
@@ -134,16 +173,10 @@ extension PluginInventoryReader {
                 ?? HostPathResolver.join(claudePluginRoot(config), "marketplaces/" + name)
             let manifest = json(
                 HostPathResolver.join(path, ".claude-plugin/marketplace.json"), issues: &issues)
-            let entries = manifest?["plugins"] as? [[String: Any]] ?? []
-            let plugins = entries.compactMap { plugin -> PluginCatalogEntry? in
-                guard let name = plugin["name"] as? String else { return nil }
-                return PluginCatalogEntry(
-                    name: name, source: plugin["source"] as? String ?? "inline",
-                    version: plugin["version"] as? String)
-            }
             return PluginMarketplace(
                 host: .claude, name: name, source: address, scopeRoot: root,
-                path: path, plugins: plugins)
+                path: path, plugins: claudeCatalog(manifest), scope: scope,
+                ref: source["ref"] as? String, localSource: Self.claudeLocalSource(source))
         }
     }
 }

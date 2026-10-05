@@ -97,7 +97,10 @@ struct PluginLifecycleCLIIntegrationTests {
         arguments: [
             ["opencode", "v1.18.34", "remove", "demo"],
             ["opencode", "v2.0.22", "update", "./local.ts"],
-            ["opencode", "v2.0.23", "install", "demo"],
+            ["opencode", "v3.0.0", "install", "demo"],
+            ["opencode", "v2.0.21", "install", "demo"],
+            ["claude", "2.1.200", "update", "demo@team"],
+            ["codex", "codex-cli 0.159.9", "install", "demo@team"],
             ["codex", "codex-cli 0.160.0", "enable", "demo@team"]
         ])
     func instructionsOnly(values: [String]) throws {
