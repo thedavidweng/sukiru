@@ -101,17 +101,17 @@ final class AppState: ObservableObject {
     @Published var fixSkipped: [String] = []
     /// Repairs queued from Health, checked out together as one batch.
     @Published var cart: [CartItem] = []
-    /// Library updates and uninstalls, checked out with the cart.
+    /// Library updates, uninstalls, and host removals, checked out with the cart.
     @Published var lifecycleQueue: [LifecycleRequest] = []
+    @Published var hostRemovalQueue: [HostRemovalRequest] = []
     @Published var updateCheck = UpdateCheckState()
     /// The skill whose pin ref, or orphan whose source, is being chosen, and
     /// each orphan's source lookup (by `skillID`) for its row and sheet.
     @Published var pinSheetSkill: Skill?
     @Published var sourceSheetSkill: Skill?
     @Published var sourceLookups: [String: SourceLookup] = [:]
-    /// Batch-construction refusal text (stale finding, ownership rule) —
-    /// rendered inline, never swallowed. (Core diagnostic text, English by
-    /// design, like CLI stderr.)
+    /// Batch-construction refusal text (stale finding, ownership rule), shown
+    /// inline. Core diagnostic text, English by design, like CLI stderr.
     @Published var repairError: String?
     /// A capability-blocked repair attempt: a localized inline hint, apart
     /// from `repairError` so the copy flows through the string catalog.

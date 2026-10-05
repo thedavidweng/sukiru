@@ -1,6 +1,6 @@
 # 0012: Host-scoped Skill removal delegates to the official CLI
 
-- Status: Accepted (core and CLI; Library presentation is a separate handoff)
+- Status: Accepted
 - Date: 2026-10-04
 - Spec: [GitHub issue #32](https://github.com/thedavidweng/sukiru/issues/32)
 
@@ -63,12 +63,14 @@ Sources: pinned upstream [remove.ts](https://github.com/vercel-labs/skills/blob/
 [agents.ts](https://github.com/vercel-labs/skills/blob/v1.7.0/src/agents.ts), and
 [installer.ts](https://github.com/vercel-labs/skills/blob/v1.7.0/src/installer.ts).
 
-## Library handoff
+## Library presentation
 
-The GUI remains unimplemented in this change. It must expose the Library
-command, choose a concrete scope and a host from `hostRemovalCandidates`, show
-the plan's three lists and shared-copy consequences, and queue `plan.request`
-in Pending Changes. Rebuild with `hostRemovals`, a fresh `hostRemovalContext`,
-and current capabilities. Localize enum reasons and plan problems in English
-and Simplified Chinese; use only system controls and the existing danger
-acknowledgement flow (ADR 0006).
+The Library toolbar opens a Remove Skills from Agent sheet. It captures a
+`HostRemovalContext` when it opens, offers a concrete scope and a host from
+`hostRemovalCandidates`, shows the plan's three lists and shared-copy
+consequences, and queues `plan.request` in Pending Changes. Checkout rebuilds
+with `hostRemovals`, a fresh `hostRemovalContext`, and current capabilities,
+so stale names are listed as not included. A succeeded batch dequeues its
+requests. Enum reasons and plan problems are localized in the app from the
+plan's facts. The sheet uses only system controls, and the existing batch
+confirmation provides the danger acknowledgement (ADR 0006).

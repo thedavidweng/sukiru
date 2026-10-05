@@ -49,12 +49,13 @@ extension AppState {
     func clearCart() {
         cart = []
         lifecycleQueue = []
+        hostRemovalQueue = []
         hookState.queue = []
     }
 
     /// Queued repairs plus queued Library changes.
     var queuedChangeCount: Int {
-        cart.count + lifecycleQueue.count + hookState.queue.count
+        cart.count + lifecycleQueue.count + hostRemovalQueue.count + hookState.queue.count
     }
 
     /// Builds every queued repair and Library change into one batch and
@@ -70,7 +71,10 @@ extension AppState {
             return DecisionEntry(findingID: id, action: item.action, choice: item.choice)
         }
         let built = CommandBatchBuilder().buildApplicable(
-            report: report, decisions: decisions, lifecycle: lifecycleQueue)
+            report: report, decisions: decisions, lifecycle: lifecycleQueue,
+            hostRemovals: hostRemovalQueue,
+            hostRemovalContext: hostRemovalQueue.isEmpty ? nil : makeHostRemovalContext(),
+            capabilities: capabilities)
         do {
             guard let hookPlan = try hookBatch() else {
                 propose(built.batch, skipped: built.skipped)
@@ -106,5 +110,6 @@ extension AppState {
             return report.skills.first { Self.skillID($0) == id }
                 .map { LifecycleRequest(skill: $0, action: request.action) }
         }
+        pruneHostRemovals()
     }
 }

@@ -73,7 +73,8 @@ struct PendingChangesView: View {
     }
 
     private var cartList: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        let libraryQueued = !state.lifecycleQueue.isEmpty || !state.hostRemovalQueue.isEmpty
+        return VStack(alignment: .leading, spacing: 0) {
             ForEach(state.cart) { item in
                 CartRow(
                     name: item.finding.skillName ?? item.finding.title, change: item.title,
@@ -81,7 +82,7 @@ struct PendingChangesView: View {
                 ) {
                     state.removeFromCart(item)
                 }
-                if item != state.cart.last || !state.lifecycleQueue.isEmpty {
+                if item != state.cart.last || libraryQueued {
                     Divider()
                 }
             }
@@ -92,7 +93,20 @@ struct PendingChangesView: View {
                 ) {
                     state.removeFromCart(request)
                 }
-                if request != state.lifecycleQueue.last {
+                if request != state.lifecycleQueue.last || !state.hostRemovalQueue.isEmpty {
+                    Divider()
+                }
+            }
+            ForEach(state.hostRemovalQueue) { request in
+                CartRow(
+                    name: HostTable.host(id: request.hostID)?.displayName ?? request.hostID,
+                    change: String(localized: "Remove Skills from Agent"),
+                    detail: state.hostRemovalScopeTitle(request.bucket) + " · "
+                        + request.names.formatted(.list(type: .and))
+                ) {
+                    state.removeFromCart(request)
+                }
+                if request != state.hostRemovalQueue.last {
                     Divider()
                 }
             }

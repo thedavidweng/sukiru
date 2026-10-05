@@ -89,11 +89,12 @@ extension AppState {
         }
     }
 
-    /// Drops the Library changes a succeeded batch carried; failed ones
-    /// stay queued for another try.
+    /// Drops the Library changes a succeeded batch carried, host removals
+    /// included; failed ones stay queued for another try.
     func dequeueLifecycle(completedBy batch: CommandBatch, status: BatchStatus?) {
         guard status == .succeeded else { return }
         let done = Set(batch.findingRefs.map(\.findingID))
         lifecycleQueue.removeAll { done.contains($0.id) }
+        hostRemovalQueue.removeAll { done.contains($0.id) }
     }
 }

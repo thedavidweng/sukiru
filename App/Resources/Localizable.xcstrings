@@ -804,6 +804,17 @@
         }
       }
     },
+    "Choose an Agent" : {
+      "comment" : "Remove Skills from Agent sheet: empty choice of the Agent Host picker.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择宿主"
+          }
+        }
+      }
+    },
     "Choose how rollback handles this changed file." : {
       "localizations" : {
         "zh-Hans" : {
@@ -2554,6 +2565,17 @@
         }
       }
     },
+    "Left in Place (%lld)" : {
+      "comment" : "Remove Skills from Agent sheet: entries the removal keeps.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留不动（%lld）"
+          }
+        }
+      }
+    },
     "Leftover" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4116,6 +4138,28 @@
         }
       }
     },
+    "Remove Skills from Agent" : {
+      "comment" : "Pending Changes row and sheet title for a host-scoped skill removal.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从宿主移除技能"
+          }
+        }
+      }
+    },
+    "Remove Skills from Agent…" : {
+      "comment" : "Library toolbar: opens the Remove Skills from Agent sheet.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从宿主移除技能…"
+          }
+        }
+      }
+    },
     "Remove from Pending Changes" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4147,6 +4191,17 @@
         }
       }
     },
+    "Remove the skills one agent loads in one scope (adds to Pending Changes)" : {
+      "comment" : "Library toolbar help.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除某个宿主在一个范围内加载的技能（加入待处理更改）"
+          }
+        }
+      }
+    },
     "Remove this skill's files (adds to Pending Changes)" : {
       "comment" : "Library detail: help for Uninstall.",
       "localizations" : {
@@ -4154,6 +4209,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移除此技能的文件（加入待处理更改）"
+          }
+        }
+      }
+    },
+    "Removed (%lld)" : {
+      "comment" : "Remove Skills from Agent sheet: entries the official CLI removes.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将移除（%lld）"
           }
         }
       }
@@ -5219,6 +5285,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "星标"
+          }
+        }
+      }
+    },
+    "Still Visible (%lld)" : {
+      "comment" : "Remove Skills from Agent sheet: entries the host still loads afterwards.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仍然可见（%lld）"
           }
         }
       }
@@ -7258,6 +7335,261 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "仅移除已审核的钩子条目。已安装的来源应用可能重新生成钩子；请先停用其集成。"
+          }
+        }
+      }
+    },
+    "hostRemoval.explanation" : {
+      "comment" : "Remove Skills from Agent sheet.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a scope and an agent. The skills CLI removes only the entries it installed in that agent's folder; everything else stays and is listed with what to do next."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择一个范围和一个宿主。技能 CLI 只会移除它在该宿主文件夹中安装的条目；其余条目保持不动，并列出后续处理方式。"
+          }
+        }
+      }
+    },
+    "hostRemoval.noHosts" : {
+      "comment" : "Remove Skills from Agent sheet: no candidate hosts.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No agent has skills in this scope."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此范围内没有宿主加载技能。"
+          }
+        }
+      }
+    },
+    "hostRemoval.openCodeHint" : {
+      "comment" : "Remove Skills from Agent sheet: OpenCode setting hint.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To hide the skills OpenCode still loads, set permission.skill in its configuration (for example, \"*\": \"deny\"). Sukiru does not change host settings."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如需隐藏 OpenCode 仍会加载的技能，请在其配置中设置 permission.skill（例如 \"*\": \"deny\"）。Sukiru 不会修改宿主设置。"
+          }
+        }
+      }
+    },
+    "hostRemoval.predictionUncertain" : {
+      "comment" : "Remove Skills from Agent sheet: Shared Copy deletion prediction is uncertain.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This prediction is uncertain: scan problems in this scope or a skills CLI version other than 1.7.0 may change what is deleted. Treat every removed skill as possibly uninstalled from every agent."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此预测不确定：该范围内的扫描问题，或 1.7.0 以外的技能 CLI 版本，可能改变实际删除的内容。请将所有被移除的技能视为可能从所有宿主中卸载。"
+          }
+        }
+      }
+    },
+    "hostRemoval.problem.needsNode" : {
+      "comment" : "Remove Skills from Agent sheet: npx skills cannot run.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Removing skills from an agent needs Node.js. Get it in Settings > Installers."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从宿主移除技能需要 Node.js。请在“设置 > 安装器”中获取。"
+          }
+        }
+      }
+    },
+    "hostRemoval.problem.nothingRemovable %@" : {
+      "comment" : "Remove Skills from Agent sheet: no eligible entries. The argument is the host name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing here was installed by npx skills for %@. Review the entries left in place."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此处没有通过 npx skills 为 %@ 安装的条目。请查看保留不动的条目。"
+          }
+        }
+      }
+    },
+    "hostRemoval.problem.sharedFolder %@" : {
+      "comment" : "Remove Skills from Agent sheet: the host folder is shared. The argument is the host name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing can be removed for %@ alone: its skills folder is shared with other agents."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法单独为 %@ 移除任何内容：它的技能文件夹与其他宿主共享。"
+          }
+        }
+      }
+    },
+    "hostRemoval.queue.help" : {
+      "comment" : "Remove Skills from Agent sheet: queue button help.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Queue this removal in Pending Changes. Nothing runs until you review and apply it."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将此移除加入待处理更改。在你审阅并应用之前不会执行任何操作。"
+          }
+        }
+      }
+    },
+    "hostRemoval.reason.agentManaged" : {
+      "comment" : "Host removal: why an entry is left in place.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent-managed Skill. Manage it in the agent."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "宿主自管技能。请在宿主中管理。"
+          }
+        }
+      }
+    },
+    "hostRemoval.reason.ambiguous" : {
+      "comment" : "Host removal: why an entry is left in place.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double-booked or ambiguous name. Resolve its ownership in Health first."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "双重记账或名称有歧义。请先在“健康”中确定归属。"
+          }
+        }
+      }
+    },
+    "hostRemoval.reason.githubLedger" : {
+      "comment" : "Host removal: why an entry is left in place.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub Ledger skill. Uninstall it on its own."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub 账本技能。请单独卸载。"
+          }
+        }
+      }
+    },
+    "hostRemoval.reason.ownerless" : {
+      "comment" : "Host removal: why an entry is left in place.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ownerless Skill. Queue its deletion from Health."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "野技能。请在“健康”中将其删除加入队列。"
+          }
+        }
+      }
+    },
+    "hostRemoval.reason.sharedFolder" : {
+      "comment" : "Host removal: why an entry is left in place.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This folder is shared with other agents, so it cannot be cleared for this agent alone."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此文件夹与其他宿主共享，无法仅为该宿主清理。"
+          }
+        }
+      }
+    },
+    "hostRemoval.reason.unofficialEntry" : {
+      "comment" : "Host removal: why an entry is left in place.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This entry was not installed by npx skills. Resolve its placement in Health."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此条目并非由 npx skills 安装。请在“健康”中处理其放置方式。"
+          }
+        }
+      }
+    },
+    "hostRemoval.sharedCopyDeletion %@" : {
+      "comment" : "Remove Skills from Agent sheet: predicted Shared Copy deletion. The argument lists skill names.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Also deletes the Shared Copy of %@: the skills CLI uninstalls it from every agent and drops its lock entry. A snapshot is taken first, so you can undo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同时删除 %@ 的共享副本：技能 CLI 会将其从所有宿主中卸载并移除其锁定条目。执行前会先创建快照，可撤销。"
           }
         }
       }

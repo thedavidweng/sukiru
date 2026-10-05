@@ -18,6 +18,7 @@ struct LibraryView: View {
     @State private var ownershipFilter: Ownership?
     /// Sections the user collapsed, keyed by `SkillGroup.id`.
     @State private var collapsedGroups: Set<String> = []
+    @State private var showingHostRemoval = false
 
     var body: some View {
         Group {
@@ -37,6 +38,9 @@ struct LibraryView: View {
         .navigationSubtitle(Text("\(skillCount) skills"))
         .toolbar { libraryToolbar }
         .modifier(UpdateCheckFailureAlert())
+        .sheet(isPresented: $showingHostRemoval) {
+            HostRemovalSheet()
+        }
     }
 
     private var isFiltering: Bool { attentionOnly || ownershipFilter != nil }
@@ -299,6 +303,17 @@ extension LibraryView {
         }
         ToolbarItem {
             UpdateAllButton(skills: scoped)
+        }
+        ToolbarItem {
+            let disabled = state.report == nil || state.batchMutationInFlight
+            Button {
+                showingHostRemoval = true
+            } label: {
+                Label("Remove Skills from Agent…", systemImage: "person.crop.circle.badge.minus")
+            }
+            .disabled(disabled)
+            .axButtonToken("sukiru.library.hostRemoval", disabled: disabled)
+            .help("Remove the skills one agent loads in one scope (adds to Pending Changes)")
         }
         ToolbarItem {
             filterMenu
