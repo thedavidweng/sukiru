@@ -9,7 +9,7 @@
     <a href="https://www.swift.org"><img src="https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&logoColor=white" alt="Swift 6.2" /></a>
     <a href="#-installation"><img src="https://img.shields.io/badge/Homebrew-thedavidweng%2Ftap-FBB040?logo=homebrew" alt="Homebrew Tap" /></a>
     <a href="PRIVACY.md"><img src="https://img.shields.io/badge/Privacy-No%20Telemetry-success" alt="No Telemetry" /></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue" alt="License: Apache-2.0" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0--only-blue" alt="License: AGPL-3.0-only" /></a>
   </p>
 
   <p>
@@ -351,8 +351,13 @@ branch.
 
 ## ⚖️ License
 
-Copyright © 2026 David Weng. Licensed under the [Apache License 2.0](LICENSE).
+Copyright © 2026 David Weng. Licensed under the [GNU AGPL v3.0 only](LICENSE).
 
 Agent logos identify compatible tools and remain the property of their
 owners. Their sources and licenses are listed in
 [`App/Resources/AgentIcons-LICENSE.txt`](App/Resources/AgentIcons-LICENSE.txt).
+
+See [LICENSING.md](LICENSING.md) for historical and third-party licenses.
+External contributions require [CLA version 1.0](CLA.md), signed by replying
+to the bot in your PR. Contributors retain copyright and permit commercial
+and proprietary licensing of accepted contributions.
