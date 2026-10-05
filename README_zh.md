@@ -166,6 +166,7 @@ Cursor 插件清单只读取本地状态：显示本地开发插件、缓存内�
 ```bash
 sukiru skills list --json
 sukiru skills update --all --dry-run
+sukiru skills uninstall --all --host claude-code --scope user --dry-run
 sukiru skills pin NAME --ref v1 --dry-run
 sukiru skills mode NAME --mode link --dry-run
 sukiru skills adopt NAME --installer vercel --source OWNER/REPO --dry-run
@@ -182,6 +183,12 @@ sukiru rollback --batch ID --dry-run
 sukiru rollback --batch ID --yes --preserve /absolute/conflict/path
 sukiru capabilities --json
 ```
+
+批量卸载必须指定 `--host`，只移除该宿主自身目录中由 `npx skills` 安装且符合条件的条目。
+预览会列出完整命令、将移除的条目、保留的条目及后续处理方法，以及仍会通过其他目录被宿主发现的技能；
+`--json` 返回同一计划及命令批次。指定 `--scope project --root /absolute/project` 可针对单个项目。
+如果操作还会删除共享副本，执行前会明确告知，并要求 `--confirm-dangerous`。
+资料库的 GUI 操作尚待实现，目前可通过 CLI 使用此流程。
 
 通过各层 `--help` 查看更新、卸载、固定/取消固定版本、恢复文件、启用/禁用和市场操作。
 搜索、检查更新和能力探测是显式操作；普通 Health 不联网、不启动宿主会话。

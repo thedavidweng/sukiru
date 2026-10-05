@@ -77,10 +77,15 @@ public struct CommandBatchBuilder: Sendable {
     /// - Returns: the batch (nil when nothing applies) and the problem of
     ///   every skipped decision or request.
     public func buildApplicable(
-        report: ScanReport, decisions: [DecisionEntry], lifecycle: [LifecycleRequest] = []
+        report: ScanReport, decisions: [DecisionEntry], lifecycle: [LifecycleRequest] = [],
+        hostRemovals: [HostRemovalRequest] = [], hostRemovalContext: HostRemovalContext? = nil,
+        capabilities: CapabilityReport? = nil
     ) -> (batch: CommandBatch?, skipped: [String]) {
         var planned = plan(report: report, decisions: decisions)
         planLifecycle(lifecycle, report: report, into: &planned)
+        planHostRemovals(
+            hostRemovals, report: report, context: hostRemovalContext,
+            capabilities: capabilities, into: &planned)
         return (batch(from: planned), planned.problems)
     }
 

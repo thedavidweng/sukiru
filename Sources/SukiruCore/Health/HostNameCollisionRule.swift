@@ -104,7 +104,7 @@ public enum HostNameCollisionRule {
 
     /// Installer destinations are not the full discovery set. Factory and
     /// OpenCode also read compatibility directories (see the rule's ADR).
-    private static func loadingRoots(
+    static func loadingRoots(
         for host: String, in workspaces: [EnumeratedWorkspace], present: Bool
     ) -> Set<String> {
         Set(

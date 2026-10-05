@@ -87,22 +87,9 @@ enum BatchCommandFactory {
         consequence: CommandConsequence? = nil,
         workingDirectory: String? = nil
     ) -> BatchCommand {
-        var argv = ["npx", "skills", "remove", name]
-        if scope == .user {
-            argv.append("-g")
-        }
-        argv.append("-y")
-        return BatchCommand(
-            argv: argv,
-            displayString: BatchCommand.display(for: argv),
-            owningCLI: .vercel,
-            intent: intent,
-            dangerFlags: [.dangerousDeletion],
-            warning: dangerousDeletionWarning(name: name, atRisk: atRisk),
-            atRiskSkills: atRisk,
-            consequence: consequence,
-            workingDirectory: workingDirectory
-        )
+        vercelRemove(
+            names: [name], agents: [], scope: scope, atRisk: atRisk, intent: intent,
+            consequence: consequence, workingDirectory: workingDirectory)
     }
 
     /// The skills a name-based `npx skills remove` of `skill` endangers:

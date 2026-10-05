@@ -236,6 +236,7 @@ observed catalog/payload changes independently of the command's exit status.
 ```bash
 sukiru skills list --json
 sukiru skills update --all --dry-run
+sukiru skills uninstall --all --host claude-code --scope user --dry-run
 sukiru skills pin NAME --ref v1 --dry-run
 sukiru skills mode NAME --mode link --dry-run
 sukiru skills adopt NAME --installer vercel --source OWNER/REPO --dry-run
@@ -252,6 +253,14 @@ sukiru rollback --batch ID --dry-run
 sukiru rollback --batch ID --yes --preserve /absolute/conflict/path
 sukiru capabilities --json          # explicit manager probes
 ```
+
+Bulk uninstall requires `--host` and removes only eligible entries installed
+by `npx skills` in that host's own folder. Dry-run shows the exact command,
+entries removed, entries left in place with next steps, and skills still visible
+through other folders; `--json` returns the same plan alongside its batch.
+Use `--scope project --root /absolute/project` for one project. Shared Copy
+deletion is disclosed before execution and requires `--confirm-dangerous`.
+The Library GUI action is pending; this workflow is currently available in the CLI.
 
 Use generated `--help` on any family to discover update, uninstall, pin,
 unpin, restore, enable/disable, and marketplace operations. Generate shell

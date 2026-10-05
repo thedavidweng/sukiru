@@ -20,3 +20,4 @@ are added as amendments or new records that reference the old one.
 Domain terms are defined in the [glossary](../../CONTEXT.md).
 
 - [0011: First-class Sukiru CLI](0011-first-class-cli.md)
+- [0012: Host-scoped Skill removal](0012-host-scoped-skill-removal.md)

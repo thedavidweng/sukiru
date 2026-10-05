@@ -108,13 +108,40 @@ extension SkillLifecycleCommand {
     }
 }
 
-struct SkillUninstall: SkillLifecycleCommand {
+struct SkillUninstall: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "uninstall", abstract: "Uninstall through the owning manager policy.")
-    @OptionGroup var selection: SkillSelection
+    @Argument var name: String?
+    @Flag(help: "Remove every eligible entry from one Agent Host.") var all = false
+    @Option(help: "Exact placement path for an individual uninstall.") var path: String?
+    @OptionGroup var inputs: ScopeOptions
     @OptionGroup var output: OutputOptions
     @OptionGroup var mutation: MutationOptions
-    var action: LifecycleAction { .uninstall }
+    mutating func validate() throws {
+        guard (name != nil) != all else { throw ValidationError("Choose a Skill name or --all") }
+        if all && inputs.host == nil { throw ValidationError("--all requires --host") }
+        if all && path != nil { throw ValidationError("--path cannot be combined with --all") }
+        if all && inputs.scope == .all { inputs.scope = inputs.roots.isEmpty ? .user : .project }
+    }
+
+    func run() throws {
+        if all {
+            try removeFromHost()
+            return
+        }
+        let environment = try cliEnvironment(roots: inputs.roots)
+        let report = try ScanEngine(environment: environment).scan(inputs.mutationRequest)
+        var selection = SkillSelection()
+        selection.name = name!
+        selection.path = path
+        selection.inputs = inputs
+        let skill = try selection.select(in: report)
+        let built = CommandBatchBuilder().buildApplicable(
+            report: report, decisions: [],
+            lifecycle: [LifecycleRequest(skill: skill, action: .uninstall)])
+        guard built.skipped.isEmpty else { throw CLIError(built.skipped.joined(separator: "\n")) }
+        try mutation.apply(built.batch, report: report, environment: environment, output: output)
+    }
 }
 
 struct SkillPin: SkillLifecycleCommand {
