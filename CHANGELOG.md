@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.4.0](https://github.com/thedavidweng/sukiru/compare/v1.3.0...v1.4.0) (2026-10-05)
+
+
+### ✨ Features
+
+* **cli:** ship first-class maintenance commands ([#30](https://github.com/thedavidweng/sukiru/issues/30)) ([65c0bbb](https://github.com/thedavidweng/sukiru/commit/65c0bbb1005047a80e6d316b55935f81baf6bc80))
+* **hooks:** audit and safely clean agent hooks ([cfdd77a](https://github.com/thedavidweng/sukiru/commit/cfdd77adff46142f563c06c1f491eabbf724c043)), closes [#29](https://github.com/thedavidweng/sukiru/issues/29)
+* **library:** add AiderDesk, CodeMaker, and iFlow CLI icons ([3df74f4](https://github.com/thedavidweng/sukiru/commit/3df74f4c0179815a14ad911ca105f7ce66900db5))
+* **plugins:** add protected native host plugin management ([8c72ead](https://github.com/thedavidweng/sukiru/commit/8c72ead5ff6351b85402eecbebd5a3a89b4b55b4))
+* **plugins:** allow explicit consent to runtime and backend effects ([ed83b5d](https://github.com/thedavidweng/sukiru/commit/ed83b5d57760ab45e8a1bb859093f8623ef9d279))
+* **plugins:** support Cursor inventory and protected lifecycle ([#31](https://github.com/thedavidweng/sukiru/issues/31)) ([38f6039](https://github.com/thedavidweng/sukiru/commit/38f60394c4ac255445e766b45bfe8b3bb8a79ded))
+* **skills:** plan host-scoped bulk removal ([#32](https://github.com/thedavidweng/sukiru/issues/32)) ([ddd7f46](https://github.com/thedavidweng/sukiru/commit/ddd7f46cff3b7459a704c566ee0aa40f01059471))
+* **ui:** customize sidebar sections and unify plugin controls ([46b14cb](https://github.com/thedavidweng/sukiru/commit/46b14cb68130b050c4624342430723e067a76c29))
+* **ui:** remove skills from agent in Library ([#32](https://github.com/thedavidweng/sukiru/issues/32)) ([3244d76](https://github.com/thedavidweng/sukiru/commit/3244d76f1c596e43117dab3caa5384962c194612))
+* **ui:** show live command output while a batch runs ([6c093db](https://github.com/thedavidweng/sukiru/commit/6c093db4910ebc7210bf3d14ce25d1680974a092))
+
+
+### 🐛 Bug Fixes
+
+* **build:** bundle the CLI under Contents/Helpers ([dbe45c8](https://github.com/thedavidweng/sukiru/commit/dbe45c8e52b361bcd570611a3b9bed1e7c3bdc4c))
+* **health:** detect host skill name collisions ([86444d2](https://github.com/thedavidweng/sukiru/commit/86444d222026409845616c3bcf8bc6eea3f41ecb))
+* **plugins:** close host lifecycle gaps and add spec coverage ([11c16b6](https://github.com/thedavidweng/sukiru/commit/11c16b649182150b77dc992330d41220cd8ed9e9))
+* **plugins:** preserve linked state and incomplete execution evidence ([95ed27e](https://github.com/thedavidweng/sukiru/commit/95ed27ec8abb98d61d25dd9b870f5cbe02579b45))
+* **ui:** reorder sidebar plugin hosts with a native list ([d12c191](https://github.com/thedavidweng/sukiru/commit/d12c191133dab09a8d29bfef7b32466a13cc78bd))
+* **ui:** separate plugins per host in the sidebar ([601a95e](https://github.com/thedavidweng/sukiru/commit/601a95e9b06f873eff1fa56fefd8c1e3b8446241))
+* **ui:** simplify native plugin library and marketplace browsing ([7c441ee](https://github.com/thedavidweng/sukiru/commit/7c441ee96e32cf5c130a587095058e84fbd087e8))
+
+
+### 📝 Documentation
+
+* **plugins:** document the same-major version contract and new CLI options ([5cf7872](https://github.com/thedavidweng/sukiru/commit/5cf78726987904230868d5762131520d442098f7))
+
 ## [1.3.0](https://github.com/thedavidweng/sukiru/compare/v1.2.0...v1.3.0) (2026-10-03)
 
 
