@@ -16,8 +16,13 @@ Confirmed local binaries:
 | OpenCode | `v2.0.22` | `opencode plugin --help`; `--help` for add/list/check/update/remove | Plugin add/list/check/update/remove. This machine has no verified v1 binary. |
 
 The exact high-level argv and flags from the installed help are summarized
-below. These flags were observed on the named versions; re-run `--help` for a
-different installed build before enabling an operation.
+below. These flags were observed on the named versions, which are the verified
+baselines in `PluginHostContract`. Sukiru accepts a reported version at or above
+a baseline within the same major version (for example Claude Code `2.1.288+`
+but not `3.x`, OpenCode `2.0.22+` but not `2.0.21`). Each operation still runs
+the matching subcommand's `--help` and refuses when an expected flag is
+missing, so a later release that changes the interface fails closed. Other
+majors, and versions below a baseline, are refused with host instructions.
 
 ### Claude Code 2.1.288
 
@@ -332,9 +337,10 @@ data directory guarantee, or path boundary for plugin code's own storage.
 
 The following source inspection supersedes any implication above that command
 availability alone permits execution. These decisions apply to OpenCode
-`v1.18.34`, OpenCode `v2.0.22`, and Codex `rust-v0.160.0`; other versions need
-the same initialization-path verification. No lifecycle command was executed
-to obtain this evidence.
+`v1.18.34`, OpenCode `v2.0.22`, and Codex `rust-v0.160.0`. Later releases in
+the same major inherit them under the version contract above; a new major needs
+the same initialization-path verification before it gets a baseline. No
+lifecycle command was executed to obtain this evidence.
 
 | Host and operation | Sukiru execution decision |
 | --- | --- |

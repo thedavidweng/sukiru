@@ -216,3 +216,31 @@ Reference evidence:
 - [Documented Agent CLI executable](https://cursor.com/docs/cli/installation)
 - [Cursor support: marketplace refresh can report false success](https://forum.cursor.com/t/cli-added-git-marketplace-never-reindexes-plugin-marketplace-update-reports-0-plugins-indexed-and-cache-stays-pinned-to-the-first-commit/169587)
 - [Enabled state and retained cache observations](https://github.com/cursor/plugins/issues/136)
+
+## Amendment (2026-10-05): version contract and host-specific limits
+
+Exact version matching refused every host release after the one inspected. A
+host version is now accepted when it is at or above a verified baseline within
+the same major (Claude Code 2.1.288, Codex 0.160.0, OpenCode v1 1.18.34 and v2
+2.0.22). The per-operation `--help` flag check remains the fail-closed guard;
+a new major requires fresh evidence before it gains a baseline. Refusals name
+the accepted range and direct the user to the host.
+
+Several boundaries above are now enforced per host:
+
+- OpenCode discovered-only local files are never offered package removal.
+  v1 rejects local targets; local disable uses the snapshot-protected
+  exception and requires the v2 contract. v1 replacement names the configured
+  version it replaces.
+- Claude Code marketplaces keep their declaring scope (user, project, local,
+  including user `extraKnownMarketplaces`). Removal must target the declared
+  scope, and removal from a non-final scope states that no uninstall cascade
+  occurs. Uninstall discloses that `--keep-data` is not passed, so data,
+  options and secrets may be removed, along with other-scope installations and
+  shared payload paths. Managed-settings installations are read-only in Sukiru.
+- Codex local marketplaces cannot be refreshed by `marketplace upgrade`, so
+  Sukiru returns instructions instead of a command. Marketplace removal has
+  its own impact and no uninstall cascade. Adding a local marketplace reads
+  its `.agents/plugins/marketplace.json` catalog.
+- One-click repairs that need `npx` are skipped when Node is unavailable, in
+  both the app and the CLI.

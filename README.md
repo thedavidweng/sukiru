@@ -248,11 +248,20 @@ sukiru plugins health
 sukiru plugins capabilities --host claude-code
 sukiru plugins install NAME@MARKET --host claude-code --scope user --dry-run
 sukiru plugins marketplaces list
+sukiru plugins disable-local ~/.config/opencode/plugins/old.ts --host opencode --scope user --dry-run
+sukiru plugins disable NAME@MARKET --host claude-code --scope project --root /absolute/project --settings-scope local --dry-run
 sukiru snapshots --json
 sukiru rollback --batch ID --dry-run
 sukiru rollback --batch ID --yes --preserve /absolute/conflict/path
 sukiru capabilities --json          # explicit manager probes
 ```
+
+Plugin commands accept a host version at or above Sukiru's verified baseline within
+the same major version, and still check the subcommand's `--help` before running.
+`disable-local` moves an incompatible local plugin file out of host discovery under
+snapshot protection. For Claude Code, `--settings-scope local` with `--root` targets
+`.claude/settings.local.json` instead of `--scope`. `fix` and `clean` skip repairs
+that need `npx` when Node is not installed.
 
 Bulk uninstall requires `--host` and removes only eligible entries installed
 by `npx skills` in that host's own folder. Dry-run shows the exact command,

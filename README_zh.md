@@ -178,11 +178,18 @@ sukiru plugins health
 sukiru plugins capabilities --host claude-code
 sukiru plugins install NAME@MARKET --host claude-code --scope user --dry-run
 sukiru plugins marketplaces list
+sukiru plugins disable-local ~/.config/opencode/plugins/old.ts --host opencode --scope user --dry-run
+sukiru plugins disable NAME@MARKET --host claude-code --scope project --root /absolute/project --settings-scope local --dry-run
 sukiru snapshots --json
 sukiru rollback --batch ID --dry-run
 sukiru rollback --batch ID --yes --preserve /absolute/conflict/path
 sukiru capabilities --json
 ```
+
+插件命令接受与 Sukiru 已验证基线主版本相同且不低于基线的宿主版本，执行前仍会检查对应子命令的
+`--help`。`disable-local` 在快照保护下把不兼容的本地插件文件移出宿主的自动发现范围。
+对 Claude Code，`--settings-scope local` 配合 `--root` 会改为写入 `.claude/settings.local.json`，
+而不是按 `--scope` 处理。未安装 Node 时，`fix` 和 `clean` 会跳过需要 `npx` 的修复。
 
 批量卸载必须指定 `--host`，只移除该宿主自身目录中由 `npx skills` 安装且符合条件的条目。
 预览会列出完整命令、将移除的条目、保留的条目及后续处理方法，以及仍会通过其他目录被宿主发现的技能；
