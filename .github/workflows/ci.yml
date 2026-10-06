@@ -20,14 +20,17 @@ jobs:
       - name: Install tools
         run: HOMEBREW_NO_AUTO_UPDATE=1 brew install swiftlint xcodegen
 
-      - name: Run SwiftLint (Strict Mode)
-        run: swiftlint lint --strict
+      # Lint and format only read sources. The bundle build stays after
+      # the test so it reuses .build instead of compiling twice.
+      - parallel:
+          - name: Run SwiftLint (Strict Mode)
+            run: swiftlint lint --strict
 
-      - name: Check Swift formatting
-        run: swift format lint --strict --recursive Sources Tests App
+          - name: Check Swift formatting
+            run: swift format lint --strict --recursive Sources Tests App
 
-      - name: Run test suite (Zero Warnings)
-        run: swift test -Xswiftc -warnings-as-errors
+          - name: Run test suite (Zero Warnings)
+            run: swift test -Xswiftc -warnings-as-errors
 
       - name: Build application bundle
         run: Scripts/build-app.sh

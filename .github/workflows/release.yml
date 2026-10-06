@@ -29,11 +29,12 @@ jobs:
       - name: Install tools
         run: HOMEBREW_NO_AUTO_UPDATE=1 brew install swiftlint xcodegen
 
-      - name: Run SwiftLint (Strict Mode)
-        run: swiftlint lint --strict
+      - parallel:
+          - name: Run SwiftLint (Strict Mode)
+            run: swiftlint lint --strict
 
-      - name: Run test suite (Zero Warnings)
-        run: swift test -Xswiftc -warnings-as-errors
+          - name: Run test suite (Zero Warnings)
+            run: swift test -Xswiftc -warnings-as-errors
 
       - name: Determine tag and version
         id: vars
