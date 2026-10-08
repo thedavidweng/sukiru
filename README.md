@@ -15,7 +15,7 @@
   <p>
     <a href="README.md"><strong>English</strong></a> •
     <a href="README_zh.md"><strong>简体中文</strong></a> •
-    <a href="https://thedavidweng.github.io/sukiru/"><strong>Website</strong></a>
+    <a href="https://sukiru.blahaj.uk/"><strong>Website</strong></a>
   </p>
 
   <br />
@@ -49,7 +49,7 @@ Sukiru reads both ledgers plus what is actually on disk, works out who owns
 each skill, explains every problem in plain language, and routes each fix to
 the tool that owns the skill.
 
-Website: <https://thedavidweng.github.io/sukiru/>
+Website: <https://sukiru.blahaj.uk/>
 
 ---
 
@@ -330,7 +330,7 @@ and test safety rules.
 
 ## 📄 Documentation & Contributing
 
-- Website: <https://thedavidweng.github.io/sukiru/>
+- Website: <https://sukiru.blahaj.uk/>
 - Glossary of domain terms used in code and UI: [CONTEXT.md](CONTEXT.md)
 - Architecture decision records: [docs/adr](docs/adr/README.md)
 - Experiments on how the two official installers interact: [collision matrix](docs/collision-matrix.md)

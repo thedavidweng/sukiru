@@ -15,7 +15,7 @@
   <p>
     <a href="README.md"><strong>English</strong></a> •
     <a href="README_zh.md"><strong>简体中文</strong></a> •
-    <a href="https://thedavidweng.github.io/sukiru/zh/"><strong>官网</strong></a>
+    <a href="https://sukiru.blahaj.uk/zh/"><strong>官网</strong></a>
   </p>
 
   <br />
@@ -36,7 +36,7 @@
 
 Sukiru 同时读取两份账本和磁盘上的实际情况，判断每个技能的归属，用通俗的语言解释每个问题，并把每项修复交给拥有该技能的那个工具去执行。
 
-官网：<https://thedavidweng.github.io/sukiru/zh/>
+官网：<https://sukiru.blahaj.uk/zh/>
 
 ---
 
@@ -251,7 +251,7 @@ Scripts/run-app.sh         # 运行调试版应用
 
 ## 📄 文档与参与贡献
 
-- 官网：<https://thedavidweng.github.io/sukiru/zh/>
+- 官网：<https://sukiru.blahaj.uk/zh/>
 - 代码与界面中使用的领域术语：[CONTEXT.md](CONTEXT.md)
 - 架构决策记录：[docs/adr](docs/adr/README.md)
 - 两个官方安装器相互影响的实验：[冲突矩阵](docs/collision-matrix.md)
