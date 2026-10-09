@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/thedavidweng/sukiru/compare/v1.4.0...v1.5.0) (2026-10-09)
+
+
+### ✨ Features
+
+* **site:** serve the site at sukiru.blahaj.uk ([43803b2](https://github.com/thedavidweng/sukiru/commit/43803b2d463846a8e13da5cef2cd1c218230ccdf))
+
 ## [1.4.0](https://github.com/thedavidweng/sukiru/compare/v1.3.0...v1.4.0) (2026-10-05)
 
 
