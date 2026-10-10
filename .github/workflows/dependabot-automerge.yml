@@ -38,7 +38,7 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
           DEP_NAMES: ${{ steps.meta.outputs.dependency-names }}
         run: |
-          deny='googleapis/release-please-action dependabot/fetch-metadata jdx/jactionlint github/codeql-action zizmorcore/zizmor-action actions/dependency-review-action trufflesecurity/trufflehog sigstore/cosign-installer anchore/sbom-action contributor-assistant/github-action'
+          deny='googleapis/release-please-action dependabot/fetch-metadata jdx/jactionlint github/codeql-action zizmorcore/zizmor-action actions/dependency-review-action trufflesecurity/trufflehog sigstore/cosign-installer anchore/sbom-action contributor-assistant/github-action contributor-license/cla-action'
           dep_names="${DEP_NAMES// /}"
           for blocked in $deny; do
             case ",${dep_names}," in
