@@ -14,6 +14,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     name: Build and Release
@@ -24,6 +28,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           ref: ${{ github.event.inputs.tag_name || github.ref }}
 
       - name: Install tools
@@ -39,13 +44,15 @@ jobs:
       - name: Determine tag and version
         id: vars
         run: |
-          if [ -n "${{ github.event.inputs.tag_name }}" ]; then
-            TAG="${{ github.event.inputs.tag_name }}"
+          if [ -n "${INPUTS_TAG_NAME}" ]; then
+            TAG="${INPUTS_TAG_NAME}"
           else
             TAG="${GITHUB_REF#refs/tags/}"
           fi
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+        env:
+          INPUTS_TAG_NAME: ${{ github.event.inputs.tag_name }}
 
       - name: Package release artifacts
         env:
@@ -53,7 +60,9 @@ jobs:
         run: ./Scripts/package-release.sh
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        # v3.0.3 retained for coordinated uploads/release metadata; no shell execution.
+        # v3.0.3; required create/update release semantics.
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # zizmor: ignore[superfluous-actions]
         with:
           tag_name: ${{ steps.vars.outputs.tag }}
           files: |
