@@ -1,7 +1,8 @@
 name: Dependabot auto-merge
 
 on:
-  pull_request:
+  # Metadata-only fixed action/API; same-repository Dependabot, no checkout.
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
 
 permissions: {}
 
@@ -35,12 +36,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
+          DEP_NAMES: ${{ steps.meta.outputs.dependency-names }}
         run: |
-          deny='googleapis/release-please-action dependabot/fetch-metadata'
-          names="${{ steps.meta.outputs.dependency-names }}"
+          deny='googleapis/release-please-action dependabot/fetch-metadata jdx/jactionlint github/codeql-action zizmorcore/zizmor-action actions/dependency-review-action trufflesecurity/trufflehog sigstore/cosign-installer anchore/sbom-action contributor-assistant/github-action'
+          dep_names="${DEP_NAMES// /}"
           for blocked in $deny; do
-            case " $names " in
-              *" $blocked "*) echo "skip auto-merge: $blocked"; exit 0 ;;
+            case ",${dep_names}," in
+              *",${blocked},"*) echo "skip auto-merge: $blocked"; exit 0 ;;
             esac
           done
           gh pr merge --auto --squash "$PR_URL"
