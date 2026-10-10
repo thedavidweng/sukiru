@@ -11,8 +11,7 @@ on:
         required: false
         type: string
 
-permissions:
-  contents: write
+permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -20,6 +19,8 @@ concurrency:
 
 jobs:
   release:
+    permissions:
+      contents: write
     name: Build and Release
     runs-on: macos-latest
     timeout-minutes: 25
