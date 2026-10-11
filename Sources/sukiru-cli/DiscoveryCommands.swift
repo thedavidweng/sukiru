@@ -1,19 +1,16 @@
-import ArgumentParser
 import Foundation
 import SukiruCore
 
-struct Search: AsyncParsableCommand {
-    static let configuration = CommandConfiguration(
-        abstract: "Search existing discovery backends (explicit remote read).")
-    @Argument(help: "Search text.") var query: String
-    @Option var backend: SkillSearchResult.Backend = .skillsDotSh
-    @Option(help: "GitHub owner filter.") var owner: String?
-    @Option(help: "Maximum results.") var limit = 20
-    @OptionGroup var output: OutputOptions
+struct Search {
+    var query: String
+    var backend: SkillSearchResult.Backend = .skillsDotSh
+    var owner: String?
+    var limit = 20
+    var output: OutputOptions
     mutating func validate() throws {
-        guard limit > 0 else { throw ValidationError("--limit must be positive") }
+        guard limit > 0 else { throw CLIUsageError("--limit must be positive") }
         guard SkillSearchRequest.parse(query: query, owner: owner, backend: backend) != nil else {
-            throw ValidationError("Search needs at least two characters or an owner filter")
+            throw CLIUsageError("Search needs at least two characters or an owner filter")
         }
     }
     func run() async throws {
@@ -42,28 +39,25 @@ struct Search: AsyncParsableCommand {
     }
 }
 
-struct Install: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        abstract: "Plan or install explicitly addressed Skills through an official installer.")
-    @Argument(help: "GitHub owner/repo or repository URL.") var source: String
-    @Option(name: .customLong("skill"), help: "Skill name or exact GitHub Skill path; repeatable.")
+struct Install {
+    var source: String
     var skills: [String] = []
-    @Option var installer: InstallerChoice
-    @OptionGroup var inputs: ScopeOptions
-    @OptionGroup var output: OutputOptions
-    @OptionGroup var mutation: MutationOptions
-    @Flag(help: "Install standalone Vercel copies.") var copy = false
-    @Option(help: "GitHub pin ref.") var pin: String?
+    var installer: InstallerChoice
+    var inputs: ScopeOptions
+    var output: OutputOptions
+    var mutation: MutationOptions
+    var copy = false
+    var pin: String?
     mutating func validate() throws {
-        guard !skills.isEmpty else { throw ValidationError("Select at least one --skill") }
+        guard !skills.isEmpty else { throw CLIUsageError("Select at least one --skill") }
         if installer == .github && copy {
-            throw ValidationError("--copy is only supported by Vercel")
+            throw CLIUsageError("--copy is only supported by Vercel")
         }
         if installer == .vercel && pin != nil {
-            throw ValidationError("--pin is only supported by GitHub")
+            throw CLIUsageError("--pin is only supported by GitHub")
         }
         if let pin, !LifecycleRequest.isValidPinRef(pin) {
-            throw ValidationError("Invalid pin ref")
+            throw CLIUsageError("Invalid pin ref")
         }
     }
     func run() throws {
@@ -103,4 +97,53 @@ extension ScopeOptions {
         case .all: throw CLIError("Choose --scope user or --scope project for installation")
         }
     }
+}
+
+extension CLI {
+    static let discoveryCommands: [CLICommand] = [
+        CLICommand(
+            path: "search", abstract: "Search existing discovery backends (explicit remote read).",
+            options: [
+                CLIOption("backend", takesValue: true, help: ""),
+                CLIOption("owner", takesValue: true, help: "GitHub owner filter."),
+                CLIOption("limit", takesValue: true, help: "Maximum results.")
+            ] + outputOptions,
+            argument: CLIPositional(name: "query", required: true, help: "Search text.")
+        ) { arguments in
+            var command = Search(
+                query: try arguments.requiredPositional(),
+                backend: try arguments.enumeration("backend", default: .skillsDotSh),
+                owner: arguments.string("owner"),
+                limit: arguments.integer("limit", default: 20),
+                output: OutputOptions(arguments))
+            try command.validate()
+            try await command.run()
+        },
+        CLICommand(
+            path: "install",
+            abstract: "Plan or install explicitly addressed Skills through an official installer.",
+            options: [
+                CLIOption(
+                    "skill", takesValue: true,
+                    help: "Skill name or exact GitHub Skill path; repeatable.", repeating: true),
+                CLIOption("installer", takesValue: true, help: "", required: true)
+            ] + scopeOptions
+                + outputOptions
+                + mutationOptions + [
+                    CLIOption("copy", takesValue: false, help: "Install standalone Vercel copies."),
+                    CLIOption("pin", takesValue: true, help: "GitHub pin ref.")
+                ],
+            argument: CLIPositional(
+                name: "source", required: true, help: "GitHub owner/repo or repository URL.")
+        ) { arguments in
+            var command = Install(
+                source: try arguments.requiredPositional(), skills: arguments.values("skill"),
+                installer: try arguments.enumeration("installer"),
+                inputs: try ScopeOptions(arguments), output: OutputOptions(arguments),
+                mutation: try MutationOptions(arguments), copy: arguments.flag("copy"),
+                pin: arguments.string("pin"))
+            try command.validate()
+            try command.run()
+        }
+    ]
 }

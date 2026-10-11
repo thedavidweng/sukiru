@@ -1,24 +1,20 @@
-import ArgumentParser
 import Foundation
 import SukiruCore
 
-struct Batch: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        abstract: "Advanced: plan or execute explicit finding decisions.")
-    @Option(help: "JSON decisions file keyed by current finding ID.") var decisions: String
-    @OptionGroup var inputs: ScopeOptions
-    @OptionGroup var output: OutputOptions
-    @OptionGroup var mutation: MutationOptions
-    @Flag(help: "Execute the reviewed decisions rather than only building them.") var execute =
-        false
+struct Batch {
+    var decisions: String
+    var inputs: ScopeOptions
+    var output: OutputOptions
+    var mutation: MutationOptions
+    var execute = false
 
     mutating func validate() throws {
         if execute && mutation.dryRun {
-            throw ValidationError("--dry-run and --execute are mutually exclusive")
+            throw CLIUsageError("--dry-run and --execute are mutually exclusive")
         }
-        if mutation.yes && !execute { throw ValidationError("--yes requires --execute") }
+        if mutation.yes && !execute { throw CLIUsageError("--yes requires --execute") }
         if mutation.commandTimeout != nil && !execute {
-            throw ValidationError("--command-timeout requires --execute")
+            throw CLIUsageError("--command-timeout requires --execute")
         }
     }
 
@@ -57,10 +53,8 @@ struct Batch: ParsableCommand {
     }
 }
 
-struct Snapshots: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        abstract: "List captured Command Batch history.")
-    @OptionGroup var output: OutputOptions
+struct Snapshots {
+    var output: OutputOptions
     func run() throws {
         let snapshots = SnapshotStore(environment: try cliEnvironment()).list()
         try output.render(
@@ -68,22 +62,17 @@ struct Snapshots: ParsableCommand {
     }
 }
 
-struct RollbackCommand: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        commandName: "rollback",
-        abstract: "Preview or restore a captured batch; resolve conflicts explicitly.")
-    @Option(help: "Executed Command Batch ID.") var batch: String
-    @Option(name: .customLong("restore"), help: "Absolute conflict path to restore; repeatable.")
+struct RollbackCommand {
+    var batch: String
     var restores: [String] = []
-    @Option(name: .customLong("preserve"), help: "Absolute conflict path to preserve; repeatable.")
     var preserves: [String] = []
-    @OptionGroup var output: OutputOptions
-    @OptionGroup var mutation: MutationOptions
+    var output: OutputOptions
+    var mutation: MutationOptions
 
     mutating func validate() throws {
         let paths = restores + preserves
         guard paths.allSatisfy({ $0.hasPrefix("/") }), Set(paths).count == paths.count else {
-            throw ValidationError("--restore/--preserve require distinct absolute paths")
+            throw CLIUsageError("--restore/--preserve require distinct absolute paths")
         }
     }
 
@@ -117,4 +106,56 @@ struct RollbackCommand: ParsableCommand {
             throw CLIError(error.message)
         }
     }
+}
+
+extension CLI {
+    static let batchCommands: [CLICommand] = [
+        CLICommand(
+            path: "batch", abstract: "Advanced: plan or execute explicit finding decisions.",
+            options: [
+                CLIOption(
+                    "decisions", takesValue: true,
+                    help: "JSON decisions file keyed by current finding ID.", required: true)
+            ] + scopeOptions + outputOptions + mutationOptions + [
+                CLIOption(
+                    "execute", takesValue: false,
+                    help: "Execute the reviewed decisions rather than only building them.")
+            ]
+        ) { arguments in
+            var command = Batch(
+                decisions: try arguments.required("decisions"), inputs: try ScopeOptions(arguments),
+                output: OutputOptions(arguments), mutation: try MutationOptions(arguments),
+                execute: arguments.flag("execute"))
+            try command.validate()
+            try command.run()
+        },
+        CLICommand(
+            path: "snapshots", abstract: "List captured Command Batch history.",
+            options: outputOptions
+        ) { arguments in
+            let command = Snapshots(output: OutputOptions(arguments))
+            try command.run()
+        },
+        CLICommand(
+            path: "rollback",
+            abstract: "Preview or restore a captured batch; resolve conflicts explicitly.",
+            options: [
+                CLIOption(
+                    "batch", takesValue: true, help: "Executed Command Batch ID.", required: true),
+                CLIOption(
+                    "restore", takesValue: true,
+                    help: "Absolute conflict path to restore; repeatable.", repeating: true),
+                CLIOption(
+                    "preserve", takesValue: true,
+                    help: "Absolute conflict path to preserve; repeatable.", repeating: true)
+            ] + outputOptions + mutationOptions
+        ) { arguments in
+            var command = RollbackCommand(
+                batch: try arguments.required("batch"), restores: arguments.values("restore"),
+                preserves: arguments.values("preserve"), output: OutputOptions(arguments),
+                mutation: try MutationOptions(arguments))
+            try command.validate()
+            try command.run()
+        }
+    ]
 }

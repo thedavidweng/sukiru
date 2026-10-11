@@ -1,6 +1,6 @@
 # 0006: Pure Swift and an Apple first-party feel (the native red line)
 
-- Status: Accepted (language setting amended 2026-10-01)
+- Status: Accepted (language setting amended 2026-10-01; dependency policy amended 2026-10-10)
 - Date: 2026-09-20
 
 ## Context and decision
@@ -13,17 +13,18 @@ Organizer).
 
 ## Constraints (the red line)
 
-- **Language and frameworks.** Swift only. The UI uses only SwiftUI, AppKit,
-  and Apple system frameworks. No webview, Electron, Tauri, React Native, or
+- **Language and frameworks.** Across app, core and CLI, Swift standard library
+  and Apple-provided frameworks only. The UI uses SwiftUI and AppKit.
+  No webview, Electron, Tauri, React Native, or
   Flutter shells; no non-Apple rendering stack (GPUI or similar); no Mac
   Catalyst port.
-- **No third-party dependencies in the UI layer.** No third-party component
+- **No third-party runtime/package dependencies across the repository.** No third-party component
   libraries, icon packs, font packs, or animation libraries. The few brand
   logos needed to identify external coding agents are content resources, kept
-  with their source and license, and never used as control icons. Non-UI
-  dependencies remain subject to the AGENTS.md rule that every dependency must
-  justify its maintenance and size cost (today only Yams, required for reading
-  YAML).
+  with their source and license, and never used as control icons. The owner
+  decision in issue #51 supersedes the previous non-UI dependency allowance.
+  Migration must preserve configuration and CLI behavior; see
+  [native implementation policy](../agents/native-ui.md).
 - **System controls use system assets only.** Semantic colors
   (`Color.primary`, `.secondary`, `.accentColor`, …), SF Symbols, and the
   system font. External agent logos only represent their agents. Never
@@ -63,8 +64,8 @@ stays within the red line.
 - When a "special" visual is wanted, change the design to fit system
   controls; never draw custom controls to match a mockup. Visual
   differentiation is not where this product competes (the referee role is).
-- Review checklist (per pull request): no third-party dependencies in the UI
-  layer, no hard-coded colors or materials, no custom chrome, every new system
+- Review checklist (per pull request): no third-party runtime/package dependencies,
+  no hard-coded colors or materials, no custom chrome, every new system
   API gated by `#available`, every new string in both catalogs, and every new
   control with an accessibility identifier and a `.help` description.
 - Gates reuse the existing toolchain: `swift-format`, `swiftlint --strict`,
