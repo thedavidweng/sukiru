@@ -1,6 +1,5 @@
 import CryptoKit
 import Foundation
-import Yams
 
 /// Reconstructs current local facts. No host, producer, shell, network, or hook is invoked.
 public struct HookInventoryReader: Sendable {
@@ -154,7 +153,7 @@ public struct HookInventoryReader: Sendable {
                 $0.trimmingCharacters(in: .whitespacesAndNewlines) == "---"
             })
         else { return .object([:]) }
-        return try YAMLDecoder().decode(
-            JSONValue.self, from: lines[1..<end].joined(separator: "\n"))
+        return try YAMLSubset.jsonValue(
+            yaml: lines[1..<end].joined(separator: "\n"))
     }
 }

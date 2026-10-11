@@ -1,5 +1,4 @@
 import Foundation
-import Yams
 
 /// Validated `SKILL.md` frontmatter.
 public struct SkillMetadata: Equatable, Sendable {
@@ -68,9 +67,9 @@ public struct FrontmatterParser: Sendable {
             return .failure(
                 invalid(path, "SKILL.md must start with YAML frontmatter delimited by `---`"))
         }
-        let root: Node?
+        let root: YAMLNode?
         do {
-            root = try Yams.compose(yaml: frontmatter)
+            root = try YAMLSubset.compose(yaml: frontmatter)
         } catch {
             return .failure(invalid(path, "invalid YAML in frontmatter: \(error)"))
         }
@@ -83,7 +82,7 @@ public struct FrontmatterParser: Sendable {
         guard let description = Self.requiredString("description", in: mapping) else {
             return .failure(invalid(path, "required frontmatter field `description` is missing"))
         }
-        let metadataMapping: Node.Mapping?
+        let metadataMapping: YAMLMapping?
         if let metadataNode = mapping["metadata"], case .mapping(let nested) = metadataNode {
             metadataMapping = nested
         } else {
@@ -105,7 +104,7 @@ public struct FrontmatterParser: Sendable {
     /// by the same rules as a file on disk; nil when either is missing.
     public static func summary(ofSkillMD text: String) -> (name: String, description: String)? {
         guard let frontmatter = splitFrontmatter(Data(text.utf8)),
-            case .mapping(let mapping)? = try? Yams.compose(yaml: frontmatter),
+            case .mapping(let mapping)? = try? YAMLSubset.compose(yaml: frontmatter),
             let name = requiredString("name", in: mapping),
             let description = requiredString("description", in: mapping)
         else { return nil }
@@ -161,10 +160,10 @@ public struct FrontmatterParser: Sendable {
     /// Upstream `string_field`: the value must be a YAML string scalar
     /// (resolved tag `str`, so `name: 123` counts as absent), trimmed, and
     /// non-empty after trimming.
-    static func requiredString(_ key: String, in mapping: Node.Mapping) -> String? {
+    static func requiredString(_ key: String, in mapping: YAMLMapping) -> String? {
         guard let node = mapping[key],
             case .scalar = node,
-            node.tag.rawValue == Tag.Name.str.rawValue,
+            node.tag.rawValue == YAMLTag.str.rawValue,
             let raw = node.string
         else {
             return nil
@@ -175,14 +174,14 @@ public struct FrontmatterParser: Sendable {
 
     /// A YAML bool scalar (resolved tag `bool`), so `internal: "true"` counts
     /// as absent, matching serde_yaml's `as_bool`.
-    static func bool(_ node: Node?) -> Bool? {
-        guard let node, node.tag.rawValue == Tag.Name.bool.rawValue else { return nil }
+    static func bool(_ node: YAMLNode?) -> Bool? {
+        guard let node, node.tag.rawValue == YAMLTag.bool.rawValue else { return nil }
         return node.bool
     }
 
     /// A scalar's raw string regardless of resolved tag (tolerant accessor for
     /// greenfield fields with no upstream parity constraint).
-    static func scalarString(_ node: Node?) -> String? {
+    static func scalarString(_ node: YAMLNode?) -> String? {
         guard let node, case .scalar(let scalar) = node else { return nil }
         let trimmed = scalar.string.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
