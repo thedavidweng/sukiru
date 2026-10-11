@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/thedavidweng/sukiru/compare/v1.5.0...v1.5.1) (2026-10-11)
+
+
+### ♻️ Refactoring
+
+* split agent guidance and replace CLI argument parser ([#54](https://github.com/thedavidweng/sukiru/issues/54)) ([0c7248b](https://github.com/thedavidweng/sukiru/commit/0c7248bacfc280ef73ec53e041cf6e34dc633882))
+
 ## [1.5.0](https://github.com/thedavidweng/sukiru/compare/v1.4.0...v1.5.0) (2026-10-09)
 
 
