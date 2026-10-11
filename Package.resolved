@@ -1,24 +1,6 @@
 {
-  "originHash" : "726816aad4b5c185e2635334cff7af4b913e8138de698f540931ec4f5bee76a0",
+  "originHash" : "3362569df3625e6cb2e23a60a33dca05d22aadddaa6575467e60efd640ee537d",
   "pins" : [
-    {
-      "identity" : "swift-argument-parser",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-argument-parser",
-      "state" : {
-        "revision" : "6a52f3251125d74daf04fcbd5e6f08a75d074382",
-        "version" : "1.8.2"
-      }
-    },
-    {
-      "identity" : "yams",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/jpsim/Yams.git",
-      "state" : {
-        "revision" : "a27b21e0c81c5bf42049b897a62aaf387e80f279",
-        "version" : "6.2.2"
-      }
-    }
   ],
   "version" : 3
 }

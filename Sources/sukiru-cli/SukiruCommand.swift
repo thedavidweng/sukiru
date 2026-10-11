@@ -1,18 +1,10 @@
-import ArgumentParser
 import Darwin
 import Foundation
 import SukiruCore
 
 @main
-struct SukiruCommand: AsyncParsableCommand {
-    static let configuration = CommandConfiguration(
-        commandName: "sukiru", abstract: "Inspect and repair coding-agent libraries.",
-        version: productVersion,
-        subcommands: [
-            Health.self, Clean.self, Fix.self, Skills.self, Plugins.self, Search.self,
-            Install.self, Snapshots.self, RollbackCommand.self, Capabilities.self,
-            Scan.self, Batch.self, Hooks.self
-        ])
+struct SukiruCommand {
+    static func main() async { await CLI.main() }
 
     static var productVersion: String {
         var pathSize: UInt32 = 0
@@ -31,19 +23,17 @@ struct SukiruCommand: AsyncParsableCommand {
     }
 }
 
-struct Health: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        abstract: "Inspect local Health without launching hosts or refreshing remotely.")
-    @OptionGroup var inputs: ScopeOptions
-    @OptionGroup var output: OutputOptions
-    @Flag(help: "Exit 0 healthy, 1 Problems, 2 scan/environment failure.") var check = false
+struct Health {
+    var inputs: ScopeOptions
+    var output: OutputOptions
+    var check = false
 
     func run() throws {
         let environment = try cliEnvironment(roots: inputs.roots)
         let scanned: ScanReport
         do { scanned = try ScanEngine(environment: environment).scan(inputs.request) } catch {
             emitError(error.localizedDescription)
-            throw ExitCode(2)
+            throw CLIExit(2)
         }
         let report = inputs.selectedReport(scanned)
         let findings = report.findings
@@ -80,29 +70,26 @@ struct Health: ParsableCommand {
                 report.issues.contains { failedKinds.contains($0.kind) }
                 || !inventoryIssues.isEmpty
             if scanFailed {
-                throw ExitCode(2)
+                throw CLIExit(2)
             }
-            if problemCount > 0 || !report.issues.isEmpty { throw ExitCode(1) }
+            if problemCount > 0 || !report.issues.isEmpty { throw CLIExit(1) }
         }
     }
 }
 
-struct Clean: ParsableCommand {
-    static let configuration = CommandConfiguration(abstract: "Repair cleanup-class Problems only.")
-    @OptionGroup var inputs: ScopeOptions
-    @OptionGroup var output: OutputOptions
-    @OptionGroup var mutation: MutationOptions
+struct Clean {
+    var inputs: ScopeOptions
+    var output: OutputOptions
+    var mutation: MutationOptions
     func run() throws {
         try runRepairs(inputs: inputs, output: output, mutation: mutation, cleanupOnly: true)
     }
 }
 
-struct Fix: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        abstract: "Apply deterministic one-click fixes; leave unresolved choices explicit.")
-    @OptionGroup var inputs: ScopeOptions
-    @OptionGroup var output: OutputOptions
-    @OptionGroup var mutation: MutationOptions
+struct Fix {
+    var inputs: ScopeOptions
+    var output: OutputOptions
+    var mutation: MutationOptions
     func run() throws {
         try runRepairs(inputs: inputs, output: output, mutation: mutation, cleanupOnly: false)
     }
@@ -150,10 +137,9 @@ func runRepairs(
     try mutation.apply(built.batch, report: report, environment: environment, output: output)
 }
 
-struct Scan: ParsableCommand {
-    static let configuration = CommandConfiguration(abstract: "Advanced: raw passive scan report.")
-    @OptionGroup var inputs: ScopeOptions
-    @OptionGroup var output: OutputOptions
+struct Scan {
+    var inputs: ScopeOptions
+    var output: OutputOptions
     func run() throws {
         let report = try ScanEngine(environment: cliEnvironment(roots: inputs.roots)).scan(
             inputs.request)
@@ -165,10 +151,8 @@ struct Scan: ParsableCommand {
     }
 }
 
-struct Capabilities: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        abstract: "Explicitly probe installed official managers.")
-    @OptionGroup var output: OutputOptions
+struct Capabilities {
+    var output: OutputOptions
     func run() throws {
         let report = CapabilityDetector(environment: try cliEnvironment()).detect()
         let github =
@@ -182,4 +166,58 @@ struct Capabilities: ParsableCommand {
                 "GitHub (gh skill): \(github) \(report.github.version ?? "")"
             ])
     }
+}
+
+extension CLI {
+    static let rootCommands: [CLICommand] = [
+        CLICommand(path: "", abstract: "Inspect and repair coding-agent libraries.", options: []),
+        CLICommand(
+            path: "health",
+            abstract: "Inspect local Health without launching hosts or refreshing remotely.",
+            options: scopeOptions + outputOptions + [
+                CLIOption(
+                    "check", takesValue: false,
+                    help: "Exit 0 healthy, 1 Problems, 2 scan/environment failure.")
+            ]
+        ) { arguments in
+            let command = Health(
+                inputs: try ScopeOptions(arguments), output: OutputOptions(arguments),
+                check: arguments.flag("check"))
+            try command.run()
+        },
+        CLICommand(
+            path: "clean", abstract: "Repair cleanup-class Problems only.",
+            options: scopeOptions + outputOptions + mutationOptions
+        ) { arguments in
+            let command = Clean(
+                inputs: try ScopeOptions(arguments), output: OutputOptions(arguments),
+                mutation: try MutationOptions(arguments))
+            try command.run()
+        },
+        CLICommand(
+            path: "fix",
+            abstract: "Apply deterministic one-click fixes; leave unresolved choices explicit.",
+            options: scopeOptions + outputOptions + mutationOptions
+        ) { arguments in
+            let command = Fix(
+                inputs: try ScopeOptions(arguments), output: OutputOptions(arguments),
+                mutation: try MutationOptions(arguments))
+            try command.run()
+        },
+        CLICommand(
+            path: "scan", abstract: "Advanced: raw passive scan report.",
+            options: scopeOptions + outputOptions
+        ) { arguments in
+            let command = Scan(
+                inputs: try ScopeOptions(arguments), output: OutputOptions(arguments))
+            try command.run()
+        },
+        CLICommand(
+            path: "capabilities", abstract: "Explicitly probe installed official managers.",
+            options: outputOptions
+        ) { arguments in
+            let command = Capabilities(output: OutputOptions(arguments))
+            try command.run()
+        }
+    ]
 }
