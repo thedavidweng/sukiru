@@ -9,7 +9,7 @@
     <a href="https://www.swift.org"><img src="https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&logoColor=white" alt="Swift 6.2" /></a>
     <a href="#-安装指南"><img src="https://img.shields.io/badge/Homebrew-thedavidweng%2Ftap-FBB040?logo=homebrew" alt="Homebrew Tap" /></a>
     <a href="PRIVACY.md"><img src="https://img.shields.io/badge/%E9%9A%90%E7%A7%81-%E6%97%A0%E9%81%A5%E6%B5%8B-success" alt="隐私：无遥测" /></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-Apache--2.0-blue" alt="许可证：Apache-2.0" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-AGPL--3.0--only-blue" alt="许可证：AGPL-3.0-only" /></a>
   </p>
 
   <p>
@@ -269,6 +269,10 @@ Sukiru 的前身是「Gino」，一个用 Rust/GPUI 重新实现 `skills` CLI �
 
 ## ⚖️ 许可证
 
-版权所有 © 2026 David Weng。基于 [Apache License 2.0](LICENSE) 许可证发布。
+版权所有 © 2026 David Weng。基于 [GNU AGPL v3.0 only](LICENSE) 许可证发布。
 
 各智能体的标志仅用于标识兼容的工具，其权利归各自所有者。来源与许可信息列于 [`App/Resources/AgentIcons-LICENSE.txt`](App/Resources/AgentIcons-LICENSE.txt)。
+
+历史授权与第三方许可见 [LICENSING.md](LICENSING.md)。外部贡献者需签署
+[CLA 1.0](CLA.md)：在 PR 回复机器人要求的声明即可，无需额外授权。
+贡献者保留版权，并许可 David Weng 将贡献用于商业及闭源版本。

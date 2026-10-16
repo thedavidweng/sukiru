@@ -11,7 +11,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 David Weng。基于 Apache-2.0 许可证发布"
+            "value" : "Copyright © 2026 David Weng。基于 AGPL-3.0-only 许可证发布"
           }
         }
       }

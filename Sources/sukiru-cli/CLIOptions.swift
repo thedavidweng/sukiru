@@ -1,22 +1,15 @@
-import ArgumentParser
 import Darwin
 import Foundation
 import SukiruCore
 
-extension Scope: ExpressibleByArgument {}
-extension InstallerChoice: ExpressibleByArgument {}
-extension PlacementMode: ExpressibleByArgument {}
-extension SkillSearchResult.Backend: ExpressibleByArgument {}
-
-struct ScopeOptions: ParsableArguments {
-    @Option(name: .customLong("root"), help: "Project root; repeat for multiple projects.")
+struct ScopeOptions {
     var roots: [String] = []
-    @Option(help: "Inspect user, project, or all scopes.") var scope: Scope = .all
-    @Option(help: "Agent Host identifier.") var host: String?
+    var scope: Scope = .all
+    var host: String?
 
     mutating func validate() throws {
         if let host, !HostTable.hosts.contains(where: { $0.id == host }) {
-            throw ValidationError("Unknown Agent Host: \(host)")
+            throw CLIUsageError("Unknown Agent Host: \(host)")
         }
         roots = roots.map { URL(fileURLWithPath: $0).standardizedFileURL.path }
     }
@@ -105,8 +98,8 @@ struct ScopeOptions: ParsableArguments {
 
 }
 
-struct OutputOptions: ParsableArguments {
-    @Flag(help: "Write structured JSON to stdout; diagnostics go to stderr.") var json = false
+struct OutputOptions {
+    var json = false
 
     func render<Value: Encodable>(_ value: Value, lines: [String]) throws {
         if json {
@@ -119,17 +112,15 @@ struct OutputOptions: ParsableArguments {
     }
 }
 
-struct MutationOptions: ParsableArguments {
-    @Flag(help: "Render the exact Command Batch without writing anything.") var dryRun = false
-    @Flag(name: [.short, .long], help: "Confirm normal execution without prompting.") var yes =
-        false
-    @Flag(help: "Separately acknowledge dangerous operations and rollback limits.")
+struct MutationOptions {
+    var dryRun = false
+    var yes = false
     var confirmDangerous = false
-    @Option(help: "Per-command timeout in positive seconds.") var commandTimeout: Double?
+    var commandTimeout: Double?
 
     mutating func validate() throws {
         if let commandTimeout, !commandTimeout.isFinite || commandTimeout <= 0 {
-            throw ValidationError("--command-timeout must be finite and positive")
+            throw CLIUsageError("--command-timeout must be finite and positive")
         }
     }
 
@@ -200,7 +191,7 @@ func cliEnvironment(roots: [String] = []) throws -> SukiruEnvironment {
     let problem = environment.fatalProblem(fileSystem: DefaultFileSystemProbe())
     if case .sukiruHomeMissing(let path) = problem {
         emitError("SUKIRU_HOME is set to a path that does not exist: \(path)")
-        throw ExitCode(2)
+        throw CLIExit(2)
     }
     return environment
 }
@@ -238,4 +229,91 @@ extension ExecutionRecord {
             + ["Post-execution differences:"] + diff.summary
             + (scanFailure.map { ["Rescan failed: \($0)"] } ?? [])
     }
+}
+
+extension ScopeOptions {
+    init(_ arguments: CLIArguments) throws {
+        roots = arguments.values("root")
+        scope = try arguments.enumeration("scope", default: .all)
+        host = arguments.string("host")
+        try validate()
+    }
+}
+
+extension OutputOptions {
+    init(_ arguments: CLIArguments) {
+        json = arguments.flag("json")
+    }
+}
+
+extension MutationOptions {
+    init(_ arguments: CLIArguments) throws {
+        dryRun = arguments.flag("dry-run")
+        yes = arguments.flag("yes")
+        confirmDangerous = arguments.flag("confirm-dangerous")
+        commandTimeout = arguments.double("command-timeout")
+        try validate()
+    }
+}
+
+extension SkillSelection {
+    init(_ arguments: CLIArguments) throws {
+        name = try arguments.requiredPositional()
+        path = arguments.string("path")
+        inputs = try ScopeOptions(arguments)
+    }
+}
+
+extension PluginOperationOptions {
+    init(_ arguments: CLIArguments) throws {
+        target = try arguments.requiredPositional()
+        inputs = try ScopeOptions(arguments)
+        settingsScope = arguments.string("settings-scope")
+        output = OutputOptions(arguments)
+        mutation = try MutationOptions(arguments)
+    }
+}
+
+extension CLI {
+    static let scopeOptions: [CLIOption] =
+        [
+            CLIOption(
+                "root", takesValue: true, help: "Project root; repeat for multiple projects.",
+                repeating: true),
+            CLIOption("scope", takesValue: true, help: "Inspect user, project, or all scopes."),
+            CLIOption("host", takesValue: true, help: "Agent Host identifier.")
+        ]
+    static let outputOptions: [CLIOption] = [
+        CLIOption(
+            "json", takesValue: false,
+            help: "Write structured JSON to stdout; diagnostics go to stderr.")
+    ]
+    static let mutationOptions: [CLIOption] =
+        [
+            CLIOption(
+                "dry-run", takesValue: false,
+                help: "Render the exact Command Batch without writing anything."),
+            CLIOption(
+                "yes", takesValue: false, help: "Confirm normal execution without prompting."),
+            CLIOption(
+                "confirm-dangerous", takesValue: false,
+                help: "Separately acknowledge dangerous operations and rollback limits."),
+            CLIOption(
+                "command-timeout", takesValue: true,
+                help: "Per-command timeout in positive seconds.")
+        ]
+    static let selectionOptions: [CLIOption] =
+        [
+            CLIOption(
+                "path", takesValue: true,
+                help: "Exact placement path when names occur in multiple projects.")
+        ] + scopeOptions
+    static let pluginOperationOptions: [CLIOption] =
+        scopeOptions + [
+            CLIOption(
+                "settings-scope", takesValue: true,
+                help:
+                    "Claude Code settings scope instead of --scope: local (with --root) or managed."
+            )
+        ] + outputOptions + mutationOptions
 }

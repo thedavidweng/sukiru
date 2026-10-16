@@ -1,18 +1,9 @@
-import ArgumentParser
 import Foundation
 import SukiruCore
 
-struct Hooks: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        abstract: "Advanced: existing passive hook inventory and explicit cleanup plans.",
-        subcommands: [HookInventoryCommand.self, HookPlanCommand.self, HookExecuteCommand.self])
-}
-
-struct HookInventoryCommand: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        commandName: "inventory", abstract: "Read hook sources and passive diagnoses.")
-    @OptionGroup var inputs: ScopeOptions
-    @OptionGroup var output: OutputOptions
+struct HookInventoryCommand {
+    var inputs: ScopeOptions
+    var output: OutputOptions
     func run() throws {
         let report = try ScanEngine(environment: cliEnvironment(roots: inputs.roots)).scan(
             inputs.request)
@@ -21,12 +12,10 @@ struct HookInventoryCommand: ParsableCommand {
     }
 }
 
-struct HookPlanCommand: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        commandName: "plan", abstract: "Build cleanup from explicit hook requests.")
-    @Option var requests: String
-    @OptionGroup var inputs: ScopeOptions
-    @OptionGroup var output: OutputOptions
+struct HookPlanCommand {
+    var requests: String
+    var inputs: ScopeOptions
+    var output: OutputOptions
     func run() throws {
         let environment = try cliEnvironment(roots: inputs.roots)
         let plugins = PluginInventoryReader(environment: environment).read(inputs.request)
@@ -38,14 +27,11 @@ struct HookPlanCommand: ParsableCommand {
     }
 }
 
-struct HookExecuteCommand: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        commandName: "execute",
-        abstract: "Execute a reviewed hook plan with danger acknowledgement.")
-    @Option var plan: String
-    @OptionGroup var inputs: ScopeOptions
-    @OptionGroup var output: OutputOptions
-    @OptionGroup var mutation: MutationOptions
+struct HookExecuteCommand {
+    var plan: String
+    var inputs: ScopeOptions
+    var output: OutputOptions
+    var mutation: MutationOptions
     func run() throws {
         let environment = try cliEnvironment(roots: inputs.roots)
         let cleanup = try readJSON(HookCleanupPlan.self, from: plan)
@@ -55,4 +41,44 @@ struct HookExecuteCommand: ParsableCommand {
         let report = try ScanEngine(environment: environment).scan(inputs.request)
         try mutation.apply(cleanup.batch, report: report, environment: environment, output: output)
     }
+}
+
+extension CLI {
+    static let hookCommands: [CLICommand] = [
+        CLICommand(
+            path: "hooks",
+            abstract: "Advanced: existing passive hook inventory and explicit cleanup plans.",
+            options: []),
+        CLICommand(
+            path: "hooks inventory", abstract: "Read hook sources and passive diagnoses.",
+            options: scopeOptions + outputOptions
+        ) { arguments in
+            let command = HookInventoryCommand(
+                inputs: try ScopeOptions(arguments), output: OutputOptions(arguments))
+            try command.run()
+        },
+        CLICommand(
+            path: "hooks plan", abstract: "Build cleanup from explicit hook requests.",
+            options: [CLIOption("requests", takesValue: true, help: "", required: true)]
+                + scopeOptions
+                + outputOptions
+        ) { arguments in
+            let command = HookPlanCommand(
+                requests: try arguments.required("requests"), inputs: try ScopeOptions(arguments),
+                output: OutputOptions(arguments))
+            try command.run()
+        },
+        CLICommand(
+            path: "hooks execute",
+            abstract: "Execute a reviewed hook plan with danger acknowledgement.",
+            options: [CLIOption("plan", takesValue: true, help: "", required: true)] + scopeOptions
+                + outputOptions
+                + mutationOptions
+        ) { arguments in
+            let command = HookExecuteCommand(
+                plan: try arguments.required("plan"), inputs: try ScopeOptions(arguments),
+                output: OutputOptions(arguments), mutation: try MutationOptions(arguments))
+            try command.run()
+        }
+    ]
 }

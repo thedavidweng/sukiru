@@ -1,5 +1,4 @@
 import Foundation
-import Yams
 
 /// GitHub ledger provenance carried in `SKILL.md` frontmatter
 /// (`metadata.github-*`).
@@ -49,7 +48,7 @@ public struct GitHubProvenance: Codable, Equatable, Sendable {
 /// without it the other `github-*` keys are ignored.
 public enum GitHubProvenanceReader {
     /// Extracts the provenance claim, or nil when `github-repo` is absent.
-    public static func provenance(in frontmatter: Node.Mapping) -> GitHubProvenance? {
+    public static func provenance(in frontmatter: YAMLMapping) -> GitHubProvenance? {
         guard let metadataNode = frontmatter["metadata"],
             case .mapping(let metadata) = metadataNode,
             let repo = FrontmatterParser.scalarString(metadata["github-repo"])

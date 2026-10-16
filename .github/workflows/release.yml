@@ -95,7 +95,8 @@ jobs:
         run: ./Scripts/package-release.sh
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        # v3.0.3 retained for coordinated uploads/release metadata; no shell execution.
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # zizmor: ignore[superfluous-actions]
         with:
           tag_name: ${{ steps.vars.outputs.tag }}
           files: |
