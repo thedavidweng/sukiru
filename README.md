@@ -326,6 +326,19 @@ Scripts/run-app.sh         # run the debug app
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow, quality gates,
 and test safety rules.
 
+### Release packaging
+
+`Scripts/package-release.sh` requires `MARKETING_VERSION` and Developer ID
+signing/notarization credentials: `APPLE_SIGNING_IDENTITY`,
+`APPLE_SIGNING_KEYCHAIN`, `APPLE_TEAM_ID`, `APPLE_API_KEY_PATH`,
+`APPLE_API_KEY_ID`, and `APPLE_API_ISSUER`. It signs the embedded CLI before the
+app, waits for Apple acceptance, staples the app before archiving, then signs
+and notarizes the DMG before calculating checksums.
+
+The Release workflow imports the certificate from `APPLE_CERTIFICATE_P12_BASE64`
+and `APPLE_CERTIFICATE_PASSWORD`, and the API key from `APPLE_API_KEY_BASE64`
+GitHub secrets. Missing credentials or rejected artifacts stop publication.
+
 ---
 
 ## 📄 Documentation & Contributing
