@@ -39,6 +39,11 @@ struct SukiruApp: App {
                 }
                 .keyboardShortcut("y", modifiers: .command)
                 .disabled(!state.canQuickLookSelectedSkill())
+                Menu("Selected Skills") {
+                    SkillsSelectionActions(skills: state.selectedSkills)
+                        .environmentObject(state)
+                }
+                .disabled(state.surface != .library || state.selectedSkills.count < 2)
                 // Deep-link without a mouse (Full Keyboard Access off
                 // means Tab never reaches the detail button, but menu items
                 // stay reachable via ⌘⇧F and Help-menu search).
@@ -57,19 +62,19 @@ struct SukiruApp: App {
                 // Reveal without a mouse (keyboard path;
                 // Full Keyboard Access off means Tab never reaches the
                 // finding-row buttons, but menu items stay reachable).
-                Button("Reveal Selected Finding in Library") {
-                    if let finding = state.selectedFinding() {
-                        state.revealInLibrary(for: finding)
-                    }
+                Button("Reveal Selected Findings in Library") {
+                    state.revealFindingsInLibrary(state.selectedFindingEntries())
                 }
                 .keyboardShortcut("l", modifiers: [.command, .shift])
                 .disabled(
-                    state.selectedFinding().flatMap { state.skill(matching: $0) } == nil)
-                Button("Toggle Selected Finding Evidence") {
+                    !state.selectedFindingEntries().contains {
+                        state.skill(matching: $0.finding) != nil
+                    })
+                Button("Toggle Selected Findings Evidence") {
                     state.toggleSelectedFindingEvidence()
                 }
                 .keyboardShortcut("e", modifiers: [.command, .shift])
-                .disabled(state.selectedFinding() == nil)
+                .disabled(state.selectedFindingEntries().isEmpty)
                 Divider()
                 // Workspace filter without a mouse (keyboard-access audit):
                 // the filter-bar option buttons are not Tab stops with Full
@@ -127,11 +132,11 @@ struct SukiruApp: App {
                 .keyboardShortcut("k", modifiers: .command)
                 .disabled(
                     state.searchQuery.allSatisfy(\.isWhitespace) && state.searchOwner == nil)
-                Button("Install Selected Skill…") {
+                Button("Install Selected Skills…") {
                     state.presentInstallSheet()
                 }
                 .keyboardShortcut("i", modifiers: [.command, .shift])
-                .disabled(state.selectedSearchResult() == nil)
+                .disabled(!state.canInstallSelectedSearchResults)
                 Button("Install from Repository…") {
                     state.presentRepositoryInstallSheet()
                 }
@@ -150,7 +155,18 @@ struct SukiruApp: App {
                 }
                 .keyboardShortcut("f", modifiers: [.command, .option])
                 .disabled(
-                    state.selectedFinding().flatMap { state.skill(matching: $0) } == nil)
+                    state.batchMutationInFlight
+                        || state.selectedFinding().map {
+                            !state.repairOptions(for: $0).contains { $0.action != .leave }
+                        } != false)
+                Button("Queue Selected Fixes") {
+                    state.queueFixes(state.selectedFindingEntries())
+                }
+                .disabled(
+                    state.batchMutationInFlight || state.selectedFindingEntries().isEmpty
+                        || state.fixableEntries(state.selectedFindingEntries()).count
+                            != state.selectedFindingEntries().count
+                )
                 Divider()
                 decisionCommand(.update, key: "u")
                 decisionCommand(.cleanup, key: "d")

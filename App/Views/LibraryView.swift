@@ -155,15 +155,15 @@ struct LibraryView: View {
             skillListContent(report)
                 // The Health → Library deep-link must land with the implicated row visible,
                 // not merely selected somewhere offscreen.
-                .onChange(of: state.selectedSkillID) { _, newSelection in
-                    if let newSelection {
+                .onChange(of: state.selectedSkillIDs) { _, newSelection in
+                    if newSelection.count == 1, let selection = newSelection.first {
                         withAnimation {
-                            proxy.scrollTo(newSelection, anchor: .center)
+                            proxy.scrollTo(selection, anchor: .center)
                         }
                     }
                 }
                 .onAppear {
-                    if let selection = state.selectedSkillID {
+                    if let selection = state.selectedSkill()?.selfID {
                         proxy.scrollTo(selection, anchor: .center)
                     }
                 }
@@ -172,7 +172,7 @@ struct LibraryView: View {
 
     private func skillListContent(_ report: ScanReport) -> some View {
         let groups = groups(in: report)
-        return List(selection: $state.selectedSkillID) {
+        return List(selection: $state.selectedSkillIDs) {
             if state.libraryScope == .all {
                 ForEach(groups) { group in
                     Section(isExpanded: expansion(of: group)) {
@@ -187,11 +187,17 @@ struct LibraryView: View {
         }
         .listStyle(.inset)
         .contextMenu(forSelectionType: String.self) { ids in
-            if ids.count == 1, let skill = ids.first.flatMap(state.skill(withID:)) {
+            let skills = groups.flatMap(\.skills).filter { ids.contains($0.selfID) }
+            if skills.count == 1, let skill = skills.first {
                 SkillContextMenu(skill: skill)
+            } else if !skills.isEmpty {
+                SkillsSelectionActions(skills: skills)
             }
         }
         .searchable(text: $filter, placement: .toolbar, prompt: Text("Filter Library"))
+        .onChange(of: groups.flatMap(\.skills).map(\.selfID), initial: true) { _, visible in
+            state.selectedSkillIDs.formIntersection(visible)
+        }
         .overlay {
             if groups.isEmpty && !filter.isEmpty {
                 ContentUnavailableView.search(text: filter)
@@ -273,6 +279,9 @@ struct LibraryView: View {
             })
     }
 
+}
+
+extension LibraryView {
     @ViewBuilder
     private func header(_ group: SkillGroup) -> some View {
         HStack(spacing: 6) {

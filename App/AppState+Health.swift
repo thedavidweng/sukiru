@@ -249,27 +249,41 @@ extension AppState {
     func revealInLibrary(for finding: Finding) {
         guard let skill = skill(matching: finding) else { return }
         libraryScope = .all
-        selectedSkillID = Self.skillID(skill)
+        selectedSkillIDs = [Self.skillID(skill)]
         surface = .library
     }
 
-    /// The currently selected finding, if it still resolves.
-    func selectedFinding() -> Finding? {
-        guard let report, let selectedFindingID else { return nil }
-        for index in report.findings.indices
-        where Self.findingID(report.findings[index], index: index) == selectedFindingID {
-            return report.findings[index]
-        }
-        return nil
+    /// Reveal every implicated skill once; findings without an on-disk skill have no target.
+    func revealFindingsInLibrary(_ entries: [FindingEntry]) {
+        let ids = Set(entries.compactMap { skill(matching: $0.finding).map(Self.skillID) })
+        guard !ids.isEmpty else { return }
+        libraryScope = .all
+        selectedSkillIDs = ids
+        surface = .library
     }
 
-    /// Toggles evidence disclosure for the selected finding (keyboard path).
-    func toggleSelectedFindingEvidence() {
-        guard let selectedFindingID else { return }
-        if expandedFindings.contains(selectedFindingID) {
-            expandedFindings.remove(selectedFindingID)
+    /// Selected visible entries in report order, never an arbitrary set element.
+    func selectedFindingEntries() -> [FindingEntry] {
+        visibleHealthEntries().filter { selectedFindingIDs.contains($0.id) }
+    }
+
+    /// Single-item actions must not pick one finding from a multiple selection.
+    func selectedFinding() -> Finding? {
+        guard selectedFindingIDs.count == 1 else { return nil }
+        return selectedFindingEntries().first?.finding
+    }
+
+    /// Collapse when all are open; otherwise expand the entire target set.
+    func toggleFindingEvidence(for ids: Set<String>) {
+        guard !ids.isEmpty else { return }
+        if ids.isSubset(of: expandedFindings) {
+            expandedFindings.subtract(ids)
         } else {
-            expandedFindings.insert(selectedFindingID)
+            expandedFindings.formUnion(ids)
         }
+    }
+
+    func toggleSelectedFindingEvidence() {
+        toggleFindingEvidence(for: Set(selectedFindingEntries().map(\.id)))
     }
 }

@@ -208,19 +208,26 @@ struct SearchView: View {
             }
         }
         .listStyle(.inset)
+        .contextMenu(forSelectionType: String.self) { ids in
+            Button("Install Selected Skills…") {
+                state.selectSearchResults(ids)
+                state.presentInstallSheet()
+            }
+            .disabled(
+                ids.isEmpty
+                    || !state.searchResults.filter { ids.contains($0.id) }.allSatisfy(
+                        \.isInstallable)
+            )
+            .axButtonToken("sukiru.search.context.install")
+            .help("Install the selected skills (⌘⇧I)")
+        }
     }
 
-    /// Selecting a row also loads its SKILL.md preview.
-    private var selection: Binding<String?> {
+    /// Native List owns range and disjoint selection; state owns preview work.
+    private var selection: Binding<Set<String>> {
         Binding(
-            get: { state.selectedSearchResultID },
-            set: { id in
-                if let id {
-                    state.selectSearchResult(id)
-                } else {
-                    state.selectedSearchResultID = nil
-                }
-            })
+            get: { state.selectedSearchResultIDs },
+            set: { state.selectSearchResults($0) })
     }
 }
 

@@ -112,25 +112,25 @@ extension AppState {
         return nil
     }
 
-    /// Opens Quick Look on the selected skill's SKILL.md, in place.
-    /// Called from the detail-pane button
-    /// (`sukiru.library.quicklook`) and the View-menu shortcut (⌘Y).
+    /// Opens Quick Look for every selected skill with a readable SKILL.md.
     func quickLookSelectedSkill() {
-        guard let skill = selectedSkill(), let url = skillMarkdownURL(for: skill) else {
-            return
-        }
-        QuickLookPreviewer.shared.preview(fileAt: url)
+        QuickLookPreviewer.shared.preview(
+            filesAt: selectedSkills.compactMap(skillMarkdownURL(for:)))
     }
 
-    /// Whether the Quick Look affordances should be enabled right now (a
-    /// selected skill with a previewable SKILL.md on disk).
     func canQuickLookSelectedSkill() -> Bool {
-        selectedSkill().flatMap { skillMarkdownURL(for: $0) } != nil
+        selectedSkills.contains { skillMarkdownURL(for: $0) != nil }
     }
 
-    /// The currently selected skill, if it still exists in the report.
+    /// Selected skills in report order, never Set iteration order.
+    var selectedSkills: [Skill] {
+        report?.skills.filter { selectedSkillIDs.contains(Self.skillID($0)) } ?? []
+    }
+
+    /// A single selected skill for actions that cannot operate on a group.
     func selectedSkill() -> Skill? {
-        selectedSkillID.flatMap(skill(withID:))
+        guard selectedSkillIDs.count == 1, let id = selectedSkillIDs.first else { return nil }
+        return skill(withID: id)
     }
 
     /// The skill with an `AppState.skillID`, if it still exists in the report.

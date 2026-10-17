@@ -32,6 +32,17 @@ struct SearchDetailView: View {
                     skillMDSection
                 }
                 .formStyle(.grouped)
+            } else if state.selectedSearchResultIDs.count > 1 {
+                ContentUnavailableView {
+                    Label(
+                        "search.selection.count \(state.selectedSearchResultIDs.count)",
+                        systemImage: "square.stack")
+                } description: {
+                    Text("search.selection.previewHint")
+                    if !state.canInstallSelectedSearchResults {
+                        Text("search.selection.unsupported")
+                    }
+                }
             } else {
                 ContentUnavailableView {
                     Label("Select a result to preview it", systemImage: "doc.text.magnifyingglass")
@@ -43,7 +54,7 @@ struct SearchDetailView: View {
 
     @ToolbarContentBuilder
     private func toolbar() -> some ToolbarContent {
-        let installable = state.selectedSearchResult()?.isInstallable ?? false
+        let installable = state.canInstallSelectedSearchResults
         ToolbarItem {
             Button {
                 state.presentInstallSheet()
@@ -52,7 +63,7 @@ struct SearchDetailView: View {
             }
             .axButtonToken("sukiru.search.install", disabled: !installable)
             .disabled(!installable)
-            .help("Install the selected skill (⌘⇧I)")
+            .help("Install the selected skills (⌘⇧I)")
         }
     }
 

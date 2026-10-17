@@ -48,9 +48,21 @@ extension AppState {
         }
     }
 
-    /// The selected result row, if it still exists in the live results.
+    /// Selected results retain the visible result order, never Set iteration order.
+    var selectedSearchResults: [SkillSearchResult] {
+        searchResults.filter { selectedSearchResultIDs.contains($0.id) }
+    }
+
+    /// Single-result inspectors must not display an arbitrary member of a selection.
     func selectedSearchResult() -> SkillSearchResult? {
-        searchResults.first { $0.id == selectedSearchResultID }
+        guard selectedSearchResultIDs.count == 1 else { return nil }
+        return searchResults.first { selectedSearchResultIDs.contains($0.id) }
+    }
+
+    var canInstallSelectedSearchResults: Bool {
+        let results = selectedSearchResults
+        return !results.isEmpty && results.count == selectedSearchResultIDs.count
+            && results.allSatisfy(\.isInstallable)
     }
 
     /// Searches the selected backend with the typed query and owner,
@@ -65,7 +77,7 @@ extension AppState {
                 query: searchQuery, owner: searchOwner, backend: searchBackend)
         else {
             searchGeneration += 1
-            selectedSearchResultID = nil
+            selectSearchResults([])
             searchPhase = .idle
             return
         }
@@ -73,8 +85,7 @@ extension AppState {
         searchGeneration += 1
         let generation = searchGeneration
         searchPhase = .searching(request)
-        selectedSearchResultID = nil
-        searchPreview = nil
+        selectSearchResults([])
         let environment = environment
         Task.detached(priority: .userInitiated) { [weak self] in
             do {
@@ -105,10 +116,7 @@ extension AppState {
     ) {
         guard generation == searchGeneration else { return }
         searchPhase = .results(results, request: request)
-        selectedSearchResultID = results.first?.id
-        if let first = results.first {
-            loadPreview(for: first)
-        }
+        selectSearchResults(Set(results.prefix(1).map(\.id)))
     }
 
     private func applySearchFailure(_ message: String, generation: Int) {
@@ -129,22 +137,26 @@ extension AppState {
         return SkillSearchRequest.ownerSuggestions(for: searchQuery, in: searchResults)
     }
 
-    /// Loads the SKILL.md preview for the selected result,
-    /// read-only, off the main actor.
-    func selectSearchResult(_ id: String) {
-        guard let result = searchResults.first(where: { $0.id == id }) else { return }
-        selectedSearchResultID = id
+    /// Every selection change invalidates pending preview work, including A → B → A.
+    func selectSearchResults(_ ids: Set<String>) {
+        selectedSearchResultIDs = ids.intersection(Set(searchResults.map(\.id)))
+        searchPreviewGeneration += 1
+        searchPreview = nil
+        searchPreviewLoading = false
+        guard let result = selectedSearchResult() else { return }
         loadPreview(for: result)
     }
 
     private func loadPreview(for result: SkillSearchResult) {
-        searchPreview = nil
+        let generation = searchPreviewGeneration
         searchPreviewLoading = true
         let fetcher = SkillPreviewFetcher(transport: URLSessionMarketplaceTransport())
         Task.detached(priority: .utility) { [weak self] in
             let preview = await fetcher.skill(of: result)
             await MainActor.run {
-                guard let self, self.selectedSearchResultID == result.id else { return }
+                guard let self, self.searchPreviewGeneration == generation,
+                    self.selectedSearchResult()?.id == result.id
+                else { return }
                 self.searchPreview = preview
                 self.searchPreviewLoading = false
             }
@@ -153,9 +165,9 @@ extension AppState {
 
     // MARK: - installer choice
 
-    /// Opens the install sheet for the selected result.
+    /// Opens one installer sheet for the complete installable selection.
     func presentInstallSheet() {
-        guard selectedSearchResult() != nil else { return }
+        guard canInstallSelectedSearchResults else { return }
         resetInstallSheet(origin: .searchResult)
         showingInstallSheet = true
     }
@@ -232,28 +244,13 @@ extension AppState {
                 return
             }
         }
-        let options = InstallOptions(
-            vercelAgents: installInstaller == .vercel ? vercelInstallAgents.sorted() : [],
-            ghAgent: installInstaller == .github ? ghInstallAgent : nil,
-            ghPinRef: installInstaller == .github ? ghPinRef : nil,
-            copy: installAsCopies)
-        let builder = InstallPlanBuilder(report: report)
+        let names = selectedSearchResults.map(\.name)
+        if installOrigin == .searchResult && Set(names).count != names.count {
+            installError = String(localized: "search.install.duplicateNames")
+            return
+        }
         do {
-            let batch: CommandBatch
-            switch installOrigin {
-            case .searchResult:
-                guard let result = selectedSearchResult() else { return }
-                batch = try builder.build(
-                    result: result, installer: installInstaller, target: installTarget,
-                    options: options)
-            case .repository:
-                guard let selection = selectedRepositorySkills() else {
-                    throw InstallPlanError.noSkillsSelected
-                }
-                batch = try builder.build(
-                    repo: selection.repo, skills: selection.skills, installer: installInstaller,
-                    target: installTarget, options: options)
-            }
+            let batch = try buildSelectedInstall()
             showingInstallSheet = false
             pendingBatch = batch
             repairDraft = nil
@@ -264,6 +261,42 @@ extension AppState {
             showingBatchConfirm = true
         } catch {
             installError = UserFacingError.message(for: error)
+        }
+    }
+
+    private func buildSelectedInstall() throws -> CommandBatch {
+        let options = InstallOptions(
+            vercelAgents: installInstaller == .vercel ? vercelInstallAgents.sorted() : [],
+            ghAgent: installInstaller == .github ? ghInstallAgent : nil,
+            ghPinRef: installInstaller == .github ? ghPinRef : nil,
+            copy: installAsCopies)
+        let builder = InstallPlanBuilder(report: report)
+        switch installOrigin {
+        case .searchResult:
+            let results = selectedSearchResults
+            guard !results.isEmpty, results.count == selectedSearchResultIDs.count else {
+                throw InstallPlanError.noSkillsSelected
+            }
+            // Validate the entire selection before publishing a proposed batch.
+            let batches = try results.map { result in
+                try builder.build(
+                    result: result, installer: installInstaller, target: installTarget,
+                    options: options)
+            }
+            let first = batches[0]
+            return CommandBatch(
+                id: first.id, createdAt: first.createdAt,
+                findingRefs: batches.flatMap(\.findingRefs),
+                decisions: batches.flatMap(\.decisions),
+                commands: batches.flatMap(\.commands),
+                snapshotID: nil, status: .proposed)
+        case .repository:
+            guard let selection = selectedRepositorySkills() else {
+                throw InstallPlanError.noSkillsSelected
+            }
+            return try builder.build(
+                repo: selection.repo, skills: selection.skills, installer: installInstaller,
+                target: installTarget, options: options)
         }
     }
 }

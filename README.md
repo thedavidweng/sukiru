@@ -79,6 +79,12 @@ Website: <https://sukiru.blahaj.uk/>
   rollback pipeline. Install from Repository takes an `owner/repo` or GitHub
   URL, lists its skills with that installer, and installs the ones you pick.
   Vercel installs can target specific agents.
+- **Consistent skill selection**: Library, Discover, Health findings, and the
+  repository install picker support Shift-click ranges and Command-click
+  individual selection, plus Command-A. Control-click opens the native context
+  menu. Group actions apply to the whole selection; actions that cannot apply
+  to every selected item stay unavailable. Search installs share one review
+  batch, and Library supports group updates, uninstalls, and Quick Look.
 - 🧭 **Adopt unknown skills**: Find Sources matches hand-copied skills to
   skills.sh listings whose `SKILL.md` matches your copy, and queues their
   adoption under `npx skills`.

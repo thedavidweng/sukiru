@@ -43,11 +43,11 @@ struct SidebarView: View {
                     }
                 case .userLibrary:
                     state.libraryScope = .user
-                    state.selectedSkillID = nil
+                    state.selectedSkillIDs = []
                     state.surface = .library
                 case .project(let root):
                     state.libraryScope = .project(root)
-                    state.selectedSkillID = nil
+                    state.selectedSkillIDs = []
                     state.surface = .library
                 case .plugins(let host):
                     if state.pluginHost != host {
@@ -130,7 +130,7 @@ struct SidebarView: View {
         .onChange(of: projects) { _, arrangement in
             if case .project(let root) = state.libraryScope, !arrangement.isShown(root) {
                 state.libraryScope = .all
-                state.selectedSkillID = nil
+                state.selectedSkillIDs = []
             }
         }
         .onChange(of: pluginHosts) { _, arrangement in

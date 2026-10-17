@@ -28,6 +28,26 @@
         }
       }
     },
+    "%lld Skills Selected" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选择 %lld 个技能"
+          }
+        }
+      }
+    },
+    "%lld findings selected" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选择 %lld 个问题"
+          }
+        }
+      }
+    },
     "%lld installs" : {
       "localizations" : {
         "en" : {
@@ -2306,8 +2326,7 @@
         }
       }
     },
-    "Install Selected Skill…" : {
-      "comment" : "Search menu: install command (⌘⇧I).",
+    "Install Selected Skills…" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2319,6 +2338,16 @@
     },
     "Install Skill" : {
       "comment" : "Install sheet title (story 23).",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装技能"
+          }
+        }
+      }
+    },
+    "Install Skills" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2381,8 +2410,7 @@
         }
       }
     },
-    "Install the selected skill (⌘⇧I)" : {
-      "comment" : "Search detail toolbar Install button help.",
+    "Install the selected skills (⌘⇧I)" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -3984,6 +4012,16 @@
         }
       }
     },
+    "Queue Selected Fixes" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将所选修复加入待处理更改"
+          }
+        }
+      }
+    },
     "Queue this exact handler for reviewed, snapshot-protected removal" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4473,13 +4511,12 @@
         }
       }
     },
-    "Reveal Selected Finding in Library" : {
-      "comment" : "View menu command: reveal the selected finding's skill in Library.",
+    "Reveal Selected Findings in Library" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在资源库中显示所选发现对应的技能"
+            "value" : "在技能库中显示所选问题对应的技能"
           }
         }
       }
@@ -4977,6 +5014,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择一个技能以查看详情"
+          }
+        }
+      }
+    },
+    "Selected Skills" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所选技能"
           }
         }
       }
@@ -5633,13 +5680,12 @@
         }
       }
     },
-    "Toggle Selected Finding Evidence" : {
-      "comment" : "View menu command: expand/collapse the selected finding's evidence.",
+    "Toggle Selected Findings Evidence" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "展开或收起所选发现的证据"
+            "value" : "展开或收起所选问题的证据"
           }
         }
       }
@@ -8453,6 +8499,22 @@
         }
       }
     },
+    "search.install.duplicateNames" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selected skills have the same name and would overwrite each other. Install them separately."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所选技能名称相同，会相互覆盖。请分别安装。"
+          }
+        }
+      }
+    },
     "search.noOwnerResults %@" : {
       "comment" : "Search empty state title: the owner filter (a GitHub login) matched no skills.",
       "localizations" : {
@@ -8483,6 +8545,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "来自 %@ 的技能"
+          }
+        }
+      }
+    },
+    "search.selection.count %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Skills Selected"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选择 %lld 个技能"
+          }
+        }
+      }
+    },
+    "search.selection.previewHint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select a single skill to preview it. Install adds every selected skill to one batch for review."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择单个技能以预览。安装会将所有已选技能添加到同一批次供审核。"
+          }
+        }
+      }
+    },
+    "search.selection.unsupported" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some selected skills have no installable source. Select only installable skills to continue."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "部分已选技能没有可安装的来源。请仅选择可安装的技能以继续。"
           }
         }
       }
