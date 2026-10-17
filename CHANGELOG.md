@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.2](https://github.com/thedavidweng/sukiru/compare/v1.5.1...v1.5.2) (2026-10-17)
+
+
+### 🐛 Bug Fixes
+
+* **release:** require Developer ID signing and notarization ([#56](https://github.com/thedavidweng/sukiru/issues/56)) ([ebde962](https://github.com/thedavidweng/sukiru/commit/ebde962ba6903410a804b625ab153898bf837ef1))
+
 ## [1.5.1](https://github.com/thedavidweng/sukiru/compare/v1.5.0...v1.5.1) (2026-10-11)
 
 
