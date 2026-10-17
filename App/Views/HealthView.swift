@@ -280,12 +280,7 @@ private struct ProblemSection: View {
     private var isExpanded: Binding<Bool> {
         Binding(
             get: { expanded ?? (group.kind.isProblem || state.healthFocus != nil) },
-            set: { value in
-                expanded = value
-                if !value {
-                    state.selectedFindingIDs.subtract(group.entries.map(\.id))
-                }
-            })
+            set: { expanded = $0 })
     }
 
     var body: some View {

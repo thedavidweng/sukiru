@@ -139,7 +139,9 @@ extension AppState {
 
     /// Every selection change invalidates pending preview work, including A → B → A.
     func selectSearchResults(_ ids: Set<String>) {
-        selectedSearchResultIDs = ids.intersection(Set(searchResults.map(\.id)))
+        let selection = ids.intersection(Set(searchResults.map(\.id)))
+        guard selection != selectedSearchResultIDs else { return }
+        selectedSearchResultIDs = selection
         searchPreviewGeneration += 1
         searchPreview = nil
         searchPreviewLoading = false
