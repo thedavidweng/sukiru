@@ -138,9 +138,6 @@ Upgrade:
 brew upgrade --cask sukiru
 ```
 
-The Homebrew cask removes the quarantine flag automatically, so Gatekeeper
-does not block the first launch.
-
 ### Direct Download
 
 1. Download `Sukiru.dmg` from [GitHub Releases](https://github.com/thedavidweng/sukiru/releases).
@@ -149,8 +146,7 @@ does not block the first launch.
 3. Launch from Applications or Spotlight.
 
 > [!NOTE]
-> Releases use ad-hoc signing and are not notarized. If Gatekeeper blocks launch, open **System Settings › Privacy & Security** and click **Open Anyway** next to the Sukiru message (on macOS 14 you can also right-click **Sukiru.app** and select **Open**), or run:
-> `xattr -cr /Applications/Sukiru.app`
+> From v1.5.2, official releases are signed with Developer ID and notarized by Apple.
 
 ---
 

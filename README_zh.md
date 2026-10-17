@@ -84,8 +84,6 @@ brew install --cask thedavidweng/tap/sukiru
 brew upgrade --cask sukiru
 ```
 
-Homebrew cask 会自动移除隔离标记，首次启动不会被 Gatekeeper 拦截。
-
 ### 手动下载
 
 1. 前往 [GitHub Releases](https://github.com/thedavidweng/sukiru/releases) 下载 `Sukiru.dmg`。每个版本都在 `checksums.txt` 中附有 SHA-256 校验值。
@@ -93,8 +91,7 @@ Homebrew cask 会自动移除隔离标记，首次启动不会被 Gatekeeper 拦
 3. 从启动台或聚焦搜索打开应用。
 
 > [!NOTE]
-> 发行版本采用临时签名（ad-hoc），未经 Apple 公证。若 Gatekeeper 阻止启动，请打开 **系统设置 › 隐私与安全性**，在 Sukiru 相关提示旁点击 **仍要打开**（在 macOS 14 上也可以右键点击 **Sukiru.app** 并选择 **打开**），或在终端执行：
-> `xattr -cr /Applications/Sukiru.app`
+> 从 v1.5.2 起，正式发行版使用 Developer ID 签名并通过 Apple 公证。
 
 ---
 
