@@ -14,8 +14,8 @@ struct InstallSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             header
-            if state.installOrigin == .searchResult, let result = state.selectedSearchResult() {
-                resultSummary(result)
+            if state.installOrigin == .searchResult {
+                searchSummary
             }
             if state.installOrigin == .repository {
                 RepositorySkillPicker()
@@ -61,7 +61,9 @@ struct InstallSheet: View {
             AXToken(token: "sukiru.search.install.title")
             switch state.installOrigin {
             case .searchResult:
-                Text("Install Skill")
+                let title: LocalizedStringKey =
+                    state.selectedSearchResultIDs.count == 1 ? "Install Skill" : "Install Skills"
+                Text(title)
                     .font(.title3.weight(.semibold))
             case .repository:
                 Text("Install from Repository")
@@ -69,6 +71,30 @@ struct InstallSheet: View {
             }
         }
         .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder
+    private var searchSummary: some View {
+        if let result = state.selectedSearchResult() {
+            resultSummary(result)
+        } else {
+            Text("search.selection.count \(state.selectedSearchResultIDs.count)")
+                .font(.headline)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(state.selectedSearchResults) { result in
+                        resultSummary(result)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: 160)
+        }
+        if !state.canInstallSelectedSearchResults {
+            Text("search.selection.unsupported")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        }
     }
 
     private func resultSummary(_ result: SkillSearchResult) -> some View {
@@ -231,7 +257,8 @@ struct InstallSheet: View {
             state.installInstaller != .github
             || !state.ghInstallAgent.isEmpty
         let sourceReady =
-            state.installOrigin == .searchResult || state.selectedRepositorySkills() != nil
+            state.installOrigin == .searchResult
+            ? state.canInstallSelectedSearchResults : state.selectedRepositorySkills() != nil
         return ghReady && sourceReady && state.installCapabilityAvailable(state.installInstaller)
     }
 }

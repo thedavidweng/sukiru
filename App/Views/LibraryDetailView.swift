@@ -12,6 +12,26 @@ struct LibraryDetailView: View {
             if let skill {
                 SkillDetailForm(skill: skill)
                     .id(skill.selfID)
+            } else if state.selectedSkillIDs.count > 1 {
+                Form {
+                    Section {
+                        ForEach(state.selectedSkills, id: \.selfID) { selected in
+                            LabeledContent {
+                                if selected.scope == .user {
+                                    Text("User Library")
+                                } else {
+                                    Text(state.projectRoot(of: selected) ?? "")
+                                }
+                            } label: {
+                                Text(verbatim: selected.name)
+                            }
+                        }
+                    } header: {
+                        Text("\(state.selectedSkills.count) Skills Selected")
+                    }
+                    SkillsSelectionActions(skills: state.selectedSkills)
+                }
+                .formStyle(.grouped)
             } else {
                 ContentUnavailableView {
                     Label("Select a skill to inspect it", systemImage: "doc.text.magnifyingglass")
@@ -23,7 +43,7 @@ struct LibraryDetailView: View {
 
     @ToolbarContentBuilder
     private func toolbar() -> some ToolbarContent {
-        let skill = state.selectedSkill()
+        let paths = state.selectedSkills.compactMap { $0.placements.first?.path }
         // macOS 26+ lays toolbar items out from the column's leading edge;
         // a flexible spacer keeps the file actions beside the search field.
         if #available(macOS 26.0, *) {
@@ -42,13 +62,11 @@ struct LibraryDetailView: View {
             .help("Quick Look the selected skill's SKILL.md (⌘Y).")
 
             Button {
-                if let path = skill?.placements.first?.path {
-                    state.revealInFinder([path])
-                }
+                state.revealInFinder(paths)
             } label: {
                 Label("Show in Finder", systemImage: "folder")
             }
-            .disabled(skill?.placements.isEmpty ?? true)
+            .disabled(paths.isEmpty)
             .help("Show the selected skill's folder in Finder")
         }
     }

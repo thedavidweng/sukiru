@@ -79,8 +79,8 @@ struct RepositorySkillPicker: View {
                 Button(title, action: state.toggleAllRepositorySkills)
                     .axButtonToken("sukiru.search.install.selectAll")
             }
-            List(skills) { skill in
-                Toggle(isOn: selected(skill.name)) {
+            List(selection: $state.repositoryInstall.selection) {
+                ForEach(skills) { skill in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(skill.name)
                         if let description = skill.description {
@@ -90,23 +90,24 @@ struct RepositorySkillPicker: View {
                                 .lineLimit(2)
                         }
                     }
+                    .tag(skill.name)
                 }
-                .toggleStyle(.checkbox)
             }
             .listStyle(.bordered)
+            .contextMenu(forSelectionType: String.self) { _ in
+                Button("Select All") {
+                    state.repositoryInstall.selection = Set(skills.map(\.name))
+                }
+                .axButtonToken("sukiru.search.install.context.selectAll")
+                .help("Select All")
+                Button("Deselect All") {
+                    state.repositoryInstall.selection = []
+                }
+                .disabled(state.repositoryInstall.selection.isEmpty)
+                .axButtonToken("sukiru.search.install.context.deselectAll")
+                .help("Deselect All")
+            }
             .frame(height: 180)
         }
-    }
-
-    private func selected(_ name: String) -> Binding<Bool> {
-        Binding(
-            get: { state.repositoryInstall.selection.contains(name) },
-            set: { isOn in
-                if isOn {
-                    state.repositoryInstall.selection.insert(name)
-                } else {
-                    state.repositoryInstall.selection.remove(name)
-                }
-            })
     }
 }

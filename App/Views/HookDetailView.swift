@@ -92,7 +92,7 @@ struct HookActions: View {
             if let skill = managingSkill {
                 Button("Show Managing Skill") {
                     state.libraryScope = .all
-                    state.selectedSkillID = AppState.skillID(skill)
+                    state.selectedSkillIDs = [AppState.skillID(skill)]
                     state.surface = .library
                 }
                 .accessibilityIdentifier("sukiru.hooks.skill")

@@ -105,3 +105,97 @@ struct SkillContextMenu: View {
         }
     }
 }
+
+/// Group actions are available only when every selected skill supports them.
+struct SkillsSelectionActions: View {
+    @EnvironmentObject private var state: AppState
+    let skills: [Skill]
+
+    var body: some View {
+        Section {
+            Button("Update") { queue(.update) }
+                .disabled(!canQueue(.update))
+                .accessibilityIdentifier("sukiru.library.selection.update")
+                .help("Update")
+            if skills.allSatisfy({ state.offersRestore(for: $0) }) {
+                Button("Restore Files") { queue(.restore) }
+                    .disabled(!canQueue(.restore))
+                    .accessibilityIdentifier("sukiru.library.selection.restore")
+                    .help("Restore Files")
+            }
+            if skills.allSatisfy({ $0.provenance.github?.pinned == true }) {
+                Button("Unpin") { queue(.unpin) }
+                    .disabled(!canQueue(.unpin))
+                    .accessibilityIdentifier("sukiru.library.selection.unpin")
+                    .help("Unpin")
+            }
+            if skills.allSatisfy(hasQueuedChange) {
+                Button("Remove from Pending Changes") {
+                    for skill in skills {
+                        if let request = state.queuedLifecycle(for: skill) {
+                            state.removeFromCart(request)
+                        }
+                        let orphan = state.orphanFinding(for: skill)
+                        if let item = orphan.flatMap(state.cartItem(for:)) {
+                            state.removeFromCart(item)
+                        }
+                    }
+                }
+                .accessibilityIdentifier("sukiru.library.selection.unqueue")
+                .help("Remove from Pending Changes")
+            }
+        }
+        .disabled(state.batchMutationInFlight)
+        Section {
+            let paths = skills.compactMap { $0.placements.first?.path }
+            Button("Show in Finder") { state.revealInFinder(paths) }
+                .disabled(paths.isEmpty)
+                .accessibilityIdentifier("sukiru.library.selection.reveal")
+                .help("Show in Finder")
+            Button("Copy Path") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(paths.joined(separator: "\n"), forType: .string)
+            }
+            .disabled(paths.isEmpty)
+            .accessibilityIdentifier("sukiru.library.selection.copy")
+            .help("Copy Path")
+        }
+        Section {
+            Button("Uninstall", role: .destructive) {
+                for skill in skills {
+                    if state.orphanFinding(for: skill) != nil {
+                        state.deleteOrphan(skill)
+                    } else {
+                        state.queueLifecycle(.uninstall, for: skill)
+                    }
+                }
+            }
+            .disabled(
+                !skills.allSatisfy {
+                    !hasQueuedChange($0)
+                        && (state.orphanFinding(for: $0) != nil
+                            || state.lifecycleBlocker(.uninstall, for: $0) == nil)
+                }
+            )
+            .accessibilityIdentifier("sukiru.library.selection.uninstall")
+            .help("Uninstall")
+        }
+        .disabled(state.batchMutationInFlight)
+    }
+
+    private func hasQueuedChange(_ skill: Skill) -> Bool {
+        state.queuedLifecycle(for: skill) != nil
+            || state.orphanFinding(for: skill).flatMap(state.cartItem(for:)) != nil
+    }
+
+    private func canQueue(_ action: LifecycleAction) -> Bool {
+        !skills.isEmpty
+            && skills.allSatisfy {
+                !hasQueuedChange($0) && state.lifecycleBlocker(action, for: $0) == nil
+            }
+    }
+
+    private func queue(_ action: LifecycleAction) {
+        for skill in skills { state.queueLifecycle(action, for: skill) }
+    }
+}

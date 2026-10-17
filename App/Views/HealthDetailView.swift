@@ -14,6 +14,12 @@ struct HealthDetailView: View {
             } else {
                 FindingDetailForm(finding: finding)
             }
+        } else if state.selectedFindingIDs.count > 1 {
+            ContentUnavailableView {
+                Label(
+                    "\(state.selectedFindingIDs.count) findings selected",
+                    systemImage: "stethoscope")
+            }
         } else {
             ContentUnavailableView {
                 Label("Select a problem to inspect it", systemImage: "stethoscope")

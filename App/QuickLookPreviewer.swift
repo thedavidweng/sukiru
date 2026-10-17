@@ -18,18 +18,17 @@ import SukiruCore
 final class QuickLookPreviewer: NSObject, QLPreviewPanelDataSource, QLPreviewPanelDelegate {
     @MainActor static let shared = QuickLookPreviewer()
 
-    /// The `SKILL.md` currently on offer, or nil when nothing is previewed.
-    nonisolated(unsafe) private var currentItem: URL?
+    /// Selected `SKILL.md` files, retained while the shared panel is open.
+    nonisolated(unsafe) private var currentItems: [URL] = []
 
-    /// Opens (or retargets) the Quick Look panel on the given file. ⌘Y is a
-    /// TOGGLE: calling this while the panel is visible closes it instead of
-    /// retargeting, so one shortcut both opens and dismisses it.
-    @MainActor func preview(fileAt url: URL) {
+    /// ⌘Y toggles the shared panel; arrows navigate the selected files.
+    @MainActor func preview(filesAt urls: [URL]) {
+        guard !urls.isEmpty else { return }
         if let panel = QLPreviewPanel.shared(), panel.isVisible {
             panel.close()
             return
         }
-        currentItem = url
+        currentItems = urls
         installEscapeMonitor()
         guard let panel = QLPreviewPanel.shared() else { return }
         panel.dataSource = self
@@ -44,7 +43,7 @@ final class QuickLookPreviewer: NSObject, QLPreviewPanelDataSource, QLPreviewPan
         // reads the window list). Demote to normal level once
         // open so the panel is enumerable like any other window.
         panel.level = .normal
-        panel.title = String(localized: "quicklook.title \(url.lastPathComponent)")
+        panel.title = String(localized: "quicklook.title \(urls[0].lastPathComponent)")
     }
 
     /// The installed Escape key monitor (kept for the app's lifetime; inert
@@ -72,13 +71,13 @@ final class QuickLookPreviewer: NSObject, QLPreviewPanelDataSource, QLPreviewPan
     // MARK: - QLPreviewPanelDataSource
 
     nonisolated func numberOfPreviewItems(in panel: QLPreviewPanel!) -> Int {
-        currentItem == nil ? 0 : 1
+        currentItems.count
     }
 
     nonisolated func previewPanel(
         _ panel: QLPreviewPanel!, previewItemAt index: Int
     ) -> (any QLPreviewItem)! {
         // NSURL conforms to QLPreviewItem; the panel reads the file itself.
-        currentItem! as NSURL
+        currentItems[index] as NSURL
     }
 }

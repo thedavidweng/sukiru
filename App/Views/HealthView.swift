@@ -154,7 +154,7 @@ struct HealthView: View {
     private var findingsList: some View {
         let entries = state.visibleHealthEntries()
         let issues = state.visibleIssues()
-        return List(selection: $state.selectedFindingID) {
+        return List(selection: $state.selectedFindingIDs) {
             if !state.visibleHookProblems.isEmpty || !state.visibleHookIssues.isEmpty {
                 HookHealthSection()
             }
@@ -179,6 +179,34 @@ struct HealthView: View {
             }
         }
         .listStyle(.inset)
+        .contextMenu(forSelectionType: String.self) { ids in
+            let targets = entries.filter { ids.contains($0.id) }
+            let fixable = state.fixableEntries(targets)
+            Button("Toggle Selected Findings Evidence") {
+                state.toggleFindingEvidence(for: ids)
+            }
+            .disabled(targets.isEmpty)
+            Button("Queue Selected Fixes") {
+                state.queueFixes(fixable)
+            }
+            .disabled(
+                targets.isEmpty || fixable.count != targets.count || state.batchMutationInFlight)
+            Button("Reveal in Library") {
+                state.revealFindingsInLibrary(targets)
+            }
+            .disabled(!targets.contains { state.skill(matching: $0.finding) != nil })
+            if targets.count == 1, let finding = targets.first?.finding {
+                Button("Other Repairs…") {
+                    state.beginRepair(for: finding)
+                }
+                .disabled(
+                    state.batchMutationInFlight
+                        || !state.repairOptions(for: finding).contains { $0.action != .leave })
+            }
+        }
+        .onChange(of: entries.map(\.id), initial: true) { _, ids in
+            state.selectedFindingIDs.formIntersection(ids)
+        }
         .overlay {
             let noHooks = state.visibleHookProblems.isEmpty && state.visibleHookIssues.isEmpty
             if entries.isEmpty && issues.isEmpty && state.visiblePluginFindings.isEmpty && noHooks {
@@ -264,6 +292,7 @@ private struct ProblemSection: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.vertical, 4)
+                    .selectionDisabled()
             }
             ForEach(rows) { row in
                 FindingRow(row: row)
@@ -271,6 +300,11 @@ private struct ProblemSection: View {
             }
         } header: {
             header
+        }
+        .onChange(of: isExpanded.wrappedValue, initial: true) { _, expanded in
+            if !expanded {
+                state.selectedFindingIDs.subtract(group.entries.map(\.id))
+            }
         }
     }
 

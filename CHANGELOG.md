@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+* Unify native skill multi-selection across Library, Discover, Health findings,
+  and repository installation, with Shift ranges and Command-click toggles.
+* Apply Library group actions and Quick Look to selected skills, queue selected
+  Health fixes, and review selected search installs together in one batch.
+
 ## [1.5.2](https://github.com/thedavidweng/sukiru/compare/v1.5.1...v1.5.2) (2026-10-17)
 
 

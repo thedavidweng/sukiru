@@ -70,8 +70,8 @@ final class AppState: ObservableObject {
     @Published var skillsFetchInFlight = false
     /// The tail of a failed skills CLI download, shown under its row.
     @Published var skillsFetchFailure: String?
-    /// Selected skill in Library (identity via `Self.skillID`), survives surface switches.
-    @Published var selectedSkillID: String?
+    /// Selected Library skills (identity via `Self.skillID`), surviving surface switches.
+    @Published var selectedSkillIDs: Set<String> = []
     /// Expanded finding rows in Health, surviving surface switches.
     @Published var expandedFindings: Set<String> = []
     /// Active Health skill focus (Library deep-link), nil = unfiltered.
@@ -81,7 +81,7 @@ final class AppState: ObservableObject {
     @Published var healthWorkspaceFilter: String?
     /// Selected finding row in Health (stable id via `Self.findingID`); the
     /// keyboard reveal/evidence menus act on it.
-    @Published var selectedFindingID: String?
+    @Published var selectedFindingIDs: Set<String> = []
     /// True while a Health "check now" run is in flight (non-reentrant).
     /// Held for a minimum duration so the running state is
     /// observable on sub-100ms fixture scans.
@@ -156,7 +156,7 @@ final class AppState: ObservableObject {
     @Published var searchBackend: SkillSearchResult.Backend = .skillsDotSh
     /// Search lifecycle, selected row, and its fetched skill preview.
     @Published var searchPhase: SearchPhase = .idle
-    @Published var selectedSearchResultID: String?
+    @Published var selectedSearchResultIDs: Set<String> = []
     @Published var searchPreview: SkillPreview?
     @Published var searchPreviewLoading = false
     /// Install sheet presentation, installer choice (Vercel
@@ -252,6 +252,7 @@ final class AppState: ObservableObject {
     /// stale completions are dropped instead of clobbering newer state.
     var scanGeneration = 0
     var searchGeneration = 0
+    var searchPreviewGeneration = 0
     /// Minimum time the running state stays visible once a scan starts.
     private static let minimumRunVisibility: Duration = .milliseconds(600)
 
@@ -346,7 +347,7 @@ final class AppState: ObservableObject {
         projectRoots.removeAll { $0 == path }
         if libraryScope == .project(path) {
             libraryScope = .all
-            selectedSkillID = nil
+            selectedSkillIDs = []
         }
         saveProjectRoots()
         rescan()
@@ -354,13 +355,7 @@ final class AppState: ObservableObject {
 
     /// Drops selection and focus state that no longer resolves after a rescan.
     private func pruneSelection(using report: ScanReport) {
-        let selectionAlive =
-            selectedSkillID.map { id in
-                report.skills.contains { Self.skillID($0) == id }
-            } ?? true
-        if !selectionAlive {
-            self.selectedSkillID = nil
-        }
+        selectedSkillIDs.formIntersection(report.skills.map(Self.skillID))
         if let focus = healthFocus {
             let focusAlive = report.skills.contains { skill in
                 skill.name == focus.skillName && scopeGroup(for: skill) == focus.scopeGroup
@@ -372,9 +367,7 @@ final class AppState: ObservableObject {
         let live = Set(
             report.findings.indices.map { Self.findingID(report.findings[$0], index: $0) })
         expandedFindings = expandedFindings.intersection(live)
-        if let selectedFindingID, !live.contains(selectedFindingID) {
-            self.selectedFindingID = nil
-        }
+        selectedFindingIDs.formIntersection(live)
         if let filter = healthWorkspaceFilter {
             let workspaceAlive = report.workspaces.contains { $0.id == filter }
             if !workspaceAlive {
