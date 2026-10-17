@@ -43,5 +43,8 @@ jobs:
           - name: Run test suite (Zero Warnings)
             run: swift test -Xswiftc -warnings-as-errors
 
+      - name: Test release signing gate
+        run: python3 Scripts/test-notarization.py
+
       - name: Build application bundle
         run: Scripts/build-app.sh

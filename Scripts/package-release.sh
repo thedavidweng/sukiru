@@ -7,6 +7,10 @@
 # project.yml. Debug builds keep project.yml's MARKETING_VERSION.
 set -euo pipefail
 
+: "${APPLE_SIGNING_IDENTITY:?release signing identity required}"
+: "${APPLE_SIGNING_KEYCHAIN:?}" "${APPLE_TEAM_ID:?}"
+: "${APPLE_API_KEY_PATH:?}" "${APPLE_API_KEY_ID:?}" "${APPLE_API_ISSUER:?}"
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
@@ -43,14 +47,15 @@ cli_bin_dir="$(swift build -c release --show-bin-path)"
 mkdir -p "$application/Contents/Helpers"
 cp "$cli_bin_dir/sukiru" "$application/Contents/Helpers/sukiru"
 # Embedding a second executable changes the app signature.
-codesign --force --sign - "$application/Contents/Helpers/sukiru"
-codesign --force --sign - "$application"
+codesign --force --timestamp --options runtime --sign "$APPLE_SIGNING_IDENTITY" \
+  --keychain "$APPLE_SIGNING_KEYCHAIN" "$application/Contents/Helpers/sukiru"
 shipped_cli_version="$("$application/Contents/Helpers/sukiru" --version)"
 if [ "$shipped_cli_version" != "$MARKETING_VERSION" ]; then
   echo "error: app and CLI versions differ ($MARKETING_VERSION / $shipped_cli_version)" >&2
   exit 1
 fi
 xattr -cr "$application"
+"$REPO_ROOT/Scripts/sign-and-notarize.sh" "$application"
 
 dist_dir="$REPO_ROOT/dist"
 rm -rf "$dist_dir"
@@ -74,6 +79,8 @@ hdiutil create \
   -imagekey zlib-level=9 \
   "$dist_dir/Sukiru.dmg"
 rm -rf "$dmg_staging"
+
+"$REPO_ROOT/Scripts/sign-and-notarize.sh" "$dist_dir/Sukiru.dmg"
 
 echo "==> Generating SHA-256 checksums..."
 cd "$dist_dir"
