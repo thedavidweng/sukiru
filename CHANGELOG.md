@@ -9,6 +9,18 @@
 * Apply Library group actions and Quick Look to selected skills, queue selected
   Health fixes, and review selected search installs together in one batch.
 
+## [1.6.0](https://github.com/thedavidweng/sukiru/compare/v1.5.2...v1.6.0) (2026-10-17)
+
+
+### ✨ Features
+
+* **ui:** unify skill multi-selection ([2c429a7](https://github.com/thedavidweng/sukiru/commit/2c429a7a01c6bcd1c7c6499b025922257e397567))
+
+
+### 📝 Documentation
+
+* describe verified notarized releases ([#59](https://github.com/thedavidweng/sukiru/issues/59)) ([d13baec](https://github.com/thedavidweng/sukiru/commit/d13baec3265884ec41ac4b87a7b2d9039c129396))
+
 ## [1.5.2](https://github.com/thedavidweng/sukiru/compare/v1.5.1...v1.5.2) (2026-10-17)
 
 
