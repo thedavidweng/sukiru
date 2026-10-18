@@ -3,6 +3,49 @@ import SukiruCore
 import Testing
 
 extension HookCLIIntegrationTests {
+    @Test("Quoted nested hook keys survive passive skill and subagent inventory")
+    func quotedHookKeys() throws {
+        let tree = try TempTree()
+        let home = try tree.dir("home")
+        let text = """
+            ---
+            "name": demo
+            'description': Quoted hook keys
+            "hooks":
+              'Stop':
+                - "matcher": "Bash: command"
+                  'hooks':
+                    - "type": prompt
+                      'prompt': "Review: the changes"
+                      'owner''s: note': retained
+            ---
+            Source stays untouched.
+            """
+        let paths = try [
+            tree.file("home/.claude/skills/demo/SKILL.md", contents: text),
+            tree.file("home/.claude/agents/demo.md", contents: text)
+        ]
+        let result = try CLIRunner.run(
+            ["scan", "--json"], environment: CLIRunner.fixtureEnvironment(home: home))
+        #expect(result.exitCode == 0)
+        let report = try JSONDecoder().decode(ScanReport.self, from: result.stdout)
+        let inventory = try #require(report.hookInventory)
+        #expect(inventory.issues.isEmpty)
+        #expect(inventory.hooks.count == 2)
+        #expect(Set(inventory.hooks.map(\.source.tier)) == ["skill", "subagent"])
+        for hook in inventory.hooks {
+            #expect(hook.event == "Stop")
+            #expect(hook.matcher == "Bash: command")
+            #expect(hook.handlerType == "prompt")
+            #expect(hook.details["prompt"]?.stringValue == "Review: the changes")
+            #expect(hook.details["owner's: note"]?.stringValue == "retained")
+            #expect(!hook.canRemove)
+        }
+        for path in paths {
+            #expect(try String(contentsOfFile: path, encoding: .utf8) == text)
+        }
+    }
+
     @Test(
         "Local, skill, subagent, plugin, and managed definitions remain separate and source-managed"
     )

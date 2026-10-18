@@ -15,6 +15,13 @@ extension LineParser {
                 cursor = content.index(after: cursor)
                 continue
             }
+            let isComment =
+                char == "#"
+                && (cursor == content.startIndex
+                    || content[content.index(before: cursor)].isWhitespace)
+            if isComment {
+                return nil
+            }
             if char == ":" {
                 let next = content.index(after: cursor)
                 let isEnd = next == content.endIndex
@@ -47,8 +54,12 @@ extension LineParser {
                 return
             }
             if inSingle {
-                if char == "'" && next != "'" {
-                    inSingle = false
+                if char == "'" {
+                    if next == "'" {
+                        escaped = true
+                    } else {
+                        inSingle = false
+                    }
                 }
                 return
             }
@@ -73,9 +84,8 @@ extension LineParser {
     /// A mapping entry range, or nil for scalars/comments/flow starters.
     func mappingStart(in content: String) -> Range<String.Index>? {
         guard let first = content.first else { return nil }
-        let isScalarStart = first == "'" || first == "\""
         let isFlowStart = first == "{" || first == "["
-        guard !isScalarStart, !isFlowStart, first != "#" else { return nil }
+        guard !isFlowStart, first != "#" else { return nil }
         return keyColonRange(in: content)
     }
 
