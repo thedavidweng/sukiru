@@ -29,6 +29,8 @@ enum UserFacingError {
 
     private static func message(for error: InstallPlanError) -> String {
         switch error {
+        case .pnpmReadOnly:
+            String(localized: "library.pnpm.readOnly")
         case .missingRepo:
             String(localized: "error.install.missingRepo")
         case .malformedRepo(let repo):

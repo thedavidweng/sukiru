@@ -23,6 +23,20 @@ struct LibraryProvenanceSection: View {
 
     @ViewBuilder
     private var rows: some View {
+        if skill.isPnpmReadOnly {
+            Text("library.pnpm.readOnly")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        if let packages = skill.provenance.pnpm {
+            ForEach(packages, id: \.placement) { package in
+                field("Package", package.packageName)
+                field("Version", package.packageVersion)
+                field("Original skill name", package.originalName)
+                field("Dependency", package.dependency)
+                field("Resolved path", package.target)
+            }
+        }
         if isVercelReadOnly { readOnlyNotice }
         if skill.ambiguous { ambiguousNotice }
         if let vercel = skill.provenance.vercel, !hasCompanionRecord {
@@ -54,15 +68,20 @@ struct LibraryProvenanceSection: View {
         if let agent = skill.managingAgent {
             Text("library.agentManaged \(agent)")
                 .foregroundStyle(.secondary)
-        } else if skill.provenance.vercel == nil && skill.provenance.github == nil {
+        } else if hasNoInstallerRecord {
             Text("No installer records this skill.")
                 .foregroundStyle(.secondary)
         }
         LibraryLifecycleControls(skill: skill)
     }
 
+    private var hasNoInstallerRecord: Bool {
+        !skill.isPnpmReadOnly && skill.provenance.vercel == nil && skill.provenance.github == nil
+    }
+
     private var isExplainedElsewhere: Bool {
         skill.ownership == .ownerless && !skill.ambiguous && !isVercelReadOnly
+            && !skill.isPnpmReadOnly
             && skill.provenance.vercel == nil && skill.provenance.github == nil
             && state.orphanFinding(for: skill) != nil
     }

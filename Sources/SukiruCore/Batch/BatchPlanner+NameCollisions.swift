@@ -111,7 +111,7 @@ extension CommandBatchBuilder {
         case .github:
             return BatchCommandFactory.deleteGitHubSkillDirectory(
                 name: skill.name, path: placement.path, intent: intent)
-        case .vercel, .doubleBooked, .agent:
+        case .vercel, .doubleBooked, .agent, .pnpm:
             // npx skills removes by name, which would delete the kept entry too.
             throw DecisionProblem(
                 message: "'\(placement.path)' belongs to '\(skill.name)', which the "

@@ -60,6 +60,7 @@ public enum LifecycleBlocker: Equatable, Sendable {
     case ambiguous
     /// A host manages the skill through its own records.
     case agentManaged
+    case pnpmManaged
     /// No ledger records the skill (Library offers deletion or adoption).
     case ownerless
     /// The owning ledger's CLI is `npx skills`, and npx is missing.
@@ -87,6 +88,8 @@ public enum LifecycleBlocker: Equatable, Sendable {
             return "both ledgers claim this skill; choose a surviving ledger in Health first"
         case .ambiguous:
             return "ownership is ambiguous, so no ledger may act on this skill"
+        case .pnpmManaged:
+            return "pnpm installation evidence is read-only; manage this dependency with pnpm"
         case .agentManaged:
             return "an agent manages this skill through its own records"
         case .ownerless:
@@ -131,12 +134,16 @@ extension CommandBatchBuilder {
         skill: Skill, action: LifecycleAction, capabilities: CapabilityReport?,
         report: ScanReport? = nil
     ) -> LifecycleBlocker? {
+        if skill.isPnpmReadOnly { return .pnpmManaged }
+        if hasPnpmNameCollision(skill: skill, report: report) { return .pnpmManaged }
         if skill.ambiguous {
             return .ambiguous
         }
         switch skill.ownership {
         case .doubleBooked:
             return .doubleBooked
+        case .pnpm:
+            return .pnpmManaged
         case .agent:
             return .agentManaged
         case .ownerless:
@@ -150,6 +157,11 @@ extension CommandBatchBuilder {
             return githubLifecycleBlocker(
                 skill: skill, action: action, capabilities: capabilities, report: report)
         }
+    }
+
+    private static func hasPnpmNameCollision(skill: Skill, report: ScanReport?) -> Bool {
+        guard let report, let bucket = Self.bucket(of: skill, report: report) else { return false }
+        return protectsPnpm(name: skill.name, bucket: bucket, report: report)
     }
 
     /// The GitHub-ledger branch of `lifecycleBlocker`: uninstall is a direct

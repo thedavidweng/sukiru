@@ -58,6 +58,7 @@ struct LibraryView: View {
                 Text("Any Installer").tag(Ownership?.none)
                 Text("Vercel").tag(Ownership?.some(.vercel))
                 Text("GitHub").tag(Ownership?.some(.github))
+                Text("Managed by pnpm").tag(Ownership?.some(.pnpm))
                 Text("Double-booked").tag(Ownership?.some(.doubleBooked))
                 Text("Ownerless").tag(Ownership?.some(.ownerless))
                 Text("Agent-managed").tag(Ownership?.some(.agent))

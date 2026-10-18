@@ -66,6 +66,7 @@ public enum InstallTarget: Equatable, Hashable, Sendable {
 /// name, missing gh agent). Named problems, surfaced inline.
 public enum InstallPlanError: Error, Equatable, Sendable {
     case missingRepo
+    case pnpmReadOnly
     case malformedRepo(String)
     case emptySkillName
     case noSkillsSelected
@@ -77,6 +78,8 @@ public enum InstallPlanError: Error, Equatable, Sendable {
     /// Human-readable refusal (English by design, like other core refusals).
     public var message: String {
         switch self {
+        case .pnpmReadOnly:
+            return LifecycleBlocker.pnpmManaged.message
         case .missingRepo:
             return "this search result has no installable source (owner/repo)"
         case .malformedRepo(let repo):
@@ -189,15 +192,7 @@ public struct InstallPlanBuilder: Sendable {
         target: InstallTarget,
         options: InstallOptions = InstallOptions()
     ) throws -> CommandBatch {
-        guard Self.isOwnerRepo(repo) else {
-            throw InstallPlanError.malformedRepo(repo)
-        }
-        guard !skills.isEmpty else {
-            throw InstallPlanError.noSkillsSelected
-        }
-        guard !skills.contains(where: \.isEmpty) else {
-            throw InstallPlanError.emptySkillName
-        }
+        try validate(repo: repo, skills: skills, target: target)
         let commands: [BatchCommand]
         switch installer {
         case .vercel:
@@ -243,6 +238,23 @@ public struct InstallPlanBuilder: Sendable {
             commands: commands,
             snapshotID: nil,
             status: .proposed)
+    }
+
+    private func validate(repo: String, skills: [String], target: InstallTarget) throws {
+        guard Self.isOwnerRepo(repo) else {
+            throw InstallPlanError.malformedRepo(repo)
+        }
+        guard !skills.isEmpty else {
+            throw InstallPlanError.noSkillsSelected
+        }
+        guard !skills.contains(where: \.isEmpty) else {
+            throw InstallPlanError.emptySkillName
+        }
+        guard let report else { return }
+        let protected = skills.contains {
+            CommandBatchBuilder.protectsPnpm(name: $0, bucket: target.workspaceID, report: report)
+        }
+        if protected { throw InstallPlanError.pnpmReadOnly }
     }
 
     /// The owner/repo slug of a typed source: `owner/repo` or a github.com

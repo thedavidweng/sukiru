@@ -91,6 +91,7 @@ extension AppState {
         func option(_ action: DecisionAction, _ block: RepairBlock?) -> RepairOption {
             RepairOption(action: action, blocked: block)
         }
+        if skill.isPnpmReadOnly { return [option(.leave, nil)] }
         if finding.ruleID == HostNameCollisionRule.ruleID {
             // Entry-level repairs only; the Health row offers Keep One.
             let removable = ProblemKind.oneClickFix(for: finding) == .cleanup
@@ -137,7 +138,7 @@ extension AppState {
                 option(.cleanup, nil),
                 option(.leave, nil)
             ]
-        case .agent:
+        case .agent, .pnpm:
             // The agent's own ledger manages these; Sukiru only reports.
             return [option(.leave, nil)]
         }

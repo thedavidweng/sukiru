@@ -1,0 +1,3 @@
+permissions:
+  '@sukiru/fixture-skills@file:../fixture.tgz':
+    skills: true

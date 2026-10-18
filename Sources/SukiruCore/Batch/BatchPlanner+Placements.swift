@@ -23,13 +23,12 @@ extension CommandBatchBuilder {
         if skill.scope == .user {
             return "user"
         }
-        return report.workspaces.lazy
-            .filter { $0.kind == .project && !$0.id.contains("#") }
-            .map(\.id)
-            .first { id in
-                let root = String(id.dropFirst("project:".count))
-                return skill.placements.contains { $0.path.hasPrefix(root + "/") }
-            }
+        let projectBuckets = Set(
+            report.workspaces.filter { $0.kind == .project }.map { Self.bucket(of: $0.id) })
+        return projectBuckets.sorted().first { id in
+            let root = String(id.dropFirst("project:".count))
+            return skill.placements.contains { $0.path.hasPrefix(root + "/") }
+        }
     }
 
     // MARK: - stale lock entries and dead links

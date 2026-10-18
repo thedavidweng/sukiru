@@ -1,0 +1,26 @@
+{
+  "hoistedDependencies": {},
+  "hoistPattern": [
+    "*"
+  ],
+  "included": {
+    "dependencies": true,
+    "devDependencies": true,
+    "optionalDependencies": true
+  },
+  "layoutVersion": 5,
+  "nodeLinker": "isolated",
+  "packageManager": "pnpm@12.11.0",
+  "pendingBuilds": [],
+  "prunedAt": "Sun, 18 Oct 2026 21:54:38 GMT",
+  "publicHoistPattern": [],
+  "skipped": [],
+  "storeDir": "<fixture-store>/v11",
+  "virtualStoreDir": ".pnpm",
+  "virtualStoreDirMaxLength": 120,
+  "allowBuilds": {},
+  "linkedSkills": [
+    ".claude/skills/pnpm-@sukiru+fixture-skills-guide",
+    ".codebuddy/skills/pnpm-@sukiru+fixture-skills-guide"
+  ]
+}

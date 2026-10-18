@@ -88,6 +88,7 @@ public struct Workspace: Codable, Equatable, Sendable {
 public enum Ownership: String, Codable, Equatable, Sendable {
     case vercel
     case github
+    case pnpm
     case doubleBooked = "double-booked"
     case ownerless
     /// Neither installer ledger claims the skill, but the agent host that
@@ -109,6 +110,11 @@ public struct Skill: Codable, Equatable, Sendable {
     public let placements: [Placement]
     /// The host id behind `Ownership.agent`; omitted from the wire otherwise.
     public let managingAgent: String?
+
+    /// Native package-manager evidence stays read-only even in a mixed-owner group.
+    public var isPnpmReadOnly: Bool {
+        ownership == .pnpm || provenance.pnpm?.isEmpty == false || provenance.pnpmUnverified == true
+    }
 }
 
 /// A physical placement of a skill on disk.
