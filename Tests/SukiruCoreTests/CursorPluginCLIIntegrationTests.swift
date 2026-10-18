@@ -145,7 +145,7 @@ struct CursorPluginCLIIntegrationTests {
             "home/.cursor/plugins/marketplaces/example.com/team/repo/one/.cursor-plugin/marketplace.json",
             contents:
                 """
-                {"name":"personal","plugins":[
+                {"name":"personal","gitRef":"refs/heads/main","plugins":[
                   {"name":"demo","source":"./plugins/demo","version":"1"},
                   {"name":"native","source":{"path":"./plugins/native"},"version":"2"}]}
                 """
@@ -158,6 +158,7 @@ struct CursorPluginCLIIntegrationTests {
             try JSONSerialization.jsonObject(with: result.stdout) as? [[String: Any]])
         #expect(catalogs.count == 1)
         #expect(catalogs.first?["name"] as? String == "personal")
+        #expect(catalogs.first?["ref"] as? String == "refs/heads/main")
         #expect(catalogs.first?["evidence"] as? String == "cached-catalog")
         #expect(
             (catalogs.first?["plugins"] as? [[String: Any]])?.first?["name"] as? String == "demo")

@@ -6,15 +6,18 @@ public struct PluginLifecycleRequest: Codable, Equatable, Sendable {
     public let target: String
     public let scope: String
     public let scopeRoot: String
+    public let gitRef: String?
 
     public init(
-        host: PluginHost, action: String, target: String, scope: String, scopeRoot: String
+        host: PluginHost, action: String, target: String, scope: String, scopeRoot: String,
+        gitRef: String? = nil
     ) {
         self.host = host
         self.action = action
         self.target = target
         self.scope = scope
         self.scopeRoot = scopeRoot
+        self.gitRef = gitRef
     }
 
     public static let actions = [

@@ -39,6 +39,7 @@ extension PluginLifecyclePlanner {
     func cursorArguments(_ request: PluginLifecycleRequest) throws -> [String] {
         let probe = PluginLifecycleProbe(environment: environment)
         try cursorHelp(request.action, probe: probe)
+        try cursorGitRefSupport(request, probe: probe)
         let verb =
             request.action == "marketplace-refresh"
             ? "update" : String(request.action.dropFirst("marketplace-".count))
@@ -77,7 +78,22 @@ extension PluginLifecyclePlanner {
                     message: "Cursor marketplace URL has duplicate registrations")
             }
         }
-        return [PluginHost.cursor.executable, "plugin", "marketplace", verb, request.target]
+        var arguments = [
+            PluginHost.cursor.executable, "plugin", "marketplace", verb, request.target
+        ]
+        if let gitRef = request.gitRef {
+            arguments += ["--git-ref", gitRef]
+        }
+        return arguments
+    }
+
+    private func cursorGitRefSupport(
+        _ request: PluginLifecycleRequest, probe: PluginLifecycleProbe
+    ) throws {
+        guard request.gitRef != nil else { return }
+        try probe.help(
+            host: .cursor, arguments: ["plugin", "marketplace", "add"],
+            requiredFlags: ["--git-ref"])
     }
 
     private struct CursorRegistration: Decodable {

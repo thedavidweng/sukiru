@@ -269,6 +269,7 @@ extension PluginOperationOptions {
         target = try arguments.requiredPositional()
         inputs = try ScopeOptions(arguments)
         settingsScope = arguments.string("settings-scope")
+        gitRef = arguments.string("git-ref")
         output = OutputOptions(arguments)
         mutation = try MutationOptions(arguments)
     }
@@ -314,6 +315,10 @@ extension CLI {
                 "settings-scope", takesValue: true,
                 help:
                     "Claude Code settings scope instead of --scope: local (with --root) or managed."
+            ),
+            CLIOption(
+                "git-ref", takesValue: true,
+                help: "Cursor marketplace branch, tag, or commit to pass to the host."
             )
         ] + outputOptions + mutationOptions
 }
