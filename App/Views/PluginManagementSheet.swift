@@ -24,6 +24,14 @@ struct PluginManagementSheet: View {
                 .help(
                     "Use a host-supported target; * selects all packages for OpenCode list, check or update"
                 )
+                let showsGitRef =
+                    state.pluginManagement.host == .cursor
+                    && state.pluginManagement.action == "marketplace-add"
+                if showsGitRef {
+                    TextField("Git ref (optional)", text: gitRef)
+                        .accessibilityIdentifier("sukiru.plugins.operation.git-ref")
+                        .help("Pass one Cursor-supported branch, tag, or commit ref")
+                }
                 Picker("Scope", selection: $state.pluginManagement.scopeRoot) {
                     Text("User Library").tag(state.environment.home)
                     ForEach(state.projectRoots, id: \.self) { root in
@@ -81,5 +89,11 @@ struct PluginManagementSheet: View {
         Binding(
             get: { state.pluginManagement.scope == "local" },
             set: { state.pluginManagement.scope = $0 ? "local" : "project" })
+    }
+
+    private var gitRef: Binding<String> {
+        Binding(
+            get: { state.pluginManagement.gitRef ?? "" },
+            set: { state.pluginManagement.gitRef = $0.isEmpty ? nil : $0 })
     }
 }

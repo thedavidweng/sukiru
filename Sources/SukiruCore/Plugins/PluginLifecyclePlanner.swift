@@ -148,6 +148,14 @@ public struct PluginLifecyclePlanner: Sendable {
             !request.target.hasPrefix("-"), !request.target.contains("\n"),
             !request.target.contains("\0")
         else { throw PluginLifecycleError(message: "Invalid plugin action or target") }
+        if let gitRef = request.gitRef {
+            guard request.host == .cursor, request.action == "marketplace-add",
+                Self.isValidCursorGitRef(gitRef)
+            else {
+                throw PluginLifecycleError(
+                    message: "Cursor marketplace Git ref must be a single non-empty ref argument")
+            }
+        }
         let managedUpdate =
             request.host == .claude && request.action == "update" && request.scope == "managed"
         guard ["user", "project", "local"].contains(request.scope) || managedUpdate,
@@ -158,6 +166,13 @@ public struct PluginLifecyclePlanner: Sendable {
             throw PluginLifecycleError(
                 message: "Scope must identify the user home or an added project")
         }
+    }
+
+    private static func isValidCursorGitRef(_ ref: String) -> Bool {
+        !ref.isEmpty && !ref.hasPrefix("-") && ref.allSatisfy { !$0.isWhitespace }
+            && ref.unicodeScalars.allSatisfy {
+                !CharacterSet.controlCharacters.contains($0)
+            }
     }
 
     private func limitation(

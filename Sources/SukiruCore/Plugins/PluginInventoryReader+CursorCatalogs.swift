@@ -34,7 +34,8 @@ extension PluginInventoryReader {
             result.append(
                 PluginMarketplace(
                     host: .cursor, name: name, source: payload, scopeRoot: environment.home,
-                    path: payload, plugins: plugins, evidence: "cached-catalog"))
+                    path: payload, plugins: plugins, evidence: "cached-catalog",
+                    ref: manifest["gitRef"] as? String ?? manifest["ref"] as? String))
         }
         issues += readErrors
         return result

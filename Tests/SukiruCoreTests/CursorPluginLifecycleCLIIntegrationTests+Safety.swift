@@ -138,6 +138,55 @@ extension CursorPluginLifecycleCLIIntegrationTests {
     }
 
     @Test(
+        "Cursor marketplace add carries one explicit Git ref",
+        arguments: ["feature/marketplace", "v2.1.0", "0123456789abcdef"])
+    func marketplaceAddGitRef(ref: String) throws {
+        let tree = try TempTree()
+        let home = try tree.dir("home")
+        try cursorShim(tree, registrations: "[]", supportsGitRef: true)
+        let result = try CLIRunner.run(
+            [
+                "plugins", "marketplaces", "add", "https://example.com/new", "--host", "cursor",
+                "--scope", "user", "--git-ref", ref, "--dry-run"
+            ],
+            environment: CLIRunner.fixtureEnvironment(
+                home: home, path: tree.path + "/bin:/usr/bin:/bin"))
+        #expect(result.exitCode == 0)
+        let json = try #require(try result.jsonObject())
+        let command = try #require(
+            ((json["batch"] as? [String: Any])?["commands"] as? [[String: Any]])?.first)
+        #expect(
+            command["argv"] as? [String]
+                == [
+                    "agent", "plugin", "marketplace", "add", "https://example.com/new",
+                    "--git-ref", ref
+                ])
+        #expect((command["intent"] as? String)?.contains("Git ref \(ref)") == true)
+    }
+
+    @Test("Cursor marketplace Git refs reject option-like and whitespace values")
+    func invalidMarketplaceGitRef() throws {
+        let tree = try TempTree()
+        let home = try tree.dir("home")
+        try cursorShim(tree, registrations: "[]", supportsGitRef: true)
+        for ref in ["--help", "feature branch"] {
+            let gitRefArgument = ref == "--help" ? "--git-ref=\(ref)" : "--git-ref"
+            var arguments = [
+                "plugins", "marketplaces", "add", "https://example.com/new", "--host",
+                "cursor", "--scope", "user", gitRefArgument
+            ]
+            if ref != "--help" { arguments.append(ref) }
+            arguments.append("--dry-run")
+            let result = try CLIRunner.run(
+                arguments,
+                environment: CLIRunner.fixtureEnvironment(
+                    home: home, path: tree.path + "/bin:/usr/bin:/bin"))
+            #expect(result.exitCode == 1)
+            #expect(result.stderrText.contains("single non-empty ref argument"))
+        }
+    }
+
+    @Test(
         "Cursor capture and command failures preserve recoverable state", arguments: [false, true])
     func executionFailure(captureFails: Bool) throws {
         let tree = try TempTree()
@@ -243,11 +292,15 @@ extension CursorPluginLifecycleCLIIntegrationTests {
         _ tree: TempTree, registrations: String, mutation: String = "exit 91",
         missingRemove: Bool = false,
         missingFormat: Bool = false,
+        supportsGitRef: Bool = false,
         version: String = "2026.08.25-3e8eec8"
     ) throws {
         let removeHelp = missingRemove ? "exit 1" : "echo 'Usage: agent plugin marketplace remove'"
         let listHelp =
             "Usage: agent plugin marketplace list" + (missingFormat ? "" : " --format text json")
+        let addHelp =
+            "Usage: agent plugin marketplace add"
+            + (supportsGitRef ? " --git-ref <ref>" : "")
         try tree.executable(
             "bin/agent",
             contents: """
@@ -256,6 +309,7 @@ extension CursorPluginLifecycleCLIIntegrationTests {
                 --version) echo '\(version)';;
                 'plugin marketplace remove --help') \(removeHelp);;
                 'plugin marketplace list --help') echo '\(listHelp)';;
+                'plugin marketplace add --help') echo '\(addHelp)';;
                 *--help*) echo "Usage: agent $*";;
                 'plugin marketplace list --format json') printf '%s\n' '\(registrations)';;
                 *) \(mutation);;

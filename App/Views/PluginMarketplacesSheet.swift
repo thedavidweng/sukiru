@@ -68,6 +68,11 @@ struct PluginMarketplacesSheet: View {
                                 Text(verbatim: marketplace.source)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
+                                if let ref = marketplace.ref {
+                                    Text("Git ref: \(ref)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                             Spacer()
                             Menu {

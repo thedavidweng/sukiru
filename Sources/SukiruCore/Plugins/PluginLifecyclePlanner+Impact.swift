@@ -20,8 +20,9 @@ extension PluginLifecyclePlanner {
             return text
         }
         if request.host == .cursor {
+            let ref = request.gitRef.map { " at Git ref \($0)" } ?? ""
             return
-                "\(request.action) \(request.target) for the personal Cursor marketplace. "
+                "\(request.action) \(request.target)\(ref) for the personal Cursor marketplace. "
                 + "Removal may uninstall its plugins. "
                 + "Catalog/payload changes will be inspected after execution; runtime loading remains unknown."
         }

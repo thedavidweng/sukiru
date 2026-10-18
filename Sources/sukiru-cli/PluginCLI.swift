@@ -64,6 +64,7 @@ struct PluginOperationOptions {
     var target: String
     var inputs: ScopeOptions
     var settingsScope: String?
+    var gitRef: String?
     var output: OutputOptions
     var mutation: MutationOptions
 
@@ -86,7 +87,8 @@ struct PluginOperationOptions {
             throw CLIError("--settings-scope local needs a project; managed needs user scope")
         }
         let request = PluginLifecycleRequest(
-            host: host, action: action, target: target, scope: scope, scopeRoot: root)
+            host: host, action: action, target: target, scope: scope, scopeRoot: root,
+            gitRef: gitRef)
         try runPluginRequests([request], inputs: inputs, output: output, mutation: mutation)
     }
 }
@@ -126,6 +128,7 @@ struct PluginMarketplaceList {
             lines: marketplaces.map {
                 "\($0.host.rawValue) / \($0.scope) / \($0.scopeRoot): \($0.name) \($0.source) "
                     + "[\($0.evidence ?? "configured")]"
+                    + ($0.ref.map { " ref=\($0)" } ?? "")
             })
     }
 }

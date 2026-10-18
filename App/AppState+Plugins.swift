@@ -10,6 +10,7 @@ struct PluginManagementState {
     var target = ""
     var scope = "user"
     var scopeRoot = ""
+    var gitRef: String?
     var error: String?
     /// Why a removal planned straight from the plugin list could not be previewed.
     var removalError: String?
@@ -30,6 +31,7 @@ extension AppState {
             : (action == "disable-local" ? plugin.path ?? "" : plugin.identifier)
         pluginManagement.scope = plugin.scope
         pluginManagement.scopeRoot = plugin.scopeRoot
+        pluginManagement.gitRef = nil
         pluginManagement.error = nil
         pluginManagement.showingSheet = true
     }
@@ -40,6 +42,7 @@ extension AppState {
         pluginManagement.target = marketplace.name
         pluginManagement.scope = marketplace.scope
         pluginManagement.scopeRoot = marketplace.scopeRoot
+        pluginManagement.gitRef = nil
         pluginManagement.error = nil
         pluginManagement.showingSheet = true
     }
@@ -53,7 +56,8 @@ extension AppState {
         let request = PluginLifecycleRequest(
             host: pluginManagement.host,
             action: pluginManagement.action, target: pluginManagement.target,
-            scope: pluginManagement.scope, scopeRoot: pluginManagement.scopeRoot)
+            scope: pluginManagement.scope, scopeRoot: pluginManagement.scopeRoot,
+            gitRef: pluginManagement.gitRef)
         pluginManagement.error = nil
         planPluginOperations([request]) { [weak self] error in
             self?.pluginManagement.error = error
