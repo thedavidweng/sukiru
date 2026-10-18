@@ -30,12 +30,15 @@ public struct HostRemovalEntry: Codable, Equatable, Sendable {
 }
 
 public enum HostRemovalReason: String, Codable, Equatable, Sendable {
-    case ownerless, githubLedger, agentManaged, ambiguous, sharedFolder, unofficialEntry
+    case ownerless, githubLedger, agentManaged, pnpmManaged, ambiguous, sharedFolder,
+        unofficialEntry
 
     public var text: String {
         switch self {
         case .ownerless: return "Ownerless Skill; queue its deletion from Health."
         case .githubLedger: return "GitHub Ledger skill; uninstall it individually."
+        case .pnpmManaged:
+            return "pnpm installation evidence is read-only; manage the dependency with pnpm."
         case .agentManaged: return "Agent-managed Skill; manage it in the host."
         case .ambiguous:
             return "Double-booked or ambiguous name; resolve ownership in Health first."

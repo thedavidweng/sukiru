@@ -3,6 +3,7 @@
 /// Issue kinds are part of the scan wire surface — validators match on these
 /// strings, so they must never be renamed casually.
 public enum IssueKind {
+    public static let pnpmUnverified = "pnpm-ownership-unverified"
     /// A `SKILL.md` whose frontmatter fails to parse or validate.
     public static let skillMDInvalid = "skill-md-invalid"
     /// A `SKILL.md` that cannot be read at all (I/O failure, non-UTF-8 bytes).

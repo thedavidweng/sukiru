@@ -17,6 +17,7 @@ extension Severity {
 enum IssuePresentation {
     static func title(forKind kind: String) -> String {
         switch kind {
+        case IssueKind.pnpmUnverified: String(localized: "Unverified pnpm ownership")
         case IssueKind.skillMDInvalid: String(localized: "Invalid SKILL.md")
         case IssueKind.skillMDUnreadable: String(localized: "Unreadable SKILL.md")
         case IssueKind.ledgerUnreadable: String(localized: "Unreadable lock file")

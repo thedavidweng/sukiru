@@ -8,9 +8,17 @@ public struct SkillProvenance: Codable, Equatable, Sendable {
     /// The gh ledger claim, when a placement carries `metadata.github-repo`.
     public let github: GitHubProvenance?
 
-    public init(vercel: VercelProvenance?, github: GitHubProvenance?) {
+    public let pnpm: [PnpmProvenance]?
+    public let pnpmUnverified: Bool?
+
+    public init(
+        vercel: VercelProvenance?, github: GitHubProvenance?,
+        pnpm: [PnpmProvenance]? = nil, pnpmUnverified: Bool? = nil
+    ) {
         self.vercel = vercel
         self.github = github
+        self.pnpm = pnpm
+        self.pnpmUnverified = pnpmUnverified
     }
 }
 

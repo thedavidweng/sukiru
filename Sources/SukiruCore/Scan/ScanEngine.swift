@@ -53,17 +53,25 @@ public struct ScanEngine: Sendable {
         // The ambiguity trigger needs the lock claims (a lock-anchored
         // canonical placement hash-explains its identical copies).
         let groups = SkillInventory.groups(from: inventory.placements, locks: claims.claims)
-        let resolution = OwnershipResolver().resolve(groups: groups, locks: claims.claims)
+        let pnpm = PnpmOwnershipReader(fileSystem: fileSystem).read(
+            placements: inventory.placements)
+        let resolution = OwnershipResolver().resolve(
+            groups: groups, locks: claims.claims, pnpm: pnpm)
+        let mutableGroups = groups.filter { !pnpm.protects($0) }
         let health = HealthAnalyzer(fileSystem: fileSystem).analyze(
-            groups: groups, locks: claims.claims)
+            groups: mutableGroups, locks: claims.claims)
         let leftovers = LeftoverHostRule.findings(workspaces: workspaces, fileSystem: fileSystem)
         let detector = HostDetector(environment: environment, fileSystem: fileSystem)
         let collisions = HostNameCollisionRule.findings(
             groups: groups, workspaces: workspaces,
             detectedHosts: Set(HostTable.hosts.filter(detector.isDetected).map(\.id)))
-        let findings = (inventory.findings + resolution.findings + health + leftovers + collisions)
+        let safeInventoryFindings = inventory.findings.filter { finding in
+            !finding.evidence.contains { pnpm.unverified.contains($0.detail) }
+        }
+        let findings =
+            (safeInventoryFindings + resolution.findings + health + leftovers + collisions)
             .sorted(by: Self.findingOrder)
-        let issues = (inventory.issues + claims.issues).sorted {
+        let issues = (inventory.issues + claims.issues + pnpm.issues).sorted {
             ($0.path, $0.kind, $0.message) < ($1.path, $1.kind, $1.message)
         }
         let plugins = PluginInventoryReader(environment: environment).read(request)

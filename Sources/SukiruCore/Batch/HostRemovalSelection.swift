@@ -50,6 +50,16 @@ struct HostRemovalSelection {
     }
 
     private func reason(skill: Skill, placement: Placement) -> HostRemovalReason? {
+        let protected =
+            skill.isPnpmReadOnly
+            || skills.contains(where: {
+                $0.isPnpmReadOnly
+                    && $0.placements.contains {
+                        HostRemovalContext.folderName(skill.name)
+                            == ($0.path as NSString).lastPathComponent
+                    }
+            })
+        if protected { return .pnpmManaged }
         let folder = HostRemovalContext.folderName(skill.name)
         if placement.managingAgent != nil || skill.ownership == .agent { return .agentManaged }
         let ambiguous =

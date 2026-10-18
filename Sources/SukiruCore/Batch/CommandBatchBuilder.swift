@@ -96,6 +96,9 @@ public struct CommandBatchBuilder: Sendable {
     public func buildModeSwitch(
         skill: Skill, to mode: PlacementMode, report: ScanReport
     ) throws -> CommandBatch {
+        guard !skill.isPnpmReadOnly else {
+            throw BatchBuildError(problems: [LifecycleBlocker.pnpmManaged.message])
+        }
         guard let bucket = Self.bucket(of: skill, report: report) else {
             throw BatchBuildError(problems: ["no scanned scope holds '\(skill.name)'"])
         }
@@ -196,6 +199,12 @@ public struct CommandBatchBuilder: Sendable {
     func plan(
         entry: DecisionEntry, finding: Finding, report: ScanReport
     ) throws -> [BatchCommand] {
+        let protected = Self.protectsPnpm(
+            name: finding.skillName, bucket: Self.bucket(of: finding.workspaceID),
+            paths: finding.evidence.map(\.detail), report: report)
+        if entry.action != .leave && protected {
+            throw DecisionProblem(message: LifecycleBlocker.pnpmManaged.message)
+        }
         switch entry.action {
         case .leave:
             try requireNoChoice(entry: entry)

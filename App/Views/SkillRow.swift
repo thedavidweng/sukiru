@@ -79,6 +79,7 @@ extension Ownership {
         switch self {
         case .vercel: "Vercel"
         case .github: "GitHub"
+        case .pnpm: "Managed by pnpm"
         case .doubleBooked: "Double-booked"
         case .ownerless: "Ownerless"
         case .agent: "Agent-managed"

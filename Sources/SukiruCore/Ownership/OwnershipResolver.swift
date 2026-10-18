@@ -81,6 +81,12 @@ public struct OwnershipResolver: Sendable {
 
     /// Resolves every group against its scope's lock claim.
     public func resolve(groups: [SkillGroup], locks: [ScopeLockClaim]) -> OwnershipResolution {
+        resolve(groups: groups, locks: locks, pnpm: PnpmOwnershipEvidence())
+    }
+
+    func resolve(
+        groups: [SkillGroup], locks: [ScopeLockClaim], pnpm: PnpmOwnershipEvidence
+    ) -> OwnershipResolution {
         var claims: [String: ScopeLockClaim] = [:]
         for claim in locks {
             claims[claim.scopeGroup] = claim
@@ -94,14 +100,25 @@ public struct OwnershipResolver: Sendable {
             // claim is a deterministic choice when several carry one.
             let ghPlacement = group.members.first { $0.githubProvenance != nil }
             let managingAgent = group.managingAgent
-            let ownership = Self.ownership(
+            var ownership = Self.ownership(
                 ambiguous: group.ambiguous, vercelClaim: claim?.vercelClaim(for: group) != nil,
                 githubClaim: ghPlacement != nil, agentClaim: managingAgent != nil)
+            let packageClaims = group.members.compactMap { pnpm.verified[$0.placement.path] }
+            let unverified = group.members.contains { pnpm.unverified.contains($0.placement.path) }
+            if !packageClaims.isEmpty {
+                let targets = Set(packageClaims.map(\.target))
+                ownership =
+                    packageClaims.count == group.members.count && targets.count == 1
+                        && !group.ambiguous && claim?.vercelClaim(for: group) == nil
+                        && ghPlacement == nil ? .pnpm : .ownerless
+            }
             let provenance = SkillProvenance(
                 vercel: entry.map {
                     VercelProvenance(entry: $0, scope: claim?.lock.scope ?? .global)
                 },
-                github: ghPlacement?.githubProvenance
+                github: ghPlacement?.githubProvenance,
+                pnpm: packageClaims.isEmpty ? nil : packageClaims,
+                pnpmUnverified: unverified ? true : nil
             )
             skills.append(
                 Skill(
@@ -113,6 +130,7 @@ public struct OwnershipResolver: Sendable {
                     placements: group.members.map(\.placement),
                     managingAgent: ownership == .agent ? managingAgent : nil
                 ))
+            if pnpm.protects(group) { continue }
             findings.append(
                 contentsOf: groupFindings(
                     for: group, ownership: ownership, claim: claim, ghPlacement: ghPlacement))

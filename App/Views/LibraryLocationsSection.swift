@@ -13,7 +13,7 @@ struct LibraryLocationsSection: View {
         } header: {
             Text("Locations")
         } footer: {
-            if skill.ownership != .agent {
+            if skill.ownership != .agent && !skill.isPnpmReadOnly {
                 modeSwitch
             }
         }

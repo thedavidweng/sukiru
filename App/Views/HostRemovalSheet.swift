@@ -243,6 +243,7 @@ extension HostRemovalReason {
         switch self {
         case .ownerless: "hostRemoval.reason.ownerless"
         case .githubLedger: "hostRemoval.reason.githubLedger"
+        case .pnpmManaged: "library.pnpm.readOnly"
         case .agentManaged: "hostRemoval.reason.agentManaged"
         case .ambiguous: "hostRemoval.reason.ambiguous"
         case .sharedFolder: "hostRemoval.reason.sharedFolder"

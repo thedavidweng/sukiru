@@ -155,6 +155,8 @@ extension CommandBatchBuilder {
                 message: "skill '\(skill.name)' (finding '\(entry.findingID)'): no ledger "
                     + "owns this skill, so 'update' is not available; choose adopt, cleanup, "
                     + "or leave")
+        case .pnpm:
+            throw DecisionProblem(message: LifecycleBlocker.pnpmManaged.message)
         case .agent:
             throw Self.agentManaged(skill: skill)
         }
