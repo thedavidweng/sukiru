@@ -60,4 +60,18 @@ targets:
           SWIFT_OPTIMIZATION_LEVEL: "-Osize"
           DEAD_CODE_STRIPPING: YES
     scheme:
-      testTargets: []
+      testTargets:
+        - SukiruUITests
+
+  SukiruUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: SukiruUITests
+    dependencies:
+      - target: Sukiru
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.sukiru.uitests
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: YES

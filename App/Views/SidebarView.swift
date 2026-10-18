@@ -178,6 +178,7 @@ struct SidebarView: View {
             AXToken(token: "sukiru.sidebar.plugins.\(host.rawValue)")
             hostLabel(host)
         }
+        .accessibilityIdentifier("sukiru.sidebar.plugins.\(host.rawValue)")
         .help("Show plugins managed by this host")
         .contextMenu {
             arrangementMenu(host, in: PluginHost.allCases, arrangement: $pluginHosts)
