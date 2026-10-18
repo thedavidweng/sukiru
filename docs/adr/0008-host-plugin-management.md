@@ -193,8 +193,9 @@ exception covers local development directories as well as incompatible local
 files; cache/marketplace payloads and symlink aliases are ineligible.
 
 Explicit personal marketplace previews verify `agent` identity and installed
-operation help. Registration targeting comes from an explicit official
-`agent plugin marketplace list` call, never from cached catalog names. Duplicate
+operation help, including the list command's `--format json` support.
+Registration targeting comes from an explicit official
+`agent plugin marketplace list --format json` call, never from cached catalog names. Duplicate
 names/URLs, unknown list formats and global/team scope block targeting. Add,
 update and remove run through command review, effects consent, snapshots,
 serialized execution, local diff and conflict-aware rollback. Server indexing

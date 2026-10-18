@@ -38,8 +38,10 @@ struct CursorPluginLifecycleCLIIntegrationTests {
                 #!/bin/sh
                 case "$*" in
                 --version) echo 2026.08.25-3e8eec8;;
+                'plugin marketplace list --help') echo "Usage: agent plugin marketplace list --format text json";;
                 *--help*) echo "Usage: agent $*";;
-                'plugin marketplace list') echo 'personal user https://example.com/plugins.git';;
+                'plugin marketplace list --format json')
+                  echo '[{"name":"personal","scope":"user","gitUrl":"https://example.com/plugins.git"}]';;
                 *) touch '\(marker)'; exit 92;;
                 esac
                 """)
@@ -126,8 +128,10 @@ struct CursorPluginLifecycleCLIIntegrationTests {
                 #!/bin/sh
                 case "$*" in
                 --version) echo 2026.08.25-3e8eec8;;
+                'plugin marketplace list --help') echo "Usage: agent plugin marketplace list --format text json";;
                 *--help*) echo "Usage: agent $*";;
-                'plugin marketplace list') echo 'personal user https://example.com/plugins.git';;
+                'plugin marketplace list --format json')
+                  echo '[{"name":"personal","scope":"user","gitUrl":"https://example.com/plugins.git"}]';;
                 'plugin marketplace update personal') \(mutation); echo 'Updated: 0 plugins indexed';;
                 *) exit 91;;
                 esac
@@ -170,8 +174,10 @@ struct CursorPluginLifecycleCLIIntegrationTests {
                 #!/bin/sh
                 case "$*" in
                 --version) echo 2026.08.25-3e8eec8;;
+                'plugin marketplace list --help') echo "Usage: agent plugin marketplace list --format text json";;
                 *--help*) echo "Usage: agent $*";;
-                'plugin marketplace list') echo 'personal user https://example.com/plugins.git';;
+                'plugin marketplace list --format json')
+                  echo '[{"name":"personal","scope":"user","gitUrl":"https://example.com/plugins.git"}]';;
                 *) exit 91;;
                 esac
                 """)

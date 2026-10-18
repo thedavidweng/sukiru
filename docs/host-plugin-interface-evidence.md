@@ -426,6 +426,30 @@ hypothetical risk. ADR-0008 requires a separate decision for it. The explicit-ef
 mutations require batch-specific agreement to backend changes. Snapshot
 restoration must not be described as reversing backend installation.
 
+### Cursor marketplace registrations use structured output
+
+The official Cursor CLI package `2026.10.16-e3cb207`, obtained from
+[Cursor's installer](https://cursor.com/install), exposes
+`agent plugin marketplace list --format <format>` with `text` and `json`
+choices. Its list handler serializes an array of registrations:
+
+```json
+[{"name":"personal","gitUrl":"https://example.com/plugins.git","scope":"user"}]
+```
+
+The handler also emits display/indexing metadata and an optional `gitRef`.
+Scope is `team` when a team ID is present, `user` when a user ID is present,
+and otherwise `global`. Sukiru reads `name`, `gitUrl` and `scope`; extra
+metadata does not establish installation or enablement. An empty array is
+valid. Missing required fields, unknown scopes, malformed JSON and text
+tables block planning. There is no human-output parsing path.
+
+Capability probing checks list help for both `--format` and `json` before
+advertising a native marketplace operation. Registration listing runs only
+for an explicit lifecycle request; passive inventory remains subprocess-free.
+Personal mutation, duplicate protection, backend-effects consent, capture,
+observation and rollback retain the ADR-0008 boundaries.
+
 ### Capability regression expectations
 
 Tests should distinguish host-exposed commands from Sukiru-executable routes:

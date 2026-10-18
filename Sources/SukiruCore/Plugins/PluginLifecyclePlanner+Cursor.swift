@@ -30,6 +30,9 @@ extension PluginLifecyclePlanner {
         try probe.help(
             host: .cursor, arguments: ["plugin", "marketplace", verb],
             requiredFlags: ["Usage:", "plugin marketplace " + verb])
+        try probe.help(
+            host: .cursor, arguments: ["plugin", "marketplace", "list"],
+            requiredFlags: ["Usage:", "plugin marketplace list", "--format", "json"])
     }
 
     /// Registration targeting comes from an explicit official list request, not cache names.
@@ -39,16 +42,13 @@ extension PluginLifecyclePlanner {
         let verb =
             request.action == "marketplace-refresh"
             ? "update" : String(request.action.dropFirst("marketplace-".count))
-        try probe.help(
-            host: .cursor, arguments: ["plugin", "marketplace", "list"],
-            requiredFlags: ["Usage:", "plugin marketplace list"])
         let output = try probe.output(
-            host: .cursor, arguments: ["plugin", "marketplace", "list"])
+            host: .cursor, arguments: ["plugin", "marketplace", "list", "--format", "json"])
         let registrations = try cursorRegistrations(output)
         if verb == "add" {
             guard
                 !registrations.contains(where: {
-                    $0.name == request.target || $0.source == request.target
+                    $0.name == request.target || $0.gitUrl == request.target
                 })
             else {
                 throw PluginLifecycleError(
@@ -56,7 +56,7 @@ extension PluginLifecyclePlanner {
             }
         } else {
             let matches = registrations.filter {
-                $0.name == request.target || $0.source == request.target
+                $0.name == request.target || $0.gitUrl == request.target
             }
             guard matches.count == 1, let registration = matches.first else {
                 throw PluginLifecycleError(
@@ -70,8 +70,8 @@ extension PluginLifecyclePlanner {
             }
             // A URL alias shared by another registration is ambiguous even when the name is unique.
             guard
-                registration.source.isEmpty
-                    || registrations.filter({ $0.source == registration.source }).count == 1
+                registration.gitUrl.isEmpty
+                    || registrations.filter({ $0.gitUrl == registration.gitUrl }).count == 1
             else {
                 throw PluginLifecycleError(
                     message: "Cursor marketplace URL has duplicate registrations")
@@ -80,26 +80,30 @@ extension PluginLifecyclePlanner {
         return [PluginHost.cursor.executable, "plugin", "marketplace", verb, request.target]
     }
 
-    private struct CursorRegistration {
+    private struct CursorRegistration: Decodable {
         let name: String
         let scope: String
-        let source: String
+        let gitUrl: String
     }
 
     private func cursorRegistrations(_ output: String) throws -> [CursorRegistration] {
-        try output.split(separator: "\n").compactMap { line in
-            let fields = line.split(maxSplits: 2, whereSeparator: { $0.isWhitespace }).map {
-                String($0).trimmingCharacters(in: .whitespaces)
-            }
-            let header = fields.prefix(2).map { $0.lowercased() } == ["name", "scope"]
-            if header { return nil }
-            guard fields.count >= 2, ["user", "team", "global"].contains(fields[1]) else {
-                throw PluginLifecycleError(
-                    message: "Unrecognized Cursor marketplace registration output; use Customize")
-            }
-            return CursorRegistration(
-                name: fields[0], scope: fields[1], source: fields.count > 2 ? fields[2] : "")
+        let registrations: [CursorRegistration]
+        do {
+            registrations = try JSONDecoder().decode(
+                [CursorRegistration].self, from: Data(output.utf8))
+        } catch {
+            throw PluginLifecycleError(
+                message: "Unrecognized Cursor marketplace JSON output; use Customize")
         }
+        guard
+            registrations.allSatisfy({
+                !$0.name.isEmpty && ["user", "team", "global"].contains($0.scope)
+            })
+        else {
+            throw PluginLifecycleError(
+                message: "Unrecognized Cursor marketplace JSON registration; use Customize")
+        }
+        return registrations
     }
 
     func cursorLimitation(_ request: PluginLifecycleRequest) -> String? {
