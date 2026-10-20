@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.7.0](https://github.com/thedavidweng/sukiru/compare/v1.6.0...v1.7.0) (2026-10-20)
+
+
+### ✨ Features
+
+* **cursor:** support pinned marketplace refs ([d93cb83](https://github.com/thedavidweng/sukiru/commit/d93cb83414d4898d51a63df07c22fa300d8306ec))
+* **cursor:** support pinned marketplace refs ([103c11c](https://github.com/thedavidweng/sukiru/commit/103c11cbd393522d78ede61bd9f8fc03b8dbb363))
+* recognize pnpm-owned skills safely ([7d4ab99](https://github.com/thedavidweng/sukiru/commit/7d4ab9916595bf327742e59c9cfc2ba7e4efbbba))
+* recognize pnpm-owned skills safely ([#67](https://github.com/thedavidweng/sukiru/issues/67)) ([c2c38a1](https://github.com/thedavidweng/sukiru/commit/c2c38a1540a4f6715baf9469065155b50f259e60))
+
+
+### 🐛 Bug Fixes
+
+* **cursor:** use structured marketplace registrations ([#62](https://github.com/thedavidweng/sukiru/issues/62)) ([fea25ae](https://github.com/thedavidweng/sukiru/commit/fea25ae5c24b6b7e2e9d82b825dc3eb59d0eff7a))
+* isolate offline UI fixtures and verify Cursor preview ([4c64753](https://github.com/thedavidweng/sukiru/commit/4c64753d605a2fec6a73526832fdaf9ba5b6f6d5))
+* isolate offline UI fixtures and verify Cursor preview ([4a6d6cb](https://github.com/thedavidweng/sukiru/commit/4a6d6cb55d990528fd3c422c5bb36338eb27b8d0))
+* **yaml:** preserve quoted frontmatter and hook mapping keys ([48de61c](https://github.com/thedavidweng/sukiru/commit/48de61ce8e720c97c939e39aa7e1aa138bc821ba))
+* **yaml:** preserve quoted mapping keys ([4cd0d87](https://github.com/thedavidweng/sukiru/commit/4cd0d872d1a14f5c5899831a679d7153832ed6e0))
+
 ## [1.6.0](https://github.com/thedavidweng/sukiru/compare/v1.5.2...v1.6.0) (2026-10-17)
 
 
