@@ -50,7 +50,10 @@ final class SukiruUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["local-demo"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["cached-demo"].waitForExistence(timeout: 10))
+        app.staticTexts["All Skills"].click()
+        XCTAssertFalse(app.staticTexts["outside-fixture-skill"].exists)
         XCTAssertFalse(app.staticTexts["outside-fixture-project"].exists)
+        cursor.click()
 
         app.staticTexts["local-demo"].click()
         XCTAssertFalse(app.buttons["sukiru.plugins.action.update"].isEnabled)
