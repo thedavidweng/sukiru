@@ -1,0 +1,9 @@
+#!/bin/sh
+printf '%s\n' "$*" >> "$SUKIRU_UI_PROBE_LOG"
+case "$*" in
+  "--version") echo "2026.10.16-e3cb207" ;;
+  "plugin marketplace add --help") echo "Usage: agent plugin marketplace add --git-ref <ref>" ;;
+  "plugin marketplace list --help") echo "Usage: agent plugin marketplace list --format json" ;;
+  *"plugin marketplace list --format json") echo '[]' ;;
+  *) exit 64 ;;
+esac

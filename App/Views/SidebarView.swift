@@ -124,8 +124,10 @@ struct SidebarView: View {
         }
         .listStyle(.sidebar)
         .onChange(of: state.projectRoots) { _, roots in
-            // A SUKIRU_ROOTS session never rewrites the user's saved folders.
-            if state.environment.projectRoots.isEmpty { projects.retain(roots) }
+            // Fixture homes and explicit roots never rewrite the user's saved folders.
+            if !state.environment.homeIsOverridden && state.environment.projectRoots.isEmpty {
+                projects.retain(roots)
+            }
         }
         .onChange(of: projects) { _, arrangement in
             if case .project(let root) = state.libraryScope, !arrangement.isShown(root) {
