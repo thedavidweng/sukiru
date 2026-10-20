@@ -189,7 +189,7 @@ final class AppState: ObservableObject {
         let environment = SukiruEnvironment(reader: ProcessEnvironmentReader())
         self.environment = environment
         self.projectRoots =
-            environment.projectRoots.isEmpty
+            !environment.homeIsOverridden && environment.projectRoots.isEmpty
             ? UserDefaults.standard.stringArray(forKey: Self.projectRootsDefaultsKey) ?? []
             : environment.projectRoots
         self.capabilityCache = CapabilityCache(
@@ -335,10 +335,9 @@ final class AppState: ObservableObject {
         rescan()
     }
 
-    /// An explicit `SUKIRU_ROOTS` session is a fixture or CLI-parity run, so
-    /// its edits never overwrite the user's saved folders.
+    /// Explicit roots or a fixture home must not overwrite saved user folders.
     private func saveProjectRoots() {
-        guard environment.projectRoots.isEmpty else { return }
+        guard !environment.homeIsOverridden, environment.projectRoots.isEmpty else { return }
         UserDefaults.standard.set(projectRoots, forKey: Self.projectRootsDefaultsKey)
     }
 

@@ -68,6 +68,11 @@ targets:
     platform: macOS
     sources:
       - path: SukiruUITests
+        excludes:
+          - Fixtures
+      - path: SukiruUITests/Fixtures
+        type: folder
+        buildPhase: resources
     dependencies:
       - target: Sukiru
     settings:

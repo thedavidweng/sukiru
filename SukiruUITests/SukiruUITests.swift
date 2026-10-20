@@ -14,6 +14,13 @@ final class SukiruUITests: XCTestCase {
     }
 
     override func tearDownWithError() throws {
+        let probes = fixture.appendingPathComponent("probes.log")
+        if FileManager.default.fileExists(atPath: probes.path) {
+            let attachment = try XCTAttachment(string: String(contentsOf: probes, encoding: .utf8))
+            attachment.name = "Fixture CLI probes"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
         if let fixture { try? FileManager.default.removeItem(at: fixture) }
     }
 
@@ -21,7 +28,20 @@ final class SukiruUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["SUKIRU_HOME"] = home.path
         app.launchEnvironment["SUKIRU_ROOTS"] = ""
-        app.launchEnvironment["PATH"] = fixture.appendingPathComponent("bin").path
+        // The sandboxed runner refuses runtime-created executables; bundle the CLI fixture.
+        app.launchEnvironment["PATH"] =
+            Bundle(for: Self.self).resourceURL!
+            .appendingPathComponent("Fixtures/bin").path
+        let probes = fixture.appendingPathComponent("probes.log")
+        app.launchEnvironment["SUKIRU_UI_PROBE_LOG"] = probes.path
+        let savedProject = fixture.appendingPathComponent("outside-fixture-project")
+        try write(
+            "---\nname: outside-fixture-skill\ndescription: must not be scanned\n---\n",
+            to: savedProject.appendingPathComponent(".agents/skills/outside-fixture-skill/SKILL.md")
+        )
+        app.launchArguments = [
+            "-AppleLanguages", "(en)", "-projectRoots", "(\"\(savedProject.path)\")"
+        ]
         app.launch()
 
         let cursor = app.descendants(matching: .any)["sukiru.sidebar.plugins.cursor"].firstMatch
@@ -30,14 +50,31 @@ final class SukiruUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["local-demo"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["cached-demo"].waitForExistence(timeout: 10))
+        app.staticTexts["All Skills"].click()
+        XCTAssertFalse(app.staticTexts["outside-fixture-skill"].exists)
+        XCTAssertFalse(app.staticTexts["outside-fixture-project"].exists)
+        cursor.click()
+
+        app.staticTexts["local-demo"].click()
+        XCTAssertFalse(app.buttons["sukiru.plugins.action.update"].isEnabled)
+        XCTAssertFalse(app.switches.firstMatch.exists)
+        app.disclosureTriangles["sukiru.plugins.locations"]
+            .coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.5)).click()
+        XCTAssertTrue(app.staticTexts["Discovered local plugin"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["style.mdc"].firstMatch.exists)
 
         app.staticTexts["cached-demo"].click()
+        let locations = app.disclosureTriangles["sukiru.plugins.locations"]
+        // macOS exposes the label and chevron as one element; only the chevron toggles it.
+        if locations.value as? String == "0" {
+            locations.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.5)).click()
+        }
         XCTAssertTrue(
             app.staticTexts["Cached payload; installation unknown"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Unknown"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Not Checked"].waitForExistence(timeout: 5))
 
-        app.buttons["sukiru.plugins.add"].click()
+        app.menuButtons["sukiru.plugins.add"].click()
         let marketplaces = app.menuItems["Marketplaces…"].firstMatch
         XCTAssertTrue(marketplaces.waitForExistence(timeout: 5))
         marketplaces.click()
@@ -45,20 +82,42 @@ final class SukiruUITests: XCTestCase {
             app.staticTexts["Git ref: refs/heads/main"].waitForExistence(timeout: 5))
         app.buttons["sukiru.plugins.catalog.done"].click()
 
-        app.buttons["sukiru.plugins.add"].click()
+        app.menuButtons["sukiru.plugins.add"].click()
         app.menuItems["Install Plugin…"].firstMatch.click()
-        app.buttons["sukiru.plugins.operation.action"].click()
+        app.popUpButtons["sukiru.plugins.operation.action"].click()
         app.menuItems["Add Marketplace"].click()
         app.textFields["sukiru.plugins.operation.target"].click()
         app.textFields["sukiru.plugins.operation.target"].typeText("https://example.com/new.git")
         app.textFields["sukiru.plugins.operation.git-ref"].click()
         app.textFields["sukiru.plugins.operation.git-ref"].typeText("feature/marketplace")
+        XCTAssertEqual(
+            app.textFields["sukiru.plugins.operation.git-ref"].value as? String,
+            "feature/marketplace")
+        // Commit the native field editor before asking the default button to read the model.
+        app.textFields["sukiru.plugins.operation.target"].click()
         app.buttons["sukiru.plugins.operation.preview"].click()
 
         XCTAssertTrue(app.staticTexts["Review Changes"].waitForExistence(timeout: 10))
         XCTAssertTrue(
-            app.staticTexts["Git ref feature/marketplace"].waitForExistence(timeout: 5))
+            app.staticTexts.matching(
+                NSPredicate(format: "value CONTAINS %@", "Git ref feature/marketplace")
+            ).firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.checkBoxes["sukiru.confirm.pluginEffects"].exists)
+        XCTAssertTrue(app.buttons["sukiru.confirm.apply.disabled"].exists)
+        app.disclosureTriangles.matching(
+            NSPredicate(format: "label BEGINSWITH %@", "Show Commands")
+        ).firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5)).click()
+        XCTAssertTrue(
+            app.staticTexts.matching(
+                NSPredicate(
+                    format: "value CONTAINS %@",
+                    "agent plugin marketplace add https://example.com/new.git --git-ref feature/marketplace"
+                )
+            ).firstMatch.waitForExistence(timeout: 5))
         app.buttons["sukiru.confirm.cancel"].click()
+        app.terminate()
+        let recorded = try String(contentsOf: probes, encoding: .utf8)
+        XCTAssertFalse(recorded.contains("plugin marketplace add https://"))
     }
 
     private func makeCursorFixture() throws {
@@ -73,9 +132,10 @@ final class SukiruUITests: XCTestCase {
         try FileManager.default.createDirectory(at: marketplace, withIntermediateDirectories: true)
 
         try write(
-            "{\"name\":\"local-demo\",\"version\":\"1\",\"skills\":\"skills\"}",
-            to: local.appendingPathComponent("plugin.json"))
+            "{\"name\":\"local-demo\",\"version\":\"1\",\"skills\":\"skills\",\"rules\":\"rules/style.mdc\"}",
+            to: local.appendingPathComponent(".cursor-plugin/plugin.json"))
         try write("# Local demo\n", to: local.appendingPathComponent("skills/SKILL.md"))
+        try write("Use Swift.\n", to: local.appendingPathComponent("rules/style.mdc"))
         try write(
             "{\"name\":\"cached-demo\",\"version\":\"2\",\"skills\":\"skills\"}",
             to: cached.appendingPathComponent("plugin.json"))
@@ -86,21 +146,6 @@ final class SukiruUITests: XCTestCase {
                 + "\"version\":\"1\"}]}",
             to: marketplace.appendingPathComponent("marketplace.json"))
 
-        let bin = fixture.appendingPathComponent("bin", isDirectory: true)
-        try FileManager.default.createDirectory(at: bin, withIntermediateDirectories: true)
-        let shim = """
-            #!/bin/sh
-            case "$*" in
-              "--version") echo "agent 2026.10.16-e3cb207" ;;
-              *"plugin marketplace"*"--help") echo "Usage: agent plugin marketplace --format json --git-ref <ref>" ;;
-              *"plugin marketplace list --format json") echo '[]' ;;
-              *) echo "Usage: agent plugin marketplace" ;;
-            esac
-            """
-        let agent = bin.appendingPathComponent("agent")
-        try write(shim, to: agent)
-        try FileManager.default.setAttributes(
-            [.posixPermissions: NSNumber(value: Int16(0o755))], ofItemAtPath: agent.path)
     }
 
     private func write(_ contents: String, to url: URL) throws {
