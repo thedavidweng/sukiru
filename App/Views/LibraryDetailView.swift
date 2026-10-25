@@ -80,14 +80,13 @@ struct SkillDetailForm: View {
         let findings = state.findingEntries(for: skill)
         Form {
             Section {
+                header
                 LabeledContent("Owner") {
                     Text(skill.ownership.title)
                 }
                 LabeledContent("Scope") {
                     scopeText
                 }
-            } header: {
-                header
             }
             if state.orphanFinding(for: skill) != nil {
                 orphanSection
@@ -122,6 +121,8 @@ struct SkillDetailForm: View {
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("sukiru.library.detail.description")
                     .help(description)
             }
         }

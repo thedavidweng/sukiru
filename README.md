@@ -73,6 +73,7 @@ Website: <https://sukiru.blahaj.uk/>
   unpinned, or restored to the recorded version over local edits. Check for
   Updates asks `gh skill` which GitHub-installed skills have newer versions
   without changing anything.
+  Long descriptions stay within three lines in the inspector; hover to read the full text.
 - 🔍 **Search and install**: Search skills.sh and `gh skill search`
   (optionally limited to one GitHub owner), preview `SKILL.md`, then install
   with the installer you choose, through the same confirm → snapshot →
