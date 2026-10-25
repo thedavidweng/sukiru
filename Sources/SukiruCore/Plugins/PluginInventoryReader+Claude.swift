@@ -71,7 +71,9 @@ extension PluginInventoryReader {
                         }
                     }
                 }
-                let enabled = settings[identifier]
+                // Claude Code treats an installed plugin absent from
+                // `enabledPlugins` as disabled; managed settings are not read.
+                let enabled = settings[identifier] ?? (installationScope == "managed" ? nil : false)
                 let path = entry["installPath"] as? String
                 let manifest = path.flatMap {
                     json(HostPathResolver.join($0, ".claude-plugin/plugin.json"), issues: &issues)

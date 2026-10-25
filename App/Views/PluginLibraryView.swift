@@ -180,6 +180,12 @@ private struct PluginRow: View {
                 PluginEnabledToggle(plugin: plugin)
                     .labelsHidden()
                     .controlSize(.mini)
+            } else {
+                Text(plugin.enablementStatus)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .help(plugin.fixedEnablementReason)
             }
         }
         .accessibilityIdentifier("sukiru.plugins.row.\(plugin.id)")

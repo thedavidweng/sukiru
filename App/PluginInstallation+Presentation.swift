@@ -77,9 +77,20 @@ extension PluginInstallation {
             "Codex has no command to enable or disable one plugin; its feature flags are not plugin enablement"
         case .claude where scope == "managed":
             "Managed settings control this plugin; change it where your organization manages Claude Code"
+        case .cursor:
+            """
+            Cursor has no command to enable or disable one plugin, \
+            and Sukiru does not read its state store; manage it in Cursor
+            """
         default:
             "This host has no command to change whether this plugin is enabled"
         }
+    }
+
+    /// The short row text shown where the enabled switch would be.
+    var enablementStatus: LocalizedStringKey {
+        host == .cursor && installationStatus == "cached"
+            ? "Cached · Manage in Cursor" : "Enablement unknown"
     }
 
     /// Why the toolbar's Update is dimmed for this installation.

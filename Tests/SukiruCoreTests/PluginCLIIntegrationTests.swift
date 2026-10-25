@@ -219,4 +219,43 @@ struct PluginCLIIntegrationTests {
         #expect(components.contains { $0["name"] as? String == "bundled" })
         #expect(!FileManager.default.fileExists(atPath: marker))
     }
+
+    @Test("Claude installations absent from enabledPlugins are disabled, except managed ones")
+    func claudeAbsentEnablement() throws {
+        let tree = try TempTree()
+        let home = try tree.dir("home")
+        let project = try tree.dir("project")
+        let payload = try tree.dir("home/.claude/plugins/cache/one/demo/1.0")
+        try tree.file(
+            "home/.claude/plugins/installed_plugins.json",
+            contents: """
+                {"version":2,"plugins":{
+                  "listed@one":[{"scope":"user","installPath":"\(payload)","version":"1.0"}],
+                  "absent@one":[{"scope":"user","installPath":"\(payload)","version":"1.0"},
+                    {"scope":"project","projectPath":"\(project)","installPath":"\(payload)","version":"1.0"}],
+                  "org@one":[{"scope":"managed","installPath":"\(payload)","version":"1.0"}]
+                }}
+                """)
+        try tree.file(
+            "home/.claude/settings.json",
+            contents: """
+                {"enabledPlugins":{"listed@one":true}}
+                """)
+        let result = try CLIRunner.run(
+            ["scan"],
+            environment: CLIRunner.fixtureEnvironment(home: home, roots: [project]))
+        #expect(result.exitCode == 0)
+        let object = try #require(try result.jsonObject())
+        let inventory = try #require(object["pluginInventory"] as? [String: Any])
+        let plugins = try #require(inventory["installations"] as? [[String: Any]])
+        func enablement(_ identifier: String, scope: String) -> String? {
+            plugins.first {
+                $0["identifier"] as? String == identifier && $0["scope"] as? String == scope
+            }?["enablement"] as? String
+        }
+        #expect(enablement("listed@one", scope: "user") == "enabled")
+        #expect(enablement("absent@one", scope: "user") == "disabled")
+        #expect(enablement("absent@one", scope: "project") == "disabled")
+        #expect(enablement("org@one", scope: "managed") == "unknown")
+    }
 }
