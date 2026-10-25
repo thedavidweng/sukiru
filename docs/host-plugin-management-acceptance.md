@@ -1,6 +1,7 @@
 # Host plugin management acceptance evidence
 
-Parent: [#14](https://github.com/thedavidweng/sukiru/issues/14).
+Parents: [#14](https://github.com/thedavidweng/sukiru/issues/14) and
+[#31](https://github.com/thedavidweng/sukiru/issues/31).
 Interface evidence: [verified host interfaces](host-plugin-interface-evidence.md).
 Policy: [ADR-0008](adr/0008-host-plugin-management.md).
 
@@ -30,7 +31,7 @@ and runtime-loaded status remain separate; runtime status is unknown.
 
 Skills and Plugins are separate sidebar destinations (stories 1 and 6): the
 Library toolbar is unchanged, and the Plugins section lists Claude Code,
-Codex, and OpenCode separately with their own counts. Users choose which hosts
+Codex, OpenCode, and Cursor separately with their own counts. Users choose which hosts
 the section shows and their order in General settings (a native reorderable
 list with a switch per host, plus Move Up/Down in the row menu), or with Move Up/Down in
 the sidebar row menu. The sidebar
@@ -55,7 +56,7 @@ identifiers/help, and English/Simplified Chinese String Catalog entries.
 
 `scan` includes `pluginInventory` when plugin facts or inspection issues exist;
 each inventory issue names the `host` whose files produced it.
-`plugins capabilities --host claude|codex|opencode` explicitly probes version/help.
+`plugins capabilities --host claude|codex|opencode|cursor` explicitly probes version/help.
 `plugins plan --requests FILE` previews an array of requests with `host`,
 `action`, `target`, `scope`, and absolute `scopeRoot` fields.
 OpenCode v1 uses `install` or explicit `replace` (`--force`), with user scope
@@ -91,11 +92,69 @@ their default directories when declared, following the official
 Conventional `.lsp.json` accepts the direct server-name map documented under
 [LSP servers](https://code.claude.com/docs/en/plugins/components#lsp-servers).
 
+## Parent acceptance closeout (2026-10-25)
+
+The complete bodies and comments of #14 and #31 were reviewed against the
+implementation and existing contract tests. #14's first-generation host scope
+is complete; Cursor is evaluated separately below under #31 and ADR-0008's
+Cursor amendment. No additional lifecycle writer or dependency is required.
+
+| #14 stories | Acceptance evidence | Result and limits |
+| --- | --- | --- |
+| 1–12 | `PluginLibraryView` separates hosts and groups concrete scope roots; `PluginCLIIntegrationTests.claudeInventory`, `.codexInventory`, and `.openCodeInventory` cover passive host/source/scope identity. `PluginInventoryComponentCLIIntegrationTests` covers bundled components. | Implemented. Components remain plugin evidence rather than standalone Skill ownership. |
+| 13–15, 30–33, 44 | Inventory retains separate enablement/load evidence. `sourceShapeContext` and `openCodeInventory` distinguish static incompatibility, historical errors, and valid definitions. `PluginLifecycleCLIIntegrationTests.localDisableRoundTrip` and `.localDisableCaptureFailure` cover reversible explicit local disable. | Implemented. No plugin execution, runtime-success inference, code migration, or automatic author-script execution. |
+| 16–29 | `ClaudePluginLifecycleCLIIntegrationTests.nativeRoutes`, `.roundTrip`, `.versionLock`, `.removeImpact`, and `.marketplaceScopes`; equivalent Codex route/round-trip/refusal/impact tests; `PluginEffectsCLIIntegrationTests.v1Installation`; `PluginRuntimeCLIIntegrationTests.runtimeOperation`; `PluginLifecycleCLIIntegrationTests.marketplaceCascade`. | Implemented through official host commands. Unsupported sources, scopes, operations and locks produce explicit limits; runtime/backend effects require consent. |
+| 34–43 | `PluginLifecycleCLIIntegrationTests.authorCommand`, `.captureFailure`, and `.executionRoundTrip` cover approval boundaries, refused capture and post-failure diff/restore. Shared rollback tests cover later edits and restore/preserve choices; #15 evidence above remains applicable. | Implemented. No automatic approval/resume, config merge or claim to reverse external backend/runtime effects. |
+| 45 | Shared SwiftUI Library, management, confirmation, Health, history and rollback controls use native system presentation and localization. `SukiruUITests` supplies a native plugin flow through these same shared surfaces. | Implemented; actual Cursor scenario execution is recorded separately from source inspection below. |
+
+| #31 stories | Acceptance evidence | Result and limits |
+| --- | --- | --- |
+| 1–10, 14–18, 39–40 | `PluginInventoryReader+Cursor` recognizes both manifest formats, local discovery, cache versions and containment; `CursorPluginCLIIntegrationTests.localInventory` and `.cacheAndContainment` cover passive scanning, distinct identities, malformed manifests, contained/escaping links and cached-only Unknown state. | Implemented with the ADR-0008 evidence limit: uncalibrated SQLite state is not read. Cache alone proves neither installed project scope nor marketplace precedence, enablement or runtime loading. Same-name local/cache evidence remains separate. |
+| 11–13 | `PluginInventoryReader+CursorComponents`; `.declaredComponents`, `.rootSkillDiscovery`, `.unreadableComponents` and `.localInventory` contract fixtures. | Rules, skills, MCP, agents, commands, hooks and variable names/schema metadata are inspected without executing commands or exposing variable defaults/secret values. |
+| 19–20 | `PluginInventoryReader+CursorCatalogs` and `.marketplaceInventory` expose cached catalog provenance and Git ref. Explicit planning uses official structured registrations rather than cache names. | Cached catalog registration/scope stays Unknown. Official `user`, `team` and `global` registrations determine mutability only after explicit host listing. |
+| 21–30 | `PluginLifecyclePlanner+Cursor`; `CursorPluginLifecycleCLIIntegrationTests.marketplacePlan`, `.marketplaceRoutes`, `.duplicateMarketplaceAdd`, `.ambiguousRegistrations`, `.executionFailure`, `.invalidStructuredOutput`, `.missingStructuredCapability`, and `.refreshObservation`. | Personal add/update/remove use verified `agent` help, exact argv, consent, capture/diff/rollback and post-state diagnostics. Team/global mutations and ambiguity are refused; file rollback cannot reverse account sync or server indexing. Exit zero with no local advance is reported as no observable change. |
+| 31–38 | `.unsupportedOperations` covers install/remove/enable/disable/update; `.projectInstallInstructions` verifies the selected project reaches Customize and interactive `/plugin` instructions. `cursorLimitation` explicitly distinguishes marketplace refresh from plugin update. | Implemented as required host instructions, followed by explicit Sukiru refresh. These are acceptance-specified capability limits, not missing lifecycle implementation. No cache or SQLite writer is added. |
+| 41–43 | `CursorLocalDisable.command` and `.validate`; `.localDisableRoundTrip` and `.localDisableBoundary` cover physical local directories, later-edit restoration, cache rejection and alias rejection. | Explicit snapshot-protected move from `~/.cursor/plugins/local` to `~/.cursor/plugins/disabled-local/<UUID>/…`; rollback restores captured state. No host-managed cache move. |
+| 44–48 | `PluginHost.cursor.executable` routes to `agent`; `.capabilitiesAndIdentity` rejects another product named `agent` and verifies help-driven operation availability. Product CLI fixtures exercise Cursor list/health/capabilities/marketplaces and dry-run planning. | Implemented. Auto-updating build strings do not replace installed-help verification; unverified aliases are not selected. |
+| 49–54 | Existing host sidebar ordering/hiding and shared plugin views include Cursor. ADR-0008 Cursor amendment records the boundary; standalone Hook policy stays under ADR-0010. `testCursorPluginInventoryAndMarketplacePreviewStayHostOwned` covers the native Cursor row, local rules, cached/Unknown distinctions, unavailable update/toggle actions, catalog Git ref and reviewed marketplace argv/effects consent. | Implemented using the existing native UI architecture. Native scenario uses a temporary HOME and bundled command substitute; it cancels the preview and asserts no marketplace add executed. |
+
+The 2026-10-05 comments' three remaining concerns are resolved as follows:
+
+- **Homebrew cask:** read-only GitHub inspection found the published
+  [tap cask at revision `95ce2f5`](https://github.com/thedavidweng/homebrew-tap/blob/95ce2f5fa627aee2425eb3490b8d6649be066661/Casks/sukiru.rb).
+  It declares version `1.7.0`, the GitHub release DMG, `Sukiru.app`, and the
+  bundled `Contents/Helpers/sukiru` binary link. This matches README installation
+  instructions. No external repository was changed and no brew installation or
+  release-artifact verification was performed in this review.
+- **UI test infrastructure:** `project.yml` now declares the macOS
+  `SukiruUITests` target and bundles `SukiruUITests/Fixtures/bin/agent`.
+  The integration owner's `xcodebuild test` run completed with exit 0
+  on 2026-10-25 at 13:34:37 after 51.272 seconds; its result summary confirms
+  the actual Cursor scenario passed (1/1). The scenario previews host-owned
+  commands using isolated fixtures and cancels before mutation.
+- **Cursor host limits:** #31 explicitly requires instructions for unsupported
+  individual lifecycle operations and Unknown for uncalibrated state. The
+  implementation and regression fixtures enforce those outcomes. A new
+  Cursor non-interactive plugin API or private state-store calibration is not
+  a prerequisite for closing this specification.
+
 ## Final verification
 
-- 610 tests in 84 suites pass with Swift compiler warnings treated as errors.
-- Native app build, strict Swift formatting, strict SwiftLint, String Catalog
-  synchronization/translation checks, and `git diff --check` pass.
+- The final integrated run passed 759 tests in 104 suites with Swift compiler
+  warnings treated as errors, including pinned real pnpm lifecycle coverage.
+- The integration owner also reports a native app build, strict formatting,
+  strict SwiftLint, localization checks and `PnpmUITests` passing.
+- The actual native Cursor UI test
+  `SukiruUITests.testCursorPluginInventoryAndMarketplacePreviewStayHostOwned`
+  passed (1/1), confirmed by the result summary. After regenerating the Xcode
+  project, `LibraryLayoutUITests` separately passed (1/1) with a screenshot proving
+  long descriptions stay above Owner/Scope; `PnpmUITests` also passed (1/1).
+  The result bundles contain existing SwiftUI/runtime diagnostics (publishing
+  changes during view updates and thread/QoS warnings); these are not represented
+  as warning-free runtime execution. No compiler warning was accepted by the
+  Swift test gate.
+- The following standards/spec/effects review findings are retained from the
+  earlier implementation evidence; this closeout did not rerun those checks.
 - Standards review: no remaining actionable findings. Physical targets and
   ancestor link identities are captured; retargeted links require conflict
   choices. Unchanged links are not rewritten. Post-state errors retain history

@@ -1,9 +1,11 @@
 # Host Plugin Interface Evidence
 
-Date: 2026-10-03. Execution decisions updated for the user-approved explicit-effects consent amendment to ADR-0008. This note records read-only verification for plugin-management
-work. The installed host versions were checked with version/help commands only;
-no inventory command, host session, plugin code, marketplace refresh, or lifecycle
-mutation was run.
+Initial verification: 2026-10-03; parent acceptance review: 2026-10-25.
+Execution decisions include the user-approved explicit-effects consent amendment
+to ADR-0008 and its Cursor amendment. Initial installed-host verification used
+version/help commands only. The later Cursor CLI package inspection below is
+separate evidence; no real plugin lifecycle mutation or host session was run
+for this documentation closeout.
 
 ## Installed command surfaces
 
@@ -425,6 +427,67 @@ bundles and caches. This is demonstrated non-filesystem state, not a
 hypothetical risk. ADR-0008 requires a separate decision for it. The explicit-effects consent amendment supplies that decision: native remote
 mutations require batch-specific agreement to backend changes. Snapshot
 restoration must not be described as reversing backend installation.
+
+### Cursor passive evidence and capability limits
+
+The [Cursor amendment to ADR-0008](adr/0008-host-plugin-management.md#amendment-2026-10-04-cursor-evidence-and-supported-writes)
+defines how #31 is accepted without treating uncalibrated private state as a
+protocol. The implementation's current evidence boundaries are:
+
+| Surface | Observed implementation | Meaning and limit |
+| --- | --- | --- |
+| Local development discovery | `PluginInventoryReader+Cursor` reads `~/.cursor/plugins/local/*/plugin.json` and `*/.cursor-plugin/plugin.json`. | Root manifests identify Agent Plugins; Cursor-specific manifests identify Cursor Plugins. Entries are discovered local payloads in user scope, not invented installation records. |
+| Cached payloads | The same reader enumerates `~/.cursor/plugins/cache/<source>/<plugin>/<version>`. | Each source/path/version remains distinct. A cache entry proves neither installation nor enablement. No same-name marketplace precedence or project installation is inferred from it. |
+| Symlinks | Resolved manifest and payload paths must stay inside the appropriate discovery/cache boundary. | Escaping local links produce inspection Problems; contained aliases can be inspected but cannot be locally disabled. |
+| Components | `PluginInventoryReader+CursorComponents` reads declarative rules, skills, agents, commands, MCP, hooks and variable metadata. | Plugin code and component commands are never run. Variable names/schema metadata are available without exposing defaults or secret values. Hooks remain plugin components, not new standalone Hook cleanup capabilities. |
+| Cached catalogs | `PluginInventoryReader+CursorCatalogs` reads `.cursor-plugin/marketplace.json` descendants of `~/.cursor/plugins/marketplaces`, retaining catalog source, entries and Git ref. | Evidence is `cached-catalog`; registration scope and mutability remain Unknown. Explicit official listing supplies registration targeting only when requested. |
+| State store | No Cursor SQLite/global-storage key is used as installation or enablement evidence. | Uncalibrated or absent state yields Unknown. Runtime loading also remains Unknown. This is the required graceful fallback, not permission to repair private state. |
+| Individual plugin lifecycle | `PluginLifecyclePlanner.cursorLimitation` returns Customize and interactive `agent` `/plugin` instructions for install/remove/enable/disable/update, including selected user/project scope and explicit Sukiru refresh. | No non-interactive command, cache deletion or SQLite edit substitutes for an unsupported host operation. Marketplace refresh is not a plugin update. |
+| Local disable exception | `CursorLocalDisable` accepts only a physical discovered plugin directly within `~/.cursor/plugins/local`; destination is `~/.cursor/plugins/disabled-local/<UUID>/<name>`. | Explicit reviewed move with manifest precondition, snapshot and conflict-aware rollback. Cache payloads and symlink aliases are refused. No ledger tracks disabled installations. |
+
+The documented host discovery/format baseline is
+[Cursor Plugins](https://cursor.com/docs/plugins) and the
+[manifest reference](https://cursor.com/docs/reference/plugins). These links
+are the previously recorded reference baseline; this closeout reviewed source
+and fixtures rather than re-fetching live documentation. The named executable
+is [`agent`](https://cursor.com/docs/cli/installation). A local executable that
+identifies as another product is rejected, without silently selecting an alias.
+Cursor capabilities depend on actual operation help and structured-list support,
+rather than matching one exact dated build string.
+
+For explicit personal marketplace requests, supported commands are:
+
+```text
+agent plugin marketplace list --format json
+agent plugin marketplace add <source> [--git-ref <ref>]
+agent plugin marketplace update <name-or-source>
+agent plugin marketplace remove <name-or-source>
+```
+
+Each mutation is advertised only when its installed help is verified; an
+explicit Git ref additionally requires `add --help` to expose `--git-ref`.
+Duplicate names/URLs and ambiguous targets are refused. `team` and `global`
+registrations are host/admin-owned and direct users to Dashboard/Customize.
+Personal marketplace mutations capture the Cursor root through the existing
+batch pipeline, require backend-effects consent and retain execution output,
+post-state diff and local rollback. Server indexing/account sync are external
+effects and cannot be promised reversible by restoring local files.
+
+Refresh diagnostics compare captured local catalog/payload state rather than
+equating exit zero with content advance. `refreshObservation(changes:)` covers
+both changed and unchanged state, preserves the host's `0 plugins indexed`
+output, and rolls back fixture files. Multi-command attribution remains
+explicitly limited by ADR-0008.
+
+Concrete acceptance fixtures are `CursorPluginCLIIntegrationTests`,
+`CursorPluginLifecycleCLIIntegrationTests` and its `+Safety` extension, all
+using temporary homes and command substitutes. Native presentation is covered
+by `SukiruUITests.testCursorPluginInventoryAndMarketplacePreviewStayHostOwned`:
+local rules and cached/Unknown distinctions, unavailable individual actions,
+catalog Git ref, exact marketplace add preview and effects consent. The
+scenario cancels before mutation and asserts no add command executed. This
+review inspected those tests; the integration owner runs them and records the
+result in [parent acceptance evidence](host-plugin-management-acceptance.md).
 
 ### Cursor marketplace registrations use structured output
 
