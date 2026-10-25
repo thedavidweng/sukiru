@@ -64,8 +64,10 @@ Website: <https://sukiru.blahaj.uk/>
   becomes one batch that you confirm once, in plain language, with the exact
   commands one click away.
 - ↩️ **Safe by construction**: Every batch runs as snapshot → execute → diff,
-  and can be rolled back after you confirm. The last 10 snapshots are kept,
-  and you can delete any of them.
+  and can be rolled back after you confirm. History is pruned by count, age
+  and size (default 20 batches, 30 days, 1 GB; the newest batch is always
+  kept), a pruned batch can no longer be rolled back, and you can delete any
+  batch or clear all history in Settings.
 - 📚 **Library**: See each skill's owner, provenance, pinned ref, and where it
   is placed across agents. Switch a skill between link and copy mode, and
   update or uninstall it (or update everything at once) through the installer
@@ -263,6 +265,8 @@ sukiru plugins marketplaces list
 sukiru plugins disable-local ~/.config/opencode/plugins/old.ts --host opencode --scope user --dry-run
 sukiru plugins disable NAME@MARKET --host claude-code --scope project --root /absolute/project --settings-scope local --dry-run
 sukiru snapshots --json
+sukiru history prune --json         # apply the retention limits from settings.json
+sukiru history clear --yes          # remove all snapshots and records
 sukiru rollback --batch ID --dry-run
 sukiru rollback --batch ID --yes --preserve /absolute/conflict/path
 sukiru capabilities --json          # explicit manager probes

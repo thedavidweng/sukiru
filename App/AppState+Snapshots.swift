@@ -88,6 +88,38 @@ extension AppState {
         }
     }
 
+    /// Applies the retention policy off the main thread, then reloads. A busy
+    /// execution lock means a batch is running; it prunes itself when done.
+    func pruneHistoryOnLaunch() {
+        let environment = Self.makeEnvironment(roots: projectRoots)
+        Task.detached(priority: .utility) { [weak self] in
+            guard (try? HistoryRetention(environment: environment).prune()) != nil else { return }
+            await MainActor.run { self?.loadHistory() }
+        }
+    }
+
+    /// Removes every snapshot and record. The skills on disk stay as they are.
+    func clearHistory() {
+        guard !batchMutationInFlight else { return }
+        batchMutationInFlight = true
+        rollbackError = nil
+        let environment = Self.makeEnvironment(roots: projectRoots)
+        Task.detached(priority: .userInitiated) { [weak self] in
+            var failure: String?
+            do {
+                try HistoryRetention(environment: environment).clear()
+            } catch {
+                failure = UserFacingError.message(for: error)
+            }
+            await MainActor.run { [failure] in
+                guard let self else { return }
+                self.batchMutationInFlight = false
+                self.rollbackError = failure
+                self.loadHistory()
+            }
+        }
+    }
+
     /// Reloads the batch history from the on-disk execution records.
     func loadHistory() {
         let environment = Self.makeEnvironment(roots: projectRoots)

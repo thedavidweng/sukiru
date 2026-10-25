@@ -29,9 +29,10 @@ struct GeneralSettingsPane: View {
                     }
                 }
             }
+            HistorySettingsSection()
         }
         .formStyle(.grouped)
-        .frame(width: 560, height: 160)
+        .frame(width: 560, height: 520)
         .onChange(of: language) { _, newValue in
             AppLanguage.override = newValue
         }

@@ -34,8 +34,7 @@ enum SnapshotTestSupport {
     static func makeStore(
         home: String,
         ids: [String] = ["snap-1"],
-        dates: [Date] = [baseDate],
-        retention: Int = SnapshotStore.defaultRetentionLimit
+        dates: [Date] = [baseDate]
     ) -> SnapshotStore {
         let idQueue = SnapshotProviderQueue(ids)
         let dateQueue = SnapshotProviderQueue(dates)
@@ -43,7 +42,6 @@ enum SnapshotTestSupport {
             reader: DictionaryEnvironmentReader(["SUKIRU_HOME": home]))
         return SnapshotStore(
             environment: environment,
-            retentionLimit: retention,
             idProvider: { idQueue.next() },
             dateProvider: { dateQueue.next() })
     }

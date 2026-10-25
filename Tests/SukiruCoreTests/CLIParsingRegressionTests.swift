@@ -7,6 +7,7 @@ struct CLIParsingRegressionTests {
         "Every command path exposes help without required arguments",
         arguments: [
             "", "health", "clean", "fix", "search", "install", "snapshots", "rollback",
+            "history", "history prune", "history clear",
             "capabilities", "scan", "batch", "skills", "skills list", "skills update",
             "skills uninstall", "skills pin", "skills unpin", "skills restore", "skills adopt",
             "skills mode", "skills check-updates", "hooks", "hooks inventory", "hooks plan",

@@ -209,6 +209,7 @@ final class AppState: ObservableObject {
         // Batch history is on-disk state, not a cache: it must be present at
         // launch and survive relaunches.
         loadHistory()
+        pruneHistoryOnLaunch()
     }
 
     /// Refresh (toolbar and ⌘R): re-reads everything Sukiru shows from disk,

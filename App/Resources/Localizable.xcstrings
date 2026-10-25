@@ -9591,6 +9591,158 @@
           }
         }
       }
+    },
+    "Cached · Manage in Cursor" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已缓存 · 在 Cursor 中管理"
+          }
+        }
+      }
+    },
+    "Enablement unknown" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用状态未知"
+          }
+        }
+      }
+    },
+    "Cursor has no command to enable or disable one plugin, and Sukiru does not read its state store; manage it in Cursor" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cursor 没有启用或停用单个插件的命令，Sukiru 也不读取它的状态存储；请在 Cursor 中管理"
+          }
+        }
+      }
+    },
+    "Batches Kept" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已保留批次"
+          }
+        }
+      }
+    },
+    "Clear All History?" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除全部历史记录？"
+          }
+        }
+      }
+    },
+    "Clear History" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除历史记录"
+          }
+        }
+      }
+    },
+    "Clear History…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除历史记录…"
+          }
+        }
+      }
+    },
+    "History" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "历史记录"
+          }
+        }
+      }
+    },
+    "Keep at most %lld batches" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最多保留 %lld 个批次"
+          }
+        }
+      }
+    },
+    "Keep history under" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "历史记录大小上限"
+          }
+        }
+      }
+    },
+    "Remove batches older than %lld days" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除超过 %lld 天的批次"
+          }
+        }
+      }
+    },
+    "Storage Used" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已用空间"
+          }
+        }
+      }
+    },
+    "history.clear.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All snapshots and execution records are deleted, so no batch can be rolled back. Skills on disk are not changed."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有快照和执行记录都将被删除，任何批次都将无法回滚。磁盘上的技能不受影响。"
+          }
+        }
+      }
+    },
+    "history.limits.footer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The most recent batch is always kept. A pruned batch can no longer be rolled back; skills on disk are not changed. Limits apply after each batch and when Sukiru launches."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "始终保留最近一个批次。被清理的批次将无法再回滚，磁盘上的技能不受影响。限制会在每次批处理之后以及 Sukiru 启动时应用。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -61,7 +61,7 @@ struct CLICommand: Sendable {
 enum CLI {
     static let commands =
         rootCommands + skillCommands + pluginCommands + hookCommands
-        + batchCommands + discoveryCommands
+        + batchCommands + historyCommands + discoveryCommands
     static let builtIns = [
         CLIOption("help", takesValue: false, help: "Show help information."),
         CLIOption("version", takesValue: false, help: "Show the version.")

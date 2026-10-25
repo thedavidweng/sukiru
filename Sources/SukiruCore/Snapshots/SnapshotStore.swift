@@ -4,7 +4,8 @@ import Foundation
 /// Snapshot storage for the Command Batch safety model: pre-execution capture
 /// of both ledger files byte-exact, a placement
 /// manifest, and full recursive payload copies of every skill dir the batch
-/// may touch (any ownership); path-traversal-safe load; retention pruning.
+/// may touch (any ownership); path-traversal-safe load. Retention
+/// lives in `HistoryRetention`.
 ///
 /// Snapshots live under
 /// `<home>/Library/Application Support/Sukiru/snapshots/<id>/` — with
@@ -15,22 +16,16 @@ import Foundation
 ///
 /// Restore lives in SnapshotRestore.swift (extension, same module).
 public struct SnapshotStore: Sendable {
-    /// Retention: at most this many snapshots survive pruning.
-    public static let defaultRetentionLimit = 10
-
     let environment: SukiruEnvironment
-    let retentionLimit: Int
     let idProvider: @Sendable () -> String
     let dateProvider: @Sendable () -> Date
 
     public init(
         environment: SukiruEnvironment,
-        retentionLimit: Int = SnapshotStore.defaultRetentionLimit,
         idProvider: @escaping @Sendable () -> String = { UUID().uuidString },
         dateProvider: @escaping @Sendable () -> Date = { Date() }
     ) {
         self.environment = environment
-        self.retentionLimit = retentionLimit
         self.idProvider = idProvider
         self.dateProvider = dateProvider
     }
@@ -43,7 +38,7 @@ public struct SnapshotStore: Sendable {
     // MARK: - capture
 
     /// Captures the pre-execution state for a batch, commits the snapshot
-    /// atomically, then applies retention pruning.
+    /// atomically. The caller applies retention once the batch's record exists.
     ///
     /// Throws — committing nothing visible — when any ledger or payload
     /// cannot be captured: a batch must never execute without a complete
@@ -82,7 +77,6 @@ public struct SnapshotStore: Sendable {
             try? FileManager.default.removeItem(atPath: staging)
             throw error
         }
-        try prune()
         return try load(id: id)
     }
 
@@ -131,7 +125,7 @@ public struct SnapshotStore: Sendable {
         try data.write(to: destination, options: .atomic)
     }
 
-    // MARK: - load / list / prune
+    // MARK: - load / list
 
     /// Loads a snapshot manifest, rejecting path-traversal attempts in both
     /// the snapshot id and every stored relative path.
@@ -167,18 +161,6 @@ public struct SnapshotStore: Sendable {
             }
         }
         return summaries.sorted { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }
-    }
-
-    /// Deletes the oldest snapshots beyond the retention limit (default 10).
-    public func prune() throws {
-        let all = list()
-        guard all.count > retentionLimit else {
-            return
-        }
-        for victim in all.prefix(all.count - retentionLimit) {
-            try FileManager.default.removeItem(
-                atPath: HostPathResolver.join(snapshotsRoot(), victim.id))
-        }
     }
 
     // MARK: - path safety

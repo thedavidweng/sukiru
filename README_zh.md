@@ -44,7 +44,7 @@ Sukiru 同时读取两份账本和磁盘上的实际情况，判断每个技能�
 
 - 🩺 **健康报告**：问题按可处理的类型归组：过期的锁记录、失效链接、本该是链接却是副本、内容分叉的副本、来源未知的技能，以及归属冲突。健康的布局和长期提示收进「备注」。
 - 🛠️ **先排队，一次应用**：像购物车一样在「健康」中把修复加入队列，再一并审阅应用，或直接「全部修复」。每次结算都生成一个命令批次，只需用通俗的说明确认一次，具体命令点一下即可查看。
-- ↩️ **安全为先**：每个批次都按「快照 → 执行 → 比对」运行，确认后即可回滚。保留最近 10 个快照，也可以随时删除。
+- ↩️ **安全为先**：每个批次都按「快照 → 执行 → 比对」运行，确认后即可回滚。历史记录按数量、时间和空间上限自动清理（默认 20 个批次、30 天、1 GB，始终保留最近一个），被清理的批次无法再回滚；也可以随时删除或在设置中清除全部。
 - 📚 **资源库**：查看每个技能的归属、溯源、固定的版本引用，以及它在各个宿主中的位置。可在链接和副本两种方式之间切换，也可通过管理它的安装器更新或卸载它（或一次全部更新）。通过 GitHub 安装的技能还可以固定到某个版本引用、取消固定，或把本地改动还原为记录的版本。「检查更新」会向 `gh skill` 查询通过 GitHub 安装的技能是否有新版本，不会改动任何文件。
   详情中的长描述最多显示三行，悬停可查看全文，不会遮挡归属与作用域等信息。
 - 🔍 **搜索与安装**：搜索 skills.sh 和 `gh skill search`（在搜索框中选择一个 GitHub 所有者，即可只看其技能），预览 `SKILL.md`，然后用你选定的安装器安装，同样经过「确认 → 快照 → 回滚」流程。「从仓库安装」接受 `owner/repo` 或 GitHub 链接，用所选安装器列出其中的技能，再安装你勾选的那些。通过 Vercel 安装时可以指定目标宿主。
@@ -191,6 +191,8 @@ sukiru plugins marketplaces list
 sukiru plugins disable-local ~/.config/opencode/plugins/old.ts --host opencode --scope user --dry-run
 sukiru plugins disable NAME@MARKET --host claude-code --scope project --root /absolute/project --settings-scope local --dry-run
 sukiru snapshots --json
+sukiru history prune --json         # apply the retention limits from settings.json
+sukiru history clear --yes          # remove all snapshots and records
 sukiru rollback --batch ID --dry-run
 sukiru rollback --batch ID --yes --preserve /absolute/conflict/path
 sukiru capabilities --json

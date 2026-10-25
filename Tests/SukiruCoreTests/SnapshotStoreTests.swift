@@ -158,31 +158,10 @@ struct SnapshotStoreCaptureTests {
     }
 }
 
-/// Retention pruning: at most 10 snapshots survive, oldest pruned first, and
-/// every surviving manifest is complete and parseable at every inspection
-/// point.
-@Suite("SnapshotStore retention")
-struct SnapshotStoreRetentionTests {
+/// Listing: snapshots come back oldest first with batch correlation.
+@Suite("SnapshotStore listing")
+struct SnapshotStoreListingTests {
     private typealias Support = SnapshotTestSupport
-
-    @Test("Retention keeps the newest 10; surviving manifests always parse")
-    func retentionPrunesOldest() throws {
-        let tree = try Support.makeTree()
-        let ids = (1...11).map { String(format: "snap-%02d", $0) }
-        let store = Support.makeStore(home: tree.home.path, ids: ids, dates: Support.dates(11))
-        for index in 1...11 {
-            let batch = Support.batch(id: "batch-\(index)", refs: [])
-            _ = try store.capture(batch: batch, report: tree.report)
-            for summary in store.list() {
-                let manifest = try? store.load(id: summary.id)
-                #expect(manifest?.id == summary.id)
-            }
-        }
-        let survivors = store.list()
-        #expect(survivors.count == 10)
-        #expect(!survivors.contains { $0.id == "snap-01" })
-        #expect(survivors.map(\.id) == Array(ids.dropFirst()))
-    }
 
     @Test("list() returns snapshots oldest-first with batch correlation")
     func listOrderingAndBatchCorrelation() throws {

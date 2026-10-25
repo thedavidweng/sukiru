@@ -135,6 +135,8 @@ public struct CLIExecutor: Sendable {
         let lock = ExecutionLock(path: HostPathResolver.join(appSupport, "execution.lock"))
         try lock.acquire()
         defer { lock.release() }
+        // Runs before the lock is released, once this batch's record exists.
+        defer { _ = try? HistoryRetention(environment: environment).pruneHoldingLock() }
 
         for condition in batch.commands.flatMap({ $0.hookPreconditions ?? [] }) {
             try condition.validate()
