@@ -161,6 +161,9 @@ struct HealthView: View {
             if !state.visiblePluginFindings.isEmpty {
                 PluginHealthSection(findings: state.visiblePluginFindings)
             }
+            if !state.visiblePnpmObservations.isEmpty {
+                PnpmObservationSection(observations: state.visiblePnpmObservations)
+            }
             ForEach(state.problemGroups()) { group in
                 ProblemSection(group: group, rows: rows(group.entries))
             }
@@ -209,7 +212,9 @@ struct HealthView: View {
         }
         .overlay {
             let noHooks = state.visibleHookProblems.isEmpty && state.visibleHookIssues.isEmpty
-            if entries.isEmpty && issues.isEmpty && state.visiblePluginFindings.isEmpty && noHooks {
+            let noSkills =
+                entries.isEmpty && issues.isEmpty && state.visiblePnpmObservations.isEmpty
+            if noSkills && state.visiblePluginFindings.isEmpty && noHooks {
                 emptyState
             }
         }

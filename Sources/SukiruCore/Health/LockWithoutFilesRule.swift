@@ -1,3 +1,5 @@
+import Foundation
+
 /// `lock-without-files` (action): a lock entry whose name has no healthy
 /// placement in its scope — the ledger claim alone conjures no skill. A
 /// broken-symlink-only name counts as fileless (a dangling link is not a
@@ -24,6 +26,12 @@ public enum LockWithoutFilesRule {
             let hasFiles = group.members.contains { $0.placement.kind != .brokenSymlink }
             if hasFiles {
                 healthy.insert(group.scopeGroup + "\u{1F}" + group.name)
+                for member in group.members where member.placement.kind != .brokenSymlink {
+                    let entry = (member.placement.path as NSString).lastPathComponent
+                    if entry.hasPrefix("pnpm-") {
+                        healthy.insert(group.scopeGroup + "\u{1F}" + entry)
+                    }
+                }
             }
             for member in group.members where member.githubProvenance != nil {
                 githubSkillFiles[group.name, default: []].append(member.skillFilePath)

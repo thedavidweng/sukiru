@@ -112,6 +112,11 @@ struct SkillDetailForm: View {
                 Text(skill.name)
                     .font(.title.weight(.semibold))
             }
+            if let identity = skill.packageQualifiedName {
+                Text(identity)
+                    .font(.callout.monospaced())
+                    .foregroundStyle(.secondary)
+            }
             if let description = state.skillDescriptions[skill.selfID] {
                 Text(description)
                     .font(.body)

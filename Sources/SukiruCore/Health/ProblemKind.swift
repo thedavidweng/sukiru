@@ -63,6 +63,7 @@ public enum ProblemKind: String, CaseIterable, Codable, Equatable, Sendable {
         "files-without-lock": .orphan,
         "double-booked": .ownerConflict,
         "ambiguous-name": .ownerConflict,
+        "pnpm-owner-conflict": .ownerConflict,
         HostNameCollisionRule.ruleID: .duplicateName,
         "lock-version-unsupported": .unsupportedLock
     ]

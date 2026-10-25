@@ -16,12 +16,22 @@ struct SkillRow: View {
         )
         .hostEntries().filter(\.installed)
         HStack(alignment: .firstTextBaseline, spacing: 6) {
-            AXToken(token: "sukiru.library.skillRow.\(AXTokens.skill(skill.name))")
+            AXToken(
+                token:
+                    "sukiru.library.skillRow.\(AXTokens.skill(skill.packageQualifiedName ?? skill.name))"
+            )
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .center, spacing: 8) {
                     Text(skill.name)
                         .fontWeight(.semibold)
                         .lineLimit(1)
+                    if let package = skill.provenance.pnpm?.first {
+                        Text(package.packageName)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .help(skill.packageQualifiedName ?? package.packageName)
+                    }
                     Spacer(minLength: 0)
                     AgentIconStrip(hosts: hosts)
                     attentionMarker

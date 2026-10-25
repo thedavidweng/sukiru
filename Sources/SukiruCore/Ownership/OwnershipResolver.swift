@@ -1,3 +1,5 @@
+import Foundation
+
 /// A scope's Vercel lock claim, as read by `VercelLockReader`, paired with
 /// the ownership bucket it applies to.
 ///
@@ -95,7 +97,12 @@ public struct OwnershipResolver: Sendable {
         var findings: [Finding] = []
         for group in groups {
             let claim = claims[group.scopeGroup]
-            let entry = claim?.lock.entries[group.name]
+            let packageClaims = group.members.compactMap { pnpm.verified[$0.placement.path] }
+            let packageName = packageClaims.first.map {
+                ($0.placement as NSString).lastPathComponent
+            }
+            // A same-name lock in another installation does not claim the package link.
+            let entry = claim?.lock.entries[packageName ?? group.name]
             // Members are path-sorted, so the first placement carrying a gh
             // claim is a deterministic choice when several carry one.
             let ghPlacement = group.members.first { $0.githubProvenance != nil }
@@ -103,14 +110,13 @@ public struct OwnershipResolver: Sendable {
             var ownership = Self.ownership(
                 ambiguous: group.ambiguous, vercelClaim: claim?.vercelClaim(for: group) != nil,
                 githubClaim: ghPlacement != nil, agentClaim: managingAgent != nil)
-            let packageClaims = group.members.compactMap { pnpm.verified[$0.placement.path] }
+            let overlappingClaim = packageName != nil && (entry != nil || ghPlacement != nil)
             let unverified = group.members.contains { pnpm.unverified.contains($0.placement.path) }
             if !packageClaims.isEmpty {
                 let targets = Set(packageClaims.map(\.target))
                 ownership =
                     packageClaims.count == group.members.count && targets.count == 1
-                        && !group.ambiguous && claim?.vercelClaim(for: group) == nil
-                        && ghPlacement == nil ? .pnpm : .ownerless
+                        && !overlappingClaim ? .pnpm : .ownerless
             }
             let provenance = SkillProvenance(
                 vercel: entry.map {
@@ -121,21 +127,49 @@ public struct OwnershipResolver: Sendable {
                 pnpmUnverified: unverified ? true : nil
             )
             skills.append(
-                Skill(
-                    name: group.name,
-                    scope: group.scopeGroup == "user" ? .user : .project,
-                    ownership: ownership,
-                    ambiguous: group.ambiguous,
-                    provenance: provenance,
-                    placements: group.members.map(\.placement),
-                    managingAgent: ownership == .agent ? managingAgent : nil
-                ))
+                resolvedSkill(
+                    group, ownership: ownership, provenance: provenance,
+                    managingAgent: managingAgent, packageName: packageName))
+            if overlappingClaim {
+                findings.append(
+                    conflictFinding(
+                        group, claim: entry == nil ? nil : claim, githubPlacement: ghPlacement))
+            }
             if pnpm.protects(group) { continue }
             findings.append(
                 contentsOf: groupFindings(
                     for: group, ownership: ownership, claim: claim, ghPlacement: ghPlacement))
         }
         return OwnershipResolution(skills: skills, findings: findings)
+    }
+
+    private func resolvedSkill(
+        _ group: SkillGroup, ownership: Ownership, provenance: SkillProvenance,
+        managingAgent: String?, packageName: String?
+    ) -> Skill {
+        Skill(
+            name: group.name, scope: group.scopeGroup == "user" ? .user : .project,
+            ownership: ownership, ambiguous: group.ambiguous, provenance: provenance,
+            placements: group.members.map(\.placement),
+            managingAgent: ownership == .agent ? managingAgent : nil,
+            packageQualifiedName: packageName)
+    }
+
+    private func conflictFinding(
+        _ group: SkillGroup, claim: ScopeLockClaim?, githubPlacement: DiscoveredPlacement?
+    ) -> Finding {
+        var evidence = group.members.map {
+            Evidence(kind: "placementPath", detail: $0.placement.path)
+        }
+        if let path = claim?.lockPath {
+            evidence.append(Evidence(kind: "lockPath", detail: path))
+        }
+        if let github = githubPlacement?.githubProvenance {
+            evidence.append(Evidence(kind: "githubRepo", detail: github.repo))
+        }
+        return Finding(
+            ruleID: "pnpm-owner-conflict", severity: .warning, skillName: group.name,
+            workspaceID: group.scopeGroup, evidence: evidence)
     }
 
     /// The ownership truth table. Ambiguity voids attribution first: an

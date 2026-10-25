@@ -56,6 +56,11 @@ struct Health {
             + findings.map { "\(ProblemKind.of($0).rawValue): \($0.skillName ?? $0.workspaceID)" }
             + pluginProblems.map { "Plugin \($0.kind): \($0.path)" }
             + hookProblems.map { "Hook \($0.health.rawValue): \($0.source.path)" }
+            + (report.pnpmObservations ?? []).map {
+                "pnpm \($0.permission.rawValue): \($0.selector) (\($0.projectRoot)); "
+                    + ($0.installed ? "verified links installed" : "no verified links")
+                    + "; manage permissions and dependencies with pnpm"
+            }
             + report.issues.map { "Issue: \($0.message) (\($0.path))" }
             + inventoryIssues.map { "Inventory issue: " + $0 }
         try output.render(report, lines: lines)

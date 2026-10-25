@@ -6,6 +6,9 @@ extension AppState {
     /// Stable identity for a skill row: scope + name + first placement path
     /// (a name can legitimately appear once per scope and per project root).
     nonisolated static func skillID(_ skill: Skill) -> String {
+        if let package = skill.provenance.pnpm?.first, let identity = skill.packageQualifiedName {
+            return "project|\(package.projectRoot)|pnpm|\(identity)|\(package.target)"
+        }
         let anchor = skill.placements.first?.path ?? "-"
         return "\(skill.scope.rawValue)|\(skill.name)|\(anchor)"
     }
@@ -63,7 +66,19 @@ extension AppState {
                 || (group == "user"
                     ? finding.workspaceID.hasPrefix("host:")
                     : finding.workspaceID.hasPrefix(group + "#"))
-            return inScope ? FindingEntry(reportIndex: index, finding: finding) : nil
+            guard inScope else { return nil }
+            let paths = Set(
+                finding.evidence.filter {
+                    [
+                        "placementPath", "memberPath", "hostPath", "canonicalPath", "impostorPath",
+                        "linkPath"
+                    ]
+                    .contains($0.kind)
+                }.map(\.detail))
+            if !paths.isEmpty && !skill.placements.contains(where: { paths.contains($0.path) }) {
+                return nil
+            }
+            return FindingEntry(reportIndex: index, finding: finding)
         }
     }
 

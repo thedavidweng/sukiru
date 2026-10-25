@@ -93,7 +93,8 @@ struct ScopeOptions {
             workspaces: workspaces, skills: skills(in: report), findings: selectedFindings,
             // Ownership ledgers are shared across Hosts and live outside Skills directories.
             issues: report.issues, lockExtras: report.lockExtras,
-            pluginInventory: plugins, hookInventory: hooks)
+            pluginInventory: plugins, hookInventory: hooks,
+            pnpmObservations: report.pnpmObservations)
     }
 
 }

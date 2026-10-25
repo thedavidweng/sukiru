@@ -17,7 +17,18 @@ extension CommandBatchBuilder {
                 message: "finding '\(entry.findingID)' (\(finding.ruleID)) has no skill "
                     + "target; only 'leave' applies")
         }
-        let candidates = report.skills.filter { $0.name == name }
+        let paths = Set(
+            finding.evidence.filter {
+                [
+                    "placementPath", "memberPath", "hostPath", "canonicalPath", "impostorPath",
+                    "linkPath"
+                ]
+                .contains($0.kind)
+            }.map(\.detail))
+        let candidates = report.skills.filter { skill in
+            skill.name == name
+                && (paths.isEmpty || skill.placements.contains { paths.contains($0.path) })
+        }
         let match: Skill?
         if finding.workspaceID == "user" {
             match = candidates.first { $0.scope == .user }

@@ -46,7 +46,7 @@ struct PnpmOwnershipReader {
         root: String, placements: [DiscoveredPlacement], into result: inout PnpmOwnershipEvidence
     ) {
         let metadataPath = root + "/node_modules/.modules.yaml"
-        let metadata = object(at: metadataPath)
+        let metadata = object(at: metadataPath, projectRoot: root)
         let records = metadata?["linkedSkills"] as? [String]
         let recorded = Set(
             (records ?? []).compactMap { record -> String? in
@@ -120,13 +120,10 @@ struct PnpmOwnershipReader {
         let skills = (target as NSString).deletingLastPathComponent
         guard (skills as NSString).lastPathComponent == "skills" else { return nil }
         let packageRoot = (skills as NSString).deletingLastPathComponent
-        guard let package = object(at: packageRoot + "/package.json"),
+        guard let package = object(at: packageRoot + "/package.json", projectRoot: root),
             let name = package["name"] as? String, Self.validPackageName(name),
             let version = package["version"] as? String, !version.isEmpty,
-            fileSystem.resolvedPath(atPath: root + "/node_modules/" + name) == packageRoot,
-            let manifest = object(at: root + "/package.json"),
-            let dependency = ["dependencies", "devDependencies", "optionalDependencies"]
-                .compactMap({ (manifest[$0] as? [String: String])?[name] }).first,
+            let dependency = dependency(named: name, packageRoot: packageRoot, projectRoot: root),
             (path as NSString).lastPathComponent
                 == "pnpm-" + name.replacingOccurrences(of: "/", with: "+") + "-" + skillFolder,
             fileSystem.isFile(atPath: target + "/SKILL.md")
@@ -137,6 +134,21 @@ struct PnpmOwnershipReader {
             metadataPath: metadataPath)
     }
 
+    private func dependency(
+        named name: String, packageRoot: String, projectRoot root: String
+    ) -> String? {
+        for importer in PnpmProjectLayout(fileSystem: fileSystem).importerRoots(projectRoot: root) {
+            guard
+                fileSystem.resolvedPath(atPath: importer + "/node_modules/" + name) == packageRoot,
+                let manifest = object(at: importer + "/package.json", projectRoot: root),
+                let dependency = ["dependencies", "devDependencies", "optionalDependencies"]
+                    .compactMap({ (manifest[$0] as? [String: String])?[name] }).first
+            else { continue }
+            return dependency
+        }
+        return nil
+    }
+
     private static func validPackageName(_ name: String) -> Bool {
         let parts = name.split(separator: "/", omittingEmptySubsequences: false)
         return !name.isEmpty && !parts.contains(where: { $0.isEmpty || $0 == "." || $0 == ".." })
@@ -144,8 +156,11 @@ struct PnpmOwnershipReader {
             && !name.contains("\\")
     }
 
-    private func object(at path: String) -> [String: Any]? {
-        guard let data = fileSystem.fileContents(atPath: path) else { return nil }
+    private func object(at path: String, projectRoot root: String) -> [String: Any]? {
+        guard
+            let data = PnpmProjectLayout(fileSystem: fileSystem)
+                .safeContents(at: path, projectRoot: root)
+        else { return nil }
         return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
     }
 }

@@ -55,8 +55,12 @@ public struct ScanEngine: Sendable {
         let groups = SkillInventory.groups(from: inventory.placements, locks: claims.claims)
         let pnpm = PnpmOwnershipReader(fileSystem: fileSystem).read(
             placements: inventory.placements)
+        let permissions = PnpmPermissionReader(fileSystem: fileSystem).read(
+            projectRoots: request.scope.includes(.project) ? roots : [], verified: pnpm.verified)
+        let ownershipGroups = PnpmSkillGrouping.groups(
+            placements: inventory.placements, locks: claims.claims, pnpm: pnpm)
         let resolution = OwnershipResolver().resolve(
-            groups: groups, locks: claims.claims, pnpm: pnpm)
+            groups: ownershipGroups, locks: claims.claims, pnpm: pnpm)
         let health = HealthAnalyzer(fileSystem: fileSystem).analyze(
             groups: groups, locks: claims.claims, pnpm: pnpm)
         let leftovers = LeftoverHostRule.findings(workspaces: workspaces, fileSystem: fileSystem)
@@ -70,7 +74,7 @@ public struct ScanEngine: Sendable {
         let findings =
             (safeInventoryFindings + resolution.findings + health + leftovers + collisions)
             .sorted(by: Self.findingOrder)
-        let issues = (inventory.issues + claims.issues + pnpm.issues).sorted {
+        let issues = (inventory.issues + claims.issues + pnpm.issues + permissions.issues).sorted {
             ($0.path, $0.kind, $0.message) < ($1.path, $1.kind, $1.message)
         }
         let plugins = PluginInventoryReader(environment: environment).read(request)
@@ -82,7 +86,8 @@ public struct ScanEngine: Sendable {
             issues: issues,
             lockExtras: Self.lockExtras(from: claims.claims),
             pluginInventory: plugins.isEmpty ? nil : plugins,
-            hookInventory: hooks.isEmpty ? nil : hooks
+            hookInventory: hooks.isEmpty ? nil : hooks,
+            pnpmObservations: permissions.observations.isEmpty ? nil : permissions.observations
         )
     }
 

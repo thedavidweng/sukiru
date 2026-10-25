@@ -54,7 +54,12 @@ struct PnpmOwnershipTests {
         }
         let report = try fixture.scan()
         #expect(report.skills.allSatisfy { $0.ownership != .pnpm && $0.isPnpmReadOnly })
-        #expect(report.issues.filter { $0.kind == IssueKind.pnpmUnverified }.count == 2)
+        for placement in fixture.paths {
+            #expect(
+                report.issues.contains {
+                    $0.kind == IssueKind.pnpmUnverified && $0.path == placement
+                })
+        }
         #expect(report.findings.isEmpty)
         #expect(try report.jsonData() == fixture.scan().jsonData())
     }
@@ -65,10 +70,11 @@ struct PnpmOwnershipTests {
         try FileManager.default.removeItem(atPath: path)
         try FileManager.default.copyItem(atPath: fixture.target, toPath: path)
         let report = try fixture.scan()
-        let skill = try #require(report.skills.first)
-        #expect(skill.ownership != .pnpm)
-        #expect(skill.isPnpmReadOnly)
-        #expect(skill.provenance.pnpm?.count == 1)
+        let copied = try #require(report.skills.first { $0.ownership != .pnpm })
+        #expect(copied.isPnpmReadOnly)
+        #expect(copied.placements.map(\.path) == [path])
+        let linked = try #require(report.skills.first { $0.ownership == .pnpm })
+        #expect(linked.provenance.pnpm?.count == 1)
         #expect(report.issues.contains { $0.path == path && $0.kind == IssueKind.pnpmUnverified })
     }
 

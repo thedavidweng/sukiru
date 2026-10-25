@@ -93,9 +93,10 @@ struct PnpmHealthTests {
         let before = try TreeChecksum.manifest(root: fixture.tree.path)
         let report = try fixture.scan()
         #expect(report.skills.allSatisfy { $0.ownership != .pnpm && $0.isPnpmReadOnly })
-        #expect(
-            Set(report.issues.filter { $0.kind == IssueKind.pnpmUnverified }.map(\.path))
-                == Set(fixture.paths))
+        for path in fixture.paths {
+            #expect(
+                report.issues.contains { $0.kind == IssueKind.pnpmUnverified && $0.path == path })
+        }
         #expect(
             report.issues.filter { $0.kind == IssueKind.pnpmUnverified }.allSatisfy {
                 $0.message.contains("Inspect the project with pnpm")

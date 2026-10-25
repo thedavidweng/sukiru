@@ -73,6 +73,9 @@ public struct WorkspaceEnumerator: Sendable {
         var workspaces = enumerateUserScope()
         for root in projectRoots.sorted() {
             workspaces.append(contentsOf: enumerateProjectScope(projectRoot: root))
+            workspaces.append(
+                contentsOf:
+                    PnpmProjectLayout(fileSystem: fileSystem).customWorkspaces(projectRoot: root))
         }
         return workspaces
     }

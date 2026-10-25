@@ -10,7 +10,13 @@ extension CommandBatchBuilder {
             guard skill.isPnpmReadOnly, Self.bucket(of: skill, report: report) == bucket else {
                 return false
             }
-            if name == skill.name { return true }
+            let hasOrdinaryInstallation = report.skills.contains {
+                !$0.isPnpmReadOnly && $0.name == name
+                    && Self.bucket(of: $0, report: report) == bucket
+            }
+            if name == skill.name && !hasOrdinaryInstallation {
+                return true
+            }
             return skill.placements.contains { placement in
                 let folder = (placement.path as NSString).lastPathComponent
                 // Installer callers may provide the concrete pnpm placement folder.

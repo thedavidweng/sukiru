@@ -250,6 +250,7 @@ struct LibraryView: View {
         if attentionOnly && !state.needsAttention(skill) { return false }
         if let ownershipFilter, skill.ownership != ownershipFilter { return false }
         return filter.isEmpty || skill.name.localizedCaseInsensitiveContains(filter)
+            || skill.packageQualifiedName?.localizedCaseInsensitiveContains(filter) == true
             || state.skillDescriptions[skill.selfID]?.localizedCaseInsensitiveContains(filter)
                 == true
             || skill.provenance.github?.repo.localizedCaseInsensitiveContains(filter) == true

@@ -17,6 +17,7 @@ extension Finding {
         case "files-without-lock": String(localized: "No known source")
         case "double-booked": String(localized: "Claimed by two installers")
         case "ambiguous-name": String(localized: "Different skills share this name")
+        case "pnpm-owner-conflict": String(localized: "Conflicting pnpm ownership")
         case HostNameCollisionRule.ruleID: collisionTitle
         case "lock-version-unsupported": String(localized: "Lock from a newer installer")
         case "dangerous-removal-surface": String(localized: "Removable by name")
@@ -49,6 +50,11 @@ extension Finding {
     var caution: String? {
         guard let name = skillName else { return nil }
         switch ruleID {
+        case "pnpm-owner-conflict":
+            return String(
+                localized:
+                    "pnpm ownership conflicts with another manager. Inspect the project before changing this entry."
+            )
         case "dangerous-removal-surface":
             return String(localized: "danger.removal.advisory \(name) \(name)")
         case LockWithoutFilesRule.companionRecordRuleID:

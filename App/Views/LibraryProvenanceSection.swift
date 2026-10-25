@@ -27,6 +27,12 @@ struct LibraryProvenanceSection: View {
             Text("library.pnpm.readOnly")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            Text("pnpm.hostLoading.unverified")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        if let identity = skill.packageQualifiedName {
+            field("Installed entry name", identity)
         }
         if let packages = skill.provenance.pnpm {
             ForEach(packages, id: \.placement) { package in

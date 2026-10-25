@@ -210,6 +210,20 @@ extension AppState {
     func skill(matching finding: Finding) -> Skill? {
         guard let name = finding.skillName else { return nil }
         let group = Self.scopeGroup(ofWorkspaceID: finding.workspaceID)
+        let paths = Set(
+            finding.evidence.filter {
+                [
+                    "placementPath", "memberPath", "hostPath", "canonicalPath", "impostorPath",
+                    "linkPath"
+                ]
+                .contains($0.kind)
+            }.map(\.detail))
+        if !paths.isEmpty {
+            return report?.skills.first { skill in
+                skill.name == name && scopeGroup(for: skill) == group
+                    && skill.placements.contains { paths.contains($0.path) }
+            }
+        }
         return skillIndex[SkillIndex.key(name: name, scopeGroup: group)]
     }
 

@@ -34,6 +34,8 @@ public struct ScanReport: Codable, Equatable, Sendable {
     public let lockExtras: [String: [String: JSONValue]]?
     public let pluginInventory: PluginInventory?
     public let hookInventory: HookInventory?
+    /// Current package permission observations, separate from installed skills.
+    public let pnpmObservations: [PnpmObservation]?
 
     public static let currentSchemaVersion = 1
 
@@ -45,7 +47,8 @@ public struct ScanReport: Codable, Equatable, Sendable {
         issues: [Issue] = [],
         lockExtras: [String: [String: JSONValue]]? = nil,
         pluginInventory: PluginInventory? = nil,
-        hookInventory: HookInventory? = nil
+        hookInventory: HookInventory? = nil,
+        pnpmObservations: [PnpmObservation]? = nil
     ) {
         self.schemaVersion = schemaVersion
         self.workspaces = workspaces
@@ -55,6 +58,7 @@ public struct ScanReport: Codable, Equatable, Sendable {
         self.lockExtras = lockExtras
         self.pluginInventory = pluginInventory
         self.hookInventory = hookInventory
+        self.pnpmObservations = pnpmObservations
     }
 
     /// Deterministic JSON encoding (sorted keys) so identical scans yield
@@ -110,6 +114,8 @@ public struct Skill: Codable, Equatable, Sendable {
     public let placements: [Placement]
     /// The host id behind `Ownership.agent`; omitted from the wire otherwise.
     public let managingAgent: String?
+    /// The verified pnpm entry name; the original frontmatter name stays in `name`.
+    public var packageQualifiedName: String?
 
     /// Native package-manager evidence stays read-only even in a mixed-owner group.
     public var isPnpmReadOnly: Bool {

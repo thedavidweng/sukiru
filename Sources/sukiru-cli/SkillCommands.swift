@@ -11,7 +11,8 @@ struct SkillList {
         try output.render(
             skills,
             lines: skills.map {
-                "\($0.name)\t\($0.scope.rawValue)\t\($0.ownership.rawValue)\t"
+                ($0.packageQualifiedName.map { $0 + "\t" } ?? "")
+                    + "\($0.name)\t\($0.scope.rawValue)\t\($0.ownership.rawValue)\t"
                     + $0.placements.map(\.path).joined(separator: ", ")
             })
     }
@@ -24,7 +25,8 @@ struct SkillSelection {
 
     func select(in report: ScanReport) throws -> Skill {
         let matches = inputs.skills(in: report).filter { skill in
-            skill.name == name && (path == nil || skill.placements.contains { $0.path == path })
+            (skill.packageQualifiedName == name || skill.name == name)
+                && (path == nil || skill.placements.contains { $0.path == path })
         }
         guard matches.count == 1, let skill = matches.first else {
             throw CLIError(
@@ -48,7 +50,9 @@ struct SkillUpdate {
     func run() throws {
         let environment = try cliEnvironment(roots: inputs.roots)
         let report = try ScanEngine(environment: environment).scan(inputs.mutationRequest)
-        let selected = inputs.skills(in: report).filter { name == nil || $0.name == name }
+        let selected = inputs.skills(in: report).filter {
+            name == nil || $0.name == name || $0.packageQualifiedName == name
+        }
         if !all && selected.count != 1 {
             throw CLIError("Select exactly one Skill with --scope/--root/--host")
         }
