@@ -1,6 +1,6 @@
 # 0008: Manage host plugins as independent units without a Sukiru ledger
 
-- Status: Accepted
+- Status: Accepted, amended by [0014](0014-native-first-management-and-bounded-history.md)
 - Date: 2026-10-03
 
 The user confirmed the complete design summary on 2026-10-03. The following

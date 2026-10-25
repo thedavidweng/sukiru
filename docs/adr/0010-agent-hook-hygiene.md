@@ -1,6 +1,6 @@
 # 0010: Passive Agent Hook inventory and structural cleanup
 
-- Status: Accepted
+- Status: Accepted, amended by [0014](0014-native-first-management-and-bounded-history.md)
 - Date: 2026-10-04
 - Origin: [#29](https://github.com/thedavidweng/sukiru/issues/29)
 
