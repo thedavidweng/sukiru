@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-25",
+  "platform": "macOS arm64",
+  "pnpmVersion": "12.11.0",
+  "reproduction": {
+    "testCommand": "SUKIRU_PNPM_E2E=1 SUKIRU_PNPM_BINARY=/absolute/path/to/pnpm-12.11.0 swift test --filter PnpmRealEndToEndTests",
+    "toolResolution": "Existing mise installation at installs/pnpm/12.11.0/pnpm; no global configuration changed. The suite also accepts SUKIRU_PNPM_BINARY and rejects any version other than 12.11.0.",
+    "isolation": "Every process received an explicit environment, separate temporary HOME, XDG_CONFIG_HOME, XDG_CACHE_HOME, XDG_DATA_HOME, XDG_STATE_HOME, TMPDIR, npm user/global config/cache, PNPM_HOME and store. No inherited host session or authentication environment. Local skill tarballs only; pnpm install/add/remove used --offline --ignore-scripts.",
+    "lifecycleCommands": [
+      "pnpm install --offline --ignore-scripts --store-dir <sandbox>/store",
+      "pnpm approve '@sukiru/real-alpha@file:../alpha-v1.tgz' --yes --store-dir <sandbox>/store",
+      "pnpm add '@sukiru/real-alpha@file:../alpha-v2.tgz' --offline --ignore-scripts --store-dir <sandbox>/store",
+      "pnpm approve '@sukiru/real-alpha@file:../alpha-v2.tgz' --yes --store-dir <sandbox>/store",
+      "pnpm install --offline --ignore-scripts --store-dir <sandbox>/store",
+      "pnpm approve '!@sukiru/real-alpha@file:../alpha-v2.tgz' --yes --store-dir <sandbox>/store",
+      "pnpm remove @sukiru/real-alpha --offline --ignore-scripts --store-dir <sandbox>/store"
+    ],
+    "hostNetworkRestriction": "sandbox-exec profile: (version 1) (allow default) (deny network-outbound (remote ip \"*:*\")) (allow network-outbound (remote ip \"localhost:*\")); Claude and Codex discovery additionally succeeded with all network operations denied.",
+    "hostEnvironment": {
+      "HOME": "<host-specific-sandbox>/home",
+      "CODEX_HOME": "<host-specific-sandbox>/home/.codex",
+      "XDG_CONFIG_HOME": "<host-specific-sandbox>/config",
+      "XDG_CACHE_HOME": "<host-specific-sandbox>/cache",
+      "XDG_DATA_HOME": "<host-specific-sandbox>/data",
+      "XDG_STATE_HOME": "<host-specific-sandbox>/state",
+      "TMPDIR": "<host-specific-sandbox>/tmp",
+      "PATH": "<resolved-node-bin>:/usr/bin:/bin",
+      "DISABLE_AUTOUPDATER": "1",
+      "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+      "DO_NOT_TRACK": "1",
+      "OPENCODE_DISABLE_MODELS_FETCH": "true",
+      "OPENCODE_DISABLE_AUTOUPDATE": "true"
+    }
+  },
+  "nativeMetadata": {
+    "format": "JSON in node_modules/.modules.yaml",
+    "pendingSkills": ["@sukiru/real-alpha@file:../alpha-v1.tgz"],
+    "permissionLocation": "pnpm-workspace.yaml permissions.<exact-selector>.skills",
+    "approvedValue": true,
+    "deniedValue": false,
+    "approvedLinkExample": ".claude/skills/pnpm-@sukiru+real-alpha-guide",
+    "approvalEffect": "approve immediately removes pendingSkills and creates linkedSkills plus symlinks; permissions are not stored in the modules manifest.",
+    "upgradeEffect": "Changing a local tarball selector to v2 removes v1 links and creates pendingSkills for v2. The old grant remains. Approving v2 links guide and the newly added added skill under one package permission.",
+    "denialEffect": "Denying the exact selector immediately writes build:false and skills:false, removes links and linkedSkills, and leaves no pendingSkills.",
+    "removalEffect": "Removing the dependency removes links; saved permission decisions remain.",
+    "workspace": {
+      "importers": [".", "apps/a", "apps/b"],
+      "rootHasDependency": false,
+      "importerSpecifier": "file:../../../alpha-v1.tgz",
+      "lockImporterVersion": "file:../alpha-v1.tgz",
+      "normalizedPermissionSelector": "@sukiru/real-alpha@file:../alpha-v1.tgz",
+      "linkLocation": "Workspace root only, even with importer .claude/skills directories present"
+    },
+    "customDirectoryConfiguration": "skills:\n  dirs:\n    - .special/agent-skills\n",
+    "customDirectoryLink": ".special/agent-skills/pnpm-@sukiru+real-alpha-guide"
+  },
+  "hosts": [
+    {
+      "host": "Claude Code",
+      "version": "2.1.310",
+      "versionCommand": "claude --version",
+      "helpCommand": "claude --help",
+      "pnpmLink": ".claude/skills/pnpm-@sukiru+real-alpha-guide",
+      "linkPresent": true,
+      "discovery": "unverified",
+      "discoveryCommand": "claude --bare --print --input-format stream-json --output-format stream-json --verbose --no-session-persistence --strict-mcp-config",
+      "stdin": "{\"type\":\"control_request\",\"request_id\":\"offline-init\",\"request\":{\"subtype\":\"initialize\"}}\n",
+      "discoveryResult": "Exit 0; initialization control response commands did not contain shared-guide or the pnpm basename. Bare mode and initialization-only enumeration do not establish normal-session acceptance or rejection.",
+      "invocation": "unverified",
+      "invocationReason": "No authenticated model request or skill invocation was sent; paid/network agent invocation was excluded."
+    },
+    {
+      "host": "Codex",
+      "version": "0.164.0",
+      "versionCommand": "codex --version",
+      "helpCommand": "codex --help",
+      "pnpmLink": ".agents/skills/pnpm-@sukiru+real-alpha-guide",
+      "linkPresent": true,
+      "discovery": "verified",
+      "discoveryCommand": "codex debug prompt-input",
+      "discoveryResult": "Exit 0 with network denied. Model-visible skill enumeration included: shared-guide: Isolated local lifecycle fixture. (file: r1/pnpm-@sukiru+real-alpha-guide/SKILL.md)",
+      "invocation": "unverified",
+      "invocationReason": "debug prompt-input renders local context without executing a model turn. No authenticated model request or actual skill invocation was sent."
+    },
+    {
+      "host": "Cursor",
+      "version": "2026.07.01-41b2de7",
+      "versionCommand": "agent --version",
+      "helpCommand": "agent --help",
+      "pnpmLink": ".cursor/skills/pnpm-@sukiru+real-alpha-guide",
+      "linkPresent": true,
+      "discovery": "unverified",
+      "discoveryResult": "Available help exposed no local skill enumeration command. No agent session was started.",
+      "invocation": "unverified",
+      "invocationReason": "No offline invocation path was identified; no account authentication, model request, or paid/network agent invocation was used."
+    },
+    {
+      "host": "OpenCode",
+      "version": "2.1.4",
+      "versionCommand": "opencode --version",
+      "helpCommand": "opencode --help",
+      "pnpmLink": ".opencode/skills/pnpm-@sukiru+real-alpha-guide",
+      "linkPresent": true,
+      "discovery": "unverified",
+      "discoveryCommand": "opencode api --standalone GET /api/skill",
+      "discoveryResult": "Exit 0 with external network denied and loopback allowed; returned data:[] at the isolated project location. An ordinary directory control SKILL.md also was absent, so this does not establish pnpm symlink rejection.",
+      "invocation": "unverified",
+      "invocationReason": "No discovered fixture skill or offline model invocation was available; no authenticated model request was sent."
+    }
+  ],
+  "limitations": [
+    "Created symlinks, local host enumeration, and actual invocation are separate claims. No host has verified invocation in this evidence.",
+    "Host versions and local discovery output are point-in-time observations, not general support guarantees.",
+    "Swift tests, builds, lint and formatting were intentionally left to the integrating parent; real pnpm and host discovery commands above were exercised during investigation."
+  ]
+}

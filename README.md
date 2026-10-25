@@ -91,10 +91,14 @@ Website: <https://sukiru.blahaj.uk/>
 - 📴 **Works without the CLIs**: With neither Node.js nor `gh` installed,
   Sukiru is still a complete read-only health checker.
 - **pnpm dependency skills**: Verified project links are read-only external
-  installations. Health excludes them from Vercel drift, orphan and copy-repair
-  checks while retaining host loading conflicts. Unverified pnpm entries stay
-  visible with guidance to inspect the project using pnpm; Fix All, `fix` and
-  `clean` skip protected entries.
+  installations, grouped by package-qualified identity rather than declared name.
+  Workspace importer dependencies and project-local `skills.dirs` targets are
+  recognized. Health shows pending, approved, denied or unknown package permissions
+  separately from installed Skills. Refresh rereads pnpm state without running it.
+  Healthy links are not Vercel drift/orphan/copy-repair candidates; real host
+  collisions remain visible. Fix All, `fix` and `clean` skip protected entries.
+  A link is not proof a host can load or invoke the skill; see
+  [pnpm verification and host evidence](Fixtures/pnpm-12.11.0/README.md).
 - 🍎 **Native**: Pure Swift, SwiftUI, and AppKit with system controls only, so
   it follows your appearance, accessibility settings, and Liquid Glass on
   macOS 26. Available in English and Simplified Chinese.

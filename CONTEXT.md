@@ -90,9 +90,9 @@ content hash.
 _Avoid_: source info
 
 **Ownerless Skill** (野技能):
-A skill that neither ledger records (copied by hand or placed by a script).
-Hosts can still use it, but no installer can update or cleanly uninstall it.
-It is the main target of repair.
+A skill no installer or host records (copied by hand or placed by a script).
+Hosts may use it, but no manager records a source to update or uninstall it.
+Verified pnpm dependency links are not Ownerless; unverified pnpm evidence stays protected.
 _Avoid_: not installed, Untracked Skill (retired term from the old spec)
 
 **Drift** (漂移):
@@ -101,9 +101,10 @@ content hash in the Vercel lock is stale, or the reverse.
 _Avoid_: inconsistency
 
 **Ownership** (归属):
-Which ledger claims a skill. It is a fact determined by ledger records, not a
-user preference. Repairs and updates are routed to the official CLI that owns
-the skill.
+Which manager records a concrete installation. It is established by records
+and disk evidence, not a user preference or equality of declared names.
+Sukiru routes Vercel/GitHub repairs to their official CLIs; pnpm and agent-managed
+installations remain read-only.
 _Avoid_: backend choice, global backend
 
 **Adoption** (收编):
@@ -129,6 +130,27 @@ A skill in a directory that a host manages with its own records (Hermes
 `.bundled_manifest` / `.hub/lock.json`, Codex `.system/`). Its ownership is
 `agent`; Sukiru shows it but never repairs it.
 _Avoid_: built-in skill
+
+**pnpm-managed Skill**（pnpm 管理技能）:
+A dependency skill whose project-local link matches pnpm's native `linkedSkills`
+record and installed direct dependency. Workspace importers may supply the dependency.
+pnpm owns its approval, deployment, updates and removal; Sukiru only observes.
+
+**Package-qualified Identity**（包限定身份）:
+The pnpm entry name (`pnpm-<package>-<folder>`) and verified dependency target
+within one project. Host aliases share identity; unrelated packages stay separate
+even when their original `SKILL.md` names match. The original name, entry name,
+package name and version remain separate evidence.
+
+**Package Permission Observation**（包权限观察）:
+The current native `pendingSkills` observation or workspace `permissions` decision:
+pending, approved, denied, or unknown. A permission applies package-wide and is not
+proof of installed links or host loading. Saved decisions may remain after removal;
+Refresh rereads disk without maintaining history or running pnpm.
+
+**Host Loading Evidence**（宿主加载证据）:
+Separate observations of a deployment link, host discovery, and successful invocation.
+A link or Sukiru inventory entry alone cannot establish actual host usability.
 
 **Problem** (问题):
 A user-facing kind of issue that one or more detection findings roll up into
