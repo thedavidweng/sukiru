@@ -46,6 +46,13 @@ cli_bin_dir="$(swift build -c release --show-bin-path)"
 # case-insensitive volume, so the CLI ships as a helper tool.
 mkdir -p "$application/Contents/Helpers"
 cp "$cli_bin_dir/sukiru" "$application/Contents/Helpers/sukiru"
+# Remove development signatures before changing executable bytes. Keep the
+# generated dSYMs beside the build products for crash symbolication; only
+# local/debug symbols are removed, before any final Developer ID signing.
+codesign --remove-signature "$application/Contents/Helpers/sukiru"
+codesign --remove-signature "$application/Contents/MacOS/Sukiru"
+xcrun strip -S -x "$application/Contents/Helpers/sukiru"
+xcrun strip -S -x "$application/Contents/MacOS/Sukiru"
 # Embedding a second executable changes the app signature.
 codesign --force --timestamp --options runtime --sign "$APPLE_SIGNING_IDENTITY" \
   --keychain "$APPLE_SIGNING_KEYCHAIN" "$application/Contents/Helpers/sukiru"

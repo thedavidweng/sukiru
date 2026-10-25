@@ -84,12 +84,15 @@ extension InlineScanner {
         }
         while true {
             skipSpaces()
+            let quotedKey = !atEnd && (text[index] == "\"" || text[index] == "'")
             let key = try parseFlowValue()
             skipSpaces()
             guard !atEnd, text[index] == ":" else {
                 throw YAMLError("expected `:` in flow mapping")
             }
-            try checkColonSeparation()
+            if !quotedKey {
+                try checkColonSeparation()
+            }
             index = text.index(after: index)
             skipSpaces()
             let value = try parseFlowValue()
@@ -113,7 +116,7 @@ extension InlineScanner {
         return true
     }
 
-    /// A flow-mapping `:` must be followed by separation or a bracket.
+    /// Plain flow keys require separation after `:`; quoted keys permit JSON adjacency.
     private func checkColonSeparation() throws {
         let afterColon = text.index(after: index)
         guard afterColon < text.endIndex else { return }

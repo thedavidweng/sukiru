@@ -17,13 +17,16 @@ Covered contract:
 - `GitHubProvenanceReader` consumes those resolved nodes. Pin refs that spell
   `true`/`false` remain strings when tagged/quoted as strings.
 - `HookInventoryReader` decodes nested YAML objects/arrays in skill and agent
-  frontmatter into `JSONValue`, including aliased hook declarations.
+  frontmatter into `JSONValue`, including aliased hook declarations. Compact
+  JSON flow objects accept adjacent values after quoted keys (`{"count":1}`),
+  while plain YAML keys retain their separator requirements.
 
 `YAMLCompatibilityTests` records these accepted skill cases, including escaped
 quotes and colons in keys. Hook source integration tests cover quoted keys in
 nested skill and subagent hook frontmatter through the passive CLI scan.
-Unsupported syntax throws `YAMLError` and surfaces as an `Issue`; that error
-handling does not establish compatibility with every input accepted by Yams.
+Unsupported syntax throws `YAMLError` and surfaces its parser message as an
+`Issue`, including through localized error descriptions in hook scans; that
+error handling does not establish compatibility with every input accepted by Yams.
 
 Yams and its resolved pin are removed (`Package.swift`, `Package.resolved`);
 `swift-argument-parser` was already removed by the independent CLI migration.

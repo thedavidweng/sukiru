@@ -46,6 +46,84 @@ extension HookCLIIntegrationTests {
         }
     }
 
+    @Test("Compact JSON frontmatter survives passive skill and subagent scans")
+    func compactHookFrontmatter() throws {
+        let tree = try TempTree()
+        let home = try tree.dir("home")
+        let hooks =
+            #"{"Stop":[{"matcher":"Bash","hooks":[{"type":"prompt","prompt":"Review: changes","#
+            + #""timeout":42,"enabled":true,"optional":null,"input":{"bins":["python3"],"ratio":1.25}}]}]}"#
+        let text = """
+            ---
+            name: compact
+            description: Compact JSON hook metadata
+            metadata: {"openclaw":{"requires":{"anyBins":["python3"]}}}
+            hooks: \(hooks)
+            ---
+            Source stays untouched.
+            """
+        let paths = try [
+            tree.file("home/.claude/skills/compact/SKILL.md", contents: text),
+            tree.file("home/.claude/agents/compact.md", contents: text)
+        ]
+        let result = try CLIRunner.run(
+            ["scan", "--json"], environment: CLIRunner.fixtureEnvironment(home: home))
+        #expect(result.exitCode == 0)
+        let report = try JSONDecoder().decode(ScanReport.self, from: result.stdout)
+        let inventory = try #require(report.hookInventory)
+        #expect(inventory.issues.isEmpty)
+        #expect(inventory.hooks.count == 2)
+        #expect(Set(inventory.hooks.map(\.source.tier)) == ["skill", "subagent"])
+        for hook in inventory.hooks {
+            #expect(hook.event == "Stop")
+            #expect(hook.matcher == "Bash")
+            #expect(hook.handlerType == "prompt")
+            #expect(hook.details["prompt"] == .string("Review: changes"))
+            #expect(hook.details["timeout"] == .int(42))
+            #expect(hook.details["enabled"] == .bool(true))
+            #expect(hook.details["optional"] == .null)
+            #expect(hook.details["input"]?["bins"] == .array([.string("python3")]))
+            #expect(hook.details["input"]?["ratio"] == .double(1.25))
+            #expect(!hook.canRemove)
+        }
+        for path in paths {
+            #expect(try String(contentsOfFile: path, encoding: .utf8) == text)
+        }
+    }
+
+    @Test("Malformed YAML hook sources retain localized parser diagnostics")
+    func invalidCompactHookFrontmatter() throws {
+        let tree = try TempTree()
+        let home = try tree.dir("home")
+        let text = """
+            ---
+            name: invalid
+            description: Invalid compact mapping
+            metadata: {"broken" 1}
+            hooks: {}
+            ---
+            Source stays untouched.
+            """
+        let paths = try [
+            tree.file("home/.claude/skills/invalid/SKILL.md", contents: text),
+            tree.file("home/.claude/agents/invalid.md", contents: text)
+        ]
+        let result = try CLIRunner.run(
+            ["scan", "--json"], environment: CLIRunner.fixtureEnvironment(home: home))
+        #expect(result.exitCode == 0)
+        let report = try JSONDecoder().decode(ScanReport.self, from: result.stdout)
+        let inventory = try #require(report.hookInventory)
+        #expect(inventory.hooks.isEmpty)
+        #expect(inventory.issues.count == 2)
+        #expect(Set(inventory.issues.map(\.path)) == Set(paths))
+        for issue in inventory.issues {
+            #expect(issue.message == "expected `:` in flow mapping")
+        }
+        for path in paths {
+            #expect(try String(contentsOfFile: path, encoding: .utf8) == text)
+        }
+    }
+
     @Test(
         "Local, skill, subagent, plugin, and managed definitions remain separate and source-managed"
     )
