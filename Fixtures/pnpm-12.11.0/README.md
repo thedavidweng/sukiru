@@ -55,6 +55,9 @@ English and Simplified Chinese UI text is in `App/Resources/Localizable.xcstring
 `Dependency`, and `library.pnpm.readOnly`. CLI diagnostics use the stable
 `pnpm-ownership-unverified` issue kind.
 
+Recorded native links are also checked when no placements remain: stale records
+stay visible as unverified issues rather than silently yielding an empty healthy scan.
+
 ## Real pnpm lifecycle and host evidence
 
 With pnpm **12.11.0** installed separately (without changing global selection):

@@ -54,7 +54,8 @@ public struct ScanEngine: Sendable {
         // canonical placement hash-explains its identical copies).
         let groups = SkillInventory.groups(from: inventory.placements, locks: claims.claims)
         let pnpm = PnpmOwnershipReader(fileSystem: fileSystem).read(
-            placements: inventory.placements)
+            placements: inventory.placements,
+            projectRoots: request.scope.includes(.project) ? roots : [])
         let permissions = PnpmPermissionReader(fileSystem: fileSystem).read(
             projectRoots: request.scope.includes(.project) ? roots : [], verified: pnpm.verified)
         let ownershipGroups = PnpmSkillGrouping.groups(

@@ -18,6 +18,20 @@ struct PnpmObservationTests {
         #expect(report.issues.isEmpty)
     }
 
+    @Test func staleNativeRecordWithoutPlacementsRemainsVisible() throws {
+        let fixture = try PendingFixture()
+        let path = fixture.root + "/.claude/skills/pnpm-@sukiru+example-guide"
+        try fixture.tree.file(
+            "project/node_modules/.modules.yaml",
+            contents: """
+                {"packageManager":"pnpm@12.11.0","layoutVersion":5,"nodeLinker":"isolated",
+                 "virtualStoreDir":".pnpm","linkedSkills":[".claude/skills/pnpm-@sukiru+example-guide"]}
+                """)
+        let report = try fixture.scan()
+        #expect(report.skills.isEmpty)
+        #expect(report.issues.contains { $0.kind == IssueKind.pnpmUnverified && $0.path == path })
+    }
+
     @Test func decisionsArePackageWideAndDoNotImplyInstallation() throws {
         let fixture = try PendingFixture()
         for (value, expected) in [(true, PnpmObservation.Permission.approved), (false, .denied)] {

@@ -29,13 +29,16 @@ struct PnpmOwnershipEvidence {
 struct PnpmOwnershipReader {
     let fileSystem: FileSystemProbe
 
-    func read(placements: [DiscoveredPlacement]) -> PnpmOwnershipEvidence {
+    func read(
+        placements: [DiscoveredPlacement], projectRoots: [String] = []
+    ) -> PnpmOwnershipEvidence {
         var result = PnpmOwnershipEvidence()
         let projects = Dictionary(
             grouping: placements.filter {
                 $0.scopeGroup.hasPrefix("project:")
             }, by: \.scopeGroup)
-        for scope in projects.keys.sorted() {
+        let scopes = Set(projects.keys).union(projectRoots.map { "project:" + $0 })
+        for scope in scopes.sorted() {
             let root = String(scope.dropFirst("project:".count))
             read(root: root, placements: projects[scope] ?? [], into: &result)
         }
