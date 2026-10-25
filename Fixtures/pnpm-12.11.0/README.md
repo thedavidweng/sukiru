@@ -37,6 +37,19 @@ package manifest. Original frontmatter names are retained. Mixed evidence does
 not grant group ownership, and all verified or unverified package-manager
 placements remain read-only.
 
+Health excludes verified and unverified pnpm placements from installer-copy
+comparisons, not the entire skill-name group. Non-pnpm copies of the same name
+still report real drift. Lock-without-files checks use the complete inventory:
+a readable pnpm link is not a missing file. Host collision detection also keeps
+the complete inventory; aliases remain Notes unless the host reports them as
+duplicates. Repairs involving protected entries are skipped with pnpm guidance.
+
+`PnpmHealthTests` covers scan/Health and batch/CLI dry runs against this restored
+fixture: same-name Vercel records, mixed-copy drift, damaged targets and manifests,
+host collision blocking, and unrelated Vercel/GitHub repairs. Tree checksums verify
+that files and raw symlink targets remain unchanged. This does not run a live pnpm
+install or verify dependency approval/lifecycle behavior.
+
 English and Simplified Chinese UI text is in `App/Resources/Localizable.xcstrings`:
 `Managed by pnpm`, `Unverified pnpm ownership`, `Package`, `Original skill name`,
 `Dependency`, and `library.pnpm.readOnly`. CLI diagnostics use the stable

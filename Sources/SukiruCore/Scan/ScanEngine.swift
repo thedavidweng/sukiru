@@ -57,9 +57,8 @@ public struct ScanEngine: Sendable {
             placements: inventory.placements)
         let resolution = OwnershipResolver().resolve(
             groups: groups, locks: claims.claims, pnpm: pnpm)
-        let mutableGroups = groups.filter { !pnpm.protects($0) }
         let health = HealthAnalyzer(fileSystem: fileSystem).analyze(
-            groups: mutableGroups, locks: claims.claims)
+            groups: groups, locks: claims.claims, pnpm: pnpm)
         let leftovers = LeftoverHostRule.findings(workspaces: workspaces, fileSystem: fileSystem)
         let detector = HostDetector(environment: environment, fileSystem: fileSystem)
         let collisions = HostNameCollisionRule.findings(

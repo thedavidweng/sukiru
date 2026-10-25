@@ -145,7 +145,7 @@ struct PnpmOwnershipTests {
     }
 }
 
-private struct PnpmFixture {
+struct PnpmFixture {
     let tree: TempTree
     let root: String
     let target: String

@@ -64,13 +64,38 @@ public struct HealthAnalyzer: Sendable {
     }
 
     /// Runs every analyzer-owned rule over the scan's groups and lock claims.
+    /// Native package-manager evidence is read when used outside `ScanEngine`.
     public func analyze(groups: [SkillGroup], locks: [ScopeLockClaim]) -> [Finding] {
+        analyze(
+            groups: groups, locks: locks,
+            pnpm: PnpmOwnershipReader(fileSystem: fileSystem).read(
+                placements: groups.flatMap(\.members)))
+    }
+
+    func analyze(
+        groups: [SkillGroup], locks: [ScopeLockClaim], pnpm: PnpmOwnershipEvidence
+    ) -> [Finding] {
         var claims: [String: ScopeLockClaim] = [:]
         for claim in locks {
             claims[claim.scopeGroup] = claim
         }
         var findings: [Finding] = []
-        for group in groups {
+        for original in groups {
+            // Package deployments are not Vercel copies. Filter placements, not
+            // names: unrelated copies of the same name still need analysis.
+            let group: SkillGroup
+            if pnpm.protects(original) {
+                let members = original.members.filter {
+                    pnpm.verified[$0.placement.path] == nil
+                        && !pnpm.unverified.contains($0.placement.path)
+                }
+                guard !members.isEmpty else { continue }
+                group = SkillGroup(
+                    name: original.name, scopeGroup: original.scopeGroup,
+                    ambiguous: original.ambiguous, members: members)
+            } else {
+                group = original
+            }
             let claim = claims[group.scopeGroup]
             findings.append(contentsOf: duplicateFindings(for: group))
             findings.append(contentsOf: impostorFindings(for: group, claim: claim))
@@ -88,6 +113,7 @@ public struct HealthAnalyzer: Sendable {
                 findings.append(finding)
             }
         }
+        // Lock presence checks need the full inventory, including pnpm files.
         findings.append(contentsOf: LockWithoutFilesRule.findings(locks: locks, groups: groups))
         findings.append(contentsOf: lockVersionFindings(locks: locks))
         return findings

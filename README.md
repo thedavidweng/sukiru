@@ -90,6 +90,11 @@ Website: <https://sukiru.blahaj.uk/>
   adoption under `npx skills`.
 - 📴 **Works without the CLIs**: With neither Node.js nor `gh` installed,
   Sukiru is still a complete read-only health checker.
+- **pnpm dependency skills**: Verified project links are read-only external
+  installations. Health excludes them from Vercel drift, orphan and copy-repair
+  checks while retaining host loading conflicts. Unverified pnpm entries stay
+  visible with guidance to inspect the project using pnpm; Fix All, `fix` and
+  `clean` skip protected entries.
 - 🍎 **Native**: Pure Swift, SwiftUI, and AppKit with system controls only, so
   it follows your appearance, accessibility settings, and Liquid Glass on
   macOS 26. Available in English and Simplified Chinese.
