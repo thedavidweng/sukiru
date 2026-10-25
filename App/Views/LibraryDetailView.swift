@@ -117,13 +117,7 @@ struct SkillDetailForm: View {
                     .foregroundStyle(.secondary)
             }
             if let description = state.skillDescriptions[skill.selfID] {
-                Text(description)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(3)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityIdentifier("sukiru.library.detail.description")
-                    .help(description)
+                ExpandableDescription(text: description)
             }
         }
         .textSelection(.enabled)
@@ -264,5 +258,64 @@ private struct SeverityIcon: View {
                 .foregroundStyle(.secondary)
                 .accessibilityLabel(Text(severity.title))
         }
+    }
+}
+
+/// The skill description, clamped to three lines with a Show More / Show Less
+/// button that appears only when the text is actually truncated. Expansion
+/// resets per skill because `SkillDetailForm` is keyed by `skill.selfID`.
+private struct ExpandableDescription: View {
+    private static let collapsedLineLimit = 3
+
+    let text: String
+    @State private var isExpanded = false
+    @State private var fullHeight: CGFloat = 0
+    @State private var clampedHeight: CGFloat = 0
+
+    private var isTruncatable: Bool { fullHeight > clampedHeight + 1 }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(text)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .lineLimit(isExpanded ? nil : Self.collapsedLineLimit)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("sukiru.library.detail.description")
+                .help(text)
+                .background(alignment: .topLeading) {
+                    measure(lineLimit: nil, into: $fullHeight)
+                    measure(lineLimit: Self.collapsedLineLimit, into: $clampedHeight)
+                }
+            if isTruncatable {
+                Button(isExpanded ? "Show Less" : "Show More") {
+                    isExpanded.toggle()
+                }
+                .buttonStyle(.link)
+                .controlSize(.small)
+                // Keep the inline link look, but announce it as a button: it
+                // expands text in place rather than navigating anywhere.
+                .accessibilityRemoveTraits(.isLink)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityIdentifier("sukiru.library.detail.description.toggle")
+            }
+        }
+    }
+
+    /// Hidden copy of the text whose height reports the full or clamped size
+    /// at the current width.
+    private func measure(lineLimit: Int?, into height: Binding<CGFloat>) -> some View {
+        Text(text)
+            .font(.body)
+            .lineLimit(lineLimit)
+            .fixedSize(horizontal: false, vertical: true)
+            .hidden()
+            .accessibilityHidden(true)
+            .background(
+                GeometryReader { proxy in
+                    Color.clear.onChange(of: proxy.size.height, initial: true) { _, new in
+                        height.wrappedValue = new
+                    }
+                })
     }
 }

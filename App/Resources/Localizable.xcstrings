@@ -5472,6 +5472,17 @@
         }
       }
     },
+    "Show Less" : {
+      "comment" : "Library detail: collapse the skill description.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收起"
+          }
+        }
+      }
+    },
     "Show Managing Plugin" : {
       "localizations" : {
         "zh-Hans" : {
@@ -5488,6 +5499,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示所属技能"
+          }
+        }
+      }
+    },
+    "Show More" : {
+      "comment" : "Library detail: expand the truncated skill description.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "展开"
           }
         }
       }

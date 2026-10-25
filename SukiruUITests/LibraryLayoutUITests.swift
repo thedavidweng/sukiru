@@ -33,6 +33,16 @@ final class LibraryLayoutUITests: XCTestCase {
         XCTAssertLessThanOrEqual(descriptionView.frame.maxY, owner.frame.minY)
         XCTAssertLessThan(owner.frame.maxY, scope.frame.minY)
         XCTAssertLessThan(descriptionView.frame.height, 100)
+        let collapsedHeight = descriptionView.frame.height
+
+        let toggle = app.buttons["sukiru.library.detail.description.toggle"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+        toggle.click()
+        XCTAssertGreaterThan(descriptionView.frame.height, collapsedHeight)
+        XCTAssertLessThanOrEqual(descriptionView.frame.maxY, owner.frame.minY)
+        toggle.click()
+        XCTAssertLessThan(descriptionView.frame.height, 100)
+        XCTAssertLessThanOrEqual(descriptionView.frame.maxY, owner.frame.minY)
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "Long description is bounded above Owner and Scope"
         attachment.lifetime = .keepAlways
