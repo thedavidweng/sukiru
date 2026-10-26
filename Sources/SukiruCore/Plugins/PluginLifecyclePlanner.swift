@@ -42,7 +42,7 @@ public struct PluginLifecyclePlanner: Sendable {
             let localCursor =
                 request.host == .cursor
                 && (request.action == "disable-local" || cursorLimitation(request) != nil)
-            if localCursor {
+            if localCursor || Self.isCodexEnablement(request) {
                 version = "not probed"
             } else if let known = versions[request.host] {
                 version = known
@@ -86,6 +86,11 @@ public struct PluginLifecyclePlanner: Sendable {
                 try PluginLocalDisable.command(
                     request: request, inventory: inventory,
                     environment: environment, hostVersion: version))
+        }
+        if Self.isCodexEnablement(request) {
+            return .native(
+                try CodexPluginEnablement.command(
+                    request: request, inventory: inventory, environment: environment))
         }
         if let limit = limitation(request, version: version, inventory: inventory) {
             return .instructions(limit)

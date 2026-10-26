@@ -1290,16 +1290,6 @@
         }
       }
     },
-    "Codex has no command to enable or disable one plugin; its feature flags are not plugin enablement" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Codex 没有启用或停用单个插件的命令；它的功能开关不等于插件启用状态"
-          }
-        }
-      }
-    },
     "Codex updates plugins only by refreshing their whole marketplace" : {
       "localizations" : {
         "zh-Hans" : {
@@ -9740,6 +9730,53 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "始终保留最近一个批次。被清理的批次将无法再回滚，磁盘上的技能不受影响。限制会在每次批处理之后以及 Sukiru 启动时应用。"
+          }
+        }
+      }
+    },
+    "Codex reads this plugin's enablement from the enabled key in config.toml; edit it there" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex 从 config.toml 中的 enabled 键读取此插件的启用状态；请在该文件中修改"
+          }
+        }
+      }
+    },
+    "plugin.codexEnablement.warning" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changes only this plugin's documented enabled key; every other byte of the file is kept. Codex reads it when its next session starts. Snapshot rollback restores the file."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只修改此插件已记录的 enabled 键，文件中的其他内容逐字节保留。Codex 会在下次启动会话时读取该设置。快照回滚可恢复此文件。"
+          }
+        }
+      }
+    },
+    "Preview the config.toml change that enables or disables this plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览启用或停用此插件的 config.toml 修改"
+          }
+        }
+      }
+    },
+    "Set %@ in %@" : {
+      "comment" : "Direct edit of one documented Codex config key; the key is not translated.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 %2$@ 中设置 %1$@"
           }
         }
       }

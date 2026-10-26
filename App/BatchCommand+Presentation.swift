@@ -55,6 +55,8 @@ extension BatchCommand {
             )
         case .deleteHookHelper(let path, _):
             return String(localized: "Deletes only the unreferenced producer helper: \(path)")
+        case .replaceConfigSource:
+            return String(localized: "plugin.codexEnablement.warning")
         case nil:
             return nil
         }
@@ -96,6 +98,12 @@ extension FileOperation {
             return String(localized: "Remove selected hooks from \(Self.display(path))")
         case .deleteHookHelper(let path, _):
             return String(localized: "Delete unreferenced hook helper \(Self.display(path))")
+        case .replaceConfigSource(let path, _, _, let pluginID, let enabled):
+            let key = "[plugins.\"\(pluginID)\"] enabled = \(enabled)"
+            return String(
+                localized: "Set \(key) in \(Self.display(path))",
+                comment:
+                    "Direct edit of one documented Codex config key; the key is not translated.")
         }
     }
 

@@ -24,7 +24,10 @@ extension PluginHost {
                 "marketplace-refresh", "marketplace-remove"
             ]
         case .codex:
-            ["install", "remove", "marketplace-add", "marketplace-refresh", "marketplace-remove"]
+            [
+                "install", "enable", "disable", "remove", "marketplace-add",
+                "marketplace-refresh", "marketplace-remove"
+            ]
         case .cursor:
             ["install", "marketplace-add", "marketplace-refresh", "marketplace-remove"]
         case .opencode:
@@ -51,17 +54,15 @@ extension PluginInstallation {
 
     /// Per-installation operations. Claude's managed installations accept
     /// only update; Codex updates arrive only through a whole-marketplace
-    /// refresh; OpenCode's discovered local files have no package lifecycle,
-    /// so a package removal of the same name is never offered for them.
+    /// refresh, and its enablement is the plugin's documented `enabled` key
+    /// in config.toml; OpenCode's discovered local files have no package
+    /// lifecycle, so a package removal of the same name is never offered.
     var actions: [String] {
         switch host {
         case .claude:
-            scope == "managed"
-                ? ["update"]
-                : (enablement == .enabled ? [] : ["enable"])
-                    + (enablement == .disabled ? [] : ["disable"]) + ["update", "remove"]
+            scope == "managed" ? ["update"] : enablementActions + ["update", "remove"]
         case .codex:
-            ["remove"]
+            enablementActions + ["remove"]
         case .cursor:
             installationStatus == "discovered" ? ["disable-local"] : []
         case .opencode:
@@ -70,11 +71,15 @@ extension PluginInstallation {
         }
     }
 
+    private var enablementActions: [String] {
+        (enablement == .enabled ? [] : ["enable"]) + (enablement == .disabled ? [] : ["disable"])
+    }
+
     /// Why the enabled switch is dimmed for this installation.
     var fixedEnablementReason: LocalizedStringKey {
         switch host {
         case .codex:
-            "Codex has no command to enable or disable one plugin; its feature flags are not plugin enablement"
+            "Codex reads this plugin's enablement from the enabled key in config.toml; edit it there"
         case .claude where scope == "managed":
             "Managed settings control this plugin; change it where your organization manages Claude Code"
         case .cursor:

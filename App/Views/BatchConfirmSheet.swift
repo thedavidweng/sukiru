@@ -274,6 +274,7 @@ struct BatchSummary {
             case .deleteDirectory: .deleteDirectory
             case .removeLeftoverSkillsDir: .removeLeftover
             case .movePlugin: .disablePlugin
+            case .replaceConfigSource: .hostPlugin
             case .replaceHookSource, .deleteHookHelper: .hookCleanup
             }
         }

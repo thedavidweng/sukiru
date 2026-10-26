@@ -14,17 +14,23 @@ extension PluginLifecyclePlanner {
         return nil
     }
 
+    static func isCodexEnablement(_ request: PluginLifecycleRequest) -> Bool {
+        request.host == .codex && ["enable", "disable"].contains(request.action)
+    }
+
     func codexLimitation(
         _ request: PluginLifecycleRequest, version: String, inventory: PluginInventory
     ) -> String? {
         guard PluginHostContract(host: .codex, version: version) != nil else {
             return PluginHostContract.unverified(host: .codex, version: version, name: "Codex")
         }
+        // Enablement is the documented `enabled` key of the scope's config.toml (ADR-0014).
+        if Self.isCodexEnablement(request) { return nil }
         if request.scope != "user" {
             return
                 "Codex plugin mutations support user scope only; project configuration is not rewritten."
         }
-        if ["enable", "disable", "update", "check", "replace", "list"].contains(request.action) {
+        if ["update", "check", "replace", "list"].contains(request.action) {
             return
                 "Codex exposes no individual \(request.action) operation. "
                 + "Marketplace refresh updates the whole configured Git marketplace; "

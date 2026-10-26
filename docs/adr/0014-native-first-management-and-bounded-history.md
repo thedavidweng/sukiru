@@ -69,3 +69,16 @@ batch can no longer be rolled back, which Settings states. Settings also offer
 clearing all history. The policy is stored in
 `~/Library/Application Support/Sukiru/settings.json` so the app and the CLI
 apply the same limits, and the CLI exposes pruning and clearing.
+
+## Applied
+
+- Codex plugin enable/disable uses rule 2, superseding ADR-0008's Codex
+  enablement limit: Sukiru edits only `enabled` in the plugin's
+  `[plugins."<name>@<marketplace>"]` table of the installation's user
+  (`$CODEX_HOME` or `~/.codex`) or project `.codex/config.toml`, inserting it
+  after the header when absent. The `sukiru-fileop replace-config-source`
+  command carries the scanned hash and the full replacement, recomputes the
+  edit and re-reads it through the plugin TOML reader before an atomic,
+  permission-preserving write. Duplicate tables, dotted-key, inline-table or
+  array-table forms, and non-boolean or multi-line values are refused. Codex
+  reads the change when its next session starts.

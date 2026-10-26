@@ -354,6 +354,7 @@ lifecycle command was executed to obtain this evidence.
 | Codex configured marketplace `add`, `upgrade`, `remove` | Native batch candidates with operation-specific capture and actual marketplace-wide impact. |
 | Codex `openai-curated-remote` plugin `add` and `remove` | Native batch with explicit backend-effects consent. File restoration cannot undo backend installation state. |
 | Codex plugin `list` | Explicit refresh only: unfiltered listing can fetch a remote catalog. Startup inventory reads local files. |
+| Codex plugin enable/disable | No CLI command. Reviewed direct edit of the documented `[plugins."<id>"] enabled` key in the installation's user or project `config.toml` ([ADR-0014](adr/0014-native-first-management-and-bounded-history.md) rule 2); Codex reads it on its next session start. |
 
 ### OpenCode v1 eagerly initializes plugins
 

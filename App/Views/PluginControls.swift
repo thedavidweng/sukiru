@@ -27,9 +27,11 @@ struct PluginEnabledToggle: View {
         .disabled(state.pluginActionsBusy || !plugin.switchIsChangeable)
         .accessibilityIdentifier("sukiru.plugins.enabled.\(plugin.id)")
         .help(
-            plugin.switchIsChangeable
-                ? "Preview the host's enable or disable command for this plugin"
-                : plugin.fixedEnablementReason)
+            !plugin.switchIsChangeable
+                ? plugin.fixedEnablementReason
+                : plugin.host == .codex
+                    ? "Preview the config.toml change that enables or disables this plugin"
+                    : "Preview the host's enable or disable command for this plugin")
     }
 }
 

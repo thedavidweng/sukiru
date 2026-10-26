@@ -6,19 +6,7 @@ enum PluginTOMLReader {
     static func tables(at path: String, issues: inout [Issue]) -> [String: [String: String]] {
         guard FileManager.default.fileExists(atPath: path) else { return [:] }
         do {
-            let text = try String(contentsOfFile: path, encoding: .utf8)
-            var table: String?
-            var result: [String: [String: String]] = [:]
-            for rawLine in text.components(separatedBy: .newlines) {
-                let line = rawLine.trimmingCharacters(in: .whitespaces)
-                if line.hasPrefix("[") {
-                    table = try tableName(line)
-                    if let table { result[table, default: [:]] = result[table] ?? [:] }
-                } else if let table, let field = try field(line) {
-                    result[table, default: [:]][field.0] = field.1
-                }
-            }
-            return result
+            return try tables(text: String(contentsOfFile: path, encoding: .utf8))
         } catch {
             issues.append(
                 Issue(
@@ -26,6 +14,22 @@ enum PluginTOMLReader {
                     message: "Cannot interpret plugin TOML tables: \(error.localizedDescription)"))
             return [:]
         }
+    }
+
+    /// The plugin and marketplace tables of `text`; throws on unsupported syntax.
+    static func tables(text: String) throws -> [String: [String: String]] {
+        var table: String?
+        var result: [String: [String: String]] = [:]
+        for rawLine in text.components(separatedBy: .newlines) {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            if line.hasPrefix("[") {
+                table = try tableName(line)
+                if let table { result[table, default: [:]] = result[table] ?? [:] }
+            } else if let table, let field = try field(line) {
+                result[table, default: [:]][field.0] = field.1
+            }
+        }
+        return result
     }
 
     /// The `plugins.<id>` or `marketplaces.<name>` table a header opens, or

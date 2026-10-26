@@ -24,6 +24,10 @@ public enum FileOperation: Equatable, Sendable {
     case movePlugin(path: String, destination: String)
     case replaceHookSource(path: String, hash: String, contents: String)
     case deleteHookHelper(path: String, hash: String)
+    /// ADR-0014 rule 2: replace a Codex `config.toml` whose only change is the
+    /// reviewed plugin's `enabled` value, re-verified against the scanned hash.
+    case replaceConfigSource(
+        path: String, hash: String, contents: String, pluginID: String, enabled: Bool)
 
     static let executable = "sukiru-fileop"
 
@@ -32,10 +36,9 @@ public enum FileOperation: Equatable, Sendable {
             return nil
         }
         switch (argv[1], argv.count) {
-        case ("replace-hook-source", 5):
-            self = .replaceHookSource(path: argv[2], hash: argv[3], contents: argv[4])
-        case ("delete-hook-helper", 4):
-            self = .deleteHookHelper(path: argv[2], hash: argv[3])
+        case ("replace-hook-source", 5), ("delete-hook-helper", 4), ("replace-config-source", 7):
+            guard let operation = Self.sourceOperation(argv) else { return nil }
+            self = operation
         case ("delete-directory", 3):
             self = .deleteDirectory(argv[2])
         case ("delete-link", 3):
@@ -53,12 +56,33 @@ public enum FileOperation: Equatable, Sendable {
         }
     }
 
+    /// The hook and config source edits, which carry a scanned content hash.
+    private static func sourceOperation(_ argv: [String]) -> FileOperation? {
+        switch argv[1] {
+        case "replace-hook-source":
+            .replaceHookSource(path: argv[2], hash: argv[3], contents: argv[4])
+        case "delete-hook-helper":
+            .deleteHookHelper(path: argv[2], hash: argv[3])
+        case "replace-config-source" where ["true", "false"].contains(argv[6]):
+            .replaceConfigSource(
+                path: argv[2], hash: argv[3], contents: argv[4], pluginID: argv[5],
+                enabled: argv[6] == "true")
+        default:
+            nil
+        }
+    }
+
     var argv: [String] {
         switch self {
         case .replaceHookSource(let path, let hash, let contents):
             return [Self.executable, "replace-hook-source", path, hash, contents]
         case .deleteHookHelper(let path, let hash):
             return [Self.executable, "delete-hook-helper", path, hash]
+        case .replaceConfigSource(let path, let hash, let contents, let pluginID, let enabled):
+            return [
+                Self.executable, "replace-config-source", path, hash, contents, pluginID,
+                String(enabled)
+            ]
         case .deleteDirectory(let path):
             return [Self.executable, "delete-directory", path]
         case .deleteLink(let path):
@@ -77,7 +101,9 @@ public enum FileOperation: Equatable, Sendable {
     /// Every path the operation reads or writes (workspace-boundary check).
     var paths: [String] {
         switch self {
-        case .replaceHookSource(let path, _, _), .deleteHookHelper(let path, _): [path]
+        case .replaceHookSource(let path, _, _), .deleteHookHelper(let path, _),
+            .replaceConfigSource(let path, _, _, _, _):
+            [path]
         default: Array(argv.dropFirst(2))
         }
     }
@@ -86,13 +112,8 @@ public enum FileOperation: Equatable, Sendable {
         let fileManager = FileManager.default
         let probe = DefaultFileSystemProbe()
         switch self {
-        case .replaceHookSource(let path, let hash, let contents):
-            try HookFileMutation.replace(path: path, hash: hash, contents: contents)
-        case .deleteHookHelper(let path, let hash):
-            guard let environment else {
-                throw HookError("Hook helper cleanup requires a scoped inventory")
-            }
-            try HookFileMutation.deleteHelper(path: path, hash: hash, environment: environment)
+        case .replaceHookSource, .deleteHookHelper, .replaceConfigSource:
+            try performSourceEdit(environment: environment)
         case .deleteDirectory(let path):
             try fileManager.removeItem(atPath: path)
         case .deleteLink(let path):
@@ -113,6 +134,23 @@ public enum FileOperation: Equatable, Sendable {
             try Self.removeLeftoverSkillsDir(path, probe: probe)
         case .movePlugin(let path, let destination):
             try Self.movePlugin(path, destination: destination, environment: environment)
+        }
+    }
+
+    private func performSourceEdit(environment: SukiruEnvironment?) throws {
+        switch self {
+        case .replaceHookSource(let path, let hash, let contents):
+            try HookFileMutation.replace(path: path, hash: hash, contents: contents)
+        case .deleteHookHelper(let path, let hash):
+            guard let environment else {
+                throw HookError("Hook helper cleanup requires a scoped inventory")
+            }
+            try HookFileMutation.deleteHelper(path: path, hash: hash, environment: environment)
+        case .replaceConfigSource(let path, let hash, let contents, let pluginID, let enabled):
+            try CodexPluginEnablement.replace(
+                path: path, hash: hash, contents: contents, pluginID: pluginID, enabled: enabled)
+        default:
+            break
         }
     }
 

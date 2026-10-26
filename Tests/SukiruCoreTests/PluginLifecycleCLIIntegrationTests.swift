@@ -100,8 +100,7 @@ struct PluginLifecycleCLIIntegrationTests {
             ["opencode", "v3.0.0", "install", "demo"],
             ["opencode", "v2.0.21", "install", "demo"],
             ["claude", "2.1.200", "update", "demo@team"],
-            ["codex", "codex-cli 0.159.9", "install", "demo@team"],
-            ["codex", "codex-cli 0.160.0", "enable", "demo@team"]
+            ["codex", "codex-cli 0.159.9", "install", "demo@team"]
         ])
     func instructionsOnly(values: [String]) throws {
         let tree = try TempTree()
