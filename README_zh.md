@@ -91,11 +91,7 @@ Sukiru 根据 pnpm 12.11+（主版本 12）的原生安装记录与实际链接�
 brew install --cask thedavidweng/tap/sukiru
 ```
 
-后续更新：
-
-```bash
-brew upgrade --cask sukiru
-```
+Sukiru 会自行更新：选择 **Sukiru › 检查 Sukiru 更新…**，或在「设置 › 通用」中保持自动检查开启。也可以运行 `brew upgrade --cask sukiru`。
 
 ### 手动下载
 

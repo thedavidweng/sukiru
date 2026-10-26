@@ -1,6 +1,28 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Check for Skill Updates" : {
+      "comment" : "Library toolbar: read-only update check through gh skill update --dry-run.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查技能更新"
+          }
+        }
+      }
+    },
+    "Check for Sukiru Updates…" : {
+      "comment" : "App menu: check for a newer Sukiru through Sparkle.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查 Sukiru 更新…"
+          }
+        }
+      }
+    },
     "Skills" : {
       "localizations" : {
         "en" : {
@@ -93,6 +115,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "上下文提供者"
+          }
+        }
+      }
+    },
+    "Update All Skills" : {
+      "comment" : "Library toolbar: queue an update for every ledger-owned skill in the selected scope.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新全部技能"
           }
         }
       }
@@ -1064,6 +1097,17 @@
         }
       }
     },
+    "Automatically check for updates" : {
+      "comment" : "Settings > General: Sparkle's automatic update check.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动检查更新"
+          }
+        }
+      }
+    },
     "Available" : {
       "comment" : "Settings > Installers: accessibility label for a ready CLI.",
       "localizations" : {
@@ -1226,17 +1270,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "检查插件更新"
-          }
-        }
-      }
-    },
-    "Check for Updates" : {
-      "comment" : "Library toolbar: read-only update check through gh skill update --dry-run.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "检查更新"
           }
         }
       }
@@ -6322,17 +6355,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更新"
-          }
-        }
-      }
-    },
-    "Update All" : {
-      "comment" : "Library toolbar: queue an update for every ledger-owned skill in the selected scope.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "全部更新"
           }
         }
       }

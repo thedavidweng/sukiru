@@ -1,6 +1,6 @@
 # Native implementation policy
 
-Across app, SukiruCore and CLI, use Swift standard library and Apple-provided frameworks (SwiftUI, AppKit, Foundation, etc.) only. Do not use third-party runtime/package dependencies. Native UI inherits platform materials, semantic colors and visual updates; no custom window chrome. Gate new system APIs with `#available`.
+Across app, SukiruCore and CLI, use Swift standard library and Apple-provided frameworks (SwiftUI, AppKit, Foundation, etc.) only. Do not use third-party runtime/package dependencies. The only exception is Sparkle, embedded in the app target for in-app updates ([ADR 0015](../adr/0015-sparkle-app-updates.md)); SukiruCore and the CLI stay dependency-free. Native UI inherits platform materials, semantic colors and visual updates; no custom window chrome. Gate new system APIs with `#available`.
 
 YAML and CLI parsing are first-party: `Sources/SukiruCore/YAML/` parses the
 supported configuration/frontmatter subset, and CLI command/flag handling

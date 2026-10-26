@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build a Release Sukiru.app and package the distributable artifacts
-# (Sukiru.dmg, Sukiru.zip, checksums.txt) into dist/.
+# (Sukiru.dmg, Sukiru.zip, appcast.xml, checksums.txt) into dist/.
 #
 # The marketing version is injected at build time (MARKETING_VERSION) so the
 # release workflow can derive it from the git tag without touching
@@ -10,12 +10,14 @@ set -euo pipefail
 : "${APPLE_SIGNING_IDENTITY:?release signing identity required}"
 : "${APPLE_SIGNING_KEYCHAIN:?}" "${APPLE_TEAM_ID:?}"
 : "${APPLE_API_KEY_PATH:?}" "${APPLE_API_KEY_ID:?}" "${APPLE_API_ISSUER:?}"
+: "${SPARKLE_BIN:?Sparkle tools directory required}" "${SPARKLE_PRIVATE_KEY:?}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 : "${MARKETING_VERSION:?set MARKETING_VERSION (e.g. 1.0.0)}"
-BUILD_NUMBER="${CURRENT_PROJECT_VERSION:-1}"
+# Sparkle orders releases by CFBundleVersion, so it follows the release.
+BUILD_NUMBER="${CURRENT_PROJECT_VERSION:-$MARKETING_VERSION}"
 
 echo "==> Generating Xcode project..."
 xcodegen generate
@@ -53,6 +55,15 @@ codesign --remove-signature "$application/Contents/Helpers/sukiru"
 codesign --remove-signature "$application/Contents/MacOS/Sukiru"
 xcrun strip -S -x "$application/Contents/Helpers/sukiru"
 xcrun strip -S -x "$application/Contents/MacOS/Sukiru"
+# Sparkle's XPC services exist for sandboxed apps only (ADR 0015). Its
+# remaining executables are re-signed, innermost first, with the release
+# identity under the hardened runtime.
+sparkle="$application/Contents/Frameworks/Sparkle.framework"
+rm -rf "$sparkle/XPCServices" "$sparkle/Versions/B/XPCServices"
+for component in "$sparkle/Versions/B/Autoupdate" "$sparkle/Versions/B/Updater.app" "$sparkle"; do
+  codesign --force --timestamp --options runtime --sign "$APPLE_SIGNING_IDENTITY" \
+    --keychain "$APPLE_SIGNING_KEYCHAIN" "$component"
+done
 # Embedding a second executable changes the app signature.
 codesign --force --timestamp --options runtime --sign "$APPLE_SIGNING_IDENTITY" \
   --keychain "$APPLE_SIGNING_KEYCHAIN" "$application/Contents/Helpers/sukiru"
@@ -88,6 +99,26 @@ hdiutil create \
 rm -rf "$dmg_staging"
 
 "$REPO_ROOT/Scripts/sign-and-notarize.sh" "$dist_dir/Sukiru.dmg"
+
+echo "==> Generating appcast.xml..."
+# generate_appcast reads every archive in its directory, so it sees only the
+# zip, with the release's CHANGELOG section beside it as release notes.
+appcast_dir="$REPO_ROOT/.build/appcast"
+rm -rf "$appcast_dir"
+mkdir -p "$appcast_dir"
+cp "$dist_dir/Sukiru.zip" "$appcast_dir/"
+escaped_version="${MARKETING_VERSION//./\\.}"
+awk "/^## \\[${escaped_version}\\]/{found=1; next} /^## \\[/{if(found) exit} found{print}" \
+  CHANGELOG.md > "$appcast_dir/Sukiru.md"
+if ! grep -q '[^[:space:]]' "$appcast_dir/Sukiru.md"; then
+  echo "error: CHANGELOG.md has no section for $MARKETING_VERSION" >&2
+  exit 1
+fi
+printf '%s' "$SPARKLE_PRIVATE_KEY" | "$SPARKLE_BIN/generate_appcast" --ed-key-file - \
+  --download-url-prefix "https://github.com/thedavidweng/sukiru/releases/download/v$MARKETING_VERSION/" \
+  --embed-release-notes --link "https://thedavidweng.github.io/sukiru/" \
+  -o "$dist_dir/appcast.xml" "$appcast_dir"
+rm -rf "$appcast_dir"
 
 echo "==> Generating SHA-256 checksums..."
 cd "$dist_dir"

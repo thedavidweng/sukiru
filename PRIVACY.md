@@ -1,6 +1,6 @@
 # Sukiru Privacy Policy
 
-Last updated: October 2, 2026
+Last updated: October 26, 2026
 
 Sukiru does not collect, sell, or share personal data. It has no accounts,
 analytics, advertising, telemetry, or cloud service of its own.
@@ -9,8 +9,9 @@ analytics, advertising, telemetry, or cloud service of its own.
 
 Sukiru reads skill directories, installer lockfiles, and `SKILL.md` files on
 your Mac to build its health report. Scanning happens only at launch and when
-you click Refresh; there are no background watchers, and Sukiru does not check
-for updates to itself or to your skills.
+you click Refresh; there are no background watchers. Sukiru checks for updates
+to your skills only when you ask, and for updates to itself as described
+below.
 
 To find `gh` and Node.js, Sukiru starts your login shell once per installer
 check and reads its PATH, so your shell startup files run as they do in a new
@@ -21,6 +22,11 @@ your startup files can check it to skip slow work.
 
 Sukiru makes these network requests, and no others:
 
+- **App updates**: once a day, and when you choose Check for Updates…,
+  Sukiru's built-in updater (Sparkle) downloads `appcast.xml` from the latest
+  GitHub release. If a newer version exists and you install it, the update is
+  downloaded from GitHub Releases. No system profile is sent. Turn off
+  automatic checks in Settings › General.
 - **Installer detection**: at launch and when you click Check Again in
   Settings, Sukiru runs `gh --version` and, if Node.js is installed,
   `npx --offline skills --version`. The `--offline` flag keeps `npx` from

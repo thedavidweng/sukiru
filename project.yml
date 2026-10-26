@@ -16,6 +16,11 @@ options:
 packages:
   SukiruCore:
     path: .
+  # The single third-party dependency (ADR 0015), app target only. Bump it
+  # together with SPARKLE_VERSION in .github/workflows/release.yml.
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: "2.10.0"
 
 targets:
   Sukiru:
@@ -31,6 +36,7 @@ targets:
       # between the two.
       - package: SukiruCore
         product: SukiruCore
+      - package: Sparkle
     settings:
       base:
         PRODUCT_NAME: Sukiru
@@ -43,6 +49,8 @@ targets:
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: YES
+        # Sparkle keys only; Xcode merges the generated keys into it.
+        INFOPLIST_FILE: App/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Sukiru
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
         INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 David Weng. Released under the AGPL-3.0-only License"

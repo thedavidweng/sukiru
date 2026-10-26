@@ -31,6 +31,9 @@ jobs:
       APPLE_TEAM_ID: NCFNX3LJ83
       APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
       APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      # Matches the Sparkle package pin in project.yml; bump both together.
+      SPARKLE_VERSION: "2.10.0"
+      SPARKLE_TARBALL_SHA256: c2bf58aa8387266ac179357b1415d6f2635f044da8be41042af32425dae6da0c
 
     steps:
       - name: Checkout repository
@@ -67,6 +70,18 @@ jobs:
       - name: Install tools
         run: HOMEBREW_NO_AUTO_UPDATE=1 brew install swiftlint xcodegen
 
+      - name: Install Sparkle release tools
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/sparkle"
+          mkdir -p "$tools"
+          curl -sfL -o "$tools/sparkle.tar.xz" \
+            "https://github.com/sparkle-project/Sparkle/releases/download/$SPARKLE_VERSION/Sparkle-$SPARKLE_VERSION.tar.xz"
+          # generate_appcast receives the private key, so run only the pinned build.
+          echo "$SPARKLE_TARBALL_SHA256  $tools/sparkle.tar.xz" | shasum -a 256 -c -
+          tar -xf "$tools/sparkle.tar.xz" -C "$tools" ./bin
+          echo "SPARKLE_BIN=$tools/bin" >> "$GITHUB_ENV"
+
       - parallel:
           - name: Run SwiftLint (Strict Mode)
             run: swiftlint lint --strict
@@ -93,6 +108,7 @@ jobs:
       - name: Package release artifacts
         env:
           MARKETING_VERSION: ${{ steps.vars.outputs.version }}
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: ./Scripts/package-release.sh
 
       - name: Create GitHub Release
@@ -103,6 +119,7 @@ jobs:
           files: |
             dist/Sukiru.dmg
             dist/Sukiru.zip
+            dist/appcast.xml
             dist/checksums.txt
           generate_release_notes: false
         env:
