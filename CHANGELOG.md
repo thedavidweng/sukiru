@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/thedavidweng/sukiru/compare/v1.8.0...v1.9.0) (2026-10-26)
+
+
+### ✨ Features
+
+* **plugins:** add Antigravity as a plugin host ([b0c33ef](https://github.com/thedavidweng/sukiru/commit/b0c33effd874eb3d242a10ca632501e5788ff2ae))
+
 ## [1.8.0](https://github.com/thedavidweng/sukiru/compare/v1.7.0...v1.8.0) (2026-10-26)
 
 
