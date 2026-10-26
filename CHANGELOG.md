@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.8.0](https://github.com/thedavidweng/sukiru/compare/v1.7.0...v1.8.0) (2026-10-26)
+
+
+### ✨ Features
+
+* **history:** bound snapshots and execution records ([fd24af8](https://github.com/thedavidweng/sukiru/commit/fd24af83c329fb82cd888321e7761c3a7a2bfafb))
+* **hooks:** add, edit and disable hooks in documented sources ([1c3c2fa](https://github.com/thedavidweng/sukiru/commit/1c3c2fa489f15f011dbc0924f97a8bc44324dd7c))
+* **plugins:** toggle Codex plugins through config.toml ([c9fa1b8](https://github.com/thedavidweng/sukiru/commit/c9fa1b8064dab0966100af9dbb78ab799e0ae525))
+* **pnpm:** separate sources and permission observations ([ce779a5](https://github.com/thedavidweng/sukiru/commit/ce779a585752965ae6ef318d0a26384cd70c564b)), closes [#45](https://github.com/thedavidweng/sukiru/issues/45) [#48](https://github.com/thedavidweng/sukiru/issues/48)
+* **ui:** toggle full skill descriptions in inspector ([72ae67a](https://github.com/thedavidweng/sukiru/commit/72ae67a3f5bc78868df341e8b9bb2b4a97fbd629))
+
+
+### 🐛 Bug Fixes
+
+* **health:** preserve pnpm placement boundaries ([759abb7](https://github.com/thedavidweng/sukiru/commit/759abb70025f7384d9a4f6174c62307ad1f0dfb6)), closes [#46](https://github.com/thedavidweng/sukiru/issues/46)
+* **plugins:** treat unlisted Claude plugins as disabled ([9a92008](https://github.com/thedavidweng/sukiru/commit/9a92008ce1a1f79faa5783fa7644a7a09d6f0d68))
+* **pnpm:** report stale links in empty inventories ([bdafe02](https://github.com/thedavidweng/sukiru/commit/bdafe0205745048a2e2ffcf4e02caf6428752b2c))
+* **ui:** bound long skill descriptions in form rows ([6e3d92a](https://github.com/thedavidweng/sukiru/commit/6e3d92aa730b074d0ef6a1a83f74fe7489c45672)), closes [#74](https://github.com/thedavidweng/sukiru/issues/74)
+* **yaml:** accept compact JSON flow values ([6975c57](https://github.com/thedavidweng/sukiru/commit/6975c5756f52f2dc6b2ef9803339acfc36104333)), closes [#75](https://github.com/thedavidweng/sukiru/issues/75)
+
+
+### 📝 Documentation
+
+* **adr:** adopt native-first writes and bounded history ([a724b2c](https://github.com/thedavidweng/sukiru/commit/a724b2cb4ea4e3e223c22dd2230938e6f05ebebf))
+* **plugins:** record complete parent acceptance evidence ([0c9bb56](https://github.com/thedavidweng/sukiru/commit/0c9bb569e6c17293ee8d287161ea69f39e8b3a7c)), closes [#14](https://github.com/thedavidweng/sukiru/issues/14) [#31](https://github.com/thedavidweng/sukiru/issues/31) [#36](https://github.com/thedavidweng/sukiru/issues/36)
+
 ## [1.7.0](https://github.com/thedavidweng/sukiru/compare/v1.6.0...v1.7.0) (2026-10-20)
 
 
