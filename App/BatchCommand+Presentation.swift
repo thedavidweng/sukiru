@@ -49,10 +49,13 @@ extension BatchCommand {
                 localized:
                     "plugin.disableLocal.warning"
             )
-        case .replaceHookSource:
-            return String(
-                localized: "hook.warning.remove"
-            )
+        case .replaceHookSource(let path, _, _):
+            guard HookCleanupPlanner.changesDefinitions(displayString: displayString) else {
+                return String(localized: "hook.warning.remove")
+            }
+            return path.hasSuffix("/hooks.json")
+                ? String(localized: "hook.warning.editCodex")
+                : String(localized: "hook.warning.edit")
         case .deleteHookHelper(let path, _):
             return String(localized: "Deletes only the unreferenced producer helper: \(path)")
         case .replaceConfigSource:
@@ -105,6 +108,16 @@ extension FileOperation {
                 comment:
                     "Direct edit of one documented Codex config key; the key is not translated.")
         }
+    }
+
+    /// Hook additions and edits share removal's verb; the core display string tells them apart.
+    static func localizedSummary(argv: [String], displayString: String) -> String? {
+        guard let operation = FileOperation(argv: argv) else { return nil }
+        let changesHooks = HookCleanupPlanner.changesDefinitions(displayString: displayString)
+        if case .replaceHookSource(let path, _, _) = operation, changesHooks {
+            return String(localized: "Change hooks in \(display(path))")
+        }
+        return operation.localizedSummary
     }
 
     private static func display(_ path: String) -> String {

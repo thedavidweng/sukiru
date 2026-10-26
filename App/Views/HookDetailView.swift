@@ -44,6 +44,19 @@ struct HookDetailView: View {
                         .help("Reveal the literal hook target in Finder")
                     }
                 }
+                if let path = state.disableAllHooksPath(for: hook) {
+                    Section("Source File") {
+                        Toggle(
+                            "Disable All Hooks in This File",
+                            isOn: Binding(
+                                get: { state.disableAllHooks(atPath: path) },
+                                set: { state.setDisableAllHooks($0, atPath: path) })
+                        )
+                        .disabled(state.batchMutationInFlight)
+                        .accessibilityIdentifier("sukiru.hooks.disableAll")
+                        .help("hook.disableAll.help")
+                    }
+                }
                 HookActions(hook: hook)
             }
             .formStyle(.grouped)
@@ -68,6 +81,12 @@ struct HookActions: View {
         state.report?.skills.first { skill in
             skill.placements.contains { hook.source.managingSource == $0.path + "/SKILL.md" }
         }
+    }
+
+    /// Codex `config.toml` tables stay remove-only; only command handlers are editable.
+    private var canEdit: Bool {
+        [.claude, .codex].contains(hook.source.host) && hook.handlerType == "command"
+            && !hook.source.path.hasSuffix(".toml")
     }
 
     private var offersOrcaDisable: Bool {
@@ -109,6 +128,12 @@ struct HookActions: View {
                         "The installed producer may recreate this hook. Disable the integration in the producer first."
                     )
                     .foregroundStyle(.secondary)
+                }
+                if canEdit {
+                    Button("Edit…") { state.hookState.editor = .edit(hook) }
+                        .disabled(state.batchMutationInFlight)
+                        .accessibilityIdentifier("sukiru.hooks.edit")
+                        .help("Change this handler's matcher, command, or timeout for review")
                 }
                 Button("Queue Hook Removal", role: .destructive) { state.queueHook(hook) }
                     .disabled(state.batchMutationInFlight)

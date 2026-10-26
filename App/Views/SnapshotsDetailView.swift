@@ -78,7 +78,8 @@ struct SnapshotsDetailView: View {
             ForEach(record.commands, id: \.index) { command in
                 VStack(alignment: .leading, spacing: 2) {
                     Text(
-                        verbatim: FileOperation(argv: command.argv)?.localizedSummary
+                        verbatim: FileOperation.localizedSummary(
+                            argv: command.argv, displayString: command.displayString)
                             ?? command.displayString
                     )
                     .font(.caption.monospaced())

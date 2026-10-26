@@ -9,6 +9,11 @@ struct HookJSONDocument {
     }
     struct Node {
         let members: [Member]
+        /// The value's own token range, brackets included.
+        let range: Range<Int>
+        let opener: UInt8
+        var isObject: Bool { opener == 123 }
+        var isArray: Bool { opener == 91 }
         func member(_ key: String) -> Node? { members.first { $0.key == key }?.node }
     }
     let bytes: [UInt8]
@@ -64,7 +69,7 @@ struct HookJSONDocument {
         return Data(result)
     }
 
-    private func removals(in node: Node, indices: Set<Int>) -> [Range<Int>] {
+    func removals(in node: Node, indices: Set<Int>) -> [Range<Int>] {
         var ranges: [Range<Int>] = []
         var index = 0
         while index < node.members.count {
@@ -117,6 +122,7 @@ struct HookJSONDocument {
 
         mutating func node() throws -> Node {
             whitespace()
+            let start = offset
             let token = bytes[offset]
             var members: [Member] = []
             if token == 123 || token == 91 {
@@ -154,7 +160,7 @@ struct HookJSONDocument {
                     offset += 1
                 }
             }
-            return Node(members: members)
+            return Node(members: members, range: start..<offset, opener: token)
         }
     }
 }

@@ -11,6 +11,12 @@ enum HookFileMutation {
         } else {
             _ = try HookJSONDocument(data)
         }
+        if hash == HookFilePrecondition.absent {
+            // Rollback removes the created file and any directory created for it.
+            try FileManager.default.createDirectory(
+                at: URL(fileURLWithPath: path).deletingLastPathComponent(),
+                withIntermediateDirectories: true)
+        }
         try data.write(to: URL(fileURLWithPath: path), options: .atomic)
     }
 

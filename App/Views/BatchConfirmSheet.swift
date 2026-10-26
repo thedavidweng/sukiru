@@ -135,9 +135,13 @@ struct BatchConfirmSheet: View {
         }
     }
 
+    private func localizedSummary(_ command: BatchCommand) -> String? {
+        FileOperation.localizedSummary(argv: command.argv, displayString: command.displayString)
+    }
+
     private func commandLine(_ command: BatchCommand) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            if let summary = command.fileOperation?.localizedSummary {
+            if let summary = localizedSummary(command) {
                 Text(verbatim: summary)
                     .font(.caption.weight(.medium))
                     .textSelection(.enabled)
@@ -156,6 +160,9 @@ struct BatchConfirmSheet: View {
             }
             ForEach(state.reviewedHooks(for: command)) { hook in
                 HookReviewEntry(hook: hook)
+            }
+            ForEach(state.reviewedHookChanges(for: command)) { change in
+                HookChangeReviewEntry(change: change)
             }
             if !command.atRiskSkills.isEmpty {
                 Text("command.atRisk \(command.atRiskList)")
@@ -251,10 +258,12 @@ struct BatchSummary {
     private enum Kind: CaseIterable {
         case deleteLink, relink, relinkDiverged, materialize, deleteDirectory
         case removeLeftover, disablePlugin, hostPlugin, remove, install, reinstall, pin, unpin,
-            update, hookCleanup
+            update, hookCleanup, hookChange
 
         init(_ command: BatchCommand) {
-            if let operation = command.fileOperation {
+            if HookCleanupPlanner.changesDefinitions(displayString: command.displayString) {
+                self = .hookChange
+            } else if let operation = command.fileOperation {
                 self = Self.fileOperation(
                     operation,
                     discardsLocalChanges: command.dangerFlags.contains(
@@ -301,12 +310,19 @@ struct BatchSummary {
         var countsNames: Bool { self == .update || self == .unpin }
 
         func line(_ count: Int) -> String {
-            fileOperationLine(count) ?? cliCommandLine(count)
+            hookLine(count) ?? fileOperationLine(count) ?? cliCommandLine(count)
+        }
+
+        private func hookLine(_ count: Int) -> String? {
+            switch self {
+            case .hookCleanup: String(localized: "Clean up \(count) hook sources or helpers")
+            case .hookChange: String(localized: "summary.hookChange \(count)")
+            default: nil
+            }
         }
 
         private func fileOperationLine(_ count: Int) -> String? {
             switch self {
-            case .hookCleanup: String(localized: "Clean up \(count) hook sources or helpers")
             case .deleteLink: String(localized: "summary.deleteLink \(count)")
             case .relink: String(localized: "summary.relink \(count)")
             case .relinkDiverged: String(localized: "summary.relinkDiverged \(count)")

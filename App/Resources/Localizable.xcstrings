@@ -9780,6 +9780,391 @@
           }
         }
       }
+    },
+    "Add Hook…" : {
+      "comment" : "Hooks toolbar: opens the Add Hook sheet.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加钩子…"
+          }
+        }
+      }
+    },
+    "Queue a new command hook in a settings file for review" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将新的命令钩子加入待处理更改，审核后写入设置文件"
+          }
+        }
+      }
+    },
+    "Add Hook" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加钩子"
+          }
+        }
+      }
+    },
+    "Edit Hook" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑钩子"
+          }
+        }
+      }
+    },
+    "The lifecycle event that runs this hook" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "触发此钩子的生命周期事件"
+          }
+        }
+      }
+    },
+    "hook.editor.matcher.help" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tool name pattern this hook applies to, for example Bash or Edit|Write. Leave empty to match every occurrence."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此钩子适用的工具名称模式，例如 Bash 或 Edit|Write。留空则匹配所有情况。"
+          }
+        }
+      }
+    },
+    "Command" : {
+      "comment" : "Hook editor: the shell command field.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "命令"
+          }
+        }
+      }
+    },
+    "The shell command the host runs for this hook" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "宿主为此钩子运行的 shell 命令"
+          }
+        }
+      }
+    },
+    "Timeout (seconds)" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "超时（秒）"
+          }
+        }
+      }
+    },
+    "Default" : {
+      "comment" : "Hook editor: placeholder of an empty timeout field.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "默认"
+          }
+        }
+      }
+    },
+    "Leave empty to use the host's default timeout" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "留空则使用宿主的默认超时"
+          }
+        }
+      }
+    },
+    "Status Message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "状态消息"
+          }
+        }
+      }
+    },
+    "None" : {
+      "comment" : "Hook editor: placeholder of an empty status message field.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无"
+          }
+        }
+      }
+    },
+    "The message Codex shows while the hook runs" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "钩子运行时 Codex 显示的消息"
+          }
+        }
+      }
+    },
+    "hook.editor.codexTrust" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex asks you to review and trust a new or changed hook before it runs."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新的或已更改的钩子运行前，Codex 会要求你审核并信任它。"
+          }
+        }
+      }
+    },
+    "The settings file that receives the hook" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接收此钩子的设置文件"
+          }
+        }
+      }
+    },
+    "hook.scope.project %@" : {
+      "comment" : "Hook editor scope option; the project folder name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (Project)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（项目）"
+          }
+        }
+      }
+    },
+    "hook.scope.local %@" : {
+      "comment" : "Hook editor scope option for Claude Code settings.local.json; the project folder name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (Local, Not Shared)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（本地，不共享）"
+          }
+        }
+      }
+    },
+    "Close without queuing a change" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭且不加入更改"
+          }
+        }
+      }
+    },
+    "Review this hook change with other queued changes before it is written" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写入前，与其他待处理更改一起审核此钩子更改"
+          }
+        }
+      }
+    },
+    "Edit…" : {
+      "comment" : "Hook detail: opens the Edit Hook sheet.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑…"
+          }
+        }
+      }
+    },
+    "Change this handler's matcher, command, or timeout for review" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改此处理器的匹配器、命令或超时，审核后写入"
+          }
+        }
+      }
+    },
+    "Source File" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "源文件"
+          }
+        }
+      }
+    },
+    "Disable All Hooks in This File" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停用此文件中的所有钩子"
+          }
+        }
+      }
+    },
+    "Allow Hooks in This File" : {
+      "comment" : "Pending Changes: a queued removal of Claude Code's disableAllHooks setting.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许此文件中的钩子"
+          }
+        }
+      }
+    },
+    "hook.disableAll.help" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Queue Claude Code's disableAllHooks setting for this settings file. Neither host offers a per-hook pause."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将此设置文件的 Claude Code disableAllHooks 设置加入待处理更改。宿主均不提供单个钩子的暂停。"
+          }
+        }
+      }
+    },
+    "hook.review.timeout %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Timeout: %lld s"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "超时：%lld 秒"
+          }
+        }
+      }
+    },
+    "hook.warning.edit" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writes only the reviewed hook entries in this Claude Code settings file. Everything else in the file stays as it is."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅写入此 Claude Code 设置文件中已审核的钩子条目，文件中的其他内容保持不变。"
+          }
+        }
+      }
+    },
+    "hook.warning.editCodex" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writes only the reviewed hook entries in this Codex hooks file. Codex asks you to trust new or changed hooks before they run."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅写入此 Codex 钩子文件中已审核的钩子条目。新的或已更改的钩子运行前，Codex 会要求你信任它们。"
+          }
+        }
+      }
+    },
+    "Change hooks in %@" : {
+      "comment" : "Direct file operation in a batch: hooks are added or edited in the file at this path.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改 %@ 中的钩子"
+          }
+        }
+      }
+    },
+    "summary.hookChange %lld" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Change hooks in %lld file"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Change hooks in %lld files"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改 %lld 个文件中的钩子"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

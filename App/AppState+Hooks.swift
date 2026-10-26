@@ -5,12 +5,42 @@ struct HookNavigationState {
     var host: PluginHost = .claude
     var selectedID: String?
     var queue: [HookQueuedChange] = []
+    var editor: HookEditorTarget?
+}
+
+/// The Add Hook / Edit sheet's subject.
+enum HookEditorTarget: Identifiable {
+    case add(PluginHost)
+    case edit(AgentHook)
+
+    var id: String {
+        switch self {
+        case .add(let host): "add:" + host.rawValue
+        case .edit(let hook): "edit:" + hook.id
+        }
+    }
+
+    var host: PluginHost {
+        switch self {
+        case .add(let host): host
+        case .edit(let hook): hook.source.host
+        }
+    }
 }
 
 struct HookQueuedChange: Identifiable, Equatable {
     let request: HookCleanupRequest
     let hooks: [AgentHook]
-    var id: String { request.hookID ?? request.action + ":" + (request.producer ?? "") }
+    var id: String {
+        switch request.action {
+        case "add": HookCleanupPlanner.reference(for: request)
+        case "edit": "edit:" + (request.hookID ?? "")
+        case "set-disable-all": "set-disable-all:" + (request.path ?? "")
+        default: request.hookID ?? request.action + ":" + (request.producer ?? "")
+        }
+    }
+
+    var isCleanup: Bool { !["add", "edit", "set-disable-all"].contains(request.action) }
 }
 
 extension AppState {
@@ -31,9 +61,24 @@ extension AppState {
     func reviewedHooks(for command: BatchCommand) -> [AgentHook] {
         guard command.hookPreconditions != nil else { return [] }
         let paths = Set(command.hookPreconditions?.map(\.path) ?? [])
-        let hooks = hookState.queue.flatMap(\.hooks).filter { paths.contains($0.source.path) }
+        let hooks = hookState.queue.filter(\.isCleanup).flatMap(\.hooks).filter {
+            paths.contains($0.source.path)
+        }
         return Dictionary(grouping: hooks, by: \.id).values.compactMap(\.first)
             .sorted { $0.id < $1.id }
+    }
+
+    /// Queued additions, edits, and settings changes for a reviewed source, in queue order.
+    func reviewedHookChanges(for command: BatchCommand) -> [HookQueuedChange] {
+        guard case .replaceHookSource(let path, _, _) = command.fileOperation else { return [] }
+        return hookState.queue.filter { !$0.isCleanup && hookChangePath($0) == path }
+    }
+
+    /// The source file a queued add, edit, or settings change writes.
+    func hookChangePath(_ item: HookQueuedChange) -> String? {
+        item.hooks.first?.source.path
+            ?? HookCleanupPlanner(environment: Self.makeEnvironment(roots: projectRoots))
+            .targetPath(for: item.request)
     }
 
     func hooks(for host: PluginHost) -> [AgentHook] {
@@ -90,6 +135,39 @@ extension AppState {
         hookState.queue.append(item)
     }
 
+    /// Queues an add, edit, or `disableAllHooks` change after planning it once,
+    /// so an invalid change is reported in the sheet rather than at checkout.
+    func queueHookChange(_ request: HookCleanupRequest, hooks: [AgentHook] = []) throws {
+        guard let inventory = report?.hookInventory else { return }
+        _ = try HookCleanupPlanner(environment: Self.makeEnvironment(roots: projectRoots)).plan(
+            requests: [request], inventory: inventory)
+        let item = HookQueuedChange(request: request, hooks: hooks)
+        hookState.queue.removeAll { $0.id == item.id }
+        hookState.queue.append(item)
+    }
+
+    /// The Claude Code settings file a hook lives in, when it can carry `disableAllHooks`.
+    func disableAllHooksPath(for hook: AgentHook) -> String? {
+        guard hook.source.host == .claude, hook.source.writable,
+            hook.source.path.hasSuffix("/settings.json")
+                || hook.source.path.hasSuffix("/settings.local.json")
+        else { return nil }
+        return hook.source.path
+    }
+
+    /// The queued `disableAllHooks` value, else the file's current value.
+    func disableAllHooks(atPath path: String) -> Bool {
+        hookState.queue.last { $0.request.action == "set-disable-all" && $0.request.path == path }?
+            .request.disableAllHooks ?? HookCleanupPlanner.disableAllHooks(atPath: path)
+    }
+
+    func setDisableAllHooks(_ flag: Bool, atPath path: String) {
+        hookState.queue.removeAll { $0.id == "set-disable-all:" + path }
+        guard flag != HookCleanupPlanner.disableAllHooks(atPath: path) else { return }
+        try? queueHookChange(
+            HookCleanupRequest(action: "set-disable-all", path: path, disableAllHooks: flag))
+    }
+
     func hookBatch() throws -> HookCleanupPlan? {
         guard !hookState.queue.isEmpty, let inventory = report?.hookInventory else { return nil }
         for queued in hookState.queue {
@@ -105,7 +183,7 @@ extension AppState {
                 }
             }
         }
-        return try HookCleanupPlanner(environment: environment).plan(
+        return try HookCleanupPlanner(environment: Self.makeEnvironment(roots: projectRoots)).plan(
             requests: hookState.queue.map(\.request), inventory: inventory)
     }
 }

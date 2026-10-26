@@ -112,9 +112,15 @@ struct PendingChangesView: View {
             }
             ForEach(state.hookState.queue) { item in
                 CartRow(
-                    name: item.request.producer ?? item.hooks.first?.event ?? "",
-                    change: String(localized: "Hook Cleanup"),
-                    detail: Set(item.hooks.map(\.source.path)).sorted().joined(separator: ", ")
+                    name: item.request.producer ?? item.request.event ?? item.hooks.first?.event
+                        ?? state.hookChangePath(item).map {
+                            URL(fileURLWithPath: $0).lastPathComponent
+                        }
+                        ?? "",
+                    change: item.changeTitle,
+                    detail: item.isCleanup
+                        ? Set(item.hooks.map(\.source.path)).sorted().joined(separator: ", ")
+                        : state.hookChangePath(item) ?? ""
                 ) {
                     state.hookState.queue.removeAll { $0.id == item.id }
                 }

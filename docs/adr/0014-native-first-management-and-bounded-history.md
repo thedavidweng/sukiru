@@ -82,3 +82,30 @@ apply the same limits, and the CLI exposes pruning and clearing.
   permission-preserving write. Duplicate tables, dotted-key, inline-table or
   array-table forms, and non-boolean or multi-line values are refused. Codex
   reads the change when its next session starts.
+
+### Applied (hooks)
+
+- Neither host has a native command for adding or editing a hook, so hook
+  definitions use rule 2 in their documented files: Claude Code
+  `settings.json` and `settings.local.json` (`hooks` object), and Codex
+  `hooks.json`. Codex `config.toml` `[[hooks…]]` tables remain remove-only.
+  Plugin, skill, subagent and managed sources remain read-only.
+- Add appends a new matcher group to `hooks.<event>`, never merging into an
+  existing group, and creates missing containers or the file itself. Edit
+  rewrites only the command handler's `command`, `timeout` and (Codex)
+  `statusMessage` members and the group's `matcher`. A matcher change in a
+  group that holds several handlers moves the handler to a new group. Removal is
+  unchanged. Inserted text follows the file's indentation. Claude Code events
+  are validated against its documented list. Codex accepts identifiers outside
+  its documented list with a warning.
+- All changes to one file are one existing `replace-hook-source` command. It
+  carries the scanned hash (or an absent marker, so rollback deletes a created
+  file), and execution preflight replays the queued requests to the same
+  bytes.
+- Claude Code's documented per-settings-file `disableAllHooks` boolean can be
+  set (inserted) or removed.
+- No per-hook pause is offered. Neither host documents a per-hook disable.
+  Parking a removed handler for later restoration would be a Sukiru ledger,
+  which ADR-0001 rules out. Removal plus snapshot rollback covers undo.
+- Codex trust review stays with Codex. A new or edited Codex hook needs trust
+  approval in Codex before it runs. Sukiru neither records nor bypasses it.

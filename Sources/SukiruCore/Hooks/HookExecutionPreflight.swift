@@ -15,9 +15,14 @@ enum HookExecutionPreflight {
         let inventory = HookInventoryReader(environment: environment).read(
             ScanRequest(), plugins: plugins)
         let ids = Set(batch.findingRefs.filter { $0.ruleID == "hook-cleanup" }.map(\.findingID))
-        let requests = inventory.hooks.filter { ids.contains($0.id) }.map {
-            HookCleanupRequest(hookID: $0.id)
-        }
+        let edits = batch.findingRefs.filter { $0.ruleID == HookCleanupPlanner.editRuleID }
+            .compactMap {
+                try? JSONDecoder().decode(HookCleanupRequest.self, from: Data($0.findingID.utf8))
+            }
+        let requests =
+            inventory.hooks.filter { ids.contains($0.id) }.map {
+                HookCleanupRequest(hookID: $0.id)
+            } + edits
         let allowed = try HookCleanupPlanner(environment: environment).plan(
             requests: requests, inventory: inventory)
         for mutation in mutations {

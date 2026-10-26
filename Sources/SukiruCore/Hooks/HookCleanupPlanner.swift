@@ -1,14 +1,40 @@
 import Foundation
 
+/// One requested hook change. `remove`, `remove-leftovers`, and `disable-producer` clean up;
+/// `add`, `edit`, and `set-disable-all` write documented standalone sources (ADR-0014).
 public struct HookCleanupRequest: Codable, Equatable, Sendable {
     public let action: String
     public let hookID: String?
     public let producer: String?
+    /// `add`: the host, `user`/`project`/`local` scope, and project root for non-user scopes.
+    public let host: PluginHost?
+    public let scope: String?
+    public let scopeRoot: String?
+    public let event: String?
+    /// `add`/`edit`: the group matcher; nil or empty matches every occurrence.
+    public let matcher: String?
+    public let handler: HookHandlerSpec?
+    /// `set-disable-all`: the Claude Code settings file and its new value.
+    public let path: String?
+    public let disableAllHooks: Bool?
 
-    public init(action: String = "remove", hookID: String? = nil, producer: String? = nil) {
+    public init(
+        action: String = "remove", hookID: String? = nil, producer: String? = nil,
+        host: PluginHost? = nil, scope: String? = nil, scopeRoot: String? = nil,
+        event: String? = nil, matcher: String? = nil, handler: HookHandlerSpec? = nil,
+        path: String? = nil, disableAllHooks: Bool? = nil
+    ) {
         self.action = action
         self.hookID = hookID
         self.producer = producer
+        self.host = host
+        self.scope = scope
+        self.scopeRoot = scopeRoot
+        self.event = event
+        self.matcher = matcher
+        self.handler = handler
+        self.path = path
+        self.disableAllHooks = disableAllHooks
     }
 }
 
@@ -31,7 +57,16 @@ public struct HookFilePrecondition: Codable, Equatable, Sendable {
             resolvedPath ?? URL(fileURLWithPath: path).resolvingSymlinksInPath().path
     }
 
+    /// The `contentHash` of a source file that does not exist yet; never a SHA-256 digest.
+    static let absent = "absent"
+
     public func validate() throws {
+        if contentHash == Self.absent {
+            guard DefaultFileSystemProbe().entryKind(atPath: path) == nil,
+                URL(fileURLWithPath: path).resolvingSymlinksInPath().path == resolvedPath
+            else { throw HookError("Hook source appeared: \(path). Rescan and replan.") }
+            return
+        }
         guard DefaultFileSystemProbe().entryKind(atPath: path) == .file,
             URL(fileURLWithPath: path).resolvingSymlinksInPath().path == resolvedPath,
             let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
@@ -58,11 +93,8 @@ public struct HookCleanupPlanner: Sendable {
         let instructions = selection.instructions
         let unique = Dictionary(grouping: selected, by: \.id).values.compactMap(\.first)
         selected = unique.sorted { $0.id < $1.id }
-        var commands: [BatchCommand] = []
-        let bySource = Dictionary(grouping: selected, by: { $0.source.path })
-        for path in bySource.keys.sorted() {
-            commands.append(try removalCommand(path: path, hooks: bySource[path]!))
-        }
+        var commands = try sourceCommands(
+            removals: selected, edits: selection.edits, inventory: inventory)
         let helpers = helperPaths(selected: selected, inventory: inventory)
         for path in helpers {
             let hash = HookInventoryReader.hash(try Data(contentsOf: URL(fileURLWithPath: path)))
@@ -82,12 +114,13 @@ public struct HookCleanupPlanner: Sendable {
         let affected =
             disableOrca
             ? selected + inventory.hooks.filter { $0.attribution.producer == "Orca" } : selected
-        let refs = affected.map { hook in
-            FindingRef(
-                findingID: hook.id, ruleID: "hook-cleanup", skillName: nil,
-                workspaceID: hook.source.scopeRoot == environment.home
-                    ? "user" : "project:" + hook.source.scopeRoot)
-        }
+        let refs =
+            affected.map { hook in
+                FindingRef(
+                    findingID: hook.id, ruleID: "hook-cleanup", skillName: nil,
+                    workspaceID: hook.source.scopeRoot == environment.home
+                        ? "user" : "project:" + hook.source.scopeRoot)
+            } + selection.edits.map { editReference($0, inventory: inventory) }
         let batch = CommandBatch(
             id: UUID().uuidString, createdAt: ISO8601DateFormatter().string(from: Date()),
             findingRefs: refs, decisions: [], commands: commands, snapshotID: nil, status: .proposed
@@ -100,6 +133,7 @@ public struct HookCleanupPlanner: Sendable {
         var hooks: [AgentHook] = []
         var instructions: [String] = []
         var disableOrca = false
+        var edits: [HookCleanupRequest] = []
     }
 
     private func select(
@@ -109,27 +143,7 @@ public struct HookCleanupPlanner: Sendable {
         for request in requests {
             switch request.action {
             case "remove":
-                guard let hook = inventory.hooks.first(where: { $0.id == request.hookID }) else {
-                    throw HookError("Hook no longer exists; rescan and replan")
-                }
-                guard hook.canRemove else {
-                    selection.instructions.append(
-                        "\(hook.event): inspect the managing source \(hook.source.managingSource ?? hook.source.path). "
-                            + "Independent removal is unavailable."
-                    )
-                    continue
-                }
-                let installedOrca =
-                    hook.attribution.producer == "Orca"
-                    && hook.attribution.producerPresent == true
-                if installedOrca && orcaDisableAvailable {
-                    selection.instructions.append(
-                        "Orca manages this hook. Review disable-producer for Orca; "
-                            + "it disables agent hooks across hosts."
-                    )
-                } else {
-                    selection.hooks.append(hook)
-                }
+                try selectRemoval(request, inventory: inventory, into: &selection)
             case "remove-leftovers":
                 guard let producer = request.producer, ["Muxy", "Orca"].contains(producer) else {
                     throw HookError("Choose an evidenced producer")
@@ -148,13 +162,41 @@ public struct HookCleanupPlanner: Sendable {
                     throw HookError("Orca's supported disable command is not available")
                 }
                 selection.disableOrca = true
+            case let action where Self.editActions.contains(action):
+                selection.edits.append(request)
             default: throw HookError("Unsupported hook cleanup action")
             }
         }
         return selection
     }
 
-    private func removalCommand(path: String, hooks: [AgentHook]) throws -> BatchCommand {
+    private func selectRemoval(
+        _ request: HookCleanupRequest, inventory: HookInventory, into selection: inout Selection
+    ) throws {
+        guard let hook = inventory.hooks.first(where: { $0.id == request.hookID }) else {
+            throw HookError("Hook no longer exists; rescan and replan")
+        }
+        guard hook.canRemove else {
+            selection.instructions.append(
+                "\(hook.event): inspect the managing source \(hook.source.managingSource ?? hook.source.path). "
+                    + "Independent removal is unavailable."
+            )
+            return
+        }
+        let installedOrca =
+            hook.attribution.producer == "Orca"
+            && hook.attribution.producerPresent == true
+        if installedOrca && orcaDisableAvailable {
+            selection.instructions.append(
+                "Orca manages this hook. Review disable-producer for Orca; "
+                    + "it disables agent hooks across hosts."
+            )
+        } else {
+            selection.hooks.append(hook)
+        }
+    }
+
+    func removalCommand(path: String, hooks: [AgentHook]) throws -> BatchCommand {
         let source = hooks[0].source
         let precondition = HookFilePrecondition(
             path: path, contentHash: source.contentHash, resolvedPath: source.resolvedPath)

@@ -296,7 +296,11 @@ extension AppState {
             dequeueLifecycle(completedBy: pendingBatch, status: record?.batchStatus)
             if record?.batchStatus == .succeeded {
                 let completed = Set(pendingBatch.findingRefs.map(\.findingID))
-                hookState.queue.removeAll { $0.hooks.allSatisfy { completed.contains($0.id) } }
+                hookState.queue.removeAll { item in
+                    item.isCleanup
+                        ? item.hooks.allSatisfy { completed.contains($0.id) }
+                        : completed.contains(HookCleanupPlanner.reference(for: item.request))
+                }
             }
         }
         pendingBatch = nil

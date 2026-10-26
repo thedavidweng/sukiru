@@ -26,6 +26,46 @@ struct HookReviewEntry: View {
     }
 }
 
+/// A queued add, edit, or `disableAllHooks` change as it will be written.
+struct HookChangeReviewEntry: View {
+    let change: HookQueuedChange
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(verbatim: change.changeTitle)
+            if let event = change.request.event ?? change.hooks.first?.event {
+                let matcher = change.request.matcher ?? String(localized: "All Events")
+                Text(verbatim: event + " · " + matcher)
+            }
+            if let handler = change.request.handler {
+                Text(verbatim: handler.command).font(.caption.monospaced())
+                if let timeout = handler.timeout {
+                    Text("hook.review.timeout \(timeout)")
+                }
+            }
+        }
+        .font(.caption)
+        .textSelection(.enabled)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+extension HookQueuedChange {
+    var changeTitle: String {
+        switch request.action {
+        case "add": String(localized: "Add Hook")
+        case "edit": String(localized: "Edit Hook")
+        case "set-disable-all":
+            if request.disableAllHooks == true {
+                String(localized: "Disable All Hooks in This File")
+            } else {
+                String(localized: "Allow Hooks in This File")
+            }
+        default: String(localized: "Hook Cleanup")
+        }
+    }
+}
+
 extension JSONValue {
     var hookDisplayValue: String {
         switch self {

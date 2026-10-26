@@ -53,6 +53,25 @@ struct HookLibraryView: View {
         .searchable(text: $search, prompt: "Filter Hooks")
         .accessibilityIdentifier("sukiru.hooks.list")
         .help("Inspect configured hooks; scanning never executes them")
+        .toolbar {
+            ToolbarItem {
+                Button {
+                    state.hookState.editor = .add(state.hookState.host)
+                } label: {
+                    Label("Add Hook…", systemImage: "plus")
+                }
+                .disabled(!canAddHooks || state.batchMutationInFlight)
+                .accessibilityIdentifier("sukiru.hooks.add")
+                .help("Queue a new command hook in a settings file for review")
+            }
+        }
+        .sheet(item: $state.hookState.editor) { target in
+            HookEditorSheet(target: target)
+        }
+    }
+
+    private var canAddHooks: Bool {
+        [.claude, .codex].contains(state.hookState.host) && state.report?.hookInventory != nil
     }
 
     @ViewBuilder

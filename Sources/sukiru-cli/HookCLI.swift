@@ -47,7 +47,7 @@ extension CLI {
     static let hookCommands: [CLICommand] = [
         CLICommand(
             path: "hooks",
-            abstract: "Advanced: existing passive hook inventory and explicit cleanup plans.",
+            abstract: "Advanced: passive hook inventory and explicit reviewed hook changes.",
             options: []),
         CLICommand(
             path: "hooks inventory", abstract: "Read hook sources and passive diagnoses.",
@@ -58,7 +58,9 @@ extension CLI {
             try command.run()
         },
         CLICommand(
-            path: "hooks plan", abstract: "Build cleanup from explicit hook requests.",
+            path: "hooks plan",
+            abstract:
+                "Build cleanup, add, edit, or disableAllHooks changes from explicit requests.",
             options: [CLIOption("requests", takesValue: true, help: "", required: true)]
                 + scopeOptions
                 + outputOptions
