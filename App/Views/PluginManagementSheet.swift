@@ -17,6 +17,9 @@ struct PluginManagementSheet: View {
                 }
                 .accessibilityIdentifier("sukiru.plugins.operation.action")
                 .help("Unsupported host operations show the host's capability limit")
+                .onChange(of: state.pluginManagement.action) { _, action in
+                    state.pluginManagement.target = ["list", "import"].contains(action) ? "*" : ""
+                }
                 TextField(
                     "Plugin, marketplace, package or address", text: $state.pluginManagement.target
                 )
@@ -24,6 +27,9 @@ struct PluginManagementSheet: View {
                 .help(
                     "Use a host-supported target; * selects all packages for OpenCode list, check or update"
                 )
+                if state.pluginManagement.host == .antigravity {
+                    antigravityOptions
+                }
                 let showsGitRef =
                     state.pluginManagement.host == .cursor
                     && state.pluginManagement.action == "marketplace-add"
@@ -76,6 +82,27 @@ struct PluginManagementSheet: View {
         .padding(20)
         .frame(width: 520)
         .disabled(state.pluginManagement.planning)
+    }
+
+    @ViewBuilder
+    private var antigravityOptions: some View {
+        if state.pluginManagement.action == "link" {
+            TextField("Marketplace", text: $state.pluginManagement.marketplace)
+                .accessibilityIdentifier("sukiru.plugins.operation.marketplace")
+                .help("Pass the marketplace argument to agy plugin link")
+        }
+        if state.pluginManagement.action == "validate" {
+            Toggle("Fail on validation warnings", isOn: $state.pluginManagement.strict)
+                .accessibilityIdentifier("sukiru.plugins.operation.strict")
+                .help("Run native validation with --strict")
+        }
+        Text(
+            """
+            Antigravity uses shared enablement across scopes. \
+            Import accepts gemini, claude, or * for both sources. Validate accepts a path; list uses *.
+            """
+        )
+        .foregroundStyle(.secondary)
     }
 
     /// The host's own operations, plus a contextual one such as local disable.

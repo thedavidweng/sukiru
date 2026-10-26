@@ -28,7 +28,9 @@ public struct PluginLifecycleProbe: Sendable {
     }
 
     func help(host: PluginHost, arguments: [String], requiredFlags: [String]) throws {
-        let help = try output(host: host, arguments: arguments + ["--help"])
+        let help = try output(
+            executable: host.executable, arguments: arguments + ["--help"], workingDirectory: nil,
+            includeStandardError: true)
         guard requiredFlags.allSatisfy(help.contains) else {
             throw PluginLifecycleError(
                 message: "Installed host help does not expose required operation flags")
@@ -58,7 +60,8 @@ public struct PluginLifecycleProbe: Sendable {
     }
 
     private func output(
-        executable: String, arguments: [String], workingDirectory: String?
+        executable: String, arguments: [String], workingDirectory: String?,
+        includeStandardError: Bool = false
     ) throws -> String {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(
             UUID().uuidString)
@@ -87,7 +90,9 @@ public struct PluginLifecycleProbe: Sendable {
         guard result.termination == .exited(0) else {
             throw PluginLifecycleError(message: "Lifecycle probe unavailable: " + executable)
         }
-        return try String(contentsOf: stdout, encoding: .utf8).trimmingCharacters(
-            in: .whitespacesAndNewlines)
+        let text = try String(contentsOf: stdout, encoding: .utf8)
+        let diagnostics =
+            includeStandardError ? try String(contentsOf: stderr, encoding: .utf8) : ""
+        return (text + "\n" + diagnostics).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

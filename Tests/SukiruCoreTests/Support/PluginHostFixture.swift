@@ -12,7 +12,7 @@ struct PluginHostFixture {
 
     init(
         host: String, version: String, help: String = "--json --scope --global --force",
-        projects: [String] = [], onRun: String = ""
+        helpOnStderr: Bool = false, projects: [String] = [], onRun: String = ""
     ) throws {
         let tree = try TempTree()
         self.tree = tree
@@ -20,12 +20,13 @@ struct PluginHostFixture {
         roots = try projects.map { try tree.dir($0) }
         self.host = host
         try tree.executable(
-            "bin/" + (host == "cursor" ? "agent" : host),
+            "bin/" + (host == "cursor" ? "agent" : host == "antigravity" ? "agy" : host),
             contents: """
                 #!/bin/sh
                 case "$*" in
                 --version) echo '\(version)';;
-                *--help*) echo '\(help)';;
+                *--help*) echo "$*" >> '\(tree.path)/help-invocations'
+                    echo '\(help)' \(helpOnStderr ? ">&2" : "");;
                 *) echo "$*" >> '\(tree.path)/invocations'
                 \(onRun);;
                 esac
@@ -40,6 +41,11 @@ struct PluginHostFixture {
     /// Every argv the shim received outside version and help probes.
     var invocations: [String] {
         let text = try? String(contentsOfFile: tree.path + "/invocations", encoding: .utf8)
+        return text?.split(separator: "\n").map(String.init) ?? []
+    }
+
+    var helpInvocations: [String] {
+        let text = try? String(contentsOfFile: tree.path + "/help-invocations", encoding: .utf8)
         return text?.split(separator: "\n").map(String.init) ?? []
     }
 

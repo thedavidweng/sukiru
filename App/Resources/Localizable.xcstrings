@@ -1,6 +1,118 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Skills" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skills"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "技能"
+          }
+        }
+      }
+    },
+    "Rules" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rules"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规则"
+          }
+        }
+      }
+    },
+    "MCP Servers" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MCP Servers"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MCP 服务器"
+          }
+        }
+      }
+    },
+    "LSP Servers" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LSP Servers"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LSP 服务器"
+          }
+        }
+      }
+    },
+    "Sidecars" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidecars"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "伴随服务"
+          }
+        }
+      }
+    },
+    "Context Providers" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Context Providers"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上下文提供者"
+          }
+        }
+      }
+    },
+    "Variables" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variables"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "变量"
+          }
+        }
+      }
+    },
     "pnpm Package Permissions" : {
       "extractionState": "manual",
       "localizations": {
@@ -2522,22 +2634,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "查看钩子"
-          }
-        }
-      }
-    },
-    "Inspect Runtime Plugins" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Inspect Runtime Plugins"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "查看运行时插件"
           }
         }
       }
@@ -10162,6 +10258,294 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更改 %lld 个文件中的钩子"
+          }
+        }
+      }
+    },
+    "Antigravity Plugin Guide" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antigravity Plugin Guide"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antigravity 插件指南"
+          }
+        }
+      }
+    },
+    "Antigravity manages automatic updates in Customizations; no native update command is available" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antigravity manages automatic updates in Customizations; no native update command is available"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antigravity 在 Customizations 中管理自动更新；未提供原生更新命令"
+          }
+        }
+      }
+    },
+    "Antigravity uses shared enablement across scopes. Import accepts gemini, claude, or * for both sources. Validate accepts a path; list uses *." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antigravity uses shared enablement across scopes. Import accepts gemini, claude, or * for both sources. Validate accepts a path; list uses *."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antigravity 的启用状态跨范围共享。导入接受 gemini、claude，或用 * 导入两者。验证接受路径；列出插件使用 *。"
+          }
+        }
+      }
+    },
+    "Fail on validation warnings" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fail on validation warnings"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "验证警告视为失败"
+          }
+        }
+      }
+    },
+    "Generate Marketplace Link" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generate Marketplace Link"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "生成市场链接"
+          }
+        }
+      }
+    },
+    "Git ref (optional)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Git ref (optional)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Git 引用（可选）"
+          }
+        }
+      }
+    },
+    "Git ref: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Git ref: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Git 引用：%@"
+          }
+        }
+      }
+    },
+    "Import Plugins" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import Plugins"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入插件"
+          }
+        }
+      }
+    },
+    "Inspect Host Plugins" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inspect Host Plugins"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查宿主插件"
+          }
+        }
+      }
+    },
+    "Manage in Antigravity" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage in Antigravity"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Antigravity 中管理"
+          }
+        }
+      }
+    },
+    "Marketplace" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marketplace"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "市场"
+          }
+        }
+      }
+    },
+    "Open the official Antigravity plugin management guide" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open the official Antigravity plugin management guide"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开 Antigravity 官方插件管理指南"
+          }
+        }
+      }
+    },
+    "Pass one Cursor-supported branch, tag, or commit ref" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pass one Cursor-supported branch, tag, or commit ref"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传入一个 Cursor 支持的分支、标签或提交引用"
+          }
+        }
+      }
+    },
+    "Pass the marketplace argument to agy plugin link" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pass the marketplace argument to agy plugin link"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将市场参数传入 agy plugin link"
+          }
+        }
+      }
+    },
+    "Preview this host’s native plugin command" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preview this host’s native plugin command"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览此宿主的原生插件命令"
+          }
+        }
+      }
+    },
+    "Run native validation with --strict" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run native validation with --strict"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 --strict 运行原生验证"
+          }
+        }
+      }
+    },
+    "Use Customizations or /plugins for marketplace search, automatic updates, project registration, MCP configuration and authentication, sidecars, and context providers. Built-in and external plugin sources stay in the host’s control." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use Customizations or /plugins for marketplace search, automatic updates, project registration, MCP configuration and authentication, sidecars, and context providers. Built-in and external plugin sources stay in the host’s control."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过 Customizations 或 /plugins 搜索市场、管理自动更新、注册项目，以及配置 MCP 与认证、sidecar 和上下文提供程序。内置和外部插件源由宿主管理。"
+          }
+        }
+      }
+    },
+    "Validate Plugin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Validate Plugin"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "验证插件"
           }
         }
       }

@@ -104,6 +104,7 @@ public enum OwningCLI: String, Codable, Equatable, Sendable {
     case codex
     case opencode
     case cursor
+    case antigravity
     case orca
 }
 

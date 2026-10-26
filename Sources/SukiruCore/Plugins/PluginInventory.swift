@@ -5,8 +5,15 @@ public enum PluginHost: String, Codable, CaseIterable, Sendable {
     case codex
     case opencode
     case cursor
+    case antigravity
 
-    public var executable: String { self == .cursor ? "agent" : rawValue }
+    public var executable: String {
+        switch self {
+        case .cursor: "agent"
+        case .antigravity: "agy"
+        default: rawValue
+        }
+    }
 }
 
 public enum PluginEnablement: String, Codable, Sendable {
@@ -29,6 +36,7 @@ public struct PluginInstallation: Codable, Equatable, Sendable, Identifiable {
     public let components: [PluginComponent]
     public let installationStatus: String
     public let format: String?
+    public let name: String?
 
     public let id: String
 
@@ -36,7 +44,7 @@ public struct PluginInstallation: Codable, Equatable, Sendable, Identifiable {
         host: PluginHost, source: String, identifier: String, scope: String, scopeRoot: String,
         version: String?, path: String?, enablement: PluginEnablement, loadStatus: String,
         components: [PluginComponent], installationStatus: String = "recorded",
-        format: String? = nil
+        format: String? = nil, name: String? = nil
     ) {
         self.host = host
         self.source = source
@@ -49,10 +57,11 @@ public struct PluginInstallation: Codable, Equatable, Sendable, Identifiable {
         self.loadStatus = loadStatus
         self.components = components
         self.format = format
+        self.name = name
         self.installationStatus = installationStatus
         self.id =
             ([host.rawValue, source, identifier, scope, scopeRoot]
-            + (host == .cursor ? [path ?? ""] : []))
+            + ([.cursor, .antigravity].contains(host) ? [path ?? ""] : []))
             .map { "\($0.utf8.count):\($0)" }.joined()
     }
 }

@@ -45,7 +45,8 @@ struct PluginDetailView: View {
                     if !plugin.components.isEmpty {
                         Section("Components") {
                             ForEach(Array(plugin.components.enumerated()), id: \.offset) { entry in
-                                LabeledContent(entry.element.name, value: entry.element.kind)
+                                LabeledContent(
+                                    entry.element.name, value: entry.element.localizedKind)
                             }
                         }
                     }
@@ -70,6 +71,25 @@ struct PluginDetailView: View {
                         $0.pluginID == plugin.id
                     }), !findings.isEmpty {
                         PluginHealthSection(findings: findings)
+                    }
+                    if plugin.host == .antigravity {
+                        Section("Manage in Antigravity") {
+                            Text(
+                                """
+                                Use Customizations or /plugins for marketplace search, automatic updates, \
+                                project registration, MCP configuration and authentication, sidecars, \
+                                and context providers. Built-in and external plugin sources stay in the host’s control.
+                                """
+                            )
+                            .foregroundStyle(.secondary)
+                            Link(
+                                "Antigravity Plugin Guide",
+                                destination: URL(
+                                    string: "https://antigravity.google/docs/plugins/")!
+                            )
+                            .accessibilityIdentifier("sukiru.plugins.antigravity.guide")
+                            .help("Open the official Antigravity plugin management guide")
+                        }
                     }
                     actionsSection(plugin)
                 }

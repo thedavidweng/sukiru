@@ -7,10 +7,12 @@ public struct PluginLifecycleRequest: Codable, Equatable, Sendable {
     public let scope: String
     public let scopeRoot: String
     public let gitRef: String?
+    public let marketplace: String?
+    public let strict: Bool?
 
     public init(
         host: PluginHost, action: String, target: String, scope: String, scopeRoot: String,
-        gitRef: String? = nil
+        gitRef: String? = nil, marketplace: String? = nil, strict: Bool? = nil
     ) {
         self.host = host
         self.action = action
@@ -18,11 +20,14 @@ public struct PluginLifecycleRequest: Codable, Equatable, Sendable {
         self.scope = scope
         self.scopeRoot = scopeRoot
         self.gitRef = gitRef
+        self.marketplace = marketplace
+        self.strict = strict
     }
 
     public static let actions = [
         "install", "replace", "enable", "disable", "update", "remove", "check", "list",
-        "marketplace-add", "marketplace-refresh", "marketplace-remove", "disable-local"
+        "marketplace-add", "marketplace-refresh", "marketplace-remove", "disable-local",
+        "import", "validate", "link"
     ]
 }
 

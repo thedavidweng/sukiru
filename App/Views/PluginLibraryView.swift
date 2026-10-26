@@ -13,7 +13,8 @@ struct PluginLibraryView: View {
 
     private var installations: [PluginInstallation] {
         state.pluginInstallations(for: host).filter {
-            filter.isEmpty || $0.identifier.localizedCaseInsensitiveContains(filter)
+            filter.isEmpty || $0.displayName.localizedCaseInsensitiveContains(filter)
+                || $0.identifier.localizedCaseInsensitiveContains(filter)
                 || $0.sourceTitle.localizedCaseInsensitiveContains(filter)
         }.sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
     }
@@ -115,6 +116,15 @@ struct PluginLibraryView: View {
                     Button("Install Plugin…") { state.newPluginOperation(host: host) }
                         .accessibilityIdentifier("sukiru.plugins.manage")
                         .help("Preview a plugin installation")
+                    if host == .antigravity {
+                        ForEach(["import", "validate", "link", "list"], id: \.self) { action in
+                            Button(PluginActionTitle.title(action) + "…") {
+                                state.newPluginOperation(host: host, action: action)
+                            }
+                            .accessibilityIdentifier("sukiru.plugins.manage.\(action)")
+                            .help("Preview this host’s native plugin command")
+                        }
+                    }
                     if host.hasMarketplaces {
                         Button("Marketplaces…") { showingMarketplaces = true }
                             .accessibilityIdentifier("sukiru.plugins.catalog")

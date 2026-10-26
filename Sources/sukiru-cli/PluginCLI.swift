@@ -65,13 +65,15 @@ struct PluginOperationOptions {
     var inputs: ScopeOptions
     var settingsScope: String?
     var gitRef: String?
+    var marketplace: String?
+    var strict: Bool?
     var output: OutputOptions
     var mutation: MutationOptions
 
     func run(action: String) throws {
         let environment = try cliEnvironment(roots: inputs.roots)
         guard let hostName = inputs.host, let host = resolvedPluginHost(for: hostName) else {
-            throw CLIError("Choose --host claude-code, codex, opencode, or cursor")
+            throw CLIError("Choose --host claude-code, codex, opencode, cursor, or antigravity")
         }
         let targetScope = try inputs.installTarget(environment: environment)
         let root: String
@@ -88,7 +90,7 @@ struct PluginOperationOptions {
         }
         let request = PluginLifecycleRequest(
             host: host, action: action, target: target, scope: scope, scopeRoot: root,
-            gitRef: gitRef)
+            gitRef: gitRef, marketplace: marketplace, strict: strict)
         try runPluginRequests([request], inputs: inputs, output: output, mutation: mutation)
     }
 }
@@ -99,7 +101,8 @@ func runPluginRequests(
 ) throws {
     let environment = try cliEnvironment(roots: inputs.roots)
     let report = try ScanEngine(environment: environment).scan(inputs.mutationRequest)
-    let inventory = PluginInventoryReader(environment: environment).read(inputs.request)
+    let inventory = PluginInventoryReader(environment: environment).read(
+        requests.contains { $0.host == .antigravity } ? inputs.mutationRequest : inputs.request)
     let plan = try PluginLifecyclePlanner(environment: environment).plan(
         requests: requests, inventory: inventory)
     if mutation.dryRun || !plan.instructions.isEmpty || plan.batch == nil {
@@ -203,182 +206,186 @@ struct PluginMarketplaceRemove {
     func run() throws { try options.run(action: "marketplace-remove") }
 }
 
-func resolvedPluginHost(for host: String) -> PluginHost? {
-    switch host {
-    case "claude-code": .claude
-    case "codex": .codex
-    case "opencode": .opencode
-    case "cursor": .cursor
-    default: nil
-    }
-}
-
 extension CLI {
-    static let pluginCommands: [CLICommand] = [
-        CLICommand(
-            path: "plugins",
-            abstract: "Agent Plugin inventory, health, lifecycle, and host-owned marketplaces.",
-            options: []),
-        CLICommand(
-            path: "plugins list",
-            abstract: "List distinct Plugin Installations by host and concrete scope.",
-            options: scopeOptions + outputOptions
-        ) { arguments in
-            let command = PluginList(
-                inputs: try ScopeOptions(arguments), output: OutputOptions(arguments))
-            try command.run()
-        },
-        CLICommand(
-            path: "plugins health",
-            abstract: "Inspect plugin enablement, load status, and diagnosed Problems passively.",
-            options: scopeOptions + outputOptions
-        ) { arguments in
-            let command = PluginHealth(
-                inputs: try ScopeOptions(arguments), output: OutputOptions(arguments))
-            try command.run()
-        },
-        CLICommand(
-            path: "plugins capabilities",
-            abstract: "Explicitly probe the host-supported operations.",
-            options: [
-                CLIOption(
-                    "host", takesValue: true,
-                    help: "Agent Host: claude-code, codex, opencode, or cursor.", required: true)
-            ] + outputOptions
-        ) { arguments in
-            let command = PluginCapabilities(
-                host: try arguments.required("host"), output: OutputOptions(arguments))
-            try command.run()
-        },
-        CLICommand(
-            path: "plugins marketplaces", abstract: "Host-owned marketplace operations.",
-            options: []),
-        CLICommand(
-            path: "plugins marketplaces list", abstract: "Read locally configured marketplaces.",
-            options: scopeOptions + outputOptions
-        ) { arguments in
-            let command = PluginMarketplaceList(
-                inputs: try ScopeOptions(arguments), output: OutputOptions(arguments))
-            try command.run()
-        },
-        CLICommand(
-            path: "plugins plan", abstract: "Advanced: build a Plugin plan from explicit requests.",
-            options: [CLIOption("requests", takesValue: true, help: "", required: true)]
-                + scopeOptions
-                + outputOptions
-        ) { arguments in
-            let command = PluginPlan(
-                requests: try arguments.required("requests"), inputs: try ScopeOptions(arguments),
-                output: OutputOptions(arguments))
-            try command.run()
-        },
-        CLICommand(
-            path: "plugins execute",
-            abstract: "Advanced: execute explicit Plugin requests with the shared safety gates.",
-            options: [CLIOption("requests", takesValue: true, help: "", required: true)]
-                + scopeOptions
-                + outputOptions + mutationOptions
-        ) { arguments in
-            let command = PluginExecute(
-                requests: try arguments.required("requests"), inputs: try ScopeOptions(arguments),
-                output: OutputOptions(arguments), mutation: try MutationOptions(arguments))
-            try command.run()
-        },
-        CLICommand(
-            path: "plugins install", abstract: "Plan or perform install through the official host.",
-            options: pluginOperationOptions,
-            argument: CLIPositional(
-                name: "target", required: true,
-                help: "Host-recognized plugin or marketplace identifier/source.")
-        ) { arguments in
-            let command = PluginInstall(options: try PluginOperationOptions(arguments))
-            try command.run()
-        },
-        CLICommand(
-            path: "plugins update", abstract: "Plan or perform update through the official host.",
-            options: pluginOperationOptions,
-            argument: CLIPositional(
-                name: "target", required: true,
-                help: "Host-recognized plugin or marketplace identifier/source.")
-        ) { arguments in
-            let command = PluginUpdate(options: try PluginOperationOptions(arguments))
-            try command.run()
-        },
-        CLICommand(
-            path: "plugins enable", abstract: "Plan or perform enable through the official host.",
-            options: pluginOperationOptions,
-            argument: CLIPositional(
-                name: "target", required: true,
-                help: "Host-recognized plugin or marketplace identifier/source.")
-        ) { arguments in
-            let command = PluginEnable(options: try PluginOperationOptions(arguments))
-            try command.run()
-        },
-        CLICommand(
-            path: "plugins disable", abstract: "Plan or perform disable through the official host.",
-            options: pluginOperationOptions,
-            argument: CLIPositional(
-                name: "target", required: true,
-                help: "Host-recognized plugin or marketplace identifier/source.")
-        ) { arguments in
-            let command = PluginDisable(options: try PluginOperationOptions(arguments))
-            try command.run()
-        },
-        CLICommand(
-            path: "plugins disable-local",
-            abstract:
-                "Move an incompatible local plugin file out of host discovery (snapshot-protected).",
-            options: pluginOperationOptions,
-            argument: CLIPositional(
-                name: "target", required: true,
-                help: "Host-recognized plugin or marketplace identifier/source.")
-        ) { arguments in
-            let command = PluginDisableLocal(options: try PluginOperationOptions(arguments))
-            try command.run()
-        },
-        CLICommand(
-            path: "plugins uninstall",
-            abstract: "Plan or perform remove through the official host.",
-            options: pluginOperationOptions,
-            argument: CLIPositional(
-                name: "target", required: true,
-                help: "Host-recognized plugin or marketplace identifier/source.")
-        ) { arguments in
-            let command = PluginUninstall(options: try PluginOperationOptions(arguments))
-            try command.run()
-        },
-        CLICommand(
-            path: "plugins marketplaces add",
-            abstract: "Plan or perform marketplace-add through the official host.",
-            options: pluginOperationOptions,
-            argument: CLIPositional(
-                name: "target", required: true,
-                help: "Host-recognized plugin or marketplace identifier/source.")
-        ) { arguments in
-            let command = PluginMarketplaceAdd(options: try PluginOperationOptions(arguments))
-            try command.run()
-        },
-        CLICommand(
-            path: "plugins marketplaces refresh",
-            abstract: "Plan or perform marketplace-refresh through the official host.",
-            options: pluginOperationOptions,
-            argument: CLIPositional(
-                name: "target", required: true,
-                help: "Host-recognized plugin or marketplace identifier/source.")
-        ) { arguments in
-            let command = PluginMarketplaceRefresh(options: try PluginOperationOptions(arguments))
-            try command.run()
-        },
-        CLICommand(
-            path: "plugins marketplaces remove",
-            abstract: "Plan or perform marketplace-remove through the official host.",
-            options: pluginOperationOptions,
-            argument: CLIPositional(
-                name: "target", required: true,
-                help: "Host-recognized plugin or marketplace identifier/source.")
-        ) { arguments in
-            let command = PluginMarketplaceRemove(options: try PluginOperationOptions(arguments))
-            try command.run()
-        }
-    ]
+    static let pluginCommands: [CLICommand] =
+        antigravityPluginCommands + [
+            CLICommand(
+                path: "plugins",
+                abstract: "Agent Plugin inventory, health, lifecycle, and host-owned marketplaces.",
+                options: []),
+            CLICommand(
+                path: "plugins list",
+                abstract: "List distinct Plugin Installations by host and concrete scope.",
+                options: scopeOptions + outputOptions
+            ) { arguments in
+                let command = PluginList(
+                    inputs: try ScopeOptions(arguments), output: OutputOptions(arguments))
+                try command.run()
+            },
+            CLICommand(
+                path: "plugins health",
+                abstract:
+                    "Inspect plugin enablement, load status, and diagnosed Problems passively.",
+                options: scopeOptions + outputOptions
+            ) { arguments in
+                let command = PluginHealth(
+                    inputs: try ScopeOptions(arguments), output: OutputOptions(arguments))
+                try command.run()
+            },
+            CLICommand(
+                path: "plugins capabilities",
+                abstract: "Explicitly probe the host-supported operations.",
+                options: [
+                    CLIOption(
+                        "host", takesValue: true,
+                        help: "Agent Host: claude-code, codex, opencode, cursor, or antigravity.",
+                        required: true)
+                ] + outputOptions
+            ) { arguments in
+                let command = PluginCapabilities(
+                    host: try arguments.required("host"), output: OutputOptions(arguments))
+                try command.run()
+            },
+            CLICommand(
+                path: "plugins marketplaces", abstract: "Host-owned marketplace operations.",
+                options: []),
+            CLICommand(
+                path: "plugins marketplaces list",
+                abstract: "Read locally configured marketplaces.",
+                options: scopeOptions + outputOptions
+            ) { arguments in
+                let command = PluginMarketplaceList(
+                    inputs: try ScopeOptions(arguments), output: OutputOptions(arguments))
+                try command.run()
+            },
+            CLICommand(
+                path: "plugins plan",
+                abstract: "Advanced: build a Plugin plan from explicit requests.",
+                options: [CLIOption("requests", takesValue: true, help: "", required: true)]
+                    + scopeOptions
+                    + outputOptions
+            ) { arguments in
+                let command = PluginPlan(
+                    requests: try arguments.required("requests"),
+                    inputs: try ScopeOptions(arguments),
+                    output: OutputOptions(arguments))
+                try command.run()
+            },
+            CLICommand(
+                path: "plugins execute",
+                abstract:
+                    "Advanced: execute explicit Plugin requests with the shared safety gates.",
+                options: [CLIOption("requests", takesValue: true, help: "", required: true)]
+                    + scopeOptions
+                    + outputOptions + mutationOptions
+            ) { arguments in
+                let command = PluginExecute(
+                    requests: try arguments.required("requests"),
+                    inputs: try ScopeOptions(arguments),
+                    output: OutputOptions(arguments), mutation: try MutationOptions(arguments))
+                try command.run()
+            },
+            CLICommand(
+                path: "plugins install",
+                abstract: "Plan or perform install through the official host.",
+                options: pluginOperationOptions,
+                argument: CLIPositional(
+                    name: "target", required: true,
+                    help: "Host-recognized plugin or marketplace identifier/source.")
+            ) { arguments in
+                let command = PluginInstall(options: try PluginOperationOptions(arguments))
+                try command.run()
+            },
+            CLICommand(
+                path: "plugins update",
+                abstract: "Plan or perform update through the official host.",
+                options: pluginOperationOptions,
+                argument: CLIPositional(
+                    name: "target", required: true,
+                    help: "Host-recognized plugin or marketplace identifier/source.")
+            ) { arguments in
+                let command = PluginUpdate(options: try PluginOperationOptions(arguments))
+                try command.run()
+            },
+            CLICommand(
+                path: "plugins enable",
+                abstract: "Plan or perform enable through the official host.",
+                options: pluginOperationOptions,
+                argument: CLIPositional(
+                    name: "target", required: true,
+                    help: "Host-recognized plugin or marketplace identifier/source.")
+            ) { arguments in
+                let command = PluginEnable(options: try PluginOperationOptions(arguments))
+                try command.run()
+            },
+            CLICommand(
+                path: "plugins disable",
+                abstract: "Plan or perform disable through the official host.",
+                options: pluginOperationOptions,
+                argument: CLIPositional(
+                    name: "target", required: true,
+                    help: "Host-recognized plugin or marketplace identifier/source.")
+            ) { arguments in
+                let command = PluginDisable(options: try PluginOperationOptions(arguments))
+                try command.run()
+            },
+            CLICommand(
+                path: "plugins disable-local",
+                abstract:
+                    "Move an incompatible local plugin file out of host discovery (snapshot-protected).",
+                options: pluginOperationOptions,
+                argument: CLIPositional(
+                    name: "target", required: true,
+                    help: "Host-recognized plugin or marketplace identifier/source.")
+            ) { arguments in
+                let command = PluginDisableLocal(options: try PluginOperationOptions(arguments))
+                try command.run()
+            },
+            CLICommand(
+                path: "plugins uninstall",
+                abstract: "Plan or perform remove through the official host.",
+                options: pluginOperationOptions,
+                argument: CLIPositional(
+                    name: "target", required: true,
+                    help: "Host-recognized plugin or marketplace identifier/source.")
+            ) { arguments in
+                let command = PluginUninstall(options: try PluginOperationOptions(arguments))
+                try command.run()
+            },
+            CLICommand(
+                path: "plugins marketplaces add",
+                abstract: "Plan or perform marketplace-add through the official host.",
+                options: pluginOperationOptions,
+                argument: CLIPositional(
+                    name: "target", required: true,
+                    help: "Host-recognized plugin or marketplace identifier/source.")
+            ) { arguments in
+                let command = PluginMarketplaceAdd(options: try PluginOperationOptions(arguments))
+                try command.run()
+            },
+            CLICommand(
+                path: "plugins marketplaces refresh",
+                abstract: "Plan or perform marketplace-refresh through the official host.",
+                options: pluginOperationOptions,
+                argument: CLIPositional(
+                    name: "target", required: true,
+                    help: "Host-recognized plugin or marketplace identifier/source.")
+            ) { arguments in
+                let command = PluginMarketplaceRefresh(
+                    options: try PluginOperationOptions(arguments))
+                try command.run()
+            },
+            CLICommand(
+                path: "plugins marketplaces remove",
+                abstract: "Plan or perform marketplace-remove through the official host.",
+                options: pluginOperationOptions,
+                argument: CLIPositional(
+                    name: "target", required: true,
+                    help: "Host-recognized plugin or marketplace identifier/source.")
+            ) { arguments in
+                let command = PluginMarketplaceRemove(
+                    options: try PluginOperationOptions(arguments))
+                try command.run()
+            }
+        ]
 }

@@ -290,7 +290,9 @@ struct BatchSummary {
 
         private static func cliCommand(_ command: BatchCommand) -> Kind {
             if command.owningCLI == .orca { return .hookCleanup }
-            if [.claude, .codex, .opencode].contains(command.owningCLI) { return .hostPlugin }
+            if [.claude, .codex, .opencode, .cursor, .antigravity].contains(command.owningCLI) {
+                return .hostPlugin
+            }
             switch command.consequenceKind {
             case .pinsGitHubSkill: return .pin
             case .unpinsAndUpdates: return .unpin

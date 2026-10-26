@@ -272,8 +272,27 @@ sukiru rollback --batch ID --yes --preserve /absolute/conflict/path
 sukiru capabilities --json          # explicit manager probes
 ```
 
+Antigravity plugin support covers shared App/CLI plugins, built-ins, project discovery,
+components, configured enablement, and cached catalogs. Native operations use `agy`
+(verified from 1.4.7): install, uninstall, enable, disable, list, import, validate, and link.
+Enablement is shared by directory name across scopes. Cached catalogs do not establish
+marketplace registration, and inventory does not prove runtime loading. Marketplace
+management, automatic updates, MCP authentication, and runtime services stay in
+Antigravity Customizations or `/plugins`.
+
+```bash
+sukiru plugins list --host antigravity --json
+sukiru plugins import gemini --scope user --dry-run
+sukiru plugins validate /path/to/plugin --strict --scope user --dry-run
+sukiru plugins link NAME --marketplace MARKET --scope user --dry-run
+sukiru plugins inspect --host antigravity --scope user --dry-run
+sukiru plugins disable --host antigravity --scope user --dry-run -- -123
+```
+
 Plugin commands accept a host version at or above Sukiru's verified baseline within
-the same major version, and still check the subcommand's `--help` before running.
+the same major version, and still check the host's supported help surface before running.
+Antigravity uses parent help for most operations because subcommands may treat `--help`
+as an operation target.
 `disable-local` moves an incompatible local plugin file out of host discovery under
 snapshot protection. For Claude Code, `--settings-scope local` with `--root` targets
 `.claude/settings.local.json` instead of `--scope`. `fix` and `clean` skip repairs

@@ -9,6 +9,7 @@ extension PluginHost {
         case .codex: "Codex"
         case .opencode: "OpenCode"
         case .cursor: "Cursor"
+        case .antigravity: "Antigravity"
         }
     }
 
@@ -32,6 +33,8 @@ extension PluginHost {
             ["install", "marketplace-add", "marketplace-refresh", "marketplace-remove"]
         case .opencode:
             ["install", "replace", "update", "check", "list", "remove"]
+        case .antigravity:
+            ["install", "enable", "disable", "remove", "list", "import", "validate", "link"]
         }
     }
 
@@ -43,6 +46,8 @@ extension PluginInstallation {
         switch host {
         case .claude, .codex, .cursor:
             String(identifier.prefix { $0 != "@" })
+        case .antigravity:
+            name ?? identifier
         case .opencode:
             identifier.hasPrefix("./") ? String(identifier.dropFirst(2)) : identifier
         }
@@ -63,6 +68,10 @@ extension PluginInstallation {
             scope == "managed" ? ["update"] : enablementActions + ["update", "remove"]
         case .codex:
             enablementActions + ["remove"]
+        case .antigravity:
+            enablementActions + ["validate"]
+                + (path == HostPathResolver.join(scopeRoot, ".gemini/config/plugins/" + identifier)
+                    && scope == "user" ? ["remove"] : [])
         case .cursor:
             installationStatus == "discovered" ? ["disable-local"] : []
         case .opencode:
@@ -103,6 +112,8 @@ extension PluginInstallation {
         switch host {
         case .codex:
             "Codex updates plugins only by refreshing their whole marketplace"
+        case .antigravity:
+            "Antigravity manages automatic updates in Customizations; no native update command is available"
         case .cursor:
             "Cursor updates plugins in Customize or the Agent /plugin flow"
         case .opencode:
@@ -117,7 +128,7 @@ extension PluginInstallation {
         case "installed": String(localized: "Installed payload")
         case "configured": String(localized: "Configured reference")
         case "discovered":
-            if host == .cursor {
+            if host == .cursor || host == .antigravity {
                 String(localized: "Discovered local plugin")
             } else {
                 String(localized: "Discovered local file")
@@ -134,6 +145,25 @@ extension PluginEnablement {
         case .enabled: String(localized: "Enabled")
         case .disabled: String(localized: "Disabled")
         case .unknown: String(localized: "Unknown")
+        }
+    }
+}
+
+extension PluginComponent {
+    var localizedKind: String {
+        switch kind {
+        case "skills": String(localized: "Skills")
+        case "commands": String(localized: "Commands")
+        case "agents": String(localized: "Agents")
+        case "rules": String(localized: "Rules")
+        case "hooks": String(localized: "Hooks")
+        case "mcpServers": String(localized: "MCP Servers")
+        case "lspServers": String(localized: "LSP Servers")
+        case "sidecars": String(localized: "Sidecars")
+        case "contextProviders": String(localized: "Context Providers")
+        case "variables": String(localized: "Variables")
+        case "local": String(localized: "Local Plugin")
+        default: kind
         }
     }
 }

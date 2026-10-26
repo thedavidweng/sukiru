@@ -32,6 +32,8 @@ struct AgentLogo: View {
             return "agent-\(hostID)"
         case "qoder-cn":
             return "agent-qoder"
+        case "antigravity-cli":
+            return "agent-antigravity"
         case "trae-cn":
             return "agent-trae"
         case "kimi-code-cli":

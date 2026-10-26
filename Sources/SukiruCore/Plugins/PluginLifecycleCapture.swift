@@ -31,7 +31,8 @@ struct PluginLifecycleCapture {
             "install", "replace", "list", "check", "update", "marketplace-add",
             "marketplace-refresh"
         ]
-        if request.host != .cursor, acquiresPackages.contains(request.action) {
+        let usesNpm = ![.cursor, .antigravity].contains(request.host)
+        if usesNpm, acquiresPackages.contains(request.action) {
             paths += try npmRoots()
         }
         for path in paths {

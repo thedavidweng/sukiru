@@ -266,11 +266,13 @@ extension SkillSelection {
 }
 
 extension PluginOperationOptions {
-    init(_ arguments: CLIArguments) throws {
-        target = try arguments.requiredPositional()
+    init(_ arguments: CLIArguments, defaultTarget: String? = nil) throws {
+        target = try arguments.positional ?? defaultTarget ?? arguments.requiredPositional()
         inputs = try ScopeOptions(arguments)
         settingsScope = arguments.string("settings-scope")
         gitRef = arguments.string("git-ref")
+        marketplace = arguments.string("marketplace")
+        strict = arguments.flag("strict") ? true : nil
         output = OutputOptions(arguments)
         mutation = try MutationOptions(arguments)
     }
@@ -320,6 +322,24 @@ extension CLI {
             CLIOption(
                 "git-ref", takesValue: true,
                 help: "Cursor marketplace branch, tag, or commit to pass to the host."
+            ),
+            CLIOption(
+                "marketplace", takesValue: true,
+                help: "Marketplace argument for Antigravity plugin link."
+            ),
+            CLIOption(
+                "strict", takesValue: false, help: "Antigravity validation also fails on warnings."
             )
         ] + outputOptions + mutationOptions
+}
+
+func resolvedPluginHost(for host: String) -> PluginHost? {
+    switch host {
+    case "claude-code": .claude
+    case "codex": .codex
+    case "opencode": .opencode
+    case "cursor": .cursor
+    case "antigravity", "antigravity-cli": .antigravity
+    default: nil
+    }
 }

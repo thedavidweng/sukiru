@@ -11,6 +11,8 @@ struct PluginManagementState {
     var scope = "user"
     var scopeRoot = ""
     var gitRef: String?
+    var marketplace = ""
+    var strict = false
     var error: String?
     /// Why a removal planned straight from the plugin list could not be previewed.
     var removalError: String?
@@ -28,10 +30,13 @@ extension AppState {
         pluginManagement.target =
             action == "list"
             ? "*"
-            : (action == "disable-local" ? plugin.path ?? "" : plugin.identifier)
+            : (["disable-local", "validate"].contains(action)
+                ? plugin.path ?? "" : plugin.identifier)
         pluginManagement.scope = plugin.scope
         pluginManagement.scopeRoot = plugin.scopeRoot
         pluginManagement.gitRef = nil
+        pluginManagement.marketplace = ""
+        pluginManagement.strict = false
         pluginManagement.error = nil
         pluginManagement.showingSheet = true
     }
@@ -43,13 +48,16 @@ extension AppState {
         pluginManagement.scope = marketplace.scope
         pluginManagement.scopeRoot = marketplace.scopeRoot
         pluginManagement.gitRef = nil
+        pluginManagement.marketplace = ""
+        pluginManagement.strict = false
         pluginManagement.error = nil
         pluginManagement.showingSheet = true
     }
 
-    func newPluginOperation(host: PluginHost) {
+    func newPluginOperation(host: PluginHost, action: String = "install") {
         pluginManagement = PluginManagementState(
-            showingSheet: true, host: host, scopeRoot: environment.home)
+            showingSheet: true, host: host, action: action,
+            target: ["list", "import"].contains(action) ? "*" : "", scopeRoot: environment.home)
     }
 
     func previewPluginOperation() {
@@ -57,7 +65,9 @@ extension AppState {
             host: pluginManagement.host,
             action: pluginManagement.action, target: pluginManagement.target,
             scope: pluginManagement.scope, scopeRoot: pluginManagement.scopeRoot,
-            gitRef: pluginManagement.gitRef)
+            gitRef: pluginManagement.gitRef,
+            marketplace: pluginManagement.action == "link" ? pluginManagement.marketplace : nil,
+            strict: pluginManagement.action == "validate" ? pluginManagement.strict : nil)
         pluginManagement.error = nil
         planPluginOperations([request]) { [weak self] error in
             self?.pluginManagement.error = error

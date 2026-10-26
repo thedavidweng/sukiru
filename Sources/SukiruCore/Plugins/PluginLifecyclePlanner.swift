@@ -10,6 +10,9 @@ public struct PluginLifecyclePlanner: Sendable {
         let probe = PluginLifecycleProbe(environment: environment)
         let version = try probe.version(host: host)
         if host == .cursor { return try cursorCapabilities(probe: probe, version: version) }
+        if host == .antigravity {
+            return try antigravityCapabilities(probe: probe, version: version)
+        }
         try probe.help(host: host, arguments: ["plugin"], requiredFlags: [])
         var native: [String] = []
         var limits: [String: String] = [:]
@@ -125,7 +128,7 @@ public struct PluginLifecyclePlanner: Sendable {
                 argv: args, displayString: BatchCommand.display(for: args),
                 owningCLI: owner(request.host), intent: impact,
                 dangerFlags: flags, warning: impact,
-                workingDirectory: request.host == .opencode
+                workingDirectory: [.opencode, .antigravity].contains(request.host)
                     ? request.scopeRoot
                     : (["user", "managed"].contains(request.scope) ? nil : request.scopeRoot),
                 captureRoots: capturePaths))
@@ -136,6 +139,9 @@ public struct PluginLifecyclePlanner: Sendable {
         version: String, probe: PluginLifecycleProbe
     ) throws -> [String] {
         if request.host == .cursor { return try cursorArguments(request) }
+        if request.host == .antigravity {
+            return try antigravityArguments(request, probe: probe)
+        }
         let args = try arguments(request, inventory: inventory, version: version)
         try probe.help(
             host: request.host,
@@ -145,49 +151,18 @@ public struct PluginLifecyclePlanner: Sendable {
         return args
     }
 
-    private func validate(_ request: PluginLifecycleRequest) throws {
-        guard PluginLifecycleRequest.actions.contains(request.action), !request.target.isEmpty,
-            request.target != "*"
-                || (request.host == .opencode
-                    && ["list", "check", "update"].contains(request.action)),
-            !request.target.hasPrefix("-"), !request.target.contains("\n"),
-            !request.target.contains("\0")
-        else { throw PluginLifecycleError(message: "Invalid plugin action or target") }
-        if let gitRef = request.gitRef {
-            guard request.host == .cursor, request.action == "marketplace-add",
-                Self.isValidCursorGitRef(gitRef)
-            else {
-                throw PluginLifecycleError(
-                    message: "Cursor marketplace Git ref must be a single non-empty ref argument")
-            }
-        }
-        let managedUpdate =
-            request.host == .claude && request.action == "update" && request.scope == "managed"
-        guard ["user", "project", "local"].contains(request.scope) || managedUpdate,
-            request.scope == "user" || managedUpdate
-                ? request.scopeRoot == environment.home
-                : environment.projectRoots.contains(request.scopeRoot)
-        else {
-            throw PluginLifecycleError(
-                message: "Scope must identify the user home or an added project")
-        }
-    }
-
-    private static func isValidCursorGitRef(_ ref: String) -> Bool {
-        !ref.isEmpty && !ref.hasPrefix("-") && ref.allSatisfy { !$0.isWhitespace }
-            && ref.unicodeScalars.allSatisfy {
-                !CharacterSet.controlCharacters.contains($0)
-            }
-    }
-
     private func limitation(
         _ request: PluginLifecycleRequest, version: String, inventory: PluginInventory
     ) -> String? {
-        switch request.host {
+        if request.host != .antigravity, ["import", "validate", "link"].contains(request.action) {
+            return "This operation is supported through Antigravity's native plugin interface only."
+        }
+        return switch request.host {
         case .claude: claudeLimitation(request, version: version)
         case .codex: codexLimitation(request, version: version, inventory: inventory)
         case .opencode: openCodeLimitation(request, version: version, inventory: inventory)
         case .cursor: cursorLimitation(request)
+        case .antigravity: antigravityLimitation(request, version: version, inventory: inventory)
         }
     }
 
@@ -245,6 +220,7 @@ public struct PluginLifecyclePlanner: Sendable {
         case .codex: .codex
         case .opencode: .opencode
         case .cursor: .cursor
+        case .antigravity: .antigravity
         }
     }
 

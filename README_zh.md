@@ -198,8 +198,22 @@ sukiru rollback --batch ID --yes --preserve /absolute/conflict/path
 sukiru capabilities --json
 ```
 
-插件命令接受与 Sukiru 已验证基线主版本相同且不低于基线的宿主版本，执行前仍会检查对应子命令的
-`--help`。`disable-local` 在快照保护下把不兼容的本地插件文件移出宿主的自动发现范围。
+Antigravity 插件支持覆盖 App 与 CLI 共享的插件、内置插件、项目自动发现、组件、已配置的启用状态和缓存目录。
+原生操作通过 `agy`（自 1.4.7 起验证）执行：install、uninstall、enable、disable、list、import、validate 和 link。
+启用状态按目录名在各作用域间共享。缓存目录不代表已注册 marketplace，清单也不能证明运行时已加载。
+Marketplace 管理、自动更新、MCP 认证和运行时服务仍在 Antigravity Customizations 或 `/plugins` 中处理。
+
+```bash
+sukiru plugins list --host antigravity --json
+sukiru plugins import gemini --scope user --dry-run
+sukiru plugins validate /path/to/plugin --strict --scope user --dry-run
+sukiru plugins link NAME --marketplace MARKET --scope user --dry-run
+sukiru plugins inspect --host antigravity --scope user --dry-run
+sukiru plugins disable --host antigravity --scope user --dry-run -- -123
+```
+
+插件命令接受与 Sukiru 已验证基线主版本相同且不低于基线的宿主版本，执行前仍会检查宿主支持的帮助入口。
+Antigravity 的多数操作检查父命令帮助，因为其子命令可能把 `--help` 当作操作目标。`disable-local` 在快照保护下把不兼容的本地插件文件移出宿主的自动发现范围。
 对 Claude Code，`--settings-scope local` 配合 `--root` 会改为写入 `.claude/settings.local.json`，
 而不是按 `--scope` 处理。未安装 Node 时，`fix` 和 `clean` 会跳过需要 `npx` 的修复。
 

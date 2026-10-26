@@ -13,6 +13,9 @@ enum PluginActionTitle {
         case "list": "list.bullet"
         case "disable-local": "pause.circle"
         case "remove": "trash"
+        case "import": "square.and.arrow.down"
+        case "validate": "checkmark.seal"
+        case "link": "link"
         default: "gearshape"
         }
     }
@@ -26,7 +29,10 @@ enum PluginActionTitle {
         "update": String(localized: "Update Plugin"),
         "remove": String(localized: "Remove Plugin"),
         "check": String(localized: "Check Plugin Updates"),
-        "list": String(localized: "Inspect Runtime Plugins"),
+        "list": String(localized: "Inspect Host Plugins"),
+        "import": String(localized: "Import Plugins"),
+        "validate": String(localized: "Validate Plugin"),
+        "link": String(localized: "Generate Marketplace Link"),
         "marketplace-add": String(localized: "Add Marketplace"),
         "marketplace-refresh": String(localized: "Refresh Marketplace"),
         "marketplace-remove": String(localized: "Remove Marketplace")
