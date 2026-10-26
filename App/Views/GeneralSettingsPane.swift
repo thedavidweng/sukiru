@@ -2,6 +2,7 @@ import SwiftUI
 
 /// App-wide preferences, such as the UI language override.
 struct GeneralSettingsPane: View {
+    @EnvironmentObject private var updater: AppUpdater
     @State private var language = AppLanguage.override
 
     var body: some View {
@@ -28,6 +29,11 @@ struct GeneralSettingsPane: View {
                         }
                     }
                 }
+            }
+            Section {
+                Toggle(
+                    "Automatically check for updates",
+                    isOn: $updater.automaticallyChecksForUpdates)
             }
             HistorySettingsSection()
         }

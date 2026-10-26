@@ -1,6 +1,6 @@
 # 0006: Pure Swift and an Apple first-party feel (the native red line)
 
-- Status: Accepted (language setting amended 2026-10-01; dependency policy amended 2026-10-10)
+- Status: Accepted (language setting amended 2026-10-01; dependency policy amended 2026-10-10; Sparkle exception added by [0015](0015-sparkle-app-updates.md) 2026-10-26)
 - Date: 2026-09-20
 
 ## Context and decision

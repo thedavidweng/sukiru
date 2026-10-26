@@ -150,11 +150,9 @@ time) and Update (when a newer release exists).
 brew install --cask thedavidweng/tap/sukiru
 ```
 
-Upgrade:
-
-```bash
-brew upgrade --cask sukiru
-```
+Sukiru updates itself: choose **Sukiru › Check for Sukiru Updates…**, or leave
+automatic checks on in Settings › General. `brew upgrade --cask sukiru` also
+works.
 
 ### Direct Download
 

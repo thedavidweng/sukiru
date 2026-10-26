@@ -131,7 +131,7 @@ struct UpdateAllButton: View {
         Button {
             state.updateAll(skills)
         } label: {
-            Label("Update All", systemImage: "arrow.triangle.2.circlepath")
+            Label("Update All Skills", systemImage: "arrow.triangle.2.circlepath")
         }
         .disabled(disabled)
         .axButtonToken("sukiru.library.updateAll", disabled: disabled)
@@ -179,7 +179,7 @@ struct CheckForUpdatesButton: View {
             Button {
                 state.checkGitHubUpdates(skills)
             } label: {
-                Label("Check for Updates", systemImage: "arrow.down.circle")
+                Label("Check for Skill Updates", systemImage: "arrow.down.circle")
             }
             .disabled(disabled)
             .axButtonToken("sukiru.library.checkUpdates", disabled: disabled)

@@ -6,6 +6,7 @@ import SwiftUI
 struct SukiruApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var state = AppState()
+    @StateObject private var updater = AppUpdater()
 
     var body: some Scene {
         WindowGroup("Sukiru") {
@@ -20,6 +21,10 @@ struct SukiruApp: App {
                 Button("About Sukiru") {
                     NSApp.orderFrontStandardAboutPanel(options: [.credits: Self.aboutCredits])
                 }
+                Button("Check for Sukiru Updates…") {
+                    updater.checkForUpdates()
+                }
+                .disabled(!updater.canCheckForUpdates)
             }
             SidebarCommands()
             // Sidebar switching shortcuts. Visible in the View
@@ -108,13 +113,13 @@ struct SukiruApp: App {
                     state.refresh()
                 }
                 .keyboardShortcut("r", modifiers: .command)
-                Button("Check for Updates") {
+                Button("Check for Skill Updates") {
                     state.checkGitHubUpdates(state.skillsInLibraryScope)
                 }
                 .disabled(
                     state.updateCheck.running
                         || !state.canCheckGitHubUpdates(state.skillsInLibraryScope))
-                Button("Update All") {
+                Button("Update All Skills") {
                     state.updateAll(state.skillsInLibraryScope)
                 }
                 .disabled(
@@ -197,6 +202,7 @@ struct SukiruApp: App {
         Settings {
             SettingsView()
                 .environmentObject(state)
+                .environmentObject(updater)
         }
     }
 
