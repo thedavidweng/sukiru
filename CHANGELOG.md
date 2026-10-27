@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/thedavidweng/sukiru/compare/v1.10.0...v1.11.0) (2026-10-27)
+
+
+### ✨ Features
+
+* **release:** ship separate arm64 and Intel builds; unblock release PRs ([#80](https://github.com/thedavidweng/sukiru/issues/80)) ([7be94c0](https://github.com/thedavidweng/sukiru/commit/7be94c061f5e39b8c565cb8ec8f7634ad7f83020))
+
 ## [1.10.0](https://github.com/thedavidweng/sukiru/compare/v1.9.0...v1.10.0) (2026-10-26)
 
 
