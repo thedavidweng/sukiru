@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# Build a Release Sukiru.app and package the distributable artifacts
-# (Sukiru.dmg, Sukiru.zip, appcast.xml, checksums.txt) into dist/.
+# Build a Release Sukiru.app once, thin it into one build per architecture
+# and package each into dist/: Sukiru-<arch>.dmg, Sukiru-<arch>.zip and that
+# architecture's Sparkle feed, plus checksums.txt. Homebrew installs the
+# build for the Mac's architecture, and each build's feed offers only its
+# own architecture.
 #
 # The marketing version is injected at build time (MARKETING_VERSION) so the
 # release workflow can derive it from the git tag without touching
@@ -30,7 +33,7 @@ echo "==> Building Release Sukiru.app (v${MARKETING_VERSION})..."
 xcodebuild \
   -scheme Sukiru \
   -configuration Release \
-  -destination 'platform=macOS,arch=arm64' \
+  -destination 'generic/platform=macOS' \
   -derivedDataPath "$DERIVED_DATA" \
   MARKETING_VERSION="$MARKETING_VERSION" \
   CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
@@ -41,9 +44,11 @@ if [ ! -d "$application" ]; then
   echo "error: build reported success but $application is missing" >&2
   exit 1
 fi
+architectures=(arm64 x86_64)
 echo "==> Building size-optimized release CLI..."
-swift build -c release --product sukiru -Xswiftc -Osize
-cli_bin_dir="$(swift build -c release --show-bin-path)"
+cli_build=(swift build -c release --product sukiru --arch arm64 --arch x86_64)
+"${cli_build[@]}" -Xswiftc -Osize
+cli_bin_dir="$("${cli_build[@]}" --show-bin-path)"
 # Contents/MacOS would collide with the app executable "Sukiru" on a
 # case-insensitive volume, so the CLI ships as a helper tool.
 mkdir -p "$application/Contents/Helpers"
@@ -55,78 +60,92 @@ codesign --remove-signature "$application/Contents/Helpers/sukiru"
 codesign --remove-signature "$application/Contents/MacOS/Sukiru"
 xcrun strip -S -x "$application/Contents/Helpers/sukiru"
 xcrun strip -S -x "$application/Contents/MacOS/Sukiru"
-# Sparkle's XPC services exist for sandboxed apps only (ADR 0015). Its
-# remaining executables are re-signed, innermost first, with the release
-# identity under the hardened runtime.
+# Sparkle's XPC services exist for sandboxed apps only (ADR 0015).
 sparkle="$application/Contents/Frameworks/Sparkle.framework"
 rm -rf "$sparkle/XPCServices" "$sparkle/Versions/B/XPCServices"
-for component in "$sparkle/Versions/B/Autoupdate" "$sparkle/Versions/B/Updater.app" "$sparkle"; do
-  codesign --force --timestamp --options runtime --sign "$APPLE_SIGNING_IDENTITY" \
-    --keychain "$APPLE_SIGNING_KEYCHAIN" "$component"
-done
-# Embedding a second executable changes the app signature.
-codesign --force --timestamp --options runtime --sign "$APPLE_SIGNING_IDENTITY" \
-  --keychain "$APPLE_SIGNING_KEYCHAIN" "$application/Contents/Helpers/sukiru"
-shipped_cli_version="$("$application/Contents/Helpers/sukiru" --version)"
-if [ "$shipped_cli_version" != "$MARKETING_VERSION" ]; then
-  echo "error: app and CLI versions differ ($MARKETING_VERSION / $shipped_cli_version)" >&2
+
+escaped_version="${MARKETING_VERSION//./\\.}"
+release_notes="$(awk "/^## \\[${escaped_version}\\]/{found=1; next} /^## \\[/{if(found) exit} found{print}" CHANGELOG.md)"
+if ! grep -q '[^[:space:]]' <<< "$release_notes"; then
+  echo "error: CHANGELOG.md has no section for $MARKETING_VERSION" >&2
   exit 1
 fi
-xattr -cr "$application"
-"$REPO_ROOT/Scripts/sign-and-notarize.sh" "$application"
 
 dist_dir="$REPO_ROOT/dist"
 rm -rf "$dist_dir"
 mkdir -p "$dist_dir"
+signing=(--force --timestamp --options runtime --sign "$APPLE_SIGNING_IDENTITY"
+  --keychain "$APPLE_SIGNING_KEYCHAIN")
 
-echo "==> Packaging Sukiru.zip..."
-ditto -c -k --keepParent "$application" "$dist_dir/Sukiru.zip"
+for arch in "${architectures[@]}"; do
+  echo "==> Packaging the $arch build..."
+  staging="$REPO_ROOT/.build/release-$arch"
+  thin="$staging/Sukiru.app"
+  rm -rf "$staging"
+  mkdir -p "$staging"
+  ditto "$application" "$thin"
+  # Keep only this architecture's slice in every Mach-O file (ditto --arch
+  # leaves them universal).
+  while IFS= read -r -d '' file; do
+    if lipo -archs "$file" >/dev/null 2>&1 && [ "$(lipo -archs "$file")" != "$arch" ]; then
+      lipo "$file" -thin "$arch" -output "$file"
+    fi
+  done < <(find "$thin" -type f -perm +111 -print0)
+  # arm64 keeps the original feed name that 1.10.0 reads; generate_appcast
+  # marks that feed arm64-only, so an Intel 1.10.0 never installs it.
+  feed="appcast.xml"
+  if [ "$arch" != arm64 ]; then feed="appcast-$arch.xml"; fi
+  /usr/libexec/PlistBuddy -c \
+    "Set :SUFeedURL https://github.com/thedavidweng/sukiru/releases/latest/download/$feed" \
+    "$thin/Contents/Info.plist"
+  # Thinning invalidates every signature: Sparkle innermost first, then the
+  # helper, then the app (Scripts/sign-and-notarize.sh).
+  thin_sparkle="$thin/Contents/Frameworks/Sparkle.framework"
+  for component in "$thin_sparkle/Versions/B/Autoupdate" "$thin_sparkle/Versions/B/Updater.app" \
+    "$thin_sparkle" "$thin/Contents/Helpers/sukiru"; do
+    codesign "${signing[@]}" "$component"
+  done
+  if [ "$arch" = "$(uname -m)" ]; then
+    shipped_cli_version="$("$thin/Contents/Helpers/sukiru" --version)"
+    if [ "$shipped_cli_version" != "$MARKETING_VERSION" ]; then
+      echo "error: app and CLI versions differ ($MARKETING_VERSION / $shipped_cli_version)" >&2
+      exit 1
+    fi
+  fi
+  xattr -cr "$thin"
+  "$REPO_ROOT/Scripts/sign-and-notarize.sh" "$thin"
 
-echo "==> Packaging Sukiru.dmg..."
-dmg_staging="$REPO_ROOT/.build/dmg_staging"
-rm -rf "$dmg_staging"
-mkdir -p "$dmg_staging"
-cp -R "$application" "$dmg_staging/"
-ln -s /Applications "$dmg_staging/Applications"
+  ditto -c -k --keepParent "$thin" "$dist_dir/Sukiru-$arch.zip"
 
-hdiutil create \
-  -volname "Sukiru" \
-  -srcfolder "$dmg_staging" \
-  -ov \
-  -format UDZO \
-  -imagekey zlib-level=9 \
-  "$dist_dir/Sukiru.dmg"
-rm -rf "$dmg_staging"
+  dmg_staging="$staging/dmg"
+  mkdir -p "$dmg_staging"
+  cp -R "$thin" "$dmg_staging/"
+  ln -s /Applications "$dmg_staging/Applications"
+  hdiutil create \
+    -volname "Sukiru" \
+    -srcfolder "$dmg_staging" \
+    -ov \
+    -format UDZO \
+    -imagekey zlib-level=9 \
+    "$dist_dir/Sukiru-$arch.dmg"
+  "$REPO_ROOT/Scripts/sign-and-notarize.sh" "$dist_dir/Sukiru-$arch.dmg"
 
-"$REPO_ROOT/Scripts/sign-and-notarize.sh" "$dist_dir/Sukiru.dmg"
-
-echo "==> Generating appcast.xml..."
-# generate_appcast reads every archive in its directory, so it sees only the
-# zip, with the release's CHANGELOG section beside it as release notes.
-appcast_dir="$REPO_ROOT/.build/appcast"
-rm -rf "$appcast_dir"
-mkdir -p "$appcast_dir"
-cp "$dist_dir/Sukiru.zip" "$appcast_dir/"
-escaped_version="${MARKETING_VERSION//./\\.}"
-awk "/^## \\[${escaped_version}\\]/{found=1; next} /^## \\[/{if(found) exit} found{print}" \
-  CHANGELOG.md > "$appcast_dir/Sukiru.md"
-if ! grep -q '[^[:space:]]' "$appcast_dir/Sukiru.md"; then
-  echo "error: CHANGELOG.md has no section for $MARKETING_VERSION" >&2
-  exit 1
-fi
-printf '%s' "$SPARKLE_PRIVATE_KEY" | "$SPARKLE_BIN/generate_appcast" --ed-key-file - \
-  --download-url-prefix "https://github.com/thedavidweng/sukiru/releases/download/v$MARKETING_VERSION/" \
-  --embed-release-notes --link "https://thedavidweng.github.io/sukiru/" \
-  -o "$dist_dir/appcast.xml" "$appcast_dir"
-rm -rf "$appcast_dir"
+  # generate_appcast reads every archive in its directory, so it sees only
+  # this zip, with the release's CHANGELOG section beside it as notes.
+  feed_dir="$staging/appcast"
+  mkdir -p "$feed_dir"
+  cp "$dist_dir/Sukiru-$arch.zip" "$feed_dir/"
+  printf '%s\n' "$release_notes" > "$feed_dir/Sukiru-$arch.md"
+  printf '%s' "$SPARKLE_PRIVATE_KEY" | "$SPARKLE_BIN/generate_appcast" --ed-key-file - \
+    --download-url-prefix "https://github.com/thedavidweng/sukiru/releases/download/v$MARKETING_VERSION/" \
+    --embed-release-notes --link "https://thedavidweng.github.io/sukiru/" \
+    -o "$dist_dir/$feed" "$feed_dir"
+  rm -rf "$staging"
+done
 
 echo "==> Generating SHA-256 checksums..."
 cd "$dist_dir"
-if command -v shasum >/dev/null 2>&1; then
-  shasum -a 256 Sukiru.dmg Sukiru.zip > checksums.txt
-elif command -v sha256sum >/dev/null 2>&1; then
-  sha256sum Sukiru.dmg Sukiru.zip > checksums.txt
-fi
+shasum -a 256 Sukiru-*.dmg Sukiru-*.zip > checksums.txt
 
 echo "==> Packaging complete! Artifacts in $dist_dir:"
 ls -lh "$dist_dir"

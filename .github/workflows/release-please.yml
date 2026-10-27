@@ -14,7 +14,6 @@ concurrency:
 jobs:
   release-please:
     permissions:
-      actions: write
       contents: write
       pull-requests: write
     runs-on: ubuntu-latest
@@ -24,8 +23,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          persist-credentials: false
 
+      # RELEASE_PLEASE_TOKEN is a personal access token, so the tag it pushes
+      # triggers release.yml and its release PR runs CI like any other PR.
       - name: Run Release Please
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         id: rp
@@ -60,25 +61,3 @@ jobs:
               --title "$TAG" \
               --notes "${FULL_NOTES}"
           fi
-
-      - name: Dispatch Release packaging
-        if: ${{ steps.rp.outputs.release_created == 'true' && steps.rp.outputs.tag_name != '' }}
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
-          GH_REPO: ${{ github.repository }}
-          TAG_NAME: ${{ steps.rp.outputs.tag_name }}
-        run: |
-          set -euo pipefail
-          existing_run="$(gh run list \
-            --repo "${GH_REPO}" \
-            --workflow release.yml \
-            --branch "${TAG_NAME}" \
-            --limit 5 \
-            --json databaseId,status \
-            --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | .[0].databaseId // empty')"
-          if [ -n "${existing_run}" ]; then
-            echo "Release workflow already running for ${TAG_NAME}: ${existing_run}"
-            exit 0
-          fi
-          echo "Dispatching release workflow for ${TAG_NAME}"
-          gh workflow run release.yml -f tag_name="${TAG_NAME}"

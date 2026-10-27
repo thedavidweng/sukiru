@@ -128,7 +128,7 @@ Website: <https://sukiru.blahaj.uk/>
 
 ### Requirements
 
-- macOS 14 Sonoma or later on Apple silicon.
+- macOS 14 Sonoma or later, on Apple silicon or Intel.
 - Optional, to make changes:
   - [Node.js](https://nodejs.org/en/download) for `npx skills`.
   - [GitHub CLI](https://cli.github.com) 2.90.0 or later for `gh skill`.
@@ -156,7 +156,8 @@ works.
 
 ### Direct Download
 
-1. Download `Sukiru.dmg` from [GitHub Releases](https://github.com/thedavidweng/sukiru/releases).
+1. Download `Sukiru-arm64.dmg` (Apple silicon) or `Sukiru-x86_64.dmg` (Intel) from
+   [GitHub Releases](https://github.com/thedavidweng/sukiru/releases).
    Each release lists SHA-256 checksums in `checksums.txt`.
 2. Drag **Sukiru.app** into `/Applications`.
 3. Launch from Applications or Spotlight.

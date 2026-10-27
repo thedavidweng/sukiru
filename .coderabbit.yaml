@@ -1,0 +1,5 @@
+# Release-please PRs only bump CHANGELOG.md and the version manifest.
+reviews:
+  auto_review:
+    ignore_title_keywords:
+      - "chore(main): release"

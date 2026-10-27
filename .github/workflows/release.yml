@@ -14,7 +14,7 @@ on:
 permissions: {}
 
 concurrency:
-  group: release-${{ github.event.inputs.tag_name || github.ref }}
+  group: release-${{ github.event.inputs.tag_name || github.ref_name }}
   cancel-in-progress: false
   queue: max
 
@@ -67,8 +67,10 @@ jobs:
           echo "APPLE_SIGNING_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
           echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/notary-key.p8" >> "$GITHUB_ENV"
 
+      # Lint and tests gate every change in CI before it reaches main; the
+      # release only builds, signs and publishes.
       - name: Install tools
-        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install swiftlint xcodegen
+        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install xcodegen
 
       - name: Install Sparkle release tools
         run: |
@@ -81,13 +83,6 @@ jobs:
           echo "$SPARKLE_TARBALL_SHA256  $tools/sparkle.tar.xz" | shasum -a 256 -c -
           tar -xf "$tools/sparkle.tar.xz" -C "$tools" ./bin
           echo "SPARKLE_BIN=$tools/bin" >> "$GITHUB_ENV"
-
-      - parallel:
-          - name: Run SwiftLint (Strict Mode)
-            run: swiftlint lint --strict
-
-          - name: Run test suite (Zero Warnings)
-            run: swift test -Xswiftc -warnings-as-errors
 
       - name: Determine tag and version
         id: vars
@@ -117,9 +112,12 @@ jobs:
         with:
           tag_name: ${{ steps.vars.outputs.tag }}
           files: |
-            dist/Sukiru.dmg
-            dist/Sukiru.zip
+            dist/Sukiru-arm64.dmg
+            dist/Sukiru-arm64.zip
+            dist/Sukiru-x86_64.dmg
+            dist/Sukiru-x86_64.zip
             dist/appcast.xml
+            dist/appcast-x86_64.xml
             dist/checksums.txt
           generate_release_notes: false
         env:

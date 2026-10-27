@@ -1,0 +1,99 @@
+name: CodeQL
+
+# Advanced setup so each language is analyzed only when its files change.
+# Swift analysis (a full macOS build, the slowest job) runs after merge and
+# weekly, not on pull requests.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  languages:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    name: Detect languages
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+    steps:
+      - name: Pick languages with changes
+        id: pick
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          all='actions javascript-typescript python rust swift'
+          if [ "$EVENT" = schedule ] || [ "$EVENT" = workflow_dispatch ]; then
+            picked="$all"
+          else
+            files="$(gh api "repos/$REPO/compare/$BASE...$HEAD" --jq 'if (.files | length) < 300 then .files[].filename else "unknown" end')"
+            picked=""
+            while IFS= read -r file; do
+              case "$file" in
+                unknown) picked="$all" ;;
+                .github/workflows/* | .github/actions/*) picked="$picked actions" ;;
+                *.js | *.mjs | *.cjs | *.ts) picked="$picked javascript-typescript" ;;
+                *.py) picked="$picked python" ;;
+                *.rs) picked="$picked rust" ;;
+                Sources/* | Tests/* | App/* | SukiruUITests/* | Package.swift | project.yml) picked="$picked swift" ;;
+              esac
+            done <<< "$files"
+          fi
+          if [ "$EVENT" = pull_request ]; then
+            picked="${picked//swift/}"
+          fi
+          if [ -z "${picked// /}" ]; then
+            matrix='[]'
+          else
+            # shellcheck disable=SC2086 # split the language list into words
+            matrix="$(printf '%s\n' $picked | sort -u | jq -R . | jq -cs .)"
+          fi
+          echo "matrix=$matrix" | tee -a "$GITHUB_OUTPUT"
+
+  analyze:
+    needs: languages
+    if: needs.languages.outputs.matrix != '[]'
+    name: Analyze (${{ matrix.language }})
+    runs-on: ${{ matrix.language == 'swift' && 'macos-latest' || 'ubuntu-latest' }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ${{ fromJSON(needs.languages.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.language == 'swift' && 'autobuild' || 'none' }}
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          category: /language:${{ matrix.language }}
