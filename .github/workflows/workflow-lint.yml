@@ -1,10 +1,13 @@
 name: Workflow lint
 
+# Not a required check, so a path filter is safe here.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
+    paths: [".github/workflows/**"]
   push:
     branches: ["main"]
+    paths: [".github/workflows/**"]
   workflow_dispatch:
 
 permissions: {}

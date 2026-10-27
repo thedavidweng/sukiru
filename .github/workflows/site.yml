@@ -8,12 +8,9 @@ on:
       - "public/**"
       - "Resources/AppIcon.webp"
       - ".github/workflows/site.yml"
+  # release-please publishes with RELEASE_PLEASE_TOKEN, which triggers this.
   release:
     types: [published]
-  schedule:
-    # Catches releases created by release-please (GITHUB_TOKEN events
-    # do not trigger the release event above).
-    - cron: "17 3 * * *"
   workflow_dispatch:
 
 permissions:

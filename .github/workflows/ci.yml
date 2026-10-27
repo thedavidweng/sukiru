@@ -17,8 +17,49 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  # Decides on a cheap runner whether the macOS job has anything to check.
+  # Docs, site and release metadata (release-please PRs) skip it; a job
+  # skipped by its condition still satisfies the required check.
+  changes:
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    name: Detect changes
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - name: List changed files
+        id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          # The compare API lists at most 300 files; past that, check everything.
+          files="$(gh api "repos/$REPO/compare/$BASE...$HEAD" --jq 'if (.files | length) < 300 then .files[].filename else "unknown" end')"
+          printf '%s\n' "$files"
+          code=false
+          while IFS= read -r file; do
+            case "$file" in
+              Fixtures/*) code=true ;;
+              docs/* | site/* | public/* | research/* | work/* | LICENSES/* | .github/ISSUE_TEMPLATE/*) ;;
+              *.md | LICENSE | NOTICE | .release-please-manifest.json | release-please-config.json) ;;
+              .github/workflows/ci.yml) code=true ;;
+              .github/*) ;;
+              *) code=true ;;
+            esac
+          done <<< "$files"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+  test:
+    needs: changes
+    # Runs when code changed, and also when change detection itself failed,
+    # so a broken diff never turns the required check green.
+    if: >-
+      always() && needs.changes.result != 'skipped'
+      && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')
     name: Lint, Test and Build
     runs-on: macos-latest
     timeout-minutes: 20
@@ -30,6 +71,13 @@ jobs:
 
       - name: Install tools
         run: HOMEBREW_NO_AUTO_UPDATE=1 brew install swiftlint xcodegen
+
+      # Xcode's checkout of Sparkle; keyed on the project spec that pins it.
+      - name: Restore Xcode package checkouts
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .build/xcode/SourcePackages
+          key: xcode-packages-${{ runner.os }}-${{ hashFiles('project.yml') }}
 
       # Lint and format only read sources. The bundle build stays after
       # the test so it reuses .build instead of compiling twice.
