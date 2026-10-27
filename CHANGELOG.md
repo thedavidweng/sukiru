@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/thedavidweng/sukiru/compare/v1.9.0...v1.10.0) (2026-10-26)
+
+
+### ✨ Features
+
+* **updates:** update Sukiru in place through Sparkle ([#78](https://github.com/thedavidweng/sukiru/issues/78)) ([0da7a2b](https://github.com/thedavidweng/sukiru/commit/0da7a2b376e2785d9bc18cb5c435a31946150703))
+
 ## [1.9.0](https://github.com/thedavidweng/sukiru/compare/v1.8.0...v1.9.0) (2026-10-26)
 
 
