@@ -67,7 +67,7 @@ Sukiru 同时读取两份账本和磁盘上的实际情况，判断每个技能�
 
 ### 系统要求
 
-- 搭载 Apple 芯片、运行 macOS 14 Sonoma 或更高版本的 Mac。
+- 运行 macOS 14 Sonoma 或更高版本的 Mac，Apple 芯片或 Intel 均可。
 - 可选，用于执行更改：
   - [Node.js](https://nodejs.org/en/download)，用于 `npx skills`。
   - [GitHub CLI](https://cli.github.com) 2.90.0 或更高版本，用于 `gh skill`。
@@ -95,7 +95,7 @@ Sukiru 会自行更新：选择 **Sukiru › 检查 Sukiru 更新…**，或在�
 
 ### 手动下载
 
-1. 前往 [GitHub Releases](https://github.com/thedavidweng/sukiru/releases) 下载 `Sukiru.dmg`。每个版本都在 `checksums.txt` 中附有 SHA-256 校验值。
+1. 前往 [GitHub Releases](https://github.com/thedavidweng/sukiru/releases) 下载 `Sukiru-arm64.dmg`（Apple 芯片）或 `Sukiru-x86_64.dmg`（Intel）。每个版本都在 `checksums.txt` 中附有 SHA-256 校验值。
 2. 将 **Sukiru.app** 拖拽至 `/Applications`（应用程序）目录。
 3. 从启动台或聚焦搜索打开应用。
 

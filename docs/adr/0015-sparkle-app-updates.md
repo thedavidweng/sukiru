@@ -35,12 +35,14 @@ dependencies" rule. SukiruCore and the CLI stay dependency-free, and every
 other third-party dependency remains forbidden.
 
 - The App menu has **Check for Sukiru Updates…**, and Settings › General
-  mirrors Sparkle's automatic-check preference. Sparkle's standard alert is the only
-  update UI. Debug builds never start the updater.
-- The feed is `appcast.xml` on the latest GitHub release. Both the archive and
-  the feed are EdDSA-signed (`SURequireSignedFeed`); the private key lives in
-  the `SPARKLE_PRIVATE_KEY` release secret, backed up in Bitwarden Secrets
-  Manager as `SUKIRU_SPARKLE_PRIVATE_KEY`.
+  mirrors Sparkle's automatic-check preference. Sparkle's standard alert is
+  the only update UI. Debug builds never start the updater.
+- Each architecture ships its own thinned build and feed on the latest GitHub
+  release: `appcast.xml` (arm64, the name 1.10.0 reads) and
+  `appcast-x86_64.xml`. Both the archive and the feed are EdDSA-signed
+  (`SURequireSignedFeed`); the private key lives in the `SPARKLE_PRIVATE_KEY`
+  release secret, backed up in Bitwarden Secrets Manager as
+  `SUKIRU_SPARKLE_PRIVATE_KEY`.
 - `CFBundleVersion` equals the marketing version so Sparkle can order
   releases.
 - The release build removes Sparkle's XPC services, which only sandboxed apps
