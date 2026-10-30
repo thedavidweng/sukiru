@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.0](https://github.com/thedavidweng/sukiru/compare/v1.12.1...v1.13.0) (2026-10-30)
+
+
+### ✨ Features
+
+* **plugins:** browse the Antigravity marketplace and install from repositories ([#93](https://github.com/thedavidweng/sukiru/issues/93)) ([e150aa4](https://github.com/thedavidweng/sukiru/commit/e150aa4d070a136da016c137c3238161695ac466))
+
 ## [1.12.1](https://github.com/thedavidweng/sukiru/compare/v1.12.0...v1.12.1) (2026-10-30)
 
 
