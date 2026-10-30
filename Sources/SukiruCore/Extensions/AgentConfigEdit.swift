@@ -125,8 +125,12 @@ enum AgentConfigEdit: Codable, Equatable, Sendable {
             for filter in AgentExtensionReader.piPackageFilters { members[filter] = .array([]) }
             replacement = .object(members)
         case .enable:
+            // Only the all-empty form is Sukiru's disable; one empty filter is the user's choice.
             let filters = AgentExtensionReader.piPackageFilters
-            for filter in filters where members[filter] == .array([]) { members[filter] = nil }
+            guard filters.allSatisfy({ members[$0] == .array([]) }) else {
+                throw HookError("Pi package is not disabled by empty filters: " + source)
+            }
+            for filter in filters { members[filter] = nil }
             replacement = Array(members.keys) == ["source"] ? .string(source) : .object(members)
         }
         let result = try document.settingElement(

@@ -205,7 +205,7 @@ struct YAMLBlockEditor {
             of: #"^[A-Za-z0-9_][A-Za-z0-9_./@+:-]*$"#, options: .regularExpression)
         guard
             plain == nil || text.contains(": ")
-                || ["true", "false", "null", "yes", "no"].contains(text)
+                || ["true", "false", "null", "yes", "no", "~"].contains(text) || Double(text) != nil
         else { return text }
         let data = (try? JSONEncoder().encode(text)) ?? Data()
         return String(bytes: data, encoding: .utf8) ?? text

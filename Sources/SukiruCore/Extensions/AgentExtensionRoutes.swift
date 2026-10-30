@@ -69,13 +69,7 @@ struct AgentExtensionRoutes {
                 }
             return .commands([try edit(item, path: settings, edits, action)])
         case .omp:
-            let id = AutoloadStates.ompID(item.name)
-            let edits: [AgentConfigEdit] = [
-                .yamlItem(keys: ["disabledExtensions"], item: id, present: disable)
-            ]
-            return .commands([
-                try edit(item, path: reader.ompAgentDir + "/config.yml", edits, action)
-            ])
+            return try ompToggle(item, action, configPath: reader.ompAgentDir + "/config.yml")
         case .hermes:
             let argv = ["hermes", "plugins", action.rawValue, item.name]
             if let command = native(item, argv, help: 3) { return .commands([command]) }
@@ -99,7 +93,7 @@ struct AgentExtensionRoutes {
                 return .instructions(Self.toggleLimit(item)!)
             }
             let argv = ["dsh", "plugin", "--profile", profile, "remove", item.name]
-            guard let command = native(item, argv, help: 0, verb: "plugin") else {
+            guard let command = native(item, argv, help: 2, verb: "remove") else {
                 return .instructions(
                     "Install the dsh CLI, then run `\(argv.joined(separator: " "))`.")
             }
@@ -151,6 +145,11 @@ struct AgentExtensionRoutes {
     private func mcpServer(_ item: AgentExtension, _ action: ExtensionAction) throws -> Route {
         let cli = mcpCLI(item, action)
         if let cli, let command = native(item, cli, help: 3) { return .commands([command]) }
+        // A file edit creates missing parents, so a server removed since the scan would return.
+        let current = FileManager.default.contents(atPath: item.path).map(HookInventoryReader.hash)
+        guard current == item.contentHash else {
+            throw HookError(item.path + " changed since the scan; rescan and replan")
+        }
         if let edits = try mcpEdits(item, action) {
             return .commands([try edit(item, path: item.path, edits, action)])
         }
@@ -164,8 +163,9 @@ struct AgentExtensionRoutes {
         return switch item.host {
         case .claude, .openclaude:
             remove ? [item.host.rawValue, "mcp", "remove", item.name, "--scope", "user"] : nil
-        case .codex, .hermes, .gemini:
+        case .codex, .hermes:
             remove ? [item.host.rawValue, "mcp", "remove", item.name] : nil
+        case .gemini: ["gemini", "mcp", action.rawValue, item.name]
         case .droid: remove ? ["droid", "mcp", "remove", item.name] : nil
         case .grok: ["grok", "mcp", action.rawValue, item.name]
         case .devin: ["devin", "mcp", action.rawValue, item.name, "--scope", "user"]
@@ -274,6 +274,26 @@ struct AgentExtensionRoutes {
     }
 }
 
+extension AgentExtensionRoutes {
+    /// omp keys a switch by file stem, so one entry is switched only when no sibling shares it.
+    fileprivate func ompToggle(
+        _ item: AgentExtension, _ action: ExtensionAction, configPath: String
+    ) throws -> Route {
+        let id = AutoloadStates.ompID(item.name)
+        let directory = URL(fileURLWithPath: item.path).deletingLastPathComponent().path
+        let siblings = ((try? FileManager.default.contentsOfDirectory(atPath: directory)) ?? [])
+            .filter { AutoloadStates.ompID($0) == id }.sorted()
+        guard siblings.count == 1 else {
+            let names = siblings.joined(separator: ", ")
+            return .instructions("omp switches \(id) for \(names) together; rename one first.")
+        }
+        let edits: [AgentConfigEdit] = [
+            .yamlItem(keys: ["disabledExtensions"], item: id, present: action == .disable)
+        ]
+        return .commands([try edit(item, path: configPath, edits, action)])
+    }
+}
+
 /// Runs \`<cli> <subcommands> --help\` once per command line. Probes only run while planning.
 final class HostHelpProbe {
     private let probe: PluginLifecycleProbe
@@ -286,6 +306,10 @@ final class HostHelpProbe {
         if cache[key] == nil {
             cache[key] = probe.help(executable: executable, arguments: arguments)
         }
-        return (cache[key] ?? nil)?.contains(word) == true
+        // Only a line that starts with the subcommand lists it; prose mentions do not.
+        let lines = (cache[key] ?? nil)?.split(whereSeparator: \.isNewline) ?? []
+        return lines.contains { line in
+            line.split(whereSeparator: { " \t,|".contains($0) }).first.map(String.init) == word
+        }
     }
 }

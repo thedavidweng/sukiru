@@ -45,8 +45,9 @@ public enum HookHost: String, Codable, CaseIterable, Sendable {
         [.cursor, .antigravity, .copilot, .kiro, .kimi, .jcode].contains(self)
     }
 
-    /// The handler keys that carry a shell command; Copilot uses `bash` and `powershell`.
-    var commandKeys: [String] { self == .copilot ? ["command", "bash", "powershell"] : ["command"] }
+    /// The handler keys that carry a shell command, in the order the host runs them on macOS;
+    /// Copilot prefers `bash` there.
+    var commandKeys: [String] { self == .copilot ? ["bash", "command", "powershell"] : ["command"] }
 
     var tomlLayout: HookTOMLDocument.Layout {
         switch self {

@@ -69,7 +69,7 @@ extension AgentExtensionReader {
                 guard scopes.contains("user") else { return nil }
                 return configEntry(
                     .openclaude, .plugin, name: id, file: file,
-                    enabled: settings?.value["enabledPlugins"]?[id]?.boolValue == true,
+                    enabled: settings.map { $0.value["enabledPlugins"]?[id]?.boolValue == true },
                     scopeName: "user")
             }
     }

@@ -60,15 +60,21 @@ extension HookInventoryReader {
         }
     }
 
-    /// Muse loads one extra hooks file named by `managed_hooks_path` in its settings.
+    /// Muse loads one extra hooks file named by `managed_hooks_path` in its settings; a relative
+    /// value resolves against the settings directory. Unreadable settings are returned as the
+    /// source itself so the inventory records an issue instead of silently missing the file.
     private func museHooksPath() -> String? {
         let directory =
             environment.externalValue(for: "XDG_CONFIG_HOME").map { $0 + "/muse" }
             ?? environment.home + "/.config/muse"
-        guard let data = FileManager.default.contents(atPath: directory + "/settings.json"),
-            let path = (try? JSONDecoder().decode(JSONValue.self, from: data))?[
-                "managed_hooks_path"]?.stringValue, path.hasPrefix("/")
-        else { return nil }
-        return path
+        let settings = directory + "/settings.json"
+        guard FileManager.default.fileExists(atPath: settings) else { return nil }
+        guard let data = FileManager.default.contents(atPath: settings),
+            let decoded = try? JSONDecoder().decode(JSONValue.self, from: data)
+        else { return settings }
+        guard let path = decoded["managed_hooks_path"]?.stringValue, !path.isEmpty else {
+            return nil
+        }
+        return path.hasPrefix("/") ? path : directory + "/" + path
     }
 }

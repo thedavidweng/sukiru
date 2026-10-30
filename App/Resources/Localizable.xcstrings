@@ -9280,6 +9280,34 @@
     "sukiru.pending.adopt.repo" : {
       "shouldTranslate" : false
     },
+    "summary.addOnChange %lld" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Change %lld agent add-on"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Change %lld agent add-ons"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改 %lld 个 agent 附加组件"
+          }
+        }
+      }
+    },
     "summary.deleteDirectory %lld" : {
       "comment" : "Batch confirmation summary line, counted by kind.",
       "localizations" : {

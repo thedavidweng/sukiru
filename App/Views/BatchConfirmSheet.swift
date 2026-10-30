@@ -258,7 +258,7 @@ struct BatchSummary {
     private enum Kind: CaseIterable {
         case deleteLink, relink, relinkDiverged, materialize, deleteDirectory
         case removeLeftover, disablePlugin, hostPlugin, remove, install, reinstall, pin, unpin,
-            update, hookCleanup, hookChange
+            update, hookCleanup, hookChange, addOnChange
 
         init(_ command: BatchCommand) {
             if HookCleanupPlanner.changesDefinitions(displayString: command.displayString) {
@@ -284,9 +284,9 @@ struct BatchSummary {
             case .removeLeftoverSkillsDir: .removeLeftover
             case .movePlugin: .disablePlugin
             case .replaceConfigSource: .hostPlugin
-            case .replaceHookSource, .deleteHookHelper, .deleteAgentExtension, .removeHermesPlugin,
-                .editAgentConfig, .moveAgentExtension:
-                .hookCleanup
+            case .replaceHookSource, .deleteHookHelper: .hookCleanup
+            case .deleteAgentExtension, .removeHermesPlugin, .editAgentConfig, .moveAgentExtension:
+                .addOnChange
             }
         }
 
@@ -324,6 +324,7 @@ struct BatchSummary {
             switch self {
             case .hookCleanup: String(localized: "Clean up \(count) hook sources or helpers")
             case .hookChange: String(localized: "summary.hookChange \(count)")
+            case .addOnChange: String(localized: "summary.addOnChange \(count)")
             default: nil
             }
         }

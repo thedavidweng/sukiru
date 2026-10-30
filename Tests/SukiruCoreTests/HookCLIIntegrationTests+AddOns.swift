@@ -180,7 +180,8 @@ extension HookCLIIntegrationTests {
         let grok = try tree.file(
             "bin/grok",
             contents:
-                "#!/bin/sh\ncase \"$*\" in *--help*) echo 'Commands: disable enable remove';;\n"
+                "#!/bin/sh\ncase \"$*\" in *--help*)\n"
+                + "printf 'Commands:\\n  disable <name>\\n  enable <name>\\n  remove\\n';;\n"
                 + "*) echo \"$*\" >> '\(log)';; esac\n")
         _ = chmod(grok, 0o755)
         let config = try tree.file(

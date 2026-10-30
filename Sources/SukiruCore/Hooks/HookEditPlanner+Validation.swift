@@ -50,7 +50,8 @@ extension HookCleanupPlanner {
         let home = environment.home
         if path == home + "/.openclaude/settings.json" { return .openclaude }
         if path == home + "/.qwen/settings.json" { return .qwenCode }
-        let copilot = home + "/.copilot/hooks/"
+        let copilot =
+            (environment.externalValue(for: "COPILOT_HOME") ?? home + "/.copilot") + "/hooks/"
         let name = path.hasPrefix(copilot) ? path.dropFirst(copilot.count) : ""
         return name.hasSuffix(".json") && !name.contains("/") ? .copilot : nil
     }

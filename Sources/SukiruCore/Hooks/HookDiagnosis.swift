@@ -74,31 +74,57 @@ struct HookDiagnosis {
             targets: [])
     }
 
-    /// Orca owns every command that names a script in its payload boundary, the rule its own
+    /// Orca owns every command that runs a script in its payload boundary, the rule its own
     /// installers use. Guarded wrappers hide the script from word parsing, so literal
     /// `~/.orca/agent-hooks/…` paths are read from the text; an empty result means every
-    /// reference resolves at runtime (`${HOME-}` or `${ORCA_AGENT_HOOK_ROOT-}`). Nil: not Orca's.
+    /// reference resolves at runtime (`${HOME-}` or `${ORCA_AGENT_HOOK_ROOT-}`). Nil: not Orca's,
+    /// including commands that only mention a payload (`echo`, a `[ -f … ]` test alone).
     func orcaPayloads(_ command: String) -> [String]? {
         let literal = environment.home + "/.orca/agent-hooks/"
-        let runtime = [
-            "${HOME-}/.orca/agent-hooks/", "${HOME}/.orca/agent-hooks/",
+        let forms = [
+            literal, "${HOME-}/.orca/agent-hooks/", "${HOME}/.orca/agent-hooks/",
             "$HOME/.orca/agent-hooks/", "${ORCA_AGENT_HOOK_ROOT-}/agent-hooks/"
         ]
-        guard command.contains(literal) || runtime.contains(where: command.contains) else {
-            return nil
-        }
-        var payloads: [String] = []
-        var rest = command[...]
-        while let range = rest.range(of: literal) {
-            let name = rest[range.upperBound...].prefix {
-                !["'", "\"", " ", ";", "\\", ")", "`"].contains($0)
+        var invoked = false
+        var payloads: Set<String> = []
+        for form in forms {
+            var rest = command[...]
+            while let range = rest.range(of: form) {
+                invoked = invoked || Self.runsWord(at: range.lowerBound, in: command)
+                if form == literal, let name = Self.payloadName(after: range, in: command) {
+                    payloads.insert(literal + name)
+                }
+                rest = rest[range.upperBound...]
             }
-            if !name.isEmpty, !name.contains("/") { payloads.append(literal + name) }
-            rest = rest[range.upperBound...]
         }
-        return Array(Set(payloads)).sorted()
+        return invoked ? payloads.sorted() : nil
     }
 
+    /// Whether the shell word starting at `index` is a command or an interpreter's script.
+    private static func runsWord(at index: String.Index, in command: String) -> Bool {
+        let before = command[..<index].reversed().drop { "\"'\\ \t\n".contains($0) }
+        let previous = String(before.prefix { !" \t\n".contains($0) }.reversed())
+        let operators = [";", "&&", "||", "|", "(", "{"]
+        let runners: Set<String> = [
+            "", "then", "do", "else", "exec", "command", "sh", "bash", "zsh", "node", "python3",
+            "/bin/sh", "/bin/bash", "/bin/zsh", "/usr/bin/env"
+        ]
+        return runners.contains(previous) || operators.contains(where: previous.hasSuffix)
+    }
+
+    /// The file name after a payload prefix: up to the closing quote when quoted, else up to
+    /// the first shell delimiter. Nil for nested paths.
+    private static func payloadName(
+        after range: Range<String.Index>, in command: String
+    ) -> String? {
+        let quote = command[..<range.lowerBound].last.flatMap { "\"'".contains($0) ? $0 : nil }
+        let unquoted: Set<Character> = [
+            " ", "\t", "\n", ";", "&", "|", "<", ">", ")", "`", "\"", "'", "\\"
+        ]
+        let stops = quote.map { [$0, "\\"] } ?? unquoted
+        let name = command[range.upperBound...].prefix { !stops.contains($0) }
+        return name.isEmpty || name.contains("/") ? nil : String(name)
+    }
     private func producerAssessment(
         _ recognized: (String, String), missing: [String], targets: [String]
     ) -> Assessment {

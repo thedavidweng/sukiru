@@ -65,7 +65,7 @@ private struct SourceChange {
 
 /// Add, edit, and `disableAllHooks` changes to documented standalone sources (ADR-0014 rule 2).
 /// Every change to one file becomes one `replace-hook-source` command, applied in a fixed
-/// order (in-place edits, appended groups, removals, then `disableAllHooks`) so that a
+/// order (in-place edits, appended groups, toggles, removals, then `disableAllHooks`) so that a
 /// saved plan replays to the same bytes during execution preflight.
 extension HookCleanupPlanner {
     static let editActions: Set<String> = ["add", "edit", "set-disable-all", "set-hook-enabled"]
@@ -343,13 +343,14 @@ extension HookCleanupPlanner {
             data = try HookJSONDocument(data).appendingGroup(
                 event: append.event, group: append.group)
         }
-        if !change.removals.isEmpty {
-            data = try HookJSONDocument(data).removing(change.removals)
-        }
+        // Toggles address scanned list indices, which a removal would shift.
         for toggle in change.toggles {
             data = try HookJSONDocument(data).setting(
                 "enabled", to: toggle.enabled ? nil : .bool(false),
                 at: [.key("hooks"), .index(toggle.index)])
+        }
+        if !change.removals.isEmpty {
+            data = try HookJSONDocument(data).removing(change.removals)
         }
         if let flag = change.disableAll {
             data = try HookJSONDocument(data).setting(

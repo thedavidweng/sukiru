@@ -167,9 +167,7 @@ public struct HookCleanupPlanner: Sendable {
         var seen: Set<String> = []
         for path in commands.flatMap({ $0.hookPreconditions ?? [] }).map(\.path)
         where !seen.insert(path).inserted {
-            throw HookError(
-                "\(path) would change twice in one batch. Apply one change, refresh, then queue the other."
-            )
+            throw HookError("\(path) would change twice in one batch; apply one change first.")
         }
     }
 
@@ -288,7 +286,9 @@ public struct HookCleanupPlanner: Sendable {
         let ids = Set(selected.map(\.id))
         // Hooks removed in the same batch cannot reference a helper afterwards.
         let remaining = inventory.hooks.filter { !ids.contains($0.id) }
-        let sources = Set(inventory.hooks.map(\.source.path))
+        // Agent hook files inside a helper boundary stay protected even with no handlers.
+        let agentFiles = HookInventoryReader(environment: environment).agentSources().map(\.path)
+        let sources = Set(inventory.hooks.map(\.source.path) + agentFiles)
         let targets = selected.filter {
             $0.health == .leftover && $0.attribution.producerPresent == false
         }

@@ -46,7 +46,7 @@ Sukiru tries the host's command first, when its CLI is on `PATH` and
 | Devin | MCP server remove, on/off | `devin mcp remove\|disable\|enable <name> --scope user` | `~/.config/devin/mcp_config.json` `mcpServers` | `devin mcp --help` | 2026-10-30 (3000.11.234) |
 | Muse | MCP server remove, on/off | none | `~/.config/muse/settings.json` `mcpServers.<name>.enabled` | [MCP servers](https://meta-models.github.io/muse-code-sdk/next/guides/extend/mcp-servers/) | 2026-10-30 (1.4.14) |
 | Muse | Plugins | `muse plugins remove\|disable\|enable <id>` (not routed: no documented installation record to read) | none | `muse plugins --help` | 2026-10-30 (1.4.14) |
-| Gemini CLI | MCP server remove, on/off | `gemini mcp remove <name>` | `~/.gemini/settings.json` `mcp.excluded` | [MCP servers](https://geminicli.com/docs/tools/mcp-server/) | 2026-10-30 (docs only) |
+| Gemini CLI | MCP server remove, on/off | `gemini mcp remove <name>`, `gemini mcp enable|disable <name>` (state in `~/.gemini/mcp-server-enablement.json`) | `~/.gemini/settings.json` `mcp.excluded` | [MCP servers](https://geminicli.com/docs/tools/mcp-server/) | 2026-10-30 (docs only) |
 | Gemini CLI | Hook on/off | `/hooks disable <name>` inside a session | none in a file | [Hooks](https://geminicli.com/docs/hooks/) | 2026-10-30 |
 | Grok | MCP server remove, on/off | `grok mcp remove\|disable\|enable <name>` | `~/.grok/config.toml` `[mcp_servers.<name>] enabled` | `grok mcp --help` | 2026-10-30 (1.0.70) |
 | Kiro | Hook on/off | none | hook file `hooks[].enabled` | [Hooks](https://kiro.dev/docs/hooks/) | 2026-10-30 (docs only) |

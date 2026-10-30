@@ -66,6 +66,7 @@ extension AgentExtensionReader {
         mcpSources().flatMap { source -> [AgentExtension] in
             guard let file = Self.read(source) else { return [] }
             let excluded = Set(file.strings(at: ["mcp", "excluded"]))
+            let persisted = source.toggle == .excludedList ? geminiEnablement() : [:]
             return (file.value(at: source.keys)?.objectValue ?? [:]).sorted { $0.key < $1.key }
                 .map { name, server in
                     let enabled: Bool? =
@@ -73,7 +74,9 @@ extension AgentExtensionReader {
                         case .none: nil
                         case .enabledKey: server["enabled"]?.boolValue ?? true
                         case .disabledKey: !(server["disabled"]?.boolValue ?? false)
-                        case .excludedList: !excluded.contains(name)
+                        case .excludedList:
+                            !excluded.contains(name)
+                                && persisted[name.lowercased()]?["enabled"]?.boolValue != false
                         }
                     return configEntry(
                         source.host, .mcpServer, name: name, file: file, enabled: enabled,
@@ -81,6 +84,12 @@ extension AgentExtensionReader {
                     )
                 }
         }
+    }
+
+    /// `gemini mcp disable` persists `{"<lowercased name>": {"enabled": false}}` here.
+    private func geminiEnablement() -> [String: JSONValue] {
+        HostConfigFile.json(environment.home + "/.gemini/mcp-server-enablement.json")?.value
+            .objectValue ?? [:]
     }
 
     static func read(_ source: MCPSource) -> HostConfigFile? {

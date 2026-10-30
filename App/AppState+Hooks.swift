@@ -147,8 +147,10 @@ extension AppState {
         hooks(for: hookState.host).first { $0.id == hookState.selectedID }
     }
 
+    /// Leftover hooks are already problems; a producer that left only extensions adds one.
     var hookProblemCount: Int {
         (report?.hookInventory?.problems.count ?? 0) + (report?.hookInventory?.issues.count ?? 0)
+            + producerLeftovers.filter { $0.hooks == 0 }.count
     }
 
     var visibleHookProblems: [AgentHook] {

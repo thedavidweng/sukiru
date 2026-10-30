@@ -258,10 +258,12 @@ struct HermesPluginList {
             return
         }
         var index = plugins + 1
+        var childIndent: Int?
         while index < lines.count {
             let line = lines[index]
             let content = Self.content(line)
             if !content.isEmpty && Self.indent(line) == 0 { return }
+            if !content.isEmpty, childIndent == nil { childIndent = Self.indent(line) }
             if let enabledLine {
                 if content.hasPrefix("- ") && Self.indent(line) >= Self.indent(lines[enabledLine]) {
                     let name = content.dropFirst(2).trimmingCharacters(in: .whitespaces)
@@ -270,7 +272,7 @@ struct HermesPluginList {
                 } else if !content.isEmpty {
                     return
                 }
-            } else if content == "enabled:" {
+            } else if content == "enabled:" && Self.indent(line) == childIndent {
                 enabledLine = index
             }
             index += 1
