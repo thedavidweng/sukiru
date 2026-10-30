@@ -1,6 +1,16 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "The cached catalog has no listings" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缓存的目录里没有插件条目"
+          }
+        }
+      }
+    },
     "%lld listings" : {
       "localizations" : {
         "zh-Hans" : {
@@ -10574,18 +10584,18 @@
         }
       }
     },
-    "Antigravity uses shared enablement across scopes. Install accepts plugin@marketplace or a local directory path. Import accepts gemini, claude, or * for both sources. Validate accepts a path; list uses *." : {
+    "Antigravity uses shared enablement across scopes. Install accepts plugin@marketplace, a GitHub repository, or a local directory path. Import accepts gemini, claude, or * for both sources. Validate accepts a path; list uses *." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Antigravity uses shared enablement across scopes. Install accepts plugin@marketplace or a local directory path. Import accepts gemini, claude, or * for both sources. Validate accepts a path; list uses *."
+            "value" : "Antigravity uses shared enablement across scopes. Install accepts plugin@marketplace, a GitHub repository, or a local directory path. Import accepts gemini, claude, or * for both sources. Validate accepts a path; list uses *."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Antigravity 的启用状态跨范围共享。安装接受 plugin@marketplace 或本地目录路径。导入接受 gemini、claude，或用 * 导入两者。验证接受路径；列出插件使用 *。"
+            "value" : "Antigravity 的启用状态跨范围共享。安装接受 plugin@marketplace、GitHub 仓库或本地目录路径。导入接受 gemini、claude，或用 * 导入两者。验证接受路径；列出插件使用 *。"
           }
         }
       }

@@ -41,6 +41,9 @@ struct PluginCatalogList: View {
                         "Open \(state.pluginHost.displayName) and sign in; Sukiru reads the catalog the host caches."
                     )
                 }
+            } else if marketplaces.allSatisfy({ $0.plugins.isEmpty }) {
+                ContentUnavailableView(
+                    "The cached catalog has no listings", systemImage: "shippingbox")
             } else if marketplaces.allSatisfy({ entries($0).isEmpty }) {
                 ContentUnavailableView.search(text: filter)
             }
@@ -128,12 +131,31 @@ private struct PluginLogo: View {
         .accessibilityHidden(true)
         .task(id: address) {
             image = nil
-            guard let address, let url = URL(string: address), url.scheme == "https",
-                let (data, response) = try? await URLSession.shared.data(from: url),
-                (response as? HTTPURLResponse)?.statusCode == 200
-            else { return }
-            image = NSImage(data: data)
+            guard let address, let url = URL(string: address), url.scheme == "https" else {
+                return
+            }
+            image = await Self.load(url)
         }
+    }
+
+    /// Catalog icons are a few kilobytes; a body over the limit is discarded.
+    private static let byteLimit = 1 << 20
+
+    private static func load(_ url: URL) async -> NSImage? {
+        guard let (bytes, response) = try? await URLSession.shared.bytes(from: url),
+            (response as? HTTPURLResponse)?.statusCode == 200,
+            response.expectedContentLength <= byteLimit
+        else { return nil }
+        var data = Data()
+        do {
+            for try await byte in bytes {
+                data.append(byte)
+                if data.count > byteLimit { return nil }
+            }
+        } catch {
+            return nil
+        }
+        return NSImage(data: data)
     }
 }
 
@@ -207,7 +229,7 @@ struct PluginCatalogDetailView: View {
             (String(localized: "Repository"), entry.repository)
         ].compactMap { label, value in
             value.flatMap(URL.init(string:)).map { (label, $0) }
-        }
+        }.filter { $0.1.scheme == "https" }
         if !links.isEmpty {
             Section("Project Links") {
                 ForEach(links, id: \.1) { label, url in

@@ -73,8 +73,17 @@ struct AntigravityPluginLifecycleTests {
             let refused = try fixture.plan([fixture.request("install", target)])
             #expect(refused.exitCode != 0)
         }
+        try fixture.tree.dir("home/plugins/demo")
+        let relative = try fixture.plan([fixture.request("install", "plugins/demo")])
+        let local = try #require(try relative.plannedCommands().first)
+        #expect(
+            local["argv"] as? [String] == [
+                "agy", "plugin", "install", fixture.home + "/plugins/demo"
+            ])
+        #expect((local["intent"] as? String)?.contains("local directory") == true)
         #expect(fixture.invocations.isEmpty)
     }
+
     @Test("Public CLI exposes import, validate, link, inspection and signed directory targets")
     func commandSurface() throws {
         let fixture = try PluginHostFixture(

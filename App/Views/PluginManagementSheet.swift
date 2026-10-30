@@ -18,18 +18,7 @@ struct PluginManagementSheet: View {
                     repositoryFields
                 } else {
                     operationFields
-                }
-                Picker("Scope", selection: $state.pluginManagement.scopeRoot) {
-                    Text("User Library").tag(state.environment.home)
-                    ForEach(state.projectRoots, id: \.self) { root in
-                        Text(verbatim: root).tag(root)
-                    }
-                }
-                .accessibilityIdentifier("sukiru.plugins.operation.scope")
-                .help("Choose user scope or an already-added project")
-                .onChange(of: state.pluginManagement.scopeRoot) { _, root in
-                    state.pluginManagement.scope =
-                        root == state.environment.home ? "user" : "project"
+                    scopePicker
                 }
                 let isProject = state.pluginManagement.scopeRoot != state.environment.home
                 if state.pluginManagement.host == .claude, isProject {
@@ -63,6 +52,22 @@ struct PluginManagementSheet: View {
         .padding(20)
         .frame(width: 520)
         .disabled(state.pluginManagement.planning)
+    }
+
+    /// Repository installs go through `agy plugin install`, which manages user plugins only.
+    private var scopePicker: some View {
+        Picker("Scope", selection: $state.pluginManagement.scopeRoot) {
+            Text("User Library").tag(state.environment.home)
+            ForEach(state.projectRoots, id: \.self) { root in
+                Text(verbatim: root).tag(root)
+            }
+        }
+        .accessibilityIdentifier("sukiru.plugins.operation.scope")
+        .help("Choose user scope or an already-added project")
+        .onChange(of: state.pluginManagement.scopeRoot) { _, root in
+            state.pluginManagement.scope =
+                root == state.environment.home ? "user" : "project"
+        }
     }
 
     @ViewBuilder
@@ -126,7 +131,7 @@ struct PluginManagementSheet: View {
         Text(
             """
             Antigravity uses shared enablement across scopes. \
-            Install accepts plugin@marketplace or a local directory path. \
+            Install accepts plugin@marketplace, a GitHub repository, or a local directory path. \
             Import accepts gemini, claude, or * for both sources. Validate accepts a path; list uses *.
             """
         )

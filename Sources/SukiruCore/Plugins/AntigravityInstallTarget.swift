@@ -8,9 +8,14 @@ enum AntigravityInstallTarget: Equatable {
     case repository(String)
     case directory(String)
 
-    init(_ target: String) throws {
+    /// `root` is agy's working directory; an existing directory there wins over the
+    /// `owner/repo` shorthand, which looks the same.
+    init(_ target: String, relativeTo root: String) throws {
+        let relative = HostPathResolver.join(root, target)
         if target.hasPrefix("/") || target.hasPrefix(".") {
             self = .directory(target)
+        } else if !target.contains(":"), DefaultFileSystemProbe().isDirectory(atPath: relative) {
+            self = .directory(URL(fileURLWithPath: relative).standardizedFileURL.path)
         } else if target.contains("/") || target.contains(":") {
             guard let repo = try? InstallPlanBuilder.ownerRepo(fromSource: target) else {
                 throw PluginLifecycleError(

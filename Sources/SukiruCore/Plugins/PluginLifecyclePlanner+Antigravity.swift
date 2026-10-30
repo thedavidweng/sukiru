@@ -56,7 +56,9 @@ extension PluginLifecyclePlanner {
             args.append(marketplace)
         }
         if request.action == "install" {
-            args.append(try AntigravityInstallTarget(request.target).argument)
+            args.append(
+                try AntigravityInstallTarget(request.target, relativeTo: request.scopeRoot).argument
+            )
         } else if request.target != "*" {
             args.append(request.target)
         }
@@ -128,7 +130,7 @@ extension PluginLifecyclePlanner {
         }
         let source =
             request.action == "install"
-            ? (try? AntigravityInstallTarget(request.target)).map {
+            ? (try? AntigravityInstallTarget(request.target, relativeTo: request.scopeRoot)).map {
                 antigravityInstallSource($0, inventory: inventory)
             } : nil
         return
@@ -144,12 +146,15 @@ extension PluginLifecyclePlanner {
     ) -> String {
         switch target {
         case .marketplace(let plugin, let marketplace):
-            let version = inventory.marketplaces.first {
+            let listing = inventory.marketplaces.first {
                 $0.host == .antigravity && $0.name == marketplace
-            }?.plugins.first { $0.name == plugin }?.version
-            return "Install \(plugin) from the Antigravity marketplace \(marketplace)"
-                + (version.map { " (cached catalog version \($0))" }
-                    ?? " (not in the cached catalog)")
+            }?.plugins.first { $0.name == plugin }
+            let status =
+                listing == nil
+                ? " (not in the cached catalog)"
+                : listing?.version.map { " (cached catalog version \($0))" }
+                    ?? " (listed in the cached catalog without a version)"
+            return "Install \(plugin) from the Antigravity marketplace \(marketplace)" + status
                 + ". agy must be signed in to resolve the marketplace and downloads the listed archive. "
         case .repository(let url):
             return "Install from the GitHub repository \(url), not from a marketplace. "

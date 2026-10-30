@@ -76,11 +76,16 @@ Sukiru runs, and Sukiru never writes it to disk.
 - **Snapshots and execution records** in
   `~/Library/Application Support/Sukiru`. Before each batch, Sukiru snapshots
   the files the batch can change so you can roll it back. Execution records
-  hold the commands that ran and their output. Sukiru keeps the last 10
-  snapshots and deletes older ones. You can delete any snapshot from the
-  Snapshots list.
+  hold the commands that ran and their output. A snapshot and its execution
+  record are kept or deleted together. By default Sukiru keeps at most 20
+  batches, deletes batches older than 30 days, and keeps the snapshot store
+  under 1 GB by deleting the oldest first. The most recent batch is always
+  kept so you can roll it back. Change these limits or clear all history in
+  Settings, or delete any snapshot from the Snapshots list.
 - **Preferences** such as your project roots, language, and install options,
-  in the standard macOS user defaults.
+  in the standard macOS user defaults. The history limits are stored in
+  `settings.json` in the folder above, so the app and the `sukiru` CLI use
+  the same limits.
 
 This data stays on your Mac. Sukiru never uploads it. Delete the folder above
 to remove it.

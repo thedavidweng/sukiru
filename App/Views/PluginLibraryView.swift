@@ -47,7 +47,9 @@ struct PluginLibraryView: View {
         .navigationTitle(Text(verbatim: host.displayName))
         .navigationSubtitle(
             showsMarketplace
-                ? Text("\(marketplaces.map(\.plugins.count).reduce(0, +)) listings")
+                ? Text(
+                    "\(marketplaces.flatMap(\.plugins).filter { $0.matches(filter) }.count) listings"
+                )
                 : Text("\(installations.count) plugins")
         )
         .searchable(text: $filter, placement: .toolbar, prompt: Text("Filter Plugins"))
