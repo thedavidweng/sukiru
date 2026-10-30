@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.12.0](https://github.com/thedavidweng/sukiru/compare/v1.11.0...v1.12.0) (2026-10-30)
+
+
+### ✨ Features
+
+* **extensions:** manage agent add-ons, MCP servers and hooks natively ([#89](https://github.com/thedavidweng/sukiru/issues/89)) ([639c352](https://github.com/thedavidweng/sukiru/commit/639c35241ecc5338c95f261070fb374b2bfea01c))
+
+
+### 🐛 Bug Fixes
+
+* improve website accessibility and performance ([#84](https://github.com/thedavidweng/sukiru/issues/84)) ([ae0576d](https://github.com/thedavidweng/sukiru/commit/ae0576d140ae02644a465eb1947d249d22f55429))
+
+
+### ⚡ Performance
+
+* serve responsive hero screenshots ([#86](https://github.com/thedavidweng/sukiru/issues/86)) ([3fdd5c7](https://github.com/thedavidweng/sukiru/commit/3fdd5c7a876d844dce2785a01fa4ec1007f28ed6))
+
 ## [1.11.0](https://github.com/thedavidweng/sukiru/compare/v1.10.0...v1.11.0) (2026-10-27)
 
 
