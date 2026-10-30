@@ -258,7 +258,7 @@ struct BatchSummary {
     private enum Kind: CaseIterable {
         case deleteLink, relink, relinkDiverged, materialize, deleteDirectory
         case removeLeftover, disablePlugin, hostPlugin, remove, install, reinstall, pin, unpin,
-            update, hookCleanup, hookChange
+            update, hookCleanup, hookChange, addOnChange
 
         init(_ command: BatchCommand) {
             if HookCleanupPlanner.changesDefinitions(displayString: command.displayString) {
@@ -285,12 +285,17 @@ struct BatchSummary {
             case .movePlugin: .disablePlugin
             case .replaceConfigSource: .hostPlugin
             case .replaceHookSource, .deleteHookHelper: .hookCleanup
+            case .deleteAgentExtension, .removeHermesPlugin, .editAgentConfig, .moveAgentExtension:
+                .addOnChange
             }
         }
 
         private static func cliCommand(_ command: BatchCommand) -> Kind {
             if command.owningCLI == .orca { return .hookCleanup }
-            if [.claude, .codex, .opencode, .cursor, .antigravity].contains(command.owningCLI) {
+            if [
+                .claude, .codex, .opencode, .cursor, .antigravity, .pi, .hermes, .dsh, .droid,
+                .openclaude, .devin, .grok, .gemini
+            ].contains(command.owningCLI) {
                 return .hostPlugin
             }
             switch command.consequenceKind {
@@ -319,6 +324,7 @@ struct BatchSummary {
             switch self {
             case .hookCleanup: String(localized: "Clean up \(count) hook sources or helpers")
             case .hookChange: String(localized: "summary.hookChange \(count)")
+            case .addOnChange: String(localized: "summary.addOnChange \(count)")
             default: nil
             }
         }

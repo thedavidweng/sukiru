@@ -44,6 +44,19 @@ struct HookDetailView: View {
                         .help("Reveal the literal hook target in Finder")
                     }
                 }
+                if HookCleanupPlanner.togglesEntries(hook) {
+                    Section("Hook") {
+                        Toggle(
+                            "Enabled",
+                            isOn: Binding(
+                                get: { state.hookEnabled(hook) },
+                                set: { state.setHookEnabled($0, hook: hook) })
+                        )
+                        .disabled(state.batchMutationInFlight)
+                        .accessibilityIdentifier("sukiru.hooks.enabled")
+                        .help("Queue the host's documented enabled switch for this hook")
+                    }
+                }
                 if let path = state.disableAllHooksPath(for: hook) {
                     Section("Source File") {
                         Toggle(

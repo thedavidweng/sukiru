@@ -70,7 +70,7 @@ enum PluginTOMLReader {
     }
 
     /// The first dotted-key segment, bare or quoted, and what follows it.
-    private static func leadingKey(_ text: String) -> (String, String)? {
+    static func leadingKey(_ text: String) -> (String, String)? {
         if let (key, remainder) = quoted(text) { return (key, remainder) }
         let bare = text.prefix { $0.isLetter || $0.isNumber || $0 == "_" || $0 == "-" }
         guard !bare.isEmpty else { return nil }
@@ -78,7 +78,7 @@ enum PluginTOMLReader {
     }
 
     /// A leading basic or literal TOML string, and the trimmed text after it.
-    private static func quoted(_ text: String) -> (String, String)? {
+    static func quoted(_ text: String) -> (String, String)? {
         guard let quote = text.first, quote == "\"" || quote == "'" else { return nil }
         var index = text.index(after: text.startIndex)
         while index < text.endIndex {

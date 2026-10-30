@@ -19,6 +19,8 @@ are added as amendments or new records that reference the old one.
 | [0013](0013-pnpm-read-only-skills.md) | Source-qualified pnpm dependency skills, passive permissions and read-only mutation protection | Accepted |
 | [0014](0014-native-first-management-and-bounded-history.md) | Native-first writes, documented-config fallback, bounded snapshot and execution history | Accepted, amends 0008 and 0010 |
 | [0015](0015-sparkle-app-updates.md) | In-app updates through Sparkle, the single third-party dependency exception | Accepted, amends 0006 |
+| [0016](0016-third-party-integrations-across-agents.md) | Hooks and extensions third-party apps install across every agent | Accepted, amends 0010 and 0014; amended by 0017 |
+| [0017](0017-native-add-on-management.md) | Remove and disable every agent's extensions, packages, plugins and MCP servers through native commands | Accepted, amends 0014 and 0016 |
 
 Domain terms are defined in the [glossary](../../CONTEXT.md).
 

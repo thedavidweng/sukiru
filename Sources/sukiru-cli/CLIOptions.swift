@@ -66,6 +66,11 @@ struct ScopeOptions {
         host.flatMap { resolvedPluginHost(for: $0) }
     }
 
+    var hookHost: HookHost? {
+        let id = host == "antigravity-cli" ? "antigravity" : host
+        return HookHost.allCases.first { $0.agentID == id }
+    }
+
     func selectedPlugins(_ inventory: PluginInventory) -> PluginInventory {
         guard host != nil else { return inventory }
         let installations = inventory.installations.filter { $0.host == pluginHost }
@@ -82,8 +87,8 @@ struct ScopeOptions {
         let plugins = report.pluginInventory.map { selectedPlugins($0) }
         let hooks = report.hookInventory.map { inventory in
             HookInventory(
-                hooks: inventory.hooks.filter { $0.source.host == pluginHost },
-                issues: inventory.issues.filter { $0.host == pluginHost })
+                hooks: inventory.hooks.filter { $0.source.host == hookHost },
+                issues: inventory.issues.filter { $0.host == hookHost })
         }
         let selectedFindings = findings(in: report)
         let contextIDs = Set(
@@ -94,6 +99,10 @@ struct ScopeOptions {
             // Ownership ledgers are shared across Hosts and live outside Skills directories.
             issues: report.issues, lockExtras: report.lockExtras,
             pluginInventory: plugins, hookInventory: hooks,
+            extensionInventory: report.extensionInventory.map { inventory in
+                ExtensionInventory(
+                    extensions: inventory.extensions.filter { $0.host.agentID == host })
+            },
             pnpmObservations: report.pnpmObservations)
     }
 

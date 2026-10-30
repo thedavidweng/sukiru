@@ -21,8 +21,16 @@ struct HookPlanCommand {
         let plugins = PluginInventoryReader(environment: environment).read(inputs.request)
         let inventory = HookInventoryReader(environment: environment).read(
             inputs.request, plugins: plugins)
+        let requests = try readJSON([HookCleanupRequest].self, from: requests)
+        let userScope = inputs.scope != .project
+        guard userScope || requests.allSatisfy({ $0.extensionID == nil }) else {
+            throw CLIError("Agent add-ons are user scope; plan them without --scope project")
+        }
         let plan = try HookCleanupPlanner(environment: environment).plan(
-            requests: readJSON([HookCleanupRequest].self, from: requests), inventory: inventory)
+            requests: requests, inventory: inventory,
+            extensions: userScope
+                ? AgentExtensionReader(environment: environment).read()
+                : ExtensionInventory(extensions: []))
         try output.render(plan, lines: plan.batch.reviewLines + plan.instructions)
     }
 }

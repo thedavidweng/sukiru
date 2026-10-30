@@ -12,9 +12,14 @@ extension String: SidebarItem {
 
 extension PluginHost: SidebarItem {
     var sidebarID: String { rawValue }
+}
 
-    /// Hosts whose lifecycle hooks Sukiru reads.
-    static let hookHosts: [PluginHost] = [.claude, .codex]
+extension HookHost: SidebarItem {
+    var sidebarID: String { rawValue }
+}
+
+extension ExtensionHost: SidebarItem {
+    var sidebarID: String { rawValue }
 }
 
 /// One sidebar section's order and hidden items, so Settings and the sidebar
@@ -24,6 +29,8 @@ extension PluginHost: SidebarItem {
 struct SidebarArrangement: RawRepresentable, Equatable {
     static let pluginHostsKey = "sidebarPluginHosts"
     static let hookHostsKey = "sidebarHookHosts"
+    static let extensionHostsKey = "sidebarExtensionHosts"
+    static let mcpHostsKey = "sidebarMCPHosts"
     static let projectsKey = "sidebarProjects"
     static let standard = SidebarArrangement(rawValue: "")!
 

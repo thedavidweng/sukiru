@@ -2,6 +2,45 @@ import Foundation
 import SukiruCore
 import SwiftUI
 
+extension HookHost {
+    var displayName: String {
+        if let plugin = PluginHost(rawValue: rawValue) { return plugin.displayName }
+        switch self {
+        case .openclaude: return "OpenClaude"
+        case .muse: return "Muse"
+        case .jcode: return "jcode"
+        case .dsh: return "DeepSeek (dsh)"
+        default: return HostTable.host(id: agentID)?.displayName ?? rawValue
+        }
+    }
+}
+
+extension ExtensionHost {
+    var displayName: String {
+        if let plugin = PluginHost(rawValue: rawValue) { return plugin.displayName }
+        if let hook = HookHost(rawValue: rawValue) { return hook.displayName }
+        switch self {
+        case .omp: return "oh-my-pi"
+        default: return HostTable.host(id: agentID)?.displayName ?? rawValue
+        }
+    }
+
+    /// Hosts listed under Extensions: auto-loaded files, packages, and plugins.
+    static let addOnHosts = allCases.filter { $0.categories.contains { $0 != .mcpServer } }
+    static let mcpHosts = allCases.filter { $0.categories.contains(.mcpServer) }
+}
+
+extension ExtensionCategory {
+    var title: LocalizedStringKey {
+        switch self {
+        case .autoloaded: "Extensions"
+        case .package: "Packages"
+        case .plugin: "Plugins"
+        case .mcpServer: "MCP Servers"
+        }
+    }
+}
+
 extension PluginHost {
     var displayName: String {
         switch self {

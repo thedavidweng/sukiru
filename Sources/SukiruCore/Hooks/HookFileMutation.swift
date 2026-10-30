@@ -7,7 +7,11 @@ enum HookFileMutation {
             throw HookError("Invalid hook replacement data")
         }
         if path.hasSuffix(".toml") {
-            _ = try HookTOMLDocument(data)
+            guard
+                HookTOMLDocument.Layout.allCases.contains(where: {
+                    (try? HookTOMLDocument(data, layout: $0)) != nil
+                })
+            else { throw HookError("Hook replacement is not a supported hook TOML layout") }
         } else {
             _ = try HookJSONDocument(data)
         }
@@ -34,12 +38,22 @@ enum HookFileMutation {
         let inventory = HookInventoryReader(environment: environment).read(
             ScanRequest(), plugins: plugins)
         let referenced = inventory.hooks.contains {
-            references($0, path: path) || ($0.handlerType == "command" && $0.targets.isEmpty)
+            mayReference($0, path: path) || $0.source.path == path
         }
         guard inventory.issues.isEmpty, !referenced else {
             throw HookError("Hook helper may still be referenced; rescan and replan: " + path)
         }
         try FileManager.default.removeItem(atPath: path)
+    }
+
+    /// A literal reference, or a command whose targets are unknown and that names the helper's
+    /// file or a producer directory; a command cannot reach a helper without naming one of them.
+    static func mayReference(_ hook: AgentHook, path: String) -> Bool {
+        if references(hook, path: path) { return true }
+        guard hook.handlerType == "command", hook.targets.isEmpty else { return false }
+        let command = hook.source.host.command(hook.details) ?? ""
+        let stem = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
+        return [stem, "agent-hooks", "Muxy"].contains { command.contains($0) }
     }
 
     static func references(_ hook: AgentHook, path: String) -> Bool {

@@ -61,6 +61,16 @@ extension HookQueuedChange {
             } else {
                 String(localized: "Allow Hooks in This File")
             }
+        case "set-hook-enabled":
+            if request.enabled == true {
+                String(localized: "Enable Hook")
+            } else {
+                String(localized: "Disable Hook")
+            }
+        case "remove-extension": String(localized: "Remove Extension")
+        case "disable-extension": String(localized: "Disable Extension")
+        case "enable-extension": String(localized: "Enable Extension")
+        case "remove-leftovers": String(localized: "Producer Cleanup")
         default: String(localized: "Hook Cleanup")
         }
     }

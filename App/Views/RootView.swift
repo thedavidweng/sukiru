@@ -89,6 +89,8 @@ struct RootView: View {
             PluginLibraryView()
         case .hooks:
             HookLibraryView()
+        case .extensions:
+            ExtensionLibraryView()
         case .health:
             HealthView()
                 .navigationTitle("Health")
@@ -113,6 +115,8 @@ struct RootView: View {
             PluginDetailView()
         case .hooks:
             HookDetailView()
+        case .extensions:
+            ExtensionDetailView()
         case .snapshots:
             // Post-run diff / itemized rollback record.
             SnapshotsDetailView()

@@ -7,7 +7,7 @@ public enum HookHealth: String, Codable, Sendable {
 }
 
 public struct HookSource: Codable, Equatable, Sendable {
-    public let host: PluginHost
+    public let host: HookHost
     public let path: String
     public let tier: String
     public let definitionRoot: [String]
@@ -46,7 +46,7 @@ public struct AgentHook: Codable, Equatable, Sendable, Identifiable {
 }
 
 public struct HookInventoryIssue: Codable, Equatable, Sendable, Identifiable {
-    public let host: PluginHost
+    public let host: HookHost
     public let path: String
     public let scopeRoot: String
     public let message: String

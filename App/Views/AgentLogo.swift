@@ -44,6 +44,20 @@ struct AgentLogo: View {
     }
 }
 
+/// A host's name with its brand mark, as sidebar and Settings rows show it.
+struct HostLabel: View {
+    let name: String
+    let agentID: String
+
+    var body: some View {
+        Label {
+            Text(verbatim: name)
+        } icon: {
+            AgentLogo(hostID: agentID, size: 16)
+        }
+    }
+}
+
 struct AgentIconStrip: View {
     let hosts: [LibraryHostsSection.HostEntry]
     private let limit = 3

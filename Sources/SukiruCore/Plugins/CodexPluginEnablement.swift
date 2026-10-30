@@ -144,7 +144,7 @@ enum CodexPluginEnablement {
 
     /// Writes beside the file and renames over it, keeping its permissions
     /// (Codex config can hold credentials).
-    private static func writeAtomically(_ data: Data, to path: String) throws {
+    static func writeAtomically(_ data: Data, to path: String) throws {
         let attributes = try FileManager.default.attributesOfItem(atPath: path)
         let mode = mode_t((attributes[.posixPermissions] as? NSNumber)?.uint16Value ?? 0o600)
         let url = URL(fileURLWithPath: path)

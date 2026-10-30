@@ -58,6 +58,14 @@ extension BatchCommand {
                 : String(localized: "hook.warning.edit")
         case .deleteHookHelper(let path, _):
             return String(localized: "Deletes only the unreferenced producer helper: \(path)")
+        case .deleteAgentExtension(let path, _):
+            return String(localized: "Deletes only this extension: \(path)")
+        case .removeHermesPlugin(let path, _, let name):
+            return String(localized: "Removes only \(name) from plugins.enabled in \(path)")
+        case .editAgentConfig(let path, _, _):
+            return String(localized: "Changes only the documented entry in \(path)")
+        case .moveAgentExtension(let path, _, let destination):
+            return String(localized: "Moves only \(path) to \(destination)")
         case .replaceConfigSource:
             return String(localized: "plugin.codexEnablement.warning")
         case nil:
@@ -101,6 +109,14 @@ extension FileOperation {
             return String(localized: "Remove selected hooks from \(Self.display(path))")
         case .deleteHookHelper(let path, _):
             return String(localized: "Delete unreferenced hook helper \(Self.display(path))")
+        case .deleteAgentExtension(let path, _):
+            return String(localized: "Delete the extension \(Self.display(path))")
+        case .removeHermesPlugin(let path, _, let name):
+            return String(localized: "Remove \(name) from plugins.enabled in \(Self.display(path))")
+        case .editAgentConfig(let path, _, _):
+            return String(localized: "Edit one documented entry in \(Self.display(path))")
+        case .moveAgentExtension(let path, _, let destination):
+            return String(localized: "Move \(Self.display(path)) to \(Self.display(destination))")
         case .replaceConfigSource(let path, _, _, let pluginID, let enabled):
             let key = "[plugins.\"\(pluginID)\"] enabled = \(enabled)"
             return String(

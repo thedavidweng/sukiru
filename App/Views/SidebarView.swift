@@ -11,6 +11,9 @@ struct SidebarView: View {
         SidebarArrangement.standard
     @AppStorage(SidebarArrangement.hookHostsKey) private var hookHosts =
         SidebarArrangement.standard
+    @AppStorage(SidebarArrangement.extensionHostsKey) private var extensionHosts =
+        SidebarArrangement.standard
+    @AppStorage(SidebarArrangement.mcpHostsKey) private var mcpHosts = SidebarArrangement.standard
     @Environment(\.openSettings) private var openSettings
 
     private enum Destination: Hashable {
@@ -18,7 +21,9 @@ struct SidebarView: View {
         case userLibrary
         case project(String)
         case plugins(PluginHost)
-        case hooks(PluginHost)
+        case hooks(HookHost)
+        case extensions(ExtensionHost)
+        case mcpServers(ExtensionHost)
     }
 
     private var selection: Binding<Destination?> {
@@ -26,6 +31,10 @@ struct SidebarView: View {
             get: {
                 if state.surface == .plugins { return .plugins(state.pluginHost) }
                 if state.surface == .hooks { return .hooks(state.hookState.host) }
+                if state.surface == .extensions {
+                    let host = state.hookState.extensionHost
+                    return state.hookState.showsMCP ? .mcpServers(host) : .extensions(host)
+                }
                 guard state.surface == .library else { return .surface(state.surface) }
                 switch state.libraryScope {
                 case .all: return .surface(.library)
@@ -59,6 +68,11 @@ struct SidebarView: View {
                     state.hookState.host = host
                     state.hookState.selectedID = nil
                     state.surface = .hooks
+                case .extensions(let host), .mcpServers(let host):
+                    state.hookState.extensionHost = host
+                    state.hookState.showsMCP = destination == .mcpServers(host)
+                    state.hookState.selectedExtensionID = nil
+                    state.surface = .extensions
                 }
             })
     }
@@ -112,12 +126,30 @@ struct SidebarView: View {
                     }
                 }
             }
-            if !hookHosts.shown(PluginHost.hookHosts).isEmpty {
+            if !hookHosts.shown(HookHost.allCases).isEmpty {
                 Section("Hooks") {
-                    ForEach(hookHosts.shown(PluginHost.hookHosts), id: \.self) { host in
+                    ForEach(hookHosts.shown(HookHost.allCases), id: \.self) { host in
                         hookRow(host)
                             .badge(state.hooks(for: host).count)
                             .tag(Destination.hooks(host))
+                    }
+                }
+            }
+            if !extensionHosts.shown(ExtensionHost.addOnHosts).isEmpty {
+                Section("Extensions") {
+                    ForEach(extensionHosts.shown(ExtensionHost.addOnHosts), id: \.self) { host in
+                        extensionRow(host, mcp: false)
+                            .badge(state.extensions(for: host, mcp: false).count)
+                            .tag(Destination.extensions(host))
+                    }
+                }
+            }
+            if !mcpHosts.shown(ExtensionHost.mcpHosts).isEmpty {
+                Section("MCP Servers") {
+                    ForEach(mcpHosts.shown(ExtensionHost.mcpHosts), id: \.self) { host in
+                        extensionRow(host, mcp: true)
+                            .badge(state.extensions(for: host, mcp: true).count)
+                            .tag(Destination.mcpServers(host))
                     }
                 }
             }
@@ -147,6 +179,12 @@ struct SidebarView: View {
                 state.surface = .library
             }
         }
+        .onChange(of: extensionHosts) { _, arrangement in
+            leaveHiddenExtensions(arrangement, mcp: false)
+        }
+        .onChange(of: mcpHosts) { _, arrangement in
+            leaveHiddenExtensions(arrangement, mcp: true)
+        }
         .sidebarFooter {
             Button {
                 state.addProjectRootViaPanel()
@@ -160,7 +198,9 @@ struct SidebarView: View {
             .padding(.vertical, 10)
         }
     }
+}
 
+extension SidebarView {
     private func row(
         _ title: LocalizedStringKey, surface: AppState.Surface, icon: String
     ) -> some View {
@@ -178,7 +218,7 @@ struct SidebarView: View {
     private func pluginRow(_ host: PluginHost) -> some View {
         HStack(spacing: 0) {
             AXToken(token: "sukiru.sidebar.plugins.\(host.rawValue)")
-            hostLabel(host)
+            HostLabel(name: host.displayName, agentID: host.agentID)
         }
         .accessibilityIdentifier("sukiru.sidebar.plugins.\(host.rawValue)")
         .help("Show plugins managed by this host")
@@ -187,21 +227,40 @@ struct SidebarView: View {
         }
     }
 
-    private func hookRow(_ host: PluginHost) -> some View {
-        hostLabel(host)
-            .accessibilityIdentifier("sukiru.sidebar.hooks.\(host.rawValue)")
-            .help("Inspect lifecycle hooks configured for this host")
+    private func leaveHiddenExtensions(_ arrangement: SidebarArrangement, mcp: Bool) {
+        let hidden = !arrangement.isShown(state.hookState.extensionHost)
+        guard state.surface == .extensions, state.hookState.showsMCP == mcp, hidden else { return }
+        state.hookState.selectedExtensionID = nil
+        state.surface = .library
+    }
+
+    private func extensionRow(_ host: ExtensionHost, mcp: Bool) -> some View {
+        HostLabel(name: host.displayName, agentID: host.agentID)
+            .accessibilityIdentifier(
+                "sukiru.sidebar.\(mcp ? "mcp" : "extensions").\(host.rawValue)"
+            )
+            .help(
+                mcp
+                    ? "Inspect MCP servers this host declares"
+                    : "Inspect extensions, packages, and plugins this host loads"
+            )
             .contextMenu {
-                arrangementMenu(host, in: PluginHost.hookHosts, arrangement: $hookHosts)
+                if mcp {
+                    arrangementMenu(host, in: ExtensionHost.mcpHosts, arrangement: $mcpHosts)
+                } else {
+                    arrangementMenu(
+                        host, in: ExtensionHost.addOnHosts, arrangement: $extensionHosts)
+                }
             }
     }
 
-    private func hostLabel(_ host: PluginHost) -> some View {
-        Label {
-            Text(verbatim: host.displayName)
-        } icon: {
-            AgentLogo(hostID: host.agentID, size: 16)
-        }
+    private func hookRow(_ host: HookHost) -> some View {
+        HostLabel(name: host.displayName, agentID: host.agentID)
+            .accessibilityIdentifier("sukiru.sidebar.hooks.\(host.rawValue)")
+            .help("Inspect lifecycle hooks configured for this host")
+            .contextMenu {
+                arrangementMenu(host, in: HookHost.allCases, arrangement: $hookHosts)
+            }
     }
 
     private func projectRow(_ root: String) -> some View {

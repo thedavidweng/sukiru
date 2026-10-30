@@ -5,6 +5,8 @@ extension AppState {
         /// One host's plugins (`pluginHost`); each host's plugin system is its own.
         case plugins
         case hooks
+        /// One host's auto-loaded extension files (`hookState.extensionHost`).
+        case extensions
         case health
         case pending
         case snapshots

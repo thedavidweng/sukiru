@@ -106,6 +106,15 @@ public enum OwningCLI: String, Codable, Equatable, Sendable {
     case cursor
     case antigravity
     case orca
+    // swiftlint:disable:next identifier_name
+    case pi
+    case hermes
+    case dsh
+    case droid
+    case openclaude
+    case devin
+    case grok
+    case gemini
 }
 
 /// Danger flags carried on batch commands.

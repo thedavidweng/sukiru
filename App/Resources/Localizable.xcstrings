@@ -9280,6 +9280,34 @@
     "sukiru.pending.adopt.repo" : {
       "shouldTranslate" : false
     },
+    "summary.addOnChange %lld" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Change %lld agent add-on"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Change %lld agent add-ons"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改 %lld 个 agent 附加组件"
+          }
+        }
+      }
+    },
     "summary.deleteDirectory %lld" : {
       "comment" : "Batch confirmation summary line, counted by kind.",
       "localizations" : {
@@ -10568,6 +10596,486 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "验证插件"
+          }
+        }
+      }
+    },
+    "Changes only the documented entry in %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只修改 %@ 中官方文档写明的那一项"
+          }
+        }
+      }
+    },
+    "Configuration Entry" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "配置条目"
+          }
+        }
+      }
+    },
+    "Declared In" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "声明位置"
+          }
+        }
+      }
+    },
+    "Delete the extension %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除扩展 %@"
+          }
+        }
+      }
+    },
+    "Deletes only this extension: %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只删除这个扩展：%@"
+          }
+        }
+      }
+    },
+    "Disable Extension" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停用扩展"
+          }
+        }
+      }
+    },
+    "Disable Hook" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停用钩子"
+          }
+        }
+      }
+    },
+    "Disable Queued" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已排队停用"
+          }
+        }
+      }
+    },
+    "Edit one documented entry in %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "修改 %@ 中官方文档写明的一项"
+          }
+        }
+      }
+    },
+    "Enable Extension" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用扩展"
+          }
+        }
+      }
+    },
+    "Enable Hook" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用钩子"
+          }
+        }
+      }
+    },
+    "Enable Queued" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已排队启用"
+          }
+        }
+      }
+    },
+    "Enabled Entry" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用项"
+          }
+        }
+      }
+    },
+    "Extensions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扩展"
+          }
+        }
+      }
+    },
+    "File" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件"
+          }
+        }
+      }
+    },
+    "Folder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件夹"
+          }
+        }
+      }
+    },
+    "Inspect MCP servers this host declares" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看此宿主声明的 MCP 服务器"
+          }
+        }
+      }
+    },
+    "Inspect extensions, packages, and plugins this host loads" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看此宿主加载的扩展、扩展包和插件"
+          }
+        }
+      }
+    },
+    "Inspect what this host loads; scanning never runs it" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看此宿主加载的内容；扫描不会运行它们"
+          }
+        }
+      }
+    },
+    "Move %@ to %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move %1$@ to %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将 %1$@ 移到 %2$@"
+          }
+        }
+      }
+    },
+    "Moves only %@ to %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Moves only %1$@ to %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只把 %1$@ 移到 %2$@"
+          }
+        }
+      }
+    },
+    "Name" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名称"
+          }
+        }
+      }
+    },
+    "No Extensions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有扩展"
+          }
+        }
+      }
+    },
+    "No MCP Servers" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有 MCP 服务器"
+          }
+        }
+      }
+    },
+    "Packages" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扩展包"
+          }
+        }
+      }
+    },
+    "Producer Cleanup" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "来源应用清理"
+          }
+        }
+      }
+    },
+    "Queue Cleanup" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入清理队列"
+          }
+        }
+      }
+    },
+    "Queue Disable" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入停用队列"
+          }
+        }
+      }
+    },
+    "Queue Enable" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入启用队列"
+          }
+        }
+      }
+    },
+    "Queue Removal" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入删除队列"
+          }
+        }
+      }
+    },
+    "Queue the host's command or documented switch that turns this off" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把宿主自带的命令或官方文档写明的开关加入队列，用来停用此项"
+          }
+        }
+      }
+    },
+    "Queue the host's command or documented switch that turns this on" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把宿主自带的命令或官方文档写明的开关加入队列，用来启用此项"
+          }
+        }
+      }
+    },
+    "Queue the host's documented enabled switch for this hook" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把此钩子官方文档写明的 enabled 开关加入队列"
+          }
+        }
+      }
+    },
+    "Queue this exact entry for reviewed, snapshot-protected removal" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将这一项加入经审阅、受快照保护的删除队列"
+          }
+        }
+      }
+    },
+    "Removal Queued" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已排队删除"
+          }
+        }
+      }
+    },
+    "Remove %@ from plugins.enabled in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove %1$@ from plugins.enabled in %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从 %2$@ 的 plugins.enabled 中移除 %1$@"
+          }
+        }
+      }
+    },
+    "Remove Extension" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除扩展"
+          }
+        }
+      }
+    },
+    "Removes only %@ from plugins.enabled in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Removes only %1$@ from plugins.enabled in %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只从 %2$@ 的 plugins.enabled 中移除 %1$@"
+          }
+        }
+      }
+    },
+    "Reveal the entry without running it" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在访达中显示此条目，不会运行它"
+          }
+        }
+      }
+    },
+    "Review every hook, extension, and helper this producer left behind" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "审阅此来源应用留下的所有钩子、扩展和辅助脚本"
+          }
+        }
+      }
+    },
+    "Review every hook, extension, and helper this uninstalled app left behind" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "审阅这个已卸载应用留下的所有钩子、扩展和辅助脚本"
+          }
+        }
+      }
+    },
+    "Select an entry to inspect it" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择一个条目以查看"
+          }
+        }
+      }
+    },
+    "Status" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "状态"
+          }
+        }
+      }
+    },
+    "This host's user configuration declares none." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此宿主的用户配置中没有声明任何条目。"
+          }
+        }
+      }
+    },
+    "producer.leftovers %lld %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld hooks, %2$lld extensions"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld 个钩子，%2$lld 个扩展"
           }
         }
       }

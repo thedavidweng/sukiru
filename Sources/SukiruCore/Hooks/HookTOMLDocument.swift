@@ -3,19 +3,27 @@ import Foundation
 /// Supported array-table hooks keep their original text blocks, comments, and order.
 /// Other hook representations are reported for host inspection, never approximated.
 struct HookTOMLDocument {
+    /// `eventTables`: Codex `[[hooks.<Event>]]` groups with `[[hooks.<Event>.hooks]]` handlers.
+    /// `hookArray`: Kimi `[[hooks]]` tables, each one handler naming its `event`.
+    /// `commandTable`: jcode `[hooks]` keys whose value is a command or a one-line array of them.
+    enum Layout: CaseIterable { case eventTables, hookArray, commandTable }
+
     struct Handler {
-        let event: String
+        var event: String
         let group: Int
         let index: Int
         var details: [String: JSONValue]
         var lines: Range<Int>
+        /// The handler's TOML string literal in a `commandTable` array.
+        var literal: String?
     }
     struct Group {
-        let event: String
+        var event: String
         let index: Int
         var matcher: String?
         var lines: Range<Int>
     }
+    let layout: Layout
     let lines: [String]
     var groups: [Group] = []
     var handlers: [Handler] = []
@@ -28,10 +36,11 @@ struct HookTOMLDocument {
         var hooksTable = false
     }
 
-    init(_ data: Data) throws {
+    init(_ data: Data, layout: Layout = .eventTables) throws {
         guard let text = String(bytes: data, encoding: .utf8) else {
             throw HookError("Hook TOML is not UTF-8")
         }
+        self.layout = layout
         lines = text.components(separatedBy: "\n")
         var cursor = Cursor()
         for (index, raw) in lines.enumerated() {
@@ -41,9 +50,14 @@ struct HookTOMLDocument {
                 try table(line, at: index, cursor: &cursor)
             } else if let group = cursor.group {
                 try field(line, group: group, cursor: cursor)
+            } else if layout == .commandTable && cursor.hooksTable {
+                try commandField(line, at: index)
             } else if !cursor.unrelatedTable {
                 try rootField(line, hooksTable: cursor.hooksTable)
             }
+        }
+        if let empty = groups.first(where: \.event.isEmpty) {
+            throw HookError("Hook table \(empty.index) has no event")
         }
         for group in groups
         where !handlers.contains(where: { $0.event == group.event && $0.group == group.index }) {
@@ -60,8 +74,21 @@ struct HookTOMLDocument {
         cursor.handler = nil
         cursor.nestedInput = false
         cursor.hooksTable = line == "[hooks]"
-        cursor.unrelatedTable = !line.hasPrefix("[hooks") && !line.hasPrefix("[[hooks")
-        if line.hasPrefix("[[hooks."), line.hasSuffix("]]") {
+        // Codex records per-hook trust under `[hooks.state…]`; those tables define no handlers.
+        cursor.unrelatedTable =
+            (!line.hasPrefix("[hooks") && !line.hasPrefix("[[hooks"))
+            || line == "[hooks.state]" || line.hasPrefix("[hooks.state.")
+        if cursor.unrelatedTable {
+            cursor.group = nil
+        } else if layout == .hookArray && line == "[[hooks]]" {
+            groups.append(Group(event: "", index: groups.count, lines: index..<lines.count))
+            handlers.append(
+                Handler(
+                    event: "", group: groups.count - 1, index: 0, details: [:],
+                    lines: index..<lines.count))
+            cursor.group = groups.count - 1
+            cursor.handler = handlers.count - 1
+        } else if line.hasPrefix("[[hooks."), line.hasSuffix("]]") {
             try arrayTable(line, at: index, cursor: &cursor)
         } else if let previousHandler, isInputTable(line, cursor: cursor) {
             let group = cursor.group!
@@ -117,7 +144,17 @@ struct HookTOMLDocument {
         let key = line[..<equal].trimmingCharacters(in: .whitespaces)
         let value = try Self.value(
             String(line[line.index(after: equal)...]).trimmingCharacters(in: .whitespaces))
-        if let handler = cursor.handler {
+        if layout == .hookArray && ["event", "matcher"].contains(key) {
+            guard let text = value.stringValue,
+                key == "event" ? groups[group].event.isEmpty : groups[group].matcher == nil
+            else { throw HookError("Invalid hook " + key) }
+            if key == "event" {
+                groups[group].event = text
+                handlers[cursor.handler!].event = text
+            } else {
+                groups[group].matcher = text
+            }
+        } else if let handler = cursor.handler {
             try handlerField(key: key, value: value, index: handler, input: cursor.nestedInput)
         } else if key == "matcher" {
             guard groups[group].matcher == nil, let matcher = value.stringValue else {
@@ -156,6 +193,7 @@ struct HookTOMLDocument {
 
     func removing(_ selected: [AgentHook]) -> Data {
         var removed: Set<Int> = []
+        var rewritten: [Int: String] = [:]
         for group in groups {
             let members = handlers.filter { $0.event == group.event && $0.group == group.index }
             let chosen = members.filter { handler in
@@ -166,6 +204,16 @@ struct HookTOMLDocument {
             }
             if !chosen.isEmpty && chosen.count == members.count {
                 removed.formUnion(group.lines)
+            } else if layout == .commandTable && !chosen.isEmpty {
+                let line = lines[group.lines.lowerBound]
+                let indent = line.prefix { $0 == " " || $0 == "\t" }
+                let comment = line.dropFirst(Self.withoutComment(line).count)
+                let kept = members.filter { member in
+                    !chosen.contains { $0.index == member.index }
+                }.compactMap(\.literal)
+                rewritten[group.lines.lowerBound] =
+                    indent + group.event + " = [" + kept.joined(separator: ", ") + "]"
+                    + (comment.isEmpty ? "" : " " + comment)
             } else {
                 for handler in chosen { removed.formUnion(handler.lines) }
             }
@@ -175,7 +223,7 @@ struct HookTOMLDocument {
                 || $0.element.trimmingCharacters(in: .whitespaces).hasPrefix("#")
         }
         return Data(
-            preserved.map(\.element).joined(
+            preserved.map { rewritten[$0.offset] ?? $0.element }.joined(
                 separator: "\n"
             ).utf8)
     }

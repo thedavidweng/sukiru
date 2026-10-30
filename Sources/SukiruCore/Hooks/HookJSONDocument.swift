@@ -26,10 +26,47 @@ struct HookJSONDocument {
         root = try parser.node()
     }
 
+    /// Removes hooks that share one container: `hooks`, or a standalone source's definitionRoot.
     func removing(_ hooks: [AgentHook]) throws -> Data {
-        guard let container = root.member("hooks") else { throw HookError("Missing hooks object") }
+        let definitionRoot = hooks.first?.source.definitionRoot ?? []
+        let path = definitionRoot.isEmpty ? ["hooks"] : definitionRoot
+        var parent = root
+        for key in path.dropLast() {
+            guard let next = parent.member(key) else { throw HookError("Missing hooks object") }
+            parent = next
+        }
+        guard let key = path.last, let container = parent.member(key) else {
+            throw HookError("Missing hooks object")
+        }
         var edits: [Range<Int>] = []
-        var emptyEvents: Set<Int> = []
+        var emptied: Set<Int> = []
+        if container.isArray {
+            emptied = Set(hooks.map(\.groupIndex))
+            guard emptied.allSatisfy(container.members.indices.contains) else {
+                throw HookError("Hook structure changed; rescan and replan")
+            }
+        } else {
+            edits = try handlerRemovals(hooks, in: container, emptied: &emptied)
+        }
+        if emptied.count == container.members.count {
+            let index = parent.members.firstIndex(where: { $0.key == key })!
+            edits += removals(in: parent, indices: [index])
+        } else {
+            edits += removals(in: container, indices: emptied)
+        }
+        var result = bytes
+        for range in edits.sorted(by: { $0.lowerBound > $1.lowerBound }) {
+            result.removeSubrange(range)
+        }
+        _ = try HookJSONDocument(Data(result))
+        return Data(result)
+    }
+
+    /// Handler and group removals inside an event map; `emptied` collects events left empty.
+    private func handlerRemovals(
+        _ hooks: [AgentHook], in container: Node, emptied emptyEvents: inout Set<Int>
+    ) throws -> [Range<Int>] {
+        var edits: [Range<Int>] = []
         for (eventIndex, event) in container.members.enumerated() {
             let selected = hooks.filter { $0.event == event.key }
             guard !selected.isEmpty else { continue }
@@ -37,6 +74,11 @@ struct HookJSONDocument {
             for (groupIndex, group) in event.node.members.enumerated() {
                 let indices = Set(
                     selected.filter { $0.groupIndex == groupIndex }.map(\.handlerIndex))
+                let bare = group.node.isObject && group.node.member("hooks") == nil
+                if bare && indices == [0] {
+                    emptyGroups.insert(groupIndex)
+                    continue
+                }
                 guard !indices.isEmpty, let handlers = group.node.member("hooks"),
                     indices.allSatisfy({ handlers.members.indices.contains($0) })
                 else {
@@ -55,18 +97,7 @@ struct HookJSONDocument {
                 edits += removals(in: event.node, indices: emptyGroups)
             }
         }
-        if emptyEvents.count == container.members.count {
-            let index = root.members.firstIndex(where: { $0.key == "hooks" })!
-            edits += removals(in: root, indices: [index])
-        } else {
-            edits += removals(in: container, indices: emptyEvents)
-        }
-        var result = bytes
-        for range in edits.sorted(by: { $0.lowerBound > $1.lowerBound }) {
-            result.removeSubrange(range)
-        }
-        _ = try HookJSONDocument(Data(result))
-        return Data(result)
+        return edits
     }
 
     func removals(in node: Node, indices: Set<Int>) -> [Range<Int>] {
