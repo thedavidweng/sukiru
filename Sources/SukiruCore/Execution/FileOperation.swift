@@ -24,6 +24,12 @@ public enum FileOperation: Equatable, Sendable {
     case movePlugin(path: String, destination: String)
     case replaceHookSource(path: String, hash: String, contents: String)
     case deleteHookHelper(path: String, hash: String)
+    case deleteAgentExtension(path: String, hash: String)
+    case removeHermesPlugin(path: String, hash: String, name: String)
+    /// ADR-0014 rule 2 for add-ons: JSON-encoded `AgentConfigEdit`s on one host file.
+    case editAgentConfig(path: String, hash: String, edits: String)
+    /// Moves an Amp or OpenCode entry out of discovery (disable) or back (enable).
+    case moveAgentExtension(path: String, hash: String, destination: String)
     /// ADR-0014 rule 2: replace a Codex `config.toml` whose only change is the
     /// reviewed plugin's `enabled` value, re-verified against the scanned hash.
     case replaceConfigSource(
@@ -36,7 +42,9 @@ public enum FileOperation: Equatable, Sendable {
             return nil
         }
         switch (argv[1], argv.count) {
-        case ("replace-hook-source", 5), ("delete-hook-helper", 4), ("replace-config-source", 7):
+        case ("replace-hook-source", 5), ("delete-hook-helper", 4), ("replace-config-source", 7),
+            ("delete-agent-extension", 4), ("remove-hermes-plugin", 5), ("edit-agent-config", 5),
+            ("move-agent-extension", 5):
             guard let operation = Self.sourceOperation(argv) else { return nil }
             self = operation
         case ("delete-directory", 3):
@@ -63,6 +71,14 @@ public enum FileOperation: Equatable, Sendable {
             .replaceHookSource(path: argv[2], hash: argv[3], contents: argv[4])
         case "delete-hook-helper":
             .deleteHookHelper(path: argv[2], hash: argv[3])
+        case "delete-agent-extension":
+            .deleteAgentExtension(path: argv[2], hash: argv[3])
+        case "remove-hermes-plugin":
+            .removeHermesPlugin(path: argv[2], hash: argv[3], name: argv[4])
+        case "edit-agent-config":
+            .editAgentConfig(path: argv[2], hash: argv[3], edits: argv[4])
+        case "move-agent-extension":
+            .moveAgentExtension(path: argv[2], hash: argv[3], destination: argv[4])
         case "replace-config-source" where ["true", "false"].contains(argv[6]):
             .replaceConfigSource(
                 path: argv[2], hash: argv[3], contents: argv[4], pluginID: argv[5],
@@ -78,6 +94,14 @@ public enum FileOperation: Equatable, Sendable {
             return [Self.executable, "replace-hook-source", path, hash, contents]
         case .deleteHookHelper(let path, let hash):
             return [Self.executable, "delete-hook-helper", path, hash]
+        case .deleteAgentExtension(let path, let hash):
+            return [Self.executable, "delete-agent-extension", path, hash]
+        case .removeHermesPlugin(let path, let hash, let name):
+            return [Self.executable, "remove-hermes-plugin", path, hash, name]
+        case .editAgentConfig(let path, let hash, let edits):
+            return [Self.executable, "edit-agent-config", path, hash, edits]
+        case .moveAgentExtension(let path, let hash, let destination):
+            return [Self.executable, "move-agent-extension", path, hash, destination]
         case .replaceConfigSource(let path, let hash, let contents, let pluginID, let enabled):
             return [
                 Self.executable, "replace-config-source", path, hash, contents, pluginID,
@@ -102,8 +126,10 @@ public enum FileOperation: Equatable, Sendable {
     var paths: [String] {
         switch self {
         case .replaceHookSource(let path, _, _), .deleteHookHelper(let path, _),
-            .replaceConfigSource(let path, _, _, _, _):
+            .replaceConfigSource(let path, _, _, _, _), .deleteAgentExtension(let path, _),
+            .removeHermesPlugin(let path, _, _), .editAgentConfig(let path, _, _):
             [path]
+        case .moveAgentExtension(let path, _, let destination): [path, destination]
         default: Array(argv.dropFirst(2))
         }
     }
@@ -112,7 +138,8 @@ public enum FileOperation: Equatable, Sendable {
         let fileManager = FileManager.default
         let probe = DefaultFileSystemProbe()
         switch self {
-        case .replaceHookSource, .deleteHookHelper, .replaceConfigSource:
+        case .replaceHookSource, .deleteHookHelper, .replaceConfigSource, .deleteAgentExtension,
+            .removeHermesPlugin, .editAgentConfig, .moveAgentExtension:
             try performSourceEdit(environment: environment)
         case .deleteDirectory(let path):
             try fileManager.removeItem(atPath: path)
@@ -142,16 +169,32 @@ public enum FileOperation: Equatable, Sendable {
         case .replaceHookSource(let path, let hash, let contents):
             try HookFileMutation.replace(path: path, hash: hash, contents: contents)
         case .deleteHookHelper(let path, let hash):
-            guard let environment else {
-                throw HookError("Hook helper cleanup requires a scoped inventory")
-            }
-            try HookFileMutation.deleteHelper(path: path, hash: hash, environment: environment)
+            try HookFileMutation.deleteHelper(
+                path: path, hash: hash, environment: Self.scope(environment))
+        case .deleteAgentExtension(let path, let hash):
+            try AgentExtensionMutation.delete(
+                path: path, hash: hash, environment: Self.scope(environment))
+        case .removeHermesPlugin(let path, let hash, let name):
+            try AgentExtensionMutation.removeHermesPlugin(
+                path: path, hash: hash, name: name, environment: Self.scope(environment))
+        case .editAgentConfig(let path, let hash, let edits):
+            try AgentExtensionMutation.edit(path: path, hash: hash, edits: edits)
+        case .moveAgentExtension(let path, let hash, let destination):
+            try AgentExtensionMutation.move(
+                path: path, hash: hash, destination: destination,
+                environment: Self.scope(environment))
         case .replaceConfigSource(let path, let hash, let contents, let pluginID, let enabled):
             try CodexPluginEnablement.replace(
                 path: path, hash: hash, contents: contents, pluginID: pluginID, enabled: enabled)
         default:
             break
         }
+    }
+
+    /// Hook and extension edits stay inside the inventory's scoped home.
+    private static func scope(_ environment: SukiruEnvironment?) throws -> SukiruEnvironment {
+        guard let environment else { throw HookError("This change requires a scoped inventory") }
+        return environment
     }
 
     private static func deleteLink(_ path: String, probe: DefaultFileSystemProbe) throws {

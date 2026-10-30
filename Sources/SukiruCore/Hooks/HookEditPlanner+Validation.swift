@@ -2,7 +2,7 @@ import Foundation
 
 /// Request validation, documented source paths, and rendered handler values for hook edits.
 extension HookCleanupPlanner {
-    func editableHost(_ host: PluginHost?) throws -> PluginHost {
+    func editableHost(_ host: HookHost?) throws -> HookHost {
         guard let host, [.claude, .codex].contains(host) else {
             throw HookError("Hooks can be added for Claude Code or Codex only")
         }
@@ -10,7 +10,7 @@ extension HookCleanupPlanner {
     }
 
     /// The documented standalone file for a host and scope; Codex has no local scope.
-    func addPath(host: PluginHost, scope: String?, root: String?) throws -> String {
+    func addPath(host: HookHost, scope: String?, root: String?) throws -> String {
         let scope = scope ?? "user"
         switch scope {
         case "user":
@@ -43,6 +43,18 @@ extension HookCleanupPlanner {
         }
     }
 
+    /// The host of a file that documents a top-level `disableAllHooks` switch.
+    public func disableAllHost(forPath path: String?) -> HookHost? {
+        guard let path else { return nil }
+        if editRoot(forPath: path) != nil { return .claude }
+        let home = environment.home
+        if path == home + "/.openclaude/settings.json" { return .openclaude }
+        if path == home + "/.qwen/settings.json" { return .qwenCode }
+        let copilot = home + "/.copilot/hooks/"
+        let name = path.hasPrefix(copilot) ? path.dropFirst(copilot.count) : ""
+        return name.hasSuffix(".json") && !name.contains("/") ? .copilot : nil
+    }
+
     private var claudeDirectory: String {
         environment.externalValue(for: "CLAUDE_CONFIG_DIR") ?? environment.home + "/.claude"
     }
@@ -51,7 +63,7 @@ extension HookCleanupPlanner {
         environment.externalValue(for: "CODEX_HOME") ?? environment.home + "/.codex"
     }
 
-    func validatedEvent(_ event: String?, host: PluginHost) throws -> (
+    func validatedEvent(_ event: String?, host: HookHost) throws -> (
         name: String, warning: String?
     ) {
         guard let event, let first = event.first, first.isLetter,
@@ -65,7 +77,7 @@ extension HookCleanupPlanner {
     }
 
     func validatedHandler(
-        _ handler: HookHandlerSpec?, host: PluginHost
+        _ handler: HookHandlerSpec?, host: HookHost
     ) throws -> HookHandlerSpec {
         guard let handler, handler.type == "command" else {
             throw HookError("Only command handlers can be added or edited")

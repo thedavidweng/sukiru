@@ -225,12 +225,13 @@ extension CLIExecutor {
                 continue
             }
             let operationBounds: [String]
-            if case .movePlugin = operation {
+            switch operation {
+            case .movePlugin, .deleteAgentExtension, .removeHermesPlugin, .editAgentConfig,
+                .moveAgentExtension:
                 operationBounds = bounds + (command.captureRoots ?? [])
-            } else if command.hookPreconditions != nil {
-                operationBounds = bounds + (command.captureRoots ?? [])
-            } else {
-                operationBounds = bounds
+            default:
+                operationBounds =
+                    bounds + (command.hookPreconditions != nil ? command.captureRoots ?? [] : [])
             }
             if !operation.paths.allSatisfy({ isInBounds($0, bounds: operationBounds) }) {
                 violations[index] = .outOfBounds

@@ -11,7 +11,7 @@ struct HookDiagnosis {
     }
 
     func inspect(details: [String: JSONValue], source: HookSource) -> Assessment {
-        let command = details["command"]?.stringValue
+        let command = source.host.command(details)
         let targets = command.flatMap(literalTargets) ?? []
         let missing = targets.filter { !FileManager.default.fileExists(atPath: $0) }
         let missingExecutable =
@@ -28,7 +28,14 @@ struct HookDiagnosis {
         if let recognized {
             return producerAssessment(recognized, missing: missing, targets: targets)
         }
-        if let command, isOrcaRuntimeWrapper(command, host: source.host) {
+        if let command, let payloads = orcaPayloads(command) {
+            guard payloads.isEmpty else {
+                return producerAssessment(
+                    boundaries[1],
+                    missing: payloads.filter {
+                        !FileManager.default.fileExists(atPath: $0)
+                    }, targets: payloads)
+            }
             return orcaRuntimeAssessment()
         }
         let producer =
@@ -57,7 +64,7 @@ struct HookDiagnosis {
         return Assessment(
             attribution: HookAttribution(
                 producer: "Orca",
-                evidence: ["Orca runtime-home wrapper with guarded producer payload invocation"],
+                evidence: ["Command invokes Orca's hook payload through a runtime-resolved path"],
                 producerPresent: installed),
             health: installed ? .externallyManaged : .leftover,
             evidence: ["Runtime HOME target existence is unknown"]
@@ -67,13 +74,29 @@ struct HookDiagnosis {
             targets: [])
     }
 
-    private func isOrcaRuntimeWrapper(_ command: String, host: PluginHost) -> Bool {
-        let script = host == .claude ? "claude-hook" : "codex-hook"
-        let target = "\"${HOME-}/.orca/agent-hooks/\(script).sh\""
-        return command.hasPrefix("if [ -z \"${HOME-}\" ]; then ")
-            && command.contains("[ -f \(target) ] && [ -r \(target) ] && [ -x \(target) ]")
-            && command.contains("/bin/sh " + target)
-            && command.hasSuffix(";; esac; fi")
+    /// Orca owns every command that names a script in its payload boundary, the rule its own
+    /// installers use. Guarded wrappers hide the script from word parsing, so literal
+    /// `~/.orca/agent-hooks/…` paths are read from the text; an empty result means every
+    /// reference resolves at runtime (`${HOME-}` or `${ORCA_AGENT_HOOK_ROOT-}`). Nil: not Orca's.
+    func orcaPayloads(_ command: String) -> [String]? {
+        let literal = environment.home + "/.orca/agent-hooks/"
+        let runtime = [
+            "${HOME-}/.orca/agent-hooks/", "${HOME}/.orca/agent-hooks/",
+            "$HOME/.orca/agent-hooks/", "${ORCA_AGENT_HOOK_ROOT-}/agent-hooks/"
+        ]
+        guard command.contains(literal) || runtime.contains(where: command.contains) else {
+            return nil
+        }
+        var payloads: [String] = []
+        var rest = command[...]
+        while let range = rest.range(of: literal) {
+            let name = rest[range.upperBound...].prefix {
+                !["'", "\"", " ", ";", "\\", ")", "`"].contains($0)
+            }
+            if !name.isEmpty, !name.contains("/") { payloads.append(literal + name) }
+            rest = rest[range.upperBound...]
+        }
+        return Array(Set(payloads)).sorted()
     }
 
     private func producerAssessment(

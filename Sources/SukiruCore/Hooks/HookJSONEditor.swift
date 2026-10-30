@@ -101,6 +101,33 @@ extension HookJSONDocument {
         return try replacing([(member.node.range, text)])
     }
 
+    /// Appends to, replaces, or (for nil) removes one element of the array at `path`.
+    func settingElement(
+        _ index: Int?, to value: HookEditValue?, at path: [Step]
+    ) throws -> Data {
+        guard let node = self.node(at: path), node.isArray else {
+            throw HookError("Configuration structure changed; rescan and replan")
+        }
+        guard let index else {
+            guard let value else { return Data(bytes) }
+            return try inserting(value, key: nil, into: node)
+        }
+        guard node.members.indices.contains(index) else {
+            throw HookError("Configuration structure changed; rescan and replan")
+        }
+        guard let value else {
+            return try replacing(removals(in: node, indices: [index]).map { ($0, "") })
+        }
+        let member = node.members[index]
+        let indent = lineIndent(at: member.range.lowerBound)
+        return try replacing([
+            (
+                member.node.range,
+                render(value, indent: indent, compact: !startsLine(member.range.lowerBound))
+            )
+        ])
+    }
+
     private func inserting(
         _ value: HookEditValue, key: String?, into node: Node, first: Bool = false
     ) throws -> Data {

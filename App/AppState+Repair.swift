@@ -299,6 +299,7 @@ extension AppState {
                 hookState.queue.removeAll { item in
                     item.isCleanup
                         ? item.hooks.allSatisfy { completed.contains($0.id) }
+                            && item.extensions.allSatisfy { completed.contains($0.id) }
                         : completed.contains(HookCleanupPlanner.reference(for: item.request))
                 }
             }

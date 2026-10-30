@@ -5,6 +5,23 @@ struct HookHealthSection: View {
 
     var body: some View {
         Section("Hook Problems") {
+            ForEach(state.producerLeftovers, id: \.producer) { leftover in
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(verbatim: leftover.producer)
+                        Text("producer.leftovers \(leftover.hooks) \(leftover.extensions)")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button("Queue Cleanup") {
+                        state.queueHookProducer(leftover.producer, disable: false)
+                    }
+                    .disabled(state.batchMutationInFlight)
+                    .accessibilityIdentifier("sukiru.health.producer.\(leftover.producer)")
+                    .help(
+                        "Review every hook, extension, and helper this uninstalled app left behind")
+                }
+            }
             ForEach(state.visibleHookProblems) { hook in
                 DisclosureGroup {
                     Text(verbatim: hook.source.path)

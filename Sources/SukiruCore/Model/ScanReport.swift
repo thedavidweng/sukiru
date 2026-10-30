@@ -34,6 +34,8 @@ public struct ScanReport: Codable, Equatable, Sendable {
     public let lockExtras: [String: [String: JSONValue]]?
     public let pluginInventory: PluginInventory?
     public let hookInventory: HookInventory?
+    /// User-scope add-ons: auto-loaded extensions, packages, plugins, and MCP servers.
+    public let extensionInventory: ExtensionInventory?
     /// Current package permission observations, separate from installed skills.
     public let pnpmObservations: [PnpmObservation]?
 
@@ -48,6 +50,7 @@ public struct ScanReport: Codable, Equatable, Sendable {
         lockExtras: [String: [String: JSONValue]]? = nil,
         pluginInventory: PluginInventory? = nil,
         hookInventory: HookInventory? = nil,
+        extensionInventory: ExtensionInventory? = nil,
         pnpmObservations: [PnpmObservation]? = nil
     ) {
         self.schemaVersion = schemaVersion
@@ -58,6 +61,7 @@ public struct ScanReport: Codable, Equatable, Sendable {
         self.lockExtras = lockExtras
         self.pluginInventory = pluginInventory
         self.hookInventory = hookInventory
+        self.extensionInventory = extensionInventory
         self.pnpmObservations = pnpmObservations
     }
 

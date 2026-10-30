@@ -30,7 +30,7 @@ public enum HookEvents {
         "Stop", "SubagentStart", "SubagentStop", "Interrupt"
     ]
 
-    public static func documented(for host: PluginHost) -> [String] {
+    public static func documented(for host: HookHost) -> [String] {
         switch host {
         case .claude: claude
         case .codex: codex
@@ -48,15 +48,19 @@ private struct SourceChange {
         let changesMatcher: Bool
     }
     var precondition: HookFilePrecondition
-    var host: PluginHost
+    var host: HookHost
     var edits: [Edit] = []
     var appends: [(event: String, group: HookEditValue)] = []
     var removals: [AgentHook] = []
     var disableAll: Bool?
+    /// Kiro list entries whose documented `enabled` member changes.
+    var toggles: [(index: Int, enabled: Bool)] = []
     var notes: [String] = []
     var warnings: [String] = []
 
-    var isRemovalOnly: Bool { edits.isEmpty && appends.isEmpty && disableAll == nil }
+    var isRemovalOnly: Bool {
+        edits.isEmpty && appends.isEmpty && disableAll == nil && toggles.isEmpty
+    }
 }
 
 /// Add, edit, and `disableAllHooks` changes to documented standalone sources (ADR-0014 rule 2).
@@ -64,7 +68,7 @@ private struct SourceChange {
 /// order (in-place edits, appended groups, removals, then `disableAllHooks`) so that a
 /// saved plan replays to the same bytes during execution preflight.
 extension HookCleanupPlanner {
-    static let editActions: Set<String> = ["add", "edit", "set-disable-all"]
+    static let editActions: Set<String> = ["add", "edit", "set-disable-all", "set-hook-enabled"]
     static let editRuleID = "hook-edit"
     private static let updatePrefix = "Update hooks in "
 
@@ -89,7 +93,7 @@ extension HookCleanupPlanner {
             return try? addPath(
                 host: editableHost(request.host), scope: request.scope, root: request.scopeRoot)
         case "set-disable-all":
-            return editRoot(forPath: request.path) == nil ? nil : request.path
+            return disableAllHost(forPath: request.path) == nil ? nil : request.path
         default:
             return nil
         }
@@ -158,18 +162,63 @@ extension HookCleanupPlanner {
             try stageEdit(request, inventory: inventory, touched: &touched, into: &changes)
         case "set-disable-all":
             guard let path = request.path, let flag = request.disableAllHooks,
-                editRoot(forPath: path) != nil
-            else { throw HookError("disableAllHooks applies to Claude Code settings files only") }
+                let host = disableAllHost(forPath: path)
+            else {
+                throw HookError(
+                    "disableAllHooks applies to Claude Code, OpenClaude, Qwen Code, and Copilot CLI files only"
+                )
+            }
             var change =
-                try changes[path] ?? newChange(path: path, host: .claude, inventory: inventory)
+                try changes[path] ?? newChange(path: path, host: host, inventory: inventory)
             guard change.disableAll == nil, Self.disableAllHooks(atPath: path) != flag else {
                 throw HookError("disableAllHooks already has this value in " + path)
             }
             change.disableAll = flag
             change.notes.append(flag ? "Set disableAllHooks to true" : "Remove disableAllHooks")
             changes[path] = change
+        case "set-hook-enabled":
+            try stageToggle(request, inventory: inventory, touched: &touched, into: &changes)
         default: throw HookError("Unsupported hook cleanup action")
         }
+    }
+
+    /// Kiro documents `hooks[].enabled: false` to skip one hook without deleting it.
+    private func stageToggle(
+        _ request: HookCleanupRequest, inventory: HookInventory, touched: inout Set<String>,
+        into changes: inout [String: SourceChange]
+    ) throws {
+        guard let hook = inventory.hooks.first(where: { $0.id == request.hookID }),
+            let flag = request.enabled
+        else { throw HookError("Hook no longer exists; rescan and replan") }
+        guard Self.togglesEntries(hook) else {
+            throw HookError("Only Kiro list-form hooks have a documented per-hook switch")
+        }
+        guard touched.insert(hook.id).inserted else {
+            throw HookError("A hook can have only one queued change")
+        }
+        guard Self.hookEnabled(hook) != flag else {
+            throw HookError("The hook is already \(flag ? "enabled" : "disabled")")
+        }
+        let path = hook.source.path
+        var change =
+            try changes[path] ?? newChange(path: path, host: hook.source.host, inventory: inventory)
+        change.toggles.append((hook.groupIndex, flag))
+        change.notes.append(
+            (flag ? "Enable " : "Disable ") + "\(hook.event) hook \(hook.groupIndex)")
+        changes[path] = change
+    }
+
+    /// Whether a hook sits in a writable Kiro list, whose entries carry `enabled`.
+    public static func togglesEntries(_ hook: AgentHook) -> Bool {
+        guard hook.source.host == .kiro, hook.source.writable, hook.source.definitionRoot.isEmpty,
+            let data = FileManager.default.contents(atPath: hook.source.path),
+            let value = try? JSONDecoder().decode(JSONValue.self, from: data)
+        else { return false }
+        return value["hooks"]?.arrayValue != nil
+    }
+
+    public static func hookEnabled(_ hook: AgentHook) -> Bool {
+        hook.details["enabled"]?.boolValue != false
     }
 
     private func stageEdit(
@@ -217,7 +266,7 @@ extension HookCleanupPlanner {
     }
 
     private func newChange(
-        path: String, host: PluginHost, inventory: HookInventory
+        path: String, host: HookHost, inventory: HookInventory
     ) throws -> SourceChange {
         if let source = inventory.hooks.first(where: { $0.source.path == path })?.source {
             let condition = HookFilePrecondition(
@@ -296,6 +345,11 @@ extension HookCleanupPlanner {
         }
         if !change.removals.isEmpty {
             data = try HookJSONDocument(data).removing(change.removals)
+        }
+        for toggle in change.toggles {
+            data = try HookJSONDocument(data).setting(
+                "enabled", to: toggle.enabled ? nil : .bool(false),
+                at: [.key("hooks"), .index(toggle.index)])
         }
         if let flag = change.disableAll {
             data = try HookJSONDocument(data).setting(

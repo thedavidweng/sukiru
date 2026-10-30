@@ -284,13 +284,18 @@ struct BatchSummary {
             case .removeLeftoverSkillsDir: .removeLeftover
             case .movePlugin: .disablePlugin
             case .replaceConfigSource: .hostPlugin
-            case .replaceHookSource, .deleteHookHelper: .hookCleanup
+            case .replaceHookSource, .deleteHookHelper, .deleteAgentExtension, .removeHermesPlugin,
+                .editAgentConfig, .moveAgentExtension:
+                .hookCleanup
             }
         }
 
         private static func cliCommand(_ command: BatchCommand) -> Kind {
             if command.owningCLI == .orca { return .hookCleanup }
-            if [.claude, .codex, .opencode, .cursor, .antigravity].contains(command.owningCLI) {
+            if [
+                .claude, .codex, .opencode, .cursor, .antigravity, .pi, .hermes, .dsh, .droid,
+                .openclaude, .devin, .grok, .gemini
+            ].contains(command.owningCLI) {
                 return .hostPlugin
             }
             switch command.consequenceKind {

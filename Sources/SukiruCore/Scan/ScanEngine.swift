@@ -88,8 +88,16 @@ public struct ScanEngine: Sendable {
             lockExtras: Self.lockExtras(from: claims.claims),
             pluginInventory: plugins.isEmpty ? nil : plugins,
             hookInventory: hooks.isEmpty ? nil : hooks,
+            extensionInventory: extensionInventory(request),
             pnpmObservations: permissions.observations.isEmpty ? nil : permissions.observations
         )
+    }
+
+    /// Extensions load at user scope only.
+    private func extensionInventory(_ request: ScanRequest) -> ExtensionInventory? {
+        guard request.scope != .project else { return nil }
+        let inventory = AgentExtensionReader(environment: environment).read()
+        return inventory.isEmpty ? nil : inventory
     }
 
     /// Top-level lock extras keyed by scope group: only locks

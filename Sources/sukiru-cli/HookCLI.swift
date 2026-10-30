@@ -22,7 +22,8 @@ struct HookPlanCommand {
         let inventory = HookInventoryReader(environment: environment).read(
             inputs.request, plugins: plugins)
         let plan = try HookCleanupPlanner(environment: environment).plan(
-            requests: readJSON([HookCleanupRequest].self, from: requests), inventory: inventory)
+            requests: readJSON([HookCleanupRequest].self, from: requests), inventory: inventory,
+            extensions: AgentExtensionReader(environment: environment).read())
         try output.render(plan, lines: plan.batch.reviewLines + plan.instructions)
     }
 }

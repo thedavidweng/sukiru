@@ -17,7 +17,7 @@ public struct HookInventoryReader: Sendable {
                 let source = descriptor.source(hash: Self.hash(data))
                 if descriptor.path.hasSuffix(".toml") || descriptor.tomlPreferenceKey != nil {
                     guard let toml = try tomlData(data, descriptor: descriptor) else { continue }
-                    let document = try HookTOMLDocument(toml)
+                    let document = try HookTOMLDocument(toml, layout: descriptor.host.tomlLayout)
                     for handler in document.handlers {
                         let matcher = document.groups.first {
                             $0.event == handler.event && $0.index == handler.group
@@ -40,7 +40,7 @@ public struct HookInventoryReader: Sendable {
                         _ = try HookJSONDocument(data)
                         object = try JSONDecoder().decode(JSONValue.self, from: data)
                     }
-                    let container = try hookObject(object, prefix: descriptor.prefix)
+                    let container = try hookObject(object, descriptor: descriptor)
                     hooks += try items(container, source: source)
                 }
             } catch {
@@ -69,9 +69,9 @@ public struct HookInventoryReader: Sendable {
         SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
     }
 
-    private func hookObject(_ value: JSONValue, prefix: [String]) throws -> JSONValue? {
+    private func hookObject(_ value: JSONValue, descriptor: SourceDescriptor) throws -> JSONValue? {
         var object = value
-        for key in prefix {
+        for key in descriptor.prefix {
             let next: JSONValue?
             if let array = object.arrayValue, let index = Int(key), array.indices.contains(index) {
                 next = array[index]
@@ -82,11 +82,16 @@ public struct HookInventoryReader: Sendable {
             object = next
         }
         guard object.objectValue != nil else { throw HookError("Expected hook source object") }
-        return object["hooks"]
+        var container: JSONValue? = object
+        for key in descriptor.container { container = container?[key] }
+        return container
     }
 
     private func items(_ value: JSONValue?, source: HookSource) throws -> [AgentHook] {
         guard let value else { return [] }
+        if source.host == .kiro, let entries = value.arrayValue {
+            return try listItems(entries, source: source)
+        }
         guard let events = value.objectValue else { throw HookError("Expected hooks object") }
         var result: [AgentHook] = []
         for event in events.keys.sorted() {
@@ -94,6 +99,13 @@ public struct HookInventoryReader: Sendable {
                 throw HookError("Expected matcher groups for " + event)
             }
             for (groupIndex, group) in groups.enumerated() {
+                if let bare = try bareHandler(group, event: event, source: source) {
+                    result.append(
+                        try item(
+                            source: source, event: event, matcher: bare.matcher,
+                            details: bare.details, position: (groupIndex, 0)))
+                    continue
+                }
                 guard let handlers = group["hooks"]?.arrayValue,
                     group["matcher"] == nil || group["matcher"]?.stringValue != nil
                 else { throw HookError("Invalid hook group for " + event) }
@@ -115,16 +127,21 @@ public struct HookInventoryReader: Sendable {
         source: HookSource, event: String, matcher: String?, details: [String: JSONValue],
         position: (group: Int, handler: Int)
     ) throws -> AgentHook {
-        guard let type = details["type"]?.stringValue else {
+        let bareCommand = source.host.acceptsBareHandlers && source.host.command(details) != nil
+        guard let type = details["type"]?.stringValue ?? (bareCommand ? "command" : nil) else {
             throw HookError("Hook handler has no type")
         }
         let required: [String: [String]] = [
-            "command": ["command"], "http": ["url"],
-            "mcp_tool": ["server", "tool"], "prompt": ["prompt"], "agent": ["prompt"]
+            "http": ["url"], "mcp_tool": ["server", "tool"], "prompt": ["prompt"],
+            "agent": ["prompt"]
         ]
         let invalid =
-            required[type] == nil
-            || !(required[type] ?? []).allSatisfy { details[$0]?.stringValue?.isEmpty == false }
+            type == "command"
+            ? source.host.command(details)?.isEmpty != false
+            : required[type] == nil
+                || !(required[type] ?? []).allSatisfy {
+                    details[$0]?.stringValue?.isEmpty == false
+                }
         let assessment = HookDiagnosis(environment: environment)
             .inspect(details: details, source: source)
         let identity = [
@@ -141,6 +158,35 @@ public struct HookInventoryReader: Sendable {
             evidence: invalid
                 ? ["Invalid or unsupported handler fields for " + type] : assessment.evidence,
             targets: assessment.targets, trust: "Unknown — review remains in the host")
+    }
+
+    /// A definition that is itself a handler (Cursor, Copilot, Antigravity direct events).
+    private func bareHandler(
+        _ group: JSONValue, event: String, source: HookSource
+    ) throws -> (matcher: String?, details: [String: JSONValue])? {
+        guard group["hooks"] == nil, source.host.acceptsBareHandlers,
+            var details = group.objectValue
+        else { return nil }
+        let matcher = details.removeValue(forKey: "matcher")
+        guard matcher == nil || matcher?.stringValue != nil else {
+            throw HookError("Invalid hook matcher for " + event)
+        }
+        return (matcher?.stringValue, details)
+    }
+
+    /// Kiro's list form: `{"trigger": event, "matcher": …, "action": handler}` entries.
+    private func listItems(_ entries: [JSONValue], source: HookSource) throws -> [AgentHook] {
+        try entries.enumerated().map { index, entry in
+            guard let event = entry["trigger"]?.stringValue,
+                let action = entry["action"]?.objectValue,
+                entry["matcher"] == nil || entry["matcher"]?.stringValue != nil
+            else { throw HookError("Invalid Kiro hook entry") }
+            var details = action
+            details["enabled"] = entry["enabled"]
+            return try item(
+                source: source, event: event, matcher: entry["matcher"]?.stringValue,
+                details: details, position: (index, 0))
+        }
     }
 
     private func frontmatter(_ data: Data) throws -> JSONValue {

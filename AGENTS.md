@@ -10,3 +10,4 @@ Task-specific references:
 - [Native implementation and dependency policy](docs/agents/native-ui.md)
 - [Code and repository footprint](docs/agents/code-footprint.md)
 - [Distribution checks](docs/agents/distribution.md)
+- [Agent interface sources](docs/agent-interface-sources.md): official source of every host command and config key Sukiru runs or edits; update it (and its version date) when a route changes

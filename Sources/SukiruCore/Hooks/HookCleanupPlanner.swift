@@ -1,13 +1,14 @@
 import Foundation
 
-/// One requested hook change. `remove`, `remove-leftovers`, and `disable-producer` clean up;
+/// One requested hook change. `remove`, `remove-leftovers`, `remove-extension`, and
+/// `disable-producer` clean up; `disable-extension` and `enable-extension` switch an add-on;
 /// `add`, `edit`, and `set-disable-all` write documented standalone sources (ADR-0014).
 public struct HookCleanupRequest: Codable, Equatable, Sendable {
     public let action: String
     public let hookID: String?
     public let producer: String?
     /// `add`: the host, `user`/`project`/`local` scope, and project root for non-user scopes.
-    public let host: PluginHost?
+    public let host: HookHost?
     public let scope: String?
     public let scopeRoot: String?
     public let event: String?
@@ -17,12 +18,17 @@ public struct HookCleanupRequest: Codable, Equatable, Sendable {
     /// `set-disable-all`: the Claude Code settings file and its new value.
     public let path: String?
     public let disableAllHooks: Bool?
+    /// `*-extension`: an `AgentExtension.id` from the scan.
+    public let extensionID: String?
+    /// `set-hook-enabled`: the new value of a Kiro hook's `enabled`.
+    public let enabled: Bool?
 
     public init(
         action: String = "remove", hookID: String? = nil, producer: String? = nil,
-        host: PluginHost? = nil, scope: String? = nil, scopeRoot: String? = nil,
+        host: HookHost? = nil, scope: String? = nil, scopeRoot: String? = nil,
         event: String? = nil, matcher: String? = nil, handler: HookHandlerSpec? = nil,
-        path: String? = nil, disableAllHooks: Bool? = nil
+        path: String? = nil, disableAllHooks: Bool? = nil, extensionID: String? = nil,
+        enabled: Bool? = nil
     ) {
         self.action = action
         self.hookID = hookID
@@ -35,6 +41,8 @@ public struct HookCleanupRequest: Codable, Equatable, Sendable {
         self.handler = handler
         self.path = path
         self.disableAllHooks = disableAllHooks
+        self.extensionID = extensionID
+        self.enabled = enabled
     }
 }
 
@@ -42,6 +50,7 @@ public struct HookCleanupPlan: Codable, Sendable {
     public let batch: CommandBatch
     public let hooks: [AgentHook]
     public let helperPaths: [String]
+    public let extensions: [AgentExtension]
     public let instructions: [String]
 }
 
@@ -84,30 +93,37 @@ public struct HookCleanupPlanner: Sendable {
         HookDiagnosis(environment: environment).executable("orca") != nil
     }
 
+    /// Why a host offers no switch for an add-on, when it offers none.
+    public static func toggleLimit(_ item: AgentExtension) -> String? {
+        AgentExtensionRoutes.toggleLimit(item)
+    }
+
+    /// Whether a producer's application or executable is on disk; absent producers' leftovers
+    /// can be cleaned up without the producer recreating them.
+    public func producerInstalled(_ producer: String) -> Bool {
+        HookDiagnosis(environment: environment).producerPresent(producer)
+    }
+
     public func plan(
-        requests: [HookCleanupRequest], inventory: HookInventory
+        requests: [HookCleanupRequest], inventory: HookInventory,
+        extensions: ExtensionInventory = ExtensionInventory(extensions: [])
     ) throws -> HookCleanupPlan {
-        let selection = try select(requests, inventory: inventory)
+        let selection = try select(requests, inventory: inventory, extensions: extensions)
         var selected = selection.hooks
         let disableOrca = selection.disableOrca
-        let instructions = selection.instructions
         let unique = Dictionary(grouping: selected, by: \.id).values.compactMap(\.first)
         selected = unique.sorted { $0.id < $1.id }
         var commands = try sourceCommands(
             removals: selected, edits: selection.edits, inventory: inventory)
-        let helpers = helperPaths(selected: selected, inventory: inventory)
-        for path in helpers {
-            let hash = HookInventoryReader.hash(try Data(contentsOf: URL(fileURLWithPath: path)))
-            commands.append(
-                BatchCommand(
-                    argv: ["sukiru-fileop", "delete-hook-helper", path, hash],
-                    displayString: "Delete unreferenced hook helper " + path, owningCLI: .file,
-                    intent: "Delete abandoned producer-owned helper: " + path,
-                    dangerFlags: [.dangerousDeletion, .directFileOperation],
-                    warning: "Only this file is removed: " + path,
-                    captureRoots: [path],
-                    hookPreconditions: [HookFilePrecondition(path: path, contentHash: hash)]))
-        }
+        let helpers = helperPaths(
+            selected: selected, inventory: inventory, sweep: selection.sweptProducers)
+        commands += try helpers.map(helperCommand)
+        var instructions = selection.instructions
+        let changes = Dictionary(grouping: selection.extensions, by: \.key).values
+            .compactMap(\.first).sorted { $0.key < $1.key }
+        commands += try extensionCommands(changes, instructions: &instructions)
+        try Self.rejectRepeatedFiles(commands)
+        let removedExtensions = changes.map(\.item)
         if disableOrca {
             commands.append(try orcaCommand(inventory: inventory))
         }
@@ -121,12 +137,62 @@ public struct HookCleanupPlanner: Sendable {
                     workspaceID: hook.source.scopeRoot == environment.home
                         ? "user" : "project:" + hook.source.scopeRoot)
             } + selection.edits.map { editReference($0, inventory: inventory) }
+            + userReferences(removedExtensions.map(\.id), rule: "extension-cleanup")
+            + userReferences(selection.sweptProducers.sorted(), rule: Self.sweepRuleID)
         let batch = CommandBatch(
             id: UUID().uuidString, createdAt: ISO8601DateFormatter().string(from: Date()),
             findingRefs: refs, decisions: [], commands: commands, snapshotID: nil, status: .proposed
         )
         return HookCleanupPlan(
-            batch: batch, hooks: affected, helperPaths: helpers, instructions: instructions)
+            batch: batch, hooks: affected, helperPaths: helpers, extensions: removedExtensions,
+            instructions: instructions)
+    }
+
+    private func extensionCommands(
+        _ changes: [ExtensionChange], instructions: inout [String]
+    ) throws -> [BatchCommand] {
+        let routes = AgentExtensionRoutes(environment: environment)
+        var routed: [BatchCommand] = []
+        for change in changes {
+            switch try routes.route(change.item, change.action) {
+            case .commands(let next): routed += next
+            case .instructions(let text): instructions.append(change.item.name + ": " + text)
+            }
+        }
+        return try AgentExtensionMutation.merged(routed)
+    }
+
+    /// Each command checks its file's scanned hash, so a second edit to that file would fail.
+    private static func rejectRepeatedFiles(_ commands: [BatchCommand]) throws {
+        var seen: Set<String> = []
+        for path in commands.flatMap({ $0.hookPreconditions ?? [] }).map(\.path)
+        where !seen.insert(path).inserted {
+            throw HookError(
+                "\(path) would change twice in one batch. Apply one change, refresh, then queue the other."
+            )
+        }
+    }
+
+    private func helperCommand(_ path: String) throws -> BatchCommand {
+        let hash = HookInventoryReader.hash(try Data(contentsOf: URL(fileURLWithPath: path)))
+        return BatchCommand(
+            argv: ["sukiru-fileop", "delete-hook-helper", path, hash],
+            displayString: "Delete unreferenced hook helper " + path, owningCLI: .file,
+            intent: "Delete abandoned producer-owned helper: " + path,
+            dangerFlags: [.dangerousDeletion, .directFileOperation],
+            warning: "Only this file is removed: " + path,
+            captureRoots: [path],
+            hookPreconditions: [HookFilePrecondition(path: path, contentHash: hash)])
+    }
+
+    private func userReferences(_ ids: [String], rule: String) -> [FindingRef] {
+        ids.map { FindingRef(findingID: $0, ruleID: rule, skillName: nil, workspaceID: "user") }
+    }
+
+    private struct ExtensionChange {
+        let item: AgentExtension
+        let action: ExtensionAction
+        var key: String { item.id + "#" + action.rawValue }
     }
 
     private struct Selection {
@@ -134,24 +200,24 @@ public struct HookCleanupPlanner: Sendable {
         var instructions: [String] = []
         var disableOrca = false
         var edits: [HookCleanupRequest] = []
+        var extensions: [ExtensionChange] = []
+        /// Absent producers whose whole helper boundary is swept of unreferenced files.
+        var sweptProducers: Set<String> = []
     }
 
     private func select(
-        _ requests: [HookCleanupRequest], inventory: HookInventory
+        _ requests: [HookCleanupRequest], inventory: HookInventory,
+        extensions: ExtensionInventory
     ) throws -> Selection {
         var selection = Selection()
         for request in requests {
             switch request.action {
             case "remove":
                 try selectRemoval(request, inventory: inventory, into: &selection)
-            case "remove-leftovers":
-                guard let producer = request.producer, ["Muxy", "Orca"].contains(producer) else {
-                    throw HookError("Choose an evidenced producer")
-                }
-                selection.hooks += inventory.hooks.filter {
-                    $0.attribution.producer == producer && $0.health == .leftover && $0.canRemove
-                        && $0.attribution.producerPresent == false
-                }
+            case "remove-leftovers", "remove-extension", "disable-extension", "enable-extension",
+                Self.sweepAction:
+                try selectProducerCleanup(
+                    request, inventory: inventory, extensions: extensions, into: &selection)
             case "disable-producer":
                 guard request.producer == "Orca",
                     inventory.hooks.contains(where: {
@@ -170,42 +236,22 @@ public struct HookCleanupPlanner: Sendable {
         return selection
     }
 
-    private func selectRemoval(
-        _ request: HookCleanupRequest, inventory: HookInventory, into selection: inout Selection
-    ) throws {
-        guard let hook = inventory.hooks.first(where: { $0.id == request.hookID }) else {
-            throw HookError("Hook no longer exists; rescan and replan")
-        }
-        guard hook.canRemove else {
-            selection.instructions.append(
-                "\(hook.event): inspect the managing source \(hook.source.managingSource ?? hook.source.path). "
-                    + "Independent removal is unavailable."
-            )
-            return
-        }
-        let installedOrca =
-            hook.attribution.producer == "Orca"
-            && hook.attribution.producerPresent == true
-        if installedOrca && orcaDisableAvailable {
-            selection.instructions.append(
-                "Orca manages this hook. Review disable-producer for Orca; "
-                    + "it disables agent hooks across hosts."
-            )
-        } else {
-            selection.hooks.append(hook)
-        }
-    }
-
     func removalCommand(path: String, hooks: [AgentHook]) throws -> BatchCommand {
         let source = hooks[0].source
         let precondition = HookFilePrecondition(
             path: path, contentHash: source.contentHash, resolvedPath: source.resolvedPath)
         try precondition.validate()
-        let data = try Data(contentsOf: URL(fileURLWithPath: path))
-        let replacement =
-            path.hasSuffix(".toml")
-            ? try HookTOMLDocument(data).removing(hooks)
-            : try HookJSONDocument(data).removing(hooks)
+        var replacement = try Data(contentsOf: URL(fileURLWithPath: path))
+        if path.hasSuffix(".toml") {
+            replacement = try HookTOMLDocument(replacement, layout: source.host.tomlLayout)
+                .removing(hooks)
+        } else {
+            // Antigravity bundles share one file; each removal re-parses the edited bytes.
+            for root in Set(hooks.map(\.source.definitionRoot)) {
+                replacement = try HookJSONDocument(replacement).removing(
+                    hooks.filter { $0.source.definitionRoot == root })
+            }
+        }
         let argv = [
             "sukiru-fileop", "replace-hook-source", path, source.contentHash,
             replacement.base64EncodedString()
@@ -225,32 +271,43 @@ public struct HookCleanupPlanner: Sendable {
             warning: warning, captureRoots: [path], hookPreconditions: [precondition])
     }
 
-    private func helperPaths(selected: [AgentHook], inventory: HookInventory) -> [String] {
-        // Ambiguous commands or unreadable sources can hide references, so no helper is provably unreferenced.
-        guard inventory.issues.isEmpty,
-            !inventory.hooks.contains(where: {
-                $0.handlerType == "command" && $0.targets.isEmpty
-            })
-        else { return [] }
+    static let sweepAction = "sweep-helpers"
+    static let sweepRuleID = "hook-helper-sweep"
+
+    static func helperBoundary(_ producer: String, home: String) -> String {
+        home
+            + (producer == "Muxy"
+                ? "/Library/Application Support/Muxy/hooks" : "/.orca/agent-hooks")
+    }
+
+    private func helperPaths(
+        selected: [AgentHook], inventory: HookInventory, sweep: Set<String>
+    ) -> [String] {
+        // Unreadable sources can hide references, so no helper is provably unreferenced.
+        guard inventory.issues.isEmpty else { return [] }
         let ids = Set(selected.map(\.id))
+        // Hooks removed in the same batch cannot reference a helper afterwards.
         let remaining = inventory.hooks.filter { !ids.contains($0.id) }
-        let candidates = selected.filter {
+        let sources = Set(inventory.hooks.map(\.source.path))
+        let targets = selected.filter {
             $0.health == .leftover && $0.attribution.producerPresent == false
         }
         .flatMap { hook in
-            let boundary =
-                environment.home
-                + (hook.attribution.producer == "Muxy"
-                    ? "/Library/Application Support/Muxy/hooks" : "/.orca/agent-hooks")
+            let boundary = Self.helperBoundary(hook.attribution.producer, home: environment.home)
             return hook.targets.filter { $0.hasPrefix(boundary + "/") }
         }
-        return Set(candidates).filter { path in
+        let swept = sweep.flatMap { producer in
+            let boundary = Self.helperBoundary(producer, home: environment.home)
+            return ((try? FileManager.default.contentsOfDirectory(atPath: boundary)) ?? [])
+                .map { boundary + "/" + $0 }
+        }
+        return Set(targets + swept).filter { path in
             let resolved = URL(fileURLWithPath: path).resolvingSymlinksInPath().path
             let home = URL(fileURLWithPath: environment.home).resolvingSymlinksInPath().path
             let expected = home + String(path.dropFirst(environment.home.count))
             return DefaultFileSystemProbe().entryKind(atPath: path) == .file
-                && resolved == expected
-                && !remaining.contains { HookFileMutation.references($0, path: path) }
+                && resolved == expected && !sources.contains(path)
+                && !remaining.contains { HookFileMutation.mayReference($0, path: path) }
         }.sorted()
     }
 
@@ -277,5 +334,67 @@ public struct HookCleanupPlanner: Sendable {
             warning: warning,
             captureRoots: preconditions.map(\.path) + [environment.home + "/.orca/agent-hooks"],
             hookPreconditions: preconditions)
+    }
+}
+
+extension HookCleanupPlanner {
+    /// Leftovers of an absent producer, one scanned extension, or a helper-boundary sweep.
+    private func selectProducerCleanup(
+        _ request: HookCleanupRequest, inventory: HookInventory, extensions: ExtensionInventory,
+        into selection: inout Selection
+    ) throws {
+        let verb =
+            request.action.hasSuffix("-extension")
+            ? String(request.action.dropLast("-extension".count)) : nil
+        if let action = verb.flatMap(ExtensionAction.init(rawValue:)) {
+            guard let item = extensions.extensions.first(where: { $0.id == request.extensionID })
+            else { throw HookError("Extension no longer exists; rescan and replan") }
+            selection.extensions.append(ExtensionChange(item: item, action: action))
+            return
+        }
+        guard let producer = request.producer, ["Muxy", "Orca"].contains(producer) else {
+            throw HookError("Choose an evidenced producer")
+        }
+        let absent = !producerInstalled(producer)
+        if request.action == Self.sweepAction {
+            guard absent else { throw HookError("Helper sweeps apply to absent producers only") }
+            selection.sweptProducers.insert(producer)
+            return
+        }
+        selection.hooks += inventory.hooks.filter {
+            $0.attribution.producer == producer && $0.health == .leftover && $0.canRemove
+                && $0.attribution.producerPresent == false
+        }
+        if absent {
+            selection.extensions += extensions.extensions.filter { $0.producer == producer }
+                .map { ExtensionChange(item: $0, action: .remove) }
+            selection.sweptProducers.insert(producer)
+        }
+    }
+
+    private func selectRemoval(
+        _ request: HookCleanupRequest, inventory: HookInventory, into selection: inout Selection
+    ) throws {
+        guard let hook = inventory.hooks.first(where: { $0.id == request.hookID }) else {
+            throw HookError("Hook no longer exists; rescan and replan")
+        }
+        guard hook.canRemove else {
+            selection.instructions.append(
+                "\(hook.event): inspect the managing source \(hook.source.managingSource ?? hook.source.path). "
+                    + "Independent removal is unavailable."
+            )
+            return
+        }
+        let installedOrca =
+            hook.attribution.producer == "Orca"
+            && hook.attribution.producerPresent == true
+        if installedOrca && orcaDisableAvailable {
+            selection.instructions.append(
+                "Orca manages this hook. Review disable-producer for Orca; "
+                    + "it disables agent hooks across hosts."
+            )
+        } else {
+            selection.hooks.append(hook)
+        }
     }
 }

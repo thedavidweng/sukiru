@@ -10,6 +10,9 @@ struct SidebarSettingsPane: View {
         SidebarArrangement.standard
     @AppStorage(SidebarArrangement.hookHostsKey) private var hookHosts =
         SidebarArrangement.standard
+    @AppStorage(SidebarArrangement.extensionHostsKey) private var extensionHosts =
+        SidebarArrangement.standard
+    @AppStorage(SidebarArrangement.mcpHostsKey) private var mcpHosts = SidebarArrangement.standard
 
     var body: some View {
         Form {
@@ -28,24 +31,25 @@ struct SidebarSettingsPane: View {
             }
             SidebarArrangementSection(
                 "Plugins", items: PluginHost.allCases, arrangement: $pluginHosts,
-                identifier: "plugins", label: hostLabel)
+                identifier: "plugins"
+            ) { HostLabel(name: $0.displayName, agentID: $0.agentID) }
             SidebarArrangementSection(
-                "Hooks", items: PluginHost.hookHosts, arrangement: $hookHosts,
-                identifier: "hooks",
+                "Hooks", items: HookHost.allCases, arrangement: $hookHosts,
+                identifier: "hooks"
+            ) { HostLabel(name: $0.displayName, agentID: $0.agentID) }
+            SidebarArrangementSection(
+                "Extensions", items: ExtensionHost.addOnHosts, arrangement: $extensionHosts,
+                identifier: "extensions"
+            ) { HostLabel(name: $0.displayName, agentID: $0.agentID) }
+            SidebarArrangementSection(
+                "MCP Servers", items: ExtensionHost.mcpHosts, arrangement: $mcpHosts,
+                identifier: "mcp",
                 footer:
-                    "Turn on the items to show in the sidebar. Drag them to change their order.",
-                label: hostLabel)
+                    "Turn on the items to show in the sidebar. Drag them to change their order."
+            ) { HostLabel(name: $0.displayName, agentID: $0.agentID) }
         }
         .formStyle(.grouped)
         .frame(width: 560, height: 480)
-    }
-
-    private func hostLabel(_ host: PluginHost) -> some View {
-        Label {
-            Text(verbatim: host.displayName)
-        } icon: {
-            AgentLogo(hostID: host.agentID, size: 16)
-        }
     }
 }
 

@@ -86,6 +86,26 @@ indentation (tabs, 2 or 4 spaces, or single-line). Rollback deletes a file that
 the batch created. Duplicate keys or an unexpected structure make the plan fail.
 Codex asks you to trust new or changed hooks before they run.
 
+## Other agents and extensions
+
+Hook inventory also covers the user-scope hook files of Cursor, Antigravity,
+Gemini CLI, Droid, OpenClaude, Qoder, Qwen Code, CodeBuddy, Command Code, Devin,
+Copilot CLI, Grok, Kimi Code, Kiro, jcode, ZCode, Muse and DSH (ADR-0016). Those
+hooks can be removed but not added or edited. Documented switches are offered as
+requests: `{"action":"set-disable-all","path":…,"disableAllHooks":true}` for Claude
+Code, OpenClaude, Qwen Code and Copilot CLI hook files, and
+`{"action":"set-hook-enabled","hookID":…,"enabled":false}` for Kiro list-form hooks.
+
+`scan --json` includes optional `extensionInventory`: auto-loaded extensions,
+packages, plugins and MCP servers per host (ADR-0017), each with its recorded
+enablement and producer attribution. Change one with
+`{"action":"remove-extension|disable-extension|enable-extension","extensionID":"<id>"}`.
+The plan uses the host's CLI when it is installed and its help lists the
+subcommand, otherwise the documented configuration key; when neither exists the
+plan carries instructions and `hooks execute` refuses it. Sources for every
+command and key are in [agent-interface-sources.md](agent-interface-sources.md).
+For an uninstalled producer, `remove-leftovers` also removes its add-ons and
+unreferenced helper files.
 ## App and isolation
 
 The native app offers per-host Hooks destinations, Needs Attention grouping,

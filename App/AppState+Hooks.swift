@@ -2,15 +2,19 @@ import Foundation
 import SukiruCore
 
 struct HookNavigationState {
-    var host: PluginHost = .claude
+    var host: HookHost = .claude
     var selectedID: String?
+    var extensionHost: ExtensionHost = .pi
+    /// The MCP Servers destination of `extensionHost` rather than its other add-ons.
+    var showsMCP = false
+    var selectedExtensionID: String?
     var queue: [HookQueuedChange] = []
     var editor: HookEditorTarget?
 }
 
 /// The Add Hook / Edit sheet's subject.
 enum HookEditorTarget: Identifiable {
-    case add(PluginHost)
+    case add(HookHost)
     case edit(AgentHook)
 
     var id: String {
@@ -20,7 +24,7 @@ enum HookEditorTarget: Identifiable {
         }
     }
 
-    var host: PluginHost {
+    var host: HookHost {
         switch self {
         case .add(let host): host
         case .edit(let hook): hook.source.host
@@ -28,24 +32,78 @@ enum HookEditorTarget: Identifiable {
     }
 }
 
+struct ProducerLeftover {
+    let producer: String
+    let hooks: Int
+    let extensions: Int
+}
+
 struct HookQueuedChange: Identifiable, Equatable {
     let request: HookCleanupRequest
     let hooks: [AgentHook]
+    var extensions: [AgentExtension] = []
     var id: String {
         switch request.action {
+        case "remove-extension", "disable-extension", "enable-extension":
+            "extension:" + (request.extensionID ?? "")
         case "add": HookCleanupPlanner.reference(for: request)
         case "edit": "edit:" + (request.hookID ?? "")
         case "set-disable-all": "set-disable-all:" + (request.path ?? "")
+        case "set-hook-enabled": "enabled:" + (request.hookID ?? "")
         default: request.hookID ?? request.action + ":" + (request.producer ?? "")
         }
     }
 
-    var isCleanup: Bool { !["add", "edit", "set-disable-all"].contains(request.action) }
+    var isCleanup: Bool {
+        !["add", "edit", "set-disable-all", "set-hook-enabled"].contains(request.action)
+    }
 }
 
 extension AppState {
     var orcaHookDisableAvailable: Bool {
         HookCleanupPlanner(environment: environment).orcaDisableAvailable
+    }
+
+    func extensions(for host: ExtensionHost, mcp: Bool) -> [AgentExtension] {
+        (report?.extensionInventory?.extensions ?? []).filter {
+            $0.host == host && ($0.category == .mcpServer) == mcp
+        }
+    }
+
+    var selectedExtension: AgentExtension? {
+        extensions(for: hookState.extensionHost, mcp: hookState.showsMCP).first {
+            $0.id == hookState.selectedExtensionID
+        }
+    }
+
+    func queuedExtensionAction(_ item: AgentExtension) -> ExtensionAction? {
+        hookState.queue.first { $0.id == "extension:" + item.id }
+            .flatMap { ExtensionAction(rawValue: String($0.request.action.prefix { $0 != "-" })) }
+    }
+
+    func queueExtension(_ item: AgentExtension, action: ExtensionAction = .remove) {
+        let change = HookQueuedChange(
+            request: HookCleanupRequest(
+                action: action.rawValue + "-extension", extensionID: item.id),
+            hooks: [], extensions: [item])
+        hookState.queue.removeAll { $0.id == change.id }
+        hookState.queue.append(change)
+    }
+
+    /// Absent producers that left hooks or extensions behind, for one-step cleanup.
+    var producerLeftovers: [ProducerLeftover] {
+        let planner = HookCleanupPlanner(environment: environment)
+        return ["Orca", "Muxy"].compactMap { producer in
+            guard !planner.producerInstalled(producer) else { return nil }
+            let hooks = (report?.hookInventory?.hooks ?? []).filter {
+                $0.attribution.producer == producer && $0.health == .leftover && $0.canRemove
+            }.count
+            let extensions = (report?.extensionInventory?.extensions ?? []).filter {
+                $0.producer == producer
+            }.count
+            return hooks + extensions == 0
+                ? nil : ProducerLeftover(producer: producer, hooks: hooks, extensions: extensions)
+        }
     }
 
     func hookProducerTitle(_ hook: AgentHook) -> String {
@@ -81,7 +139,7 @@ extension AppState {
             .targetPath(for: item.request)
     }
 
-    func hooks(for host: PluginHost) -> [AgentHook] {
+    func hooks(for host: HookHost) -> [AgentHook] {
         (report?.hookInventory?.hooks ?? []).filter { $0.source.host == host }
     }
 
@@ -130,7 +188,10 @@ extension AppState {
             $0.attribution.producer == producer
                 && (disable || ($0.health == .leftover && $0.canRemove))
         }
-        let item = HookQueuedChange(request: request, hooks: hooks)
+        let extensions =
+            disable
+            ? [] : (report?.extensionInventory?.extensions ?? []).filter { $0.producer == producer }
+        let item = HookQueuedChange(request: request, hooks: hooks, extensions: extensions)
         hookState.queue.removeAll { $0.id == item.id }
         hookState.queue.append(item)
     }
@@ -146,13 +207,30 @@ extension AppState {
         hookState.queue.append(item)
     }
 
-    /// The Claude Code settings file a hook lives in, when it can carry `disableAllHooks`.
+    /// The hook's file, when its host documents a file-wide `disableAllHooks` switch.
     func disableAllHooksPath(for hook: AgentHook) -> String? {
-        guard hook.source.host == .claude, hook.source.writable,
-            hook.source.path.hasSuffix("/settings.json")
-                || hook.source.path.hasSuffix("/settings.local.json")
+        let planner = HookCleanupPlanner(environment: Self.makeEnvironment(roots: projectRoots))
+        guard hook.source.writable, planner.disableAllHost(forPath: hook.source.path) != nil
         else { return nil }
         return hook.source.path
+    }
+
+    /// The queued per-hook switch, else the hook's current value.
+    func hookEnabled(_ hook: AgentHook) -> Bool {
+        hookState.queue.last {
+            $0.request.action == "set-hook-enabled" && $0.request.hookID == hook.id
+        }?
+        .request.enabled ?? HookCleanupPlanner.hookEnabled(hook)
+    }
+
+    func setHookEnabled(_ flag: Bool, hook: AgentHook) {
+        hookState.queue.removeAll {
+            $0.request.action == "set-hook-enabled" && $0.request.hookID == hook.id
+        }
+        guard flag != HookCleanupPlanner.hookEnabled(hook) else { return }
+        try? queueHookChange(
+            HookCleanupRequest(action: "set-hook-enabled", hookID: hook.id, enabled: flag),
+            hooks: [hook])
     }
 
     /// The queued `disableAllHooks` value, else the file's current value.
@@ -169,8 +247,14 @@ extension AppState {
     }
 
     func hookBatch() throws -> HookCleanupPlan? {
-        guard !hookState.queue.isEmpty, let inventory = report?.hookInventory else { return nil }
+        guard !hookState.queue.isEmpty else { return nil }
+        let inventory = report?.hookInventory ?? HookInventory(hooks: [], issues: [])
+        let extensions = report?.extensionInventory ?? ExtensionInventory(extensions: [])
         for queued in hookState.queue {
+            for item in queued.extensions where !extensions.extensions.contains(item) {
+                throw HookError(
+                    "Extension changed. Remove the queued cleanup, refresh, and review it again.")
+            }
             for hook in queued.hooks {
                 guard
                     inventory.hooks.contains(where: {
@@ -184,6 +268,6 @@ extension AppState {
             }
         }
         return try HookCleanupPlanner(environment: Self.makeEnvironment(roots: projectRoots)).plan(
-            requests: hookState.queue.map(\.request), inventory: inventory)
+            requests: hookState.queue.map(\.request), inventory: inventory, extensions: extensions)
     }
 }

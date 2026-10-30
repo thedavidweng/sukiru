@@ -2,7 +2,7 @@ import Foundation
 
 extension HookInventoryReader {
     struct SourceDescriptor {
-        let host: PluginHost
+        let host: HookHost
         let path: String
         let tier: String
         let scope: String
@@ -11,11 +11,16 @@ extension HookInventoryReader {
         var managingSource: String?
         var prefix: [String] = []
         var tomlPreferenceKey: String?
+        /// The key path of the event map (or Kiro's handler list) below `prefix`.
+        var container = ["hooks"]
 
         func source(hash: String) -> HookSource {
             HookSource(
                 host: host, path: path, tier: tier,
-                definitionRoot: prefix + (tomlPreferenceKey.map { [$0] } ?? []),
+                // A standalone source's definitionRoot is its non-default container, which
+                // removal follows back to the same JSON node.
+                definitionRoot: prefix + (container == ["hooks"] ? [] : container)
+                    + (tomlPreferenceKey.map { [$0] } ?? []),
                 scope: scope, scopeRoot: scopeRoot,
                 managingPluginID: pluginID, managingSource: managingSource, contentHash: hash,
                 resolvedPath: URL(fileURLWithPath: path).resolvingSymlinksInPath().path,
@@ -43,6 +48,7 @@ extension HookInventoryReader {
             result += markdownSources(
                 claude + "/agents", tier: "subagent", root: environment.home, scope: "user")
             result += managedSources()
+            result += agentSources()
         }
         if request.scope != .user {
             for root in Set(roots).sorted() {
@@ -67,7 +73,7 @@ extension HookInventoryReader {
             seen.insert(
                 [
                     $0.host.rawValue, $0.path, $0.scopeRoot, $0.prefix.joined(separator: "."),
-                    $0.tomlPreferenceKey ?? ""
+                    $0.container.joined(separator: "."), $0.tomlPreferenceKey ?? ""
                 ].joined(
                     separator: ":")
             ).inserted
@@ -76,16 +82,16 @@ extension HookInventoryReader {
 
     private func installedSources(_ plugins: [PluginInstallation]) -> [SourceDescriptor] {
         var result: [SourceDescriptor] = []
-        for plugin in plugins where plugin.host != .opencode {
-            guard let path = plugin.path else { continue }
-            result += pluginSources(plugin, path: path)
+        for plugin in plugins {
+            guard let host = HookHost(plugin.host), let path = plugin.path else { continue }
+            result += pluginSources(plugin, host: host, path: path)
             for component in plugin.components
             where plugin.host == .claude && ["skills", "agents"].contains(component.kind) {
                 guard let path = component.path else { continue }
                 let markdown = component.kind == "skills" ? path + "/SKILL.md" : path
                 result.append(
                     SourceDescriptor(
-                        host: plugin.host, path: markdown,
+                        host: host, path: markdown,
                         tier: component.kind == "skills" ? "skill" : "subagent",
                         scope: plugin.scope,
                         scopeRoot: plugin.scopeRoot, pluginID: plugin.id, managingSource: path))
@@ -176,7 +182,9 @@ extension HookInventoryReader {
         }
     }
 
-    private func pluginSources(_ plugin: PluginInstallation, path: String) -> [SourceDescriptor] {
+    private func pluginSources(
+        _ plugin: PluginInstallation, host: HookHost, path: String
+    ) -> [SourceDescriptor] {
         let candidates =
             plugin.host == .claude
             ? [".claude-plugin/plugin.json"]
@@ -188,11 +196,11 @@ extension HookInventoryReader {
             FileManager.default.fileExists(atPath: $0)
         }
         let defaultSource = SourceDescriptor(
-            host: plugin.host, path: path + "/hooks/hooks.json", tier: "plugin",
+            host: host, path: path + "/hooks/hooks.json", tier: "plugin",
             scope: plugin.scope, scopeRoot: plugin.scopeRoot, pluginID: plugin.id)
         guard let manifest else { return [defaultSource] }
         let descriptor = SourceDescriptor(
-            host: plugin.host, path: manifest, tier: "plugin",
+            host: host, path: manifest, tier: "plugin",
             scope: plugin.scope, scopeRoot: plugin.scopeRoot, pluginID: plugin.id)
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: manifest)),
             let object = try? JSONDecoder().decode(JSONValue.self, from: data)
@@ -206,7 +214,7 @@ extension HookInventoryReader {
                 let root = URL(fileURLWithPath: path).resolvingSymlinksInPath().path
                 guard target.hasPrefix(root + "/") else { return descriptor }
                 return SourceDescriptor(
-                    host: plugin.host, path: target, tier: "plugin", scope: plugin.scope,
+                    host: host, path: target, tier: "plugin", scope: plugin.scope,
                     scopeRoot: plugin.scopeRoot, pluginID: plugin.id)
             }
             var inline = descriptor
@@ -215,7 +223,7 @@ extension HookInventoryReader {
         }
     }
 
-    private func entries(_ path: String) -> [String] {
+    func entries(_ path: String) -> [String] {
         (try? FileManager.default.contentsOfDirectory(atPath: path))?.sorted() ?? []
     }
 }

@@ -37,6 +37,13 @@ public struct PluginLifecycleProbe: Sendable {
         }
     }
 
+    /// Help text, or nil when the executable is absent or the help fails.
+    func help(executable: String, arguments: [String]) -> String? {
+        try? output(
+            executable: executable, arguments: arguments + ["--help"], workingDirectory: nil,
+            includeStandardError: true)
+    }
+
     func output(host: PluginHost, arguments: [String]) throws -> String {
         try output(executable: host.executable, arguments: arguments, workingDirectory: nil)
     }
