@@ -7,6 +7,8 @@
 
 * **updates:** enable SUVerifyUpdateBeforeExtraction so the updater starts ([#90](https://github.com/thedavidweng/sukiru/issues/90)) ([4aa852d](https://github.com/thedavidweng/sukiru/commit/4aa852d10dc0fc64695efec37820efbaf29f3d60))
 
+The built-in updater in 1.11.0 and 1.12.0 cannot start, so update those installs once with `brew upgrade --cask sukiru` or the DMG.
+
 ## [1.12.0](https://github.com/thedavidweng/sukiru/compare/v1.11.0...v1.12.0) (2026-10-30)
 
 
