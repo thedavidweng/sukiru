@@ -12,11 +12,12 @@ enum AntigravityInstallTarget: Equatable {
     /// `owner/repo` shorthand, which looks the same.
     init(_ target: String, relativeTo root: String) throws {
         let relative = HostPathResolver.join(root, target)
+        let existingDirectory =
+            !target.contains(":") && !target.contains("@")
+            && DefaultFileSystemProbe().isDirectory(atPath: relative)
         if target.hasPrefix("/") || target.hasPrefix(".") {
             self = .directory(target)
-        } else if !target.contains(":"), !target.contains("@"),
-            DefaultFileSystemProbe().isDirectory(atPath: relative)
-        {
+        } else if existingDirectory {
             self = .directory(URL(fileURLWithPath: relative).standardizedFileURL.path)
         } else if target.contains("/") || target.contains(":") {
             guard let repo = try? InstallPlanBuilder.ownerRepo(fromSource: target) else {
