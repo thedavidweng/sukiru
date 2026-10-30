@@ -10,7 +10,7 @@ struct PluginCatalogList: View {
 
     var body: some View {
         List(selection: $state.selectedCatalogEntryID) {
-            ForEach(marketplaces) { marketplace in
+            ForEach(marketplaces.filter { filter.isEmpty || !entries($0).isEmpty }) { marketplace in
                 Section {
                     ForEach(entries(marketplace), id: \.name) { entry in
                         PluginCatalogRow(

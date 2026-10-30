@@ -81,6 +81,12 @@ struct AntigravityPluginLifecycleTests {
                 "agy", "plugin", "install", fixture.home + "/plugins/demo"
             ])
         #expect((local["intent"] as? String)?.contains("local directory") == true)
+        try fixture.tree.dir("home/demo@market")
+        let listed = try fixture.plan([fixture.request("install", "demo@market")])
+        #expect(
+            try listed.plannedCommands().first?["argv"] as? [String] == [
+                "agy", "plugin", "install", "demo@market"
+            ])
         #expect(fixture.invocations.isEmpty)
     }
 

@@ -146,9 +146,10 @@ extension PluginLifecyclePlanner {
     ) -> String {
         switch target {
         case .marketplace(let plugin, let marketplace):
-            let listing = inventory.marketplaces.first {
-                $0.host == .antigravity && $0.name == marketplace
-            }?.plugins.first { $0.name == plugin }
+            let listing = inventory.marketplaces
+                .filter { $0.host == .antigravity && $0.name == marketplace }
+                .flatMap(\.plugins)
+                .first { $0.name == plugin }
             let status =
                 listing == nil
                 ? " (not in the cached catalog)"
