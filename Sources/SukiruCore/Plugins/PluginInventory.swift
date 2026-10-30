@@ -87,6 +87,8 @@ public struct PluginMarketplace: Codable, Equatable, Sendable, Identifiable {
     public var ref: String?
     /// A local directory used in place; hosts do not fetch or upgrade it.
     public var localSource = false
+    /// When the host last fetched a cached catalog, as the host records it.
+    public var updatedAt: String?
 
     public var id: String {
         "\(host.rawValue):\(scopeRoot):\(name)"
@@ -95,10 +97,22 @@ public struct PluginMarketplace: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
+/// Listing details are what the catalog declares; they are not evidence of an installation.
 public struct PluginCatalogEntry: Codable, Equatable, Sendable {
     public let name: String
     public let source: String
     public let version: String?
+    public var displayName: String?
+    public var summary: String?
+    /// The listing's icon address as the catalog declares it.
+    public var logo: String?
+    public var author: String?
+    public var homepage: String?
+    public var repository: String?
+    public var license: String?
+    public var categories: [String]?
+    public var keywords: [String]?
+    public var suggestedPrompts: [String]?
 }
 
 /// An inventory read error attributed to the host whose files produced it.

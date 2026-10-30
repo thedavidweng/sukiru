@@ -55,7 +55,11 @@ extension PluginLifecyclePlanner {
             }
             args.append(marketplace)
         }
-        if request.target != "*" { args.append(request.target) }
+        if request.action == "install" {
+            args.append(try AntigravityInstallTarget(request.target).argument)
+        } else if request.target != "*" {
+            args.append(request.target)
+        }
         if ["list", "validate"].contains(request.action) { args.append("--json") }
         if request.strict == true { args.append("--strict") }
         return args
@@ -122,9 +126,37 @@ extension PluginLifecyclePlanner {
                     ? " Native list reports user plugins; Sukiru's passive inventory includes added projects."
                     : "")
         }
-        return "\(request.action.capitalized) \(request.target) through agy plugin in user scope. "
+        let source =
+            request.action == "install"
+            ? (try? AntigravityInstallTarget(request.target)).map {
+                antigravityInstallSource($0, inventory: inventory)
+            } : nil
+        return
+            (source
+            ?? "\(request.action.capitalized) \(request.target) through agy plugin in user scope. ")
             + "User plugin payloads, preferences, import records and cached catalogs are captured. "
             + "Installation or import may replace existing plugins; restart Antigravity to discover new directories. "
             + "File rollback does not undo running services or external authentication."
+    }
+
+    private func antigravityInstallSource(
+        _ target: AntigravityInstallTarget, inventory: PluginInventory
+    ) -> String {
+        switch target {
+        case .marketplace(let plugin, let marketplace):
+            let version = inventory.marketplaces.first {
+                $0.host == .antigravity && $0.name == marketplace
+            }?.plugins.first { $0.name == plugin }?.version
+            return "Install \(plugin) from the Antigravity marketplace \(marketplace)"
+                + (version.map { " (cached catalog version \($0))" }
+                    ?? " (not in the cached catalog)")
+                + ". agy must be signed in to resolve the marketplace and downloads the listed archive. "
+        case .repository(let url):
+            return "Install from the GitHub repository \(url), not from a marketplace. "
+                + "agy clones the default branch, so the contents can differ from any marketplace listing. "
+                + "A failed clone can leave a partial directory in ~/.gemini/config/plugins; rollback removes it. "
+        case .directory(let path):
+            return "Install the local directory \(path) by copying it into the user profile. "
+        }
     }
 }

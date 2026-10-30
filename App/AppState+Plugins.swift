@@ -13,6 +13,8 @@ struct PluginManagementState {
     var gitRef: String?
     var marketplace = ""
     var strict = false
+    /// The install target is a GitHub repository rather than a marketplace listing.
+    var repositoryInstall = false
     var error: String?
     /// Why a removal planned straight from the plugin list could not be previewed.
     var removalError: String?
@@ -37,6 +39,7 @@ extension AppState {
         pluginManagement.gitRef = nil
         pluginManagement.marketplace = ""
         pluginManagement.strict = false
+        pluginManagement.repositoryInstall = false
         pluginManagement.error = nil
         pluginManagement.showingSheet = true
     }
@@ -50,6 +53,7 @@ extension AppState {
         pluginManagement.gitRef = nil
         pluginManagement.marketplace = ""
         pluginManagement.strict = false
+        pluginManagement.repositoryInstall = false
         pluginManagement.error = nil
         pluginManagement.showingSheet = true
     }
@@ -60,10 +64,26 @@ extension AppState {
             target: ["list", "import"].contains(action) ? "*" : "", scopeRoot: environment.home)
     }
 
+    func newPluginRepositoryInstall(host: PluginHost) {
+        pluginManagement = PluginManagementState(
+            showingSheet: true, host: host, scopeRoot: environment.home, repositoryInstall: true)
+    }
+
     func previewPluginOperation() {
+        var target = pluginManagement.target
+        if pluginManagement.repositoryInstall {
+            do {
+                target =
+                    "https://github.com/"
+                    + (try InstallPlanBuilder.ownerRepo(fromSource: target))
+            } catch {
+                pluginManagement.error = error.localizedDescription
+                return
+            }
+        }
         let request = PluginLifecycleRequest(
             host: pluginManagement.host,
-            action: pluginManagement.action, target: pluginManagement.target,
+            action: pluginManagement.action, target: target,
             scope: pluginManagement.scope, scopeRoot: pluginManagement.scopeRoot,
             gitRef: pluginManagement.gitRef,
             marketplace: pluginManagement.action == "link" ? pluginManagement.marketplace : nil,

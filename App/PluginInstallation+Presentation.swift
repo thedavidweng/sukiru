@@ -78,6 +78,9 @@ extension PluginHost {
     }
 
     var hasMarketplaces: Bool { self != .opencode }
+
+    /// Hosts whose marketplace is browsed inside their own Plugins tab.
+    var hasMarketplaceBrowser: Bool { self == .antigravity }
 }
 
 extension PluginInstallation {

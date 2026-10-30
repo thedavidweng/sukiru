@@ -32,7 +32,7 @@ the group help, rather than probing mutation subcommands with help flags.
 
 | Operation | Verified native contract / boundary |
 | --- | --- |
-| Install | `<target>` accepts an official catalog name, `name@antigravity-plugins-official`, GitHub repository URL, or local directory. No scope flag. A local fixture was staged under the shared user root below. [Plugin guide](https://antigravity.google/docs/plugins/). |
+| Install | `<target>` accepts `<plugin>@<marketplace>`, a GitHub repository URL, or a local directory. No scope flag. A local fixture was staged under the shared user root below. [Plugin guide](https://antigravity.google/docs/plugins/). Re-checked 2026-10-30 against agy **1.4.11** (see below): a bare plugin name is rejected despite the guide. |
 | Enable / disable / uninstall | Argument is the **install directory name**, including signed numeric directory names; it is not necessarily manifest `name`. Isolated `-12345` directory targets work directly without `--`. No project-scope flag is exposed. |
 | List | JSON is an array of objects with `name`, `enabled`, optional `version` and `source`, `path`, and component-name arrays such as `skills`, `agents`, `rules`, `mcpServers`, `hooks`. Missing arrays can be omitted. It includes shared App-installed plugins. A fixture project plugin did not appear, so this is not authoritative project discovery. |
 | Import | `gemini` and `claude` are accepted sources. With no argument, an empty isolated profile prints `No gemini extensions found.` followed by `No claude extensions found.` and exits 0; each explicit source scans only that source. Error text also mentions an invalid path, but local-path import semantics were not established. |
@@ -53,6 +53,29 @@ agent session in these probes. No hook/MCP execution was observed; that is not
 a proof of every possible host implementation's external effects or runtime
 health. Passive startup should continue to read files and reserve CLI execution
 for an explicit operation.
+
+### Install sources (agy 1.4.11, 2026-10-30)
+
+The [Marketplace guide](https://antigravity.google/docs/marketplace/) says only
+`antigravity-plugins-official` is accepted after `@` and that a bare name
+defaults to it. Observed instead:
+
+- With a signed-in profile, `agy plugin install <missing>@antigravity-plugins-official`
+  and `…@antigravity-plugins-partners` both report `plugin "<missing>" not found in
+  marketplace "<name>"`, so the partner marketplace resolves too. A nonexistent
+  name was used so nothing was installed.
+- In an isolated `HOME` with no sign-in, both marketplaces fail as
+  `unknown marketplace`, even with the catalog cache copied in. The cache does not
+  register a marketplace.
+- `agy plugin install stripe` fails: `install target must be a directory or
+  <plugin>@<marketplace>`.
+- `agy plugin install https://github.com/stripe/ai` clones the default branch. That
+  clone failed on a symlink loop, left a partial `~/.gemini/config/plugins/stripe`
+  directory, and `list --json` still reported `[]`.
+
+Sukiru therefore always passes `<plugin>@<marketplace>` for a marketplace listing,
+normalizes repository input to `https://github.com/<owner>/<repo>` (GitHub only),
+and keeps the payload root in the snapshot so rollback removes a partial clone.
 
 ## Local state, identity, and capture boundaries
 
@@ -114,7 +137,12 @@ Observed non-secret schema:
 ]}
 ```
 
-`meta.json` contains `lastModified`. This is a cached catalog, not installation
+`meta.json` contains `lastModified`. A signed-in host also caches
+`antigravity-plugins-partners`, whose entries add `category` (a string or a list),
+`skills` paths and an `mcpServers` path. Both catalogs list `displayName`,
+`description`, `author`, `homepage`, `repository`, `license`, `keywords`, `logo`
+and `suggestedPrompts`. A partner `repository` can be a whole product repository
+rather than the plugin source, so Sukiru never installs a listing from it. This is a cached catalog, not installation
 provenance. Matching names do not justify associating an installed plugin with
 that catalog. Capture the native cache/config/payload paths relevant to each
 reviewed action, including absent paths and symlinks; do not invent a Sukiru

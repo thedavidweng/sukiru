@@ -6,37 +6,18 @@ struct PluginManagementSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Manage Host Plugins").font(.title2)
+            if state.pluginManagement.repositoryInstall {
+                Text("Install from Repository").font(.title2)
+            } else {
+                Text("Manage Host Plugins").font(.title2)
+            }
             Form {
                 LabeledContent("Host", value: state.pluginManagement.host.displayName)
                     .accessibilityIdentifier("sukiru.plugins.operation.host")
-                Picker("Operation", selection: $state.pluginManagement.action) {
-                    ForEach(operations, id: \.self) { action in
-                        Text(verbatim: PluginActionTitle.title(action)).tag(action)
-                    }
-                }
-                .accessibilityIdentifier("sukiru.plugins.operation.action")
-                .help("Unsupported host operations show the host's capability limit")
-                .onChange(of: state.pluginManagement.action) { _, action in
-                    state.pluginManagement.target = ["list", "import"].contains(action) ? "*" : ""
-                }
-                TextField(
-                    "Plugin, marketplace, package or address", text: $state.pluginManagement.target
-                )
-                .accessibilityIdentifier("sukiru.plugins.operation.target")
-                .help(
-                    "Use a host-supported target; * selects all packages for OpenCode list, check or update"
-                )
-                if state.pluginManagement.host == .antigravity {
-                    antigravityOptions
-                }
-                let showsGitRef =
-                    state.pluginManagement.host == .cursor
-                    && state.pluginManagement.action == "marketplace-add"
-                if showsGitRef {
-                    TextField("Git ref (optional)", text: gitRef)
-                        .accessibilityIdentifier("sukiru.plugins.operation.git-ref")
-                        .help("Pass one Cursor-supported branch, tag, or commit ref")
+                if state.pluginManagement.repositoryInstall {
+                    repositoryFields
+                } else {
+                    operationFields
                 }
                 Picker("Scope", selection: $state.pluginManagement.scopeRoot) {
                     Text("User Library").tag(state.environment.home)
@@ -85,6 +66,52 @@ struct PluginManagementSheet: View {
     }
 
     @ViewBuilder
+    private var operationFields: some View {
+        Picker("Operation", selection: $state.pluginManagement.action) {
+            ForEach(operations, id: \.self) { action in
+                Text(verbatim: PluginActionTitle.title(action)).tag(action)
+            }
+        }
+        .accessibilityIdentifier("sukiru.plugins.operation.action")
+        .help("Unsupported host operations show the host's capability limit")
+        .onChange(of: state.pluginManagement.action) { _, action in
+            state.pluginManagement.target = ["list", "import"].contains(action) ? "*" : ""
+        }
+        TextField(
+            "Plugin, marketplace, package or address", text: $state.pluginManagement.target
+        )
+        .accessibilityIdentifier("sukiru.plugins.operation.target")
+        .help(
+            "Use a host-supported target; * selects all packages for OpenCode list, check or update"
+        )
+        if state.pluginManagement.host == .antigravity {
+            antigravityOptions
+        }
+        let showsGitRef =
+            state.pluginManagement.host == .cursor
+            && state.pluginManagement.action == "marketplace-add"
+        if showsGitRef {
+            TextField("Git ref (optional)", text: gitRef)
+                .accessibilityIdentifier("sukiru.plugins.operation.git-ref")
+                .help("Pass one Cursor-supported branch, tag, or commit ref")
+        }
+    }
+
+    @ViewBuilder
+    private var repositoryFields: some View {
+        TextField("owner/repo or GitHub URL", text: $state.pluginManagement.target)
+            .accessibilityIdentifier("sukiru.plugins.operation.repository")
+            .help("A GitHub repository that contains an Antigravity plugin")
+        Text(
+            """
+            agy clones the repository's default branch. \
+            This is not a marketplace listing, so its contents can differ from a marketplace version.
+            """
+        )
+        .foregroundStyle(.secondary)
+    }
+
+    @ViewBuilder
     private var antigravityOptions: some View {
         if state.pluginManagement.action == "link" {
             TextField("Marketplace", text: $state.pluginManagement.marketplace)
@@ -99,6 +126,7 @@ struct PluginManagementSheet: View {
         Text(
             """
             Antigravity uses shared enablement across scopes. \
+            Install accepts plugin@marketplace or a local directory path. \
             Import accepts gemini, claude, or * for both sources. Validate accepts a path; list uses *.
             """
         )
