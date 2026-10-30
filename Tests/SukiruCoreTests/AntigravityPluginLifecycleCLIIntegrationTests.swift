@@ -46,6 +46,50 @@ struct AntigravityPluginLifecycleTests {
             })
     }
 
+    @Test("Install distinguishes marketplace, GitHub repository and local directory sources")
+    func installSources() throws {
+        let fixture = try PluginHostFixture(
+            host: "antigravity", version: "1.4.7", help: help, helpOnStderr: true)
+        let result = try fixture.plan([
+            fixture.request("install", "stripe@antigravity-plugins-partners"),
+            fixture.request("install", "git@github.com:stripe/ai.git"),
+            fixture.request("install", "/tmp/demo-plugin")
+        ])
+        #expect(result.exitCode == 0, "\(result.stderrText)")
+        let commands = try result.plannedCommands()
+        #expect(
+            commands.compactMap { $0["argv"] as? [String] } == [
+                ["agy", "plugin", "install", "stripe@antigravity-plugins-partners"],
+                ["agy", "plugin", "install", "https://github.com/stripe/ai"],
+                ["agy", "plugin", "install", "/tmp/demo-plugin"]
+            ])
+        let intents = commands.compactMap { $0["intent"] as? String }
+        #expect(
+            intents[0].contains("from the Antigravity marketplace antigravity-plugins-partners"))
+        #expect(
+            intents[1].contains("not from a marketplace") && intents[1].contains("default branch"))
+        #expect(intents[2].contains("local directory"))
+        for target in ["stripe", "https://gitlab.com/owner/repo"] {
+            let refused = try fixture.plan([fixture.request("install", target)])
+            #expect(refused.exitCode != 0)
+        }
+        try fixture.tree.dir("home/plugins/demo")
+        let relative = try fixture.plan([fixture.request("install", "plugins/demo")])
+        let local = try #require(try relative.plannedCommands().first)
+        #expect(
+            local["argv"] as? [String] == [
+                "agy", "plugin", "install", fixture.home + "/plugins/demo"
+            ])
+        #expect((local["intent"] as? String)?.contains("local directory") == true)
+        try fixture.tree.dir("home/demo@market")
+        let listed = try fixture.plan([fixture.request("install", "demo@market")])
+        #expect(
+            try listed.plannedCommands().first?["argv"] as? [String] == [
+                "agy", "plugin", "install", "demo@market"
+            ])
+        #expect(fixture.invocations.isEmpty)
+    }
+
     @Test("Public CLI exposes import, validate, link, inspection and signed directory targets")
     func commandSurface() throws {
         let fixture = try PluginHostFixture(

@@ -75,29 +75,27 @@ struct PluginMarketplacesSheet: View {
                                 }
                             }
                             Spacer()
-                            if marketplace.host != .antigravity {
-                                Menu {
-                                    let actions = ["marketplace-refresh", "marketplace-remove"]
-                                    ForEach(actions, id: \.self) { action in
-                                        Button(PluginActionTitle.title(action)) {
-                                            onManage(marketplace, action)
-                                        }
-                                        .accessibilityIdentifier(
-                                            "sukiru.plugins.marketplace.\(action).\(marketplace.id)"
-                                        )
-                                        .help("Preview an operation for this marketplace")
+                            Menu {
+                                let actions = ["marketplace-refresh", "marketplace-remove"]
+                                ForEach(actions, id: \.self) { action in
+                                    Button(PluginActionTitle.title(action)) {
+                                        onManage(marketplace, action)
                                     }
-                                } label: {
-                                    Label("Marketplace Actions", systemImage: "ellipsis.circle")
+                                    .accessibilityIdentifier(
+                                        "sukiru.plugins.marketplace.\(action).\(marketplace.id)"
+                                    )
+                                    .help("Preview an operation for this marketplace")
                                 }
-                                .accessibilityIdentifier(
-                                    "sukiru.plugins.marketplace.actions.\(marketplace.id)"
-                                )
-                                .labelStyle(.iconOnly)
-                                .menuStyle(.borderlessButton)
-                                .fixedSize()
-                                .help("Preview an operation for this marketplace")
+                            } label: {
+                                Label("Marketplace Actions", systemImage: "ellipsis.circle")
                             }
+                            .accessibilityIdentifier(
+                                "sukiru.plugins.marketplace.actions.\(marketplace.id)"
+                            )
+                            .labelStyle(.iconOnly)
+                            .menuStyle(.borderlessButton)
+                            .fixedSize()
+                            .help("Preview an operation for this marketplace")
                         }
                     }
                     .accessibilityIdentifier("sukiru.plugins.marketplace.\(marketplace.id)")

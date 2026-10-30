@@ -5,6 +5,14 @@ struct PluginDetailView: View {
     @EnvironmentObject private var state: AppState
 
     var body: some View {
+        if state.showsPluginMarketplace && state.pluginHost.hasMarketplaceBrowser {
+            PluginCatalogDetailView()
+        } else {
+            installationDetail
+        }
+    }
+
+    private var installationDetail: some View {
         Group {
             if let plugin = state.selectedPlugin {
                 Form {

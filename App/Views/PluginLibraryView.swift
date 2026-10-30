@@ -32,7 +32,87 @@ struct PluginLibraryView: View {
         (state.report?.pluginInventory?.marketplaces ?? []).filter { $0.host == host }
     }
 
+    private var showsMarketplace: Bool {
+        state.showsPluginMarketplace && host.hasMarketplaceBrowser
+    }
+
     var body: some View {
+        Group {
+            if showsMarketplace {
+                PluginCatalogList(marketplaces: marketplaces, filter: filter)
+            } else {
+                installedList
+            }
+        }
+        .navigationTitle(Text(verbatim: host.displayName))
+        .navigationSubtitle(
+            showsMarketplace
+                ? Text(
+                    "\(marketplaces.flatMap(\.plugins).filter { $0.matches(filter) }.count) listings"
+                )
+                : Text("\(installations.count) plugins")
+        )
+        .searchable(text: $filter, placement: .toolbar, prompt: Text("Filter Plugins"))
+        .sheet(isPresented: $showingMarketplaces, onDismiss: runCatalogAction) {
+            PluginMarketplacesSheet(
+                marketplaces: marketplaces,
+                onInstall: { entry, marketplace in
+                    catalogAction = { state.manageCatalogEntry(entry, marketplace: marketplace) }
+                    showingMarketplaces = false
+                },
+                onManage: { marketplace, action in
+                    catalogAction = { state.manageMarketplace(marketplace, action: action) }
+                    showingMarketplaces = false
+                })
+        }
+        .toolbar {
+            if host.hasMarketplaceBrowser {
+                ToolbarItem {
+                    Picker("Show", selection: $state.showsPluginMarketplace) {
+                        Text("Installed").tag(false)
+                        Text("Marketplace").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("sukiru.plugins.page")
+                    .help("Switch between installed plugins and this host's marketplace")
+                }
+            }
+            ToolbarItem {
+                addMenu
+            }
+        }
+    }
+
+    private var addMenu: some View {
+        Menu {
+            Button("Install Plugin…") { state.newPluginOperation(host: host) }
+                .accessibilityIdentifier("sukiru.plugins.manage")
+                .help("Preview a plugin installation")
+            if host == .antigravity {
+                Button("Install from Repository…") { state.newPluginRepositoryInstall(host: host) }
+                    .accessibilityIdentifier("sukiru.plugins.manage.repository")
+                    .help("Preview installing a plugin from a GitHub repository")
+                ForEach(["import", "validate", "link", "list"], id: \.self) { action in
+                    Button(PluginActionTitle.title(action) + "…") {
+                        state.newPluginOperation(host: host, action: action)
+                    }
+                    .accessibilityIdentifier("sukiru.plugins.manage.\(action)")
+                    .help("Preview this host’s native plugin command")
+                }
+            }
+            if host.hasMarketplaces, !host.hasMarketplaceBrowser {
+                Button("Marketplaces…") { showingMarketplaces = true }
+                    .accessibilityIdentifier("sukiru.plugins.catalog")
+                    .help("Browse configured marketplaces")
+            }
+        } label: {
+            Label("Add Plugin", systemImage: "plus")
+        }
+        .accessibilityIdentifier("sukiru.plugins.add")
+        .help("Install a plugin or browse configured marketplaces")
+    }
+
+    private var installedList: some View {
         List(selection: $state.selectedPluginIDs) {
             ForEach(groups, id: \.root) { group in
                 Section {
@@ -79,9 +159,6 @@ struct PluginLibraryView: View {
         } message: {
             Text(verbatim: state.pluginManagement.removalError ?? "")
         }
-        .navigationTitle(Text(verbatim: host.displayName))
-        .navigationSubtitle(Text("\(installations.count) plugins"))
-        .searchable(text: $filter, placement: .toolbar, prompt: Text("Filter Plugins"))
         .overlay {
             if installations.isEmpty {
                 if filter.isEmpty {
@@ -95,47 +172,8 @@ struct PluginLibraryView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingMarketplaces, onDismiss: runCatalogAction) {
-            PluginMarketplacesSheet(
-                marketplaces: marketplaces,
-                onInstall: { entry, marketplace in
-                    catalogAction = { state.manageCatalogEntry(entry, marketplace: marketplace) }
-                    showingMarketplaces = false
-                },
-                onManage: { marketplace, action in
-                    catalogAction = { state.manageMarketplace(marketplace, action: action) }
-                    showingMarketplaces = false
-                })
-        }
         .onChange(of: installations.map(\.id)) { _, visible in
             state.selectedPluginIDs.formIntersection(visible)
-        }
-        .toolbar {
-            ToolbarItem {
-                Menu {
-                    Button("Install Plugin…") { state.newPluginOperation(host: host) }
-                        .accessibilityIdentifier("sukiru.plugins.manage")
-                        .help("Preview a plugin installation")
-                    if host == .antigravity {
-                        ForEach(["import", "validate", "link", "list"], id: \.self) { action in
-                            Button(PluginActionTitle.title(action) + "…") {
-                                state.newPluginOperation(host: host, action: action)
-                            }
-                            .accessibilityIdentifier("sukiru.plugins.manage.\(action)")
-                            .help("Preview this host’s native plugin command")
-                        }
-                    }
-                    if host.hasMarketplaces {
-                        Button("Marketplaces…") { showingMarketplaces = true }
-                            .accessibilityIdentifier("sukiru.plugins.catalog")
-                            .help("Browse configured marketplaces")
-                    }
-                } label: {
-                    Label("Add Plugin", systemImage: "plus")
-                }
-                .accessibilityIdentifier("sukiru.plugins.add")
-                .help("Install a plugin or browse configured marketplaces")
-            }
         }
     }
 

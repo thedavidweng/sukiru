@@ -1,6 +1,6 @@
 # Sukiru Privacy Policy
 
-Last updated: October 26, 2026
+Last updated: October 30, 2026
 
 Sukiru does not collect, sell, or share personal data. It has no accounts,
 analytics, advertising, telemetry, or cloud service of its own.
@@ -51,8 +51,15 @@ Sukiru makes these network requests, and no others:
   the `SKILL.md` of a few same-name listings is downloaded from
   `raw.githubusercontent.com` (or the listing's own website) to compare with
   your copy. Your copy is never uploaded.
+- **Plugin marketplace icons**: when you open a host's Marketplace view in
+  Plugins, Sukiru downloads each listing's icon from the HTTPS address in that
+  host's own cached catalog (for Antigravity, `www.gstatic.com`). The request
+  carries only the icon address; nothing about your Mac or your plugins is
+  sent.
 - **Commands you confirm**: installs, updates, and repairs run `npx skills` or
   `gh skill`, which may contact npm, GitHub, or a skill's source repository.
+  Plugin operations run the host's own CLI, such as `agy plugin install`,
+  which may contact that host's marketplace or a plugin's repository.
   Those tools follow their own privacy policies. Sukiru runs them with
   `SKILLS_TELEMETRY=0` to opt out of the `skills` CLI's telemetry, and with
   `npm_config_prefer_offline=true` so `npx` uses the `skills` CLI already on
@@ -69,11 +76,16 @@ Sukiru runs, and Sukiru never writes it to disk.
 - **Snapshots and execution records** in
   `~/Library/Application Support/Sukiru`. Before each batch, Sukiru snapshots
   the files the batch can change so you can roll it back. Execution records
-  hold the commands that ran and their output. Sukiru keeps the last 10
-  snapshots and deletes older ones. You can delete any snapshot from the
-  Snapshots list.
+  hold the commands that ran and their output. A snapshot and its execution
+  record are kept or deleted together. By default Sukiru keeps at most 20
+  batches, deletes batches older than 30 days, and keeps the snapshot store
+  under 1 GB by deleting the oldest first. The most recent batch is always
+  kept so you can roll it back. Change these limits or clear all history in
+  Settings, or delete any snapshot from the Snapshots list.
 - **Preferences** such as your project roots, language, and install options,
-  in the standard macOS user defaults.
+  in the standard macOS user defaults. The history limits are stored in
+  `settings.json` in the folder above, so the app and the `sukiru` CLI use
+  the same limits.
 
 This data stays on your Mac. Sukiru never uploads it. Delete the folder above
 to remove it.

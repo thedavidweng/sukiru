@@ -35,6 +35,9 @@ final class AppState: ObservableObject {
     @Published var libraryScope: LibraryScope = .all
     @Published var pluginHost: PluginHost = .claude
     @Published var selectedPluginIDs: Set<String> = []
+    /// The Plugins tab shows the host's marketplace instead of its installations.
+    @Published var showsPluginMarketplace = false
+    @Published var selectedCatalogEntryID: String?
     @Published var pluginManagement = PluginManagementState()
     @Published var hookState = HookNavigationState()
     @Published private(set) var scanPhase: ScanPhase = .loading

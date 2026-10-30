@@ -111,14 +111,37 @@ extension PluginInventoryReader {
             guard let catalog = json(file, issues: &issues), let name = catalog["name"] as? String,
                 let entries = catalog["plugins"] as? [[String: Any]]
             else { return nil }
+            let meta = HostPathResolver.join(directory, "meta.json")
+            let updatedAt =
+                FileManager.default.fileExists(atPath: meta)
+                ? json(meta, issues: &issues)?["lastModified"] as? String : nil
             return PluginMarketplace(
                 host: .antigravity, name: name, source: directory, scopeRoot: environment.home,
                 path: directory,
                 plugins: entries.compactMap { entry in
                     guard let name = entry["name"] as? String else { return nil }
-                    return PluginCatalogEntry(
-                        name: name, source: directory, version: entry["version"] as? String)
-                }, evidence: "cached-catalog")
+                    return antigravityCatalogEntry(entry, name: name, source: directory)
+                }, evidence: "cached-catalog", updatedAt: updatedAt)
         }
+    }
+
+    /// Partner listings give `category` as a string or a list, and `author` as an object.
+    private func antigravityCatalogEntry(
+        _ entry: [String: Any], name: String, source: String
+    ) -> PluginCatalogEntry {
+        let author = entry["author"] as? [String: Any]
+        let category = entry["category"]
+        return PluginCatalogEntry(
+            name: name, source: source, version: entry["version"] as? String,
+            displayName: entry["displayName"] as? String,
+            summary: entry["description"] as? String,
+            logo: entry["logo"] as? String,
+            author: author?["name"] as? String ?? entry["author"] as? String,
+            homepage: entry["homepage"] as? String,
+            repository: entry["repository"] as? String,
+            license: entry["license"] as? String,
+            categories: (category as? String).map { [$0] } ?? category as? [String],
+            keywords: entry["keywords"] as? [String],
+            suggestedPrompts: entry["suggestedPrompts"] as? [String])
     }
 }

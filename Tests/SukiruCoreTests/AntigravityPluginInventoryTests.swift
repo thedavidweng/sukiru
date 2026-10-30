@@ -33,6 +33,46 @@ struct AntigravityPluginInventoryTests {
         #expect(inventory.issues.isEmpty)
     }
 
+    @Test("Cached catalogs keep listing details, string or list categories and the fetch date")
+    func catalogDetails() throws {
+        let tree = try TempTree()
+        let home = try tree.dir("home")
+        let cache = "home/.gemini/antigravity-cli/cache/marketplaces/"
+        try tree.file(
+            cache + "partners/marketplace.json",
+            contents: """
+                {"name":"antigravity-plugins-partners","plugins":[
+                 {"name":"stripe","displayName":"Stripe","version":"0.0.1","description":"Payments",
+                  "logo":"https://www.gstatic.com/s.svg",
+                  "author":{"name":"Stripe"},"repository":"https://github.com/stripe/ai",
+                  "category":"Developer Tools","keywords":["payments"],"suggestedPrompts":["List products"]},
+                 {"name":"multi","category":["Security","Productivity"]}]}
+                """)
+        try tree.file(
+            cache + "partners/meta.json", contents: "{\"lastModified\":\"Thu, 29 Oct 2026\"}")
+        try tree.file(
+            cache + "official/marketplace.json",
+            contents:
+                "{\"name\":\"antigravity-plugins-official\",\"plugins\":[{\"name\":\"firebase\"}]}")
+        let marketplaces = read(home, roots: []).marketplaces
+        let partners = try #require(
+            marketplaces.first { $0.name == "antigravity-plugins-partners" })
+        #expect(partners.updatedAt == "Thu, 29 Oct 2026")
+        let stripe = try #require(partners.plugins.first { $0.name == "stripe" })
+        #expect(stripe.displayName == "Stripe" && stripe.summary == "Payments")
+        #expect(stripe.logo == "https://www.gstatic.com/s.svg")
+        #expect(stripe.author == "Stripe" && stripe.repository == "https://github.com/stripe/ai")
+        #expect(
+            stripe.categories == ["Developer Tools"] && stripe.suggestedPrompts == ["List products"]
+        )
+        #expect(
+            partners.plugins.first { $0.name == "multi" }?.categories == [
+                "Security", "Productivity"
+            ])
+        let official = try #require(
+            marketplaces.first { $0.name == "antigravity-plugins-official" })
+        #expect(official.updatedAt == nil && official.plugins.first?.displayName == nil)
+    }
     @Test("Native component inventory lists names and declaration files without exposing secrets")
     func components() throws {
         let tree = try TempTree()

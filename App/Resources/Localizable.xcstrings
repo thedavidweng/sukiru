@@ -1,6 +1,246 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "The cached catalog has no listings" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缓存的目录里没有插件条目"
+          }
+        }
+      }
+    },
+    "%lld listings" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 个市场条目"
+          }
+        }
+      }
+    },
+    "A GitHub repository that contains an Antigravity plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "包含 Antigravity 插件的 GitHub 仓库"
+          }
+        }
+      }
+    },
+    "An installed plugin has this directory name; that does not prove it came from this listing" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已有插件使用这个目录名；这不能证明它来自此市场条目"
+          }
+        }
+      }
+    },
+    "Author" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "作者"
+          }
+        }
+      }
+    },
+    "Catalog cached by the host: %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "宿主缓存目录的时间：%@"
+          }
+        }
+      }
+    },
+    "Category" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分类"
+          }
+        }
+      }
+    },
+    "Homepage" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主页"
+          }
+        }
+      }
+    },
+    "Install from Marketplace…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从市场安装…"
+          }
+        }
+      }
+    },
+    "Install runs agy plugin install %@@%@ and needs a signed-in agy. API keys, OAuth and other setup stay in the host." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装会运行 agy plugin install %1$@@%2$@，需要 agy 已登录。API 密钥、OAuth 等配置仍在宿主中完成。"
+          }
+        }
+      }
+    },
+    "Installed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已安装"
+          }
+        }
+      }
+    },
+    "Keywords" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关键词"
+          }
+        }
+      }
+    },
+    "License" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "许可证"
+          }
+        }
+      }
+    },
+    "No cached marketplace catalog" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有已缓存的市场目录"
+          }
+        }
+      }
+    },
+    "Open %@ and sign in; Sukiru reads the catalog the host caches." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开 %@ 并登录；Sukiru 读取宿主缓存的目录。"
+          }
+        }
+      }
+    },
+    "Plugin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "插件"
+          }
+        }
+      }
+    },
+    "Preview installing a plugin from a GitHub repository" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览从 GitHub 仓库安装插件"
+          }
+        }
+      }
+    },
+    "Preview installing this listing from its marketplace" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览从所属市场安装此插件"
+          }
+        }
+      }
+    },
+    "Project Links" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "项目链接"
+          }
+        }
+      }
+    },
+    "Same name installed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已装同名插件"
+          }
+        }
+      }
+    },
+    "Suggested Prompts" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "示例提示词"
+          }
+        }
+      }
+    },
+    "Switch between installed plugins and this host's marketplace" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在已安装插件和此宿主的市场之间切换"
+          }
+        }
+      }
+    },
+    "agy clones the repository's default branch. This is not a marketplace listing, so its contents can differ from a marketplace version." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "agy 会克隆仓库的默认分支。这不是市场条目，内容可能与市场版本不同。"
+          }
+        }
+      }
+    },
+    "owner/repo or GitHub URL" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "owner/repo 或 GitHub 地址"
+          }
+        }
+      }
+    },
     "Check for Skill Updates" : {
       "comment" : "Library toolbar: read-only update check through gh skill update --dry-run.",
       "localizations" : {
@@ -10344,18 +10584,18 @@
         }
       }
     },
-    "Antigravity uses shared enablement across scopes. Import accepts gemini, claude, or * for both sources. Validate accepts a path; list uses *." : {
+    "Antigravity uses shared enablement across scopes. Install accepts plugin@marketplace, a GitHub repository, or a local directory path. Import accepts gemini, claude, or * for both sources. Validate accepts a path; list uses *." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Antigravity uses shared enablement across scopes. Import accepts gemini, claude, or * for both sources. Validate accepts a path; list uses *."
+            "value" : "Antigravity uses shared enablement across scopes. Install accepts plugin@marketplace, a GitHub repository, or a local directory path. Import accepts gemini, claude, or * for both sources. Validate accepts a path; list uses *."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Antigravity 的启用状态跨范围共享。导入接受 gemini、claude，或用 * 导入两者。验证接受路径；列出插件使用 *。"
+            "value" : "Antigravity 的启用状态跨范围共享。安装接受 plugin@marketplace、GitHub 仓库或本地目录路径。导入接受 gemini、claude，或用 * 导入两者。验证接受路径；列出插件使用 *。"
           }
         }
       }

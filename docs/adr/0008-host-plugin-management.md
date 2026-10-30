@@ -218,6 +218,22 @@ Reference evidence:
 - [Cursor support: marketplace refresh can report false success](https://forum.cursor.com/t/cli-added-git-marketplace-never-reindexes-plugin-marketplace-update-reports-0-plugins-indexed-and-cache-stays-pinned-to-the-first-commit/169587)
 - [Enabled state and retained cache observations](https://github.com/cursor/plugins/issues/136)
 
+## Amendment (2026-10-30): marketplace browsing inside each host's tab
+
+A host's marketplace is browsed only in that host's own Plugins tab, as an
+Installed / Marketplace switch, because plugin marketplaces are proprietary
+to each host. Antigravity is the first host with this view; others follow
+when their catalogs carry listing details. Listings come from the host's own
+catalog cache; Sukiru still keeps no catalog. A matching directory name is
+shown as a name match, not as provenance.
+
+Install from a marketplace and install from a repository are separate entry
+points that both run the host's native install. For Antigravity a listing
+installs as `agy plugin install <plugin>@<marketplace>`; a repository install
+accepts GitHub only and states that it installs the default branch, not a
+marketplace version. See the
+[Antigravity evidence](../antigravity-plugin-interface-evidence.md).
+
 ## Amendment (2026-10-05): version contract and host-specific limits
 
 Exact version matching refused every host release after the one inspected. A
