@@ -208,14 +208,14 @@ a:hover { text-decoration: underline; }
   display: inline-flex; align-items: center; gap: 0.4cqw;
   padding: 0.25cqw 0.7cqw; border-radius: 99px; white-space: nowrap; font-weight: 600;
 }
-.hero-row .bad { color: var(--c); background: color-mix(in srgb, var(--c) 18%, transparent); }
+.hero-row .bad { color: color-mix(in srgb, var(--c), white 35%); background: color-mix(in srgb, var(--c) 18%, transparent); }
 .hero-row .bad::before {
   content: ""; width: 0.6cqw; height: 0.6cqw; border-radius: 50%;
   background: var(--c); box-shadow: 0 0 0.8cqw var(--c);
 }
 .hero-row .ok {
   position: absolute; inset: 0; justify-content: center;
-  color: #30d158; background: rgba(48, 209, 88, 0.16); opacity: 0;
+  color: #30d158; background: #243c2a; visibility: hidden;
 }
 .hero-replay {
   position: absolute; right: 24px; bottom: 24px; width: 36px; height: 36px;
@@ -225,7 +225,7 @@ a:hover { text-decoration: underline; }
 .hero-replay[hidden] { display: none; }
 .hero-replay:hover { background: rgba(255, 255, 255, 0.22); }
 /* Until site.js plays the intro, the shot and copy wait offstage. */
-.js .hero:not(.is-done) .hero-shot, .js .hero:not(.is-done) .hero-meta > * { opacity: 0; }
+.js .hero:not(.is-done) .hero-shot { opacity: 0; }
 @supports (animation-timeline: view()) {
   .hero-stage-wrap {
     animation: hero-recede linear both;
@@ -309,7 +309,7 @@ footer .cols {
   max-width: 980px; margin: 0 auto;
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
 }
-footer h4 { font-size: 12px; font-weight: 600; line-height: 1.5; letter-spacing: 0; color: var(--fg); }
+footer h2 { font-size: 12px; font-weight: 600; line-height: 1.5; letter-spacing: 0; color: var(--fg); }
 footer ul { list-style: none; margin-top: 4px; }
 footer li { margin-top: 8px; }
 footer li a { color: var(--fg-secondary); text-decoration: none; font-size: 12px; line-height: 1.5; letter-spacing: 0; }

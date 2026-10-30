@@ -137,7 +137,7 @@
       var enter = i * 45, sortAt = 1150 + i * 70;
 
       anim(card, [
-        { transform: at(1, 1) + " translateZ(-600px)", opacity: 0, filter: "blur(" + (blur + 10) + "px)" },
+        { transform: at(1, 1) + " translateZ(-600px)", opacity: 1, filter: "blur(" + (blur + 10) + "px)" },
         { transform: at(0.85, 0.8), opacity: 1, filter: "blur(" + blur + "px)" }
       ], { duration: sortAt - enter, delay: enter, easing: "cubic-bezier(.2,.7,.3,1)" });
       anim(card, [
@@ -146,11 +146,11 @@
       ], { duration: 1100, delay: sortAt, easing: "cubic-bezier(.5,0,.15,1)", fill: "forwards" });
 
       // Once in place, each problem resolves to a fix.
-      anim(card.querySelector(".bad"), [{ opacity: 1 }, { opacity: 0 }],
-        { duration: 160, delay: sortAt + 900, fill: "forwards" });
-      anim(card.querySelector(".ok"), [{ opacity: 0, transform: "scale(.6)" }, { opacity: 1, transform: "none" }],
+      anim(card.querySelector(".bad"), [{ visibility: "visible" }, { visibility: "hidden" }],
+        { duration: 1, delay: sortAt + 900, fill: "forwards" });
+      anim(card.querySelector(".ok"), [{ visibility: "visible", transform: "scale(.6)" }, { visibility: "visible", transform: "none" }],
         { duration: 260, delay: sortAt + 900, easing: "cubic-bezier(.3,1.6,.5,1)", fill: "forwards" });
-      anim(card, [{ opacity: 1 }, { opacity: 0 }], { duration: 500, delay: 3050 + i * 25, fill: "forwards" });
+      anim(card, [{ filter: "blur(0px)", visibility: "visible" }, { filter: "blur(10px)", visibility: "hidden" }], { duration: 500, delay: 3050 + i * 25, fill: "forwards" });
     });
 
     // The window opens first under the list, then out to its full width.
@@ -164,7 +164,7 @@
     anim(sheen, [{ transform: "translateX(-60%)" }, { transform: "translateX(60%)" }],
       { duration: 1200, delay: 3350, easing: "cubic-bezier(.45,0,.2,1)", pseudoElement: "::after" });
     copy.forEach(function (c, i) {
-      anim(c, [{ opacity: 0, transform: "translateY(18px)" }, { opacity: 1, transform: "none" }],
+      anim(c, [{ transform: "translateY(18px)" }, { transform: "none" }],
         { duration: 900, delay: 3500 + i * 110, easing: "cubic-bezier(.2,.7,.3,1)" });
     });
 
