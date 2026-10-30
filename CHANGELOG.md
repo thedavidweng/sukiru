@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.1](https://github.com/thedavidweng/sukiru/compare/v1.12.0...v1.12.1) (2026-10-30)
+
+
+### 🐛 Bug Fixes
+
+* **updates:** enable SUVerifyUpdateBeforeExtraction so the updater starts ([#90](https://github.com/thedavidweng/sukiru/issues/90)) ([4aa852d](https://github.com/thedavidweng/sukiru/commit/4aa852d10dc0fc64695efec37820efbaf29f3d60))
+
 ## [1.12.0](https://github.com/thedavidweng/sukiru/compare/v1.11.0...v1.12.0) (2026-10-30)
 
 
