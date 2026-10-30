@@ -8,6 +8,8 @@
 	<string>MXOzfefBvfEcz0VaUdo7Oz7s12tMjB1THAKxw81cXDE=</string>
 	<key>SURequireSignedFeed</key>
 	<true/>
+	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 </dict>
