@@ -126,7 +126,7 @@
       "root" : "<FIXTURE>/.claude/skills"
     },
     {
-      "id" : "host:codex",
+      "id" : "host:codex#legacy:skills",
       "installed" : true,
       "kind" : "user",
       "root" : "<FIXTURE>/.codex/skills"

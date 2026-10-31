@@ -31,7 +31,7 @@ extension CommandBatchBuilder {
         let selection = HostRemovalSelection(root: root, facts: facts, skills: skills)
         let (removed, kept) = selection.entries()
         let uncertain =
-            capabilities?.npx.skillsVersion.map { $0 != "1.7.0" } == true
+            capabilities?.npx.skillsVersion.map { $0 != "1.7.4" } == true
             || report.issues.contains { issue in
                 facts.workspaces.contains { issue.path.hasPrefix($0.workspace.root) }
                     || issue.path == facts.lockPath

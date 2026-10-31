@@ -30,7 +30,7 @@ struct LibraryLifecycleTests {
                 available: github, present: github, version: github ? "2.90.0" : nil,
                 meetsMinimum: github, reason: github ? nil : .absent),
             npx: .init(
-                resolvable: npx, skillsVersion: npx ? "1.7.0" : nil,
+                resolvable: npx, skillsVersion: npx ? "1.7.4" : nil,
                 reason: npx ? nil : .absent))
     }
 

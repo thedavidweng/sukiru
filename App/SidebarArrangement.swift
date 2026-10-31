@@ -135,27 +135,31 @@ struct SidebarArrangement: RawRepresentable, Equatable {
 
 /// An agent is available to the sidebar when it is installed on this Mac or
 /// holds something the scan found, so leftovers written by other tools stay
-/// reachable for cleanup.
+/// reachable for cleanup. The open agent also stays available, so cleaning
+/// up its last item does not pull its row out from under the user.
 extension AppState {
     nonisolated static func installedAgentIDs(in environment: SukiruEnvironment) -> Set<String> {
-        let detector = HostDetector(environment: environment, fileSystem: DefaultFileSystemProbe())
-        return Set(HostTable.hosts.filter(detector.isDetected).map(\.id))
+        HostDetector(environment: environment, fileSystem: DefaultFileSystemProbe())
+            .installedAgentIDs()
     }
 
     func isAvailable(_ host: PluginHost) -> Bool {
         let inventory = report?.pluginInventory
-        return detectedAgentIDs.contains(host.agentID)
+        return (surface == .plugins && pluginHost == host)
+            || detectedAgentIDs.contains(host.agentID)
             || !pluginInstallations(for: host).isEmpty
             || inventory?.marketplaces.contains { $0.host == host } == true
             || inventory?.issues.contains { $0.host == host } == true
     }
 
     func isAvailable(_ host: HookHost) -> Bool {
-        detectedAgentIDs.contains(host.agentID) || !hooks(for: host).isEmpty
+        (surface == .hooks && hookState.host == host)
+            || detectedAgentIDs.contains(host.agentID) || !hooks(for: host).isEmpty
             || report?.hookInventory?.issues.contains { $0.host == host } == true
     }
 
     func isAvailable(_ host: ExtensionHost, mcp: Bool) -> Bool {
-        detectedAgentIDs.contains(host.agentID) || !extensions(for: host, mcp: mcp).isEmpty
+        (surface == .extensions && hookState.showsMCP == mcp && hookState.extensionHost == host)
+            || detectedAgentIDs.contains(host.agentID) || !extensions(for: host, mcp: mcp).isEmpty
     }
 }

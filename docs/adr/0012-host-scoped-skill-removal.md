@@ -18,7 +18,9 @@ Project commands run in the project root. Sukiru performs no removal file
 operations and never passes `*` or `--all` to npx. Names which could be parsed
 as options or wildcard selection are excluded, as are sanitized name collisions.
 
-Three mitigations address the pinned skills@1.7.0 removal behavior:
+Three mitigations address the pinned skills@1.7.4 removal behavior (re-pinned
+from 1.7.0 on 2026-10-31: name matching and agent-folder removal are unchanged;
+1.7.4 only adds removal by exact lock source, which Sukiru never passes):
 
 1. Select only Vercel-owned entries in the host's own folder: links resolving
    to the scope's Shared Copy, or Vercel-locked directory copies. Preserve
@@ -29,7 +31,7 @@ Three mitigations address the pinned skills@1.7.0 removal behavior:
    existence and lstat-style install-path existence, including universal hosts'
    canonical install path. Sukiru's stricter spray-residue detection is not the
    upstream rule. Several queued removals account for earlier removed paths.
-   Scan issues or a detected CLI version other than 1.7.0 make the prediction
+   Scan issues or a detected CLI version other than 1.7.4 make the prediction
    uncertain and disclose possible deletion. Affected names and paths use the
    structured `removesLockedSkill` consequence, with an explicit every-agent
    warning. Every official removal retains the existing danger flag; `--yes`
@@ -55,13 +57,13 @@ Each removal carries capture roots for the host folder, the scope's shared
 folder, and its Vercel lock. Existing snapshots, execution, rescans, diff, and
 rollback handle the batch. Core tests exercise the scan-to-builder seam and
 built-executable CLI tests exercise previews and confirmation. Isolated real
-npx tests pin 1.7.0, verify both shared-store outcomes, protect Ownerless entries
+npx tests pin 1.7.4, verify both shared-store outcomes, protect Ownerless entries
 and other host links, and verify byte-identical rollback within affected roots.
 npm's package cache is outside those mutation bounds.
 
-Sources: pinned upstream [remove.ts](https://github.com/vercel-labs/skills/blob/v1.7.0/src/remove.ts),
-[agents.ts](https://github.com/vercel-labs/skills/blob/v1.7.0/src/agents.ts), and
-[installer.ts](https://github.com/vercel-labs/skills/blob/v1.7.0/src/installer.ts).
+Sources: pinned upstream [remove.ts](https://github.com/vercel-labs/skills/blob/v1.7.4/src/remove.ts),
+[agents.ts](https://github.com/vercel-labs/skills/blob/v1.7.4/src/agents.ts), and
+[installer.ts](https://github.com/vercel-labs/skills/blob/v1.7.4/src/installer.ts).
 
 ## Library presentation
 

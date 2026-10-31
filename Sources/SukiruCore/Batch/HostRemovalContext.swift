@@ -66,7 +66,7 @@ public struct HostRemovalContext: Sendable {
         host.projectSkillDir == HostTable.canonicalProjectSkillDir && host.showInUniversalList
     }
 
-    /// skills@1.7.0's name-to-folder mapping, including plugin names such as ce:review.
+    /// skills@1.7.4's name-to-folder mapping, including plugin names such as ce:review.
     static func folderName(_ name: String) -> String {
         let replaced = name.lowercased().replacingOccurrences(
             of: "[^a-z0-9._]+", with: "-", options: .regularExpression)

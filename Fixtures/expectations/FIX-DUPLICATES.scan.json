@@ -207,6 +207,30 @@
       "severity" : "info",
       "skillName" : "exact-demo",
       "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "alias",
+          "kind" : "subtype"
+        },
+        {
+          "detail" : "codex",
+          "kind" : "hostID"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/alias-demo",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/alias-demo",
+          "kind" : "memberPath"
+        }
+      ],
+      "ruleID" : "host-name-collision",
+      "severity" : "info",
+      "skillName" : "alias-demo",
+      "workspaceID" : "user"
     }
   ],
   "issues" : [
@@ -313,7 +337,7 @@
       "root" : "<FIXTURE>/.claude/skills"
     },
     {
-      "id" : "host:codex",
+      "id" : "host:codex#legacy:skills",
       "installed" : true,
       "kind" : "user",
       "root" : "<FIXTURE>/.codex/skills"

@@ -12,7 +12,7 @@ struct HostRemovalCLIIntegrationTests {
         try home.file(".agents/skills/a/SKILL.md", contents: OwnershipBuilders.skillMD("a"))
         try home.symlink(".claude/skills/a", to: home.path + "/.agents/skills/a")
         try home.file(".claude/skills/own/SKILL.md", contents: OwnershipBuilders.skillMD("own"))
-        try home.executable("bin/npx", contents: "#!/bin/sh\necho 1.7.0\n")
+        try home.executable("bin/npx", contents: "#!/bin/sh\necho 1.7.4\n")
         let environment = CLIRunner.fixtureEnvironment(
             home: home.path, path: home.path + "/bin:/usr/bin:/bin")
         let refused = try CLIRunner.run(

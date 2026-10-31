@@ -211,6 +211,22 @@ struct HostDetectorTests {
         #expect(!absent.detector.isDetected(try host("openclaw")))
     }
 
+    @Test("Agents outside the host table are detected at their config homes")
+    func agentsOutsideHostTable() {
+        let rig = Rig(
+            vars: ["SUKIRU_HOME": "/h"],
+            directories: ["/h/.openclaude", "/h/.config/muse", "/h/.omp/agent", "/h/.dsh"],
+            entries: [
+                "/h/.openclaude": ["settings.json"], "/h/.config/muse": ["settings.json"],
+                "/h/.omp/agent": ["config.yml"], "/h/.dsh": ["skills"]
+            ]
+        )
+        let ids = rig.detector.installedAgentIDs()
+        #expect(ids.isSuperset(of: ["openclaude", "muse", "omp"]))
+        #expect(!ids.contains("dsh"))
+        #expect(!ids.contains("jcode"))
+    }
+
     @Test("detectInProject hosts still fall through to home probes in user scope")
     func detectInProjectFallsThrough() throws {
         let home = Rig(

@@ -40,7 +40,11 @@ public struct HostPathResolver: Sendable {
 
     /// The resolved config base directory for a host.
     public func configHome(for host: HostSpec) -> String {
-        switch host.globalBase {
+        base(host.globalBase, for: host)
+    }
+
+    private func base(_ base: HostSpec.GlobalBase, for host: HostSpec) -> String {
+        switch base {
         case .home:
             return environment.home
         case .xdg:
@@ -72,7 +76,8 @@ public struct HostPathResolver: Sendable {
             }
             return Self.join(Self.join(environment.home, ".openclaw"), "skills")
         }
-        return Self.join(configHome(for: host), host.globalSkillDirRelative)
+        let root = host.globalSkillDirBase.map { base($0, for: host) } ?? configHome(for: host)
+        return Self.join(root, host.globalSkillDirRelative)
     }
 
     /// The resolved project skills root for a host under a project root.
