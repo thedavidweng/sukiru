@@ -24,6 +24,17 @@ CodeArts Agent uses the Huawei Cloud mark and Cortex Code uses the Snowflake
 mark, both from @lobehub/icons-static-svg 1.95.1 (Lobe Icons, MIT, Copyright
 (c) 2023 LobeHub).
 
+AstrBot, DeepSeek (dsh), fx, Grok Build, jcode, MiniMax Code, Muse, oh-my-pi
+(omp), Reasonix, and ZCode were converted from magpie's agent icons at commit
+11fc687c0e26dafe8c96b746151a1e80de668ce7:
+https://github.com/yetone/magpie/tree/11fc687c0e26dafe8c96b746151a1e80de668ce7/internal/gui/assets/icons
+Copyright (c) 2026 yetone (MIT). Grok Build uses the xAI mark, DeepSeek (dsh)
+the DeepSeek mark, MiniMax Code the MiniMax mark, and Muse the Meta mark, as
+magpie does; magpie attributes these provider icons to Lobe Icons (MIT,
+Copyright (c) 2023 LobeHub). Reasonix is the Reasonix Studio app icon from
+esengine/DeepSeek-Reasonix (MIT, Copyright (c) 2026 Reasonix Contributors).
+ZCode (a PNG) and Reasonix were traced to vector with potrace.
+
 The remaining marks were taken from each product's own published artwork and
 reduced to a single color; brand marks are used only to identify the product:
 - AdaL: https://sylph.ai/adal-icon-pink.svg
