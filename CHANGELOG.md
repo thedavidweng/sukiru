@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.0](https://github.com/thedavidweng/sukiru/compare/v1.14.0...v1.15.0) (2026-10-31)
+
+
+### ✨ Features
+
+* **hosts:** follow skills 1.7.4 paths and detect five more agents ([#98](https://github.com/thedavidweng/sukiru/issues/98)) ([06e98d8](https://github.com/thedavidweng/sukiru/commit/06e98d842d7113c2a2dabf203a3400d65083e350))
+
 ## [1.14.0](https://github.com/thedavidweng/sukiru/compare/v1.13.0...v1.14.0) (2026-10-31)
 
 
