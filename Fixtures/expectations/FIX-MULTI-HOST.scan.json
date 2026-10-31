@@ -31,6 +31,30 @@
       "severity" : "info",
       "skillName" : "web-api",
       "workspaceID" : "user"
+    },
+    {
+      "evidence" : [
+        {
+          "detail" : "alias",
+          "kind" : "subtype"
+        },
+        {
+          "detail" : "codex",
+          "kind" : "hostID"
+        },
+        {
+          "detail" : "<FIXTURE>/.agents/skills/web-api",
+          "kind" : "memberPath"
+        },
+        {
+          "detail" : "<FIXTURE>/.codex/skills/web-api",
+          "kind" : "memberPath"
+        }
+      ],
+      "ruleID" : "host-name-collision",
+      "severity" : "info",
+      "skillName" : "web-api",
+      "workspaceID" : "user"
     }
   ],
   "issues" : [
@@ -103,12 +127,6 @@
       "root" : "<FIXTURE>/.claude/skills"
     },
     {
-      "id" : "host:codex",
-      "installed" : true,
-      "kind" : "user",
-      "root" : "<FIXTURE>/.codex/skills"
-    },
-    {
       "id" : "host:cursor",
       "installed" : true,
       "kind" : "user",
@@ -119,6 +137,12 @@
       "installed" : false,
       "kind" : "user",
       "root" : "<FIXTURE>/.qoder/skills"
+    },
+    {
+      "id" : "host:codex#legacy:skills",
+      "installed" : true,
+      "kind" : "user",
+      "root" : "<FIXTURE>/.codex/skills"
     }
   ]
 }

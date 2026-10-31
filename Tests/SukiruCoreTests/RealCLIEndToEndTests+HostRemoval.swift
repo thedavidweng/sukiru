@@ -67,7 +67,7 @@ extension RealCLIEndToEndTests {
                 "home/.codex/skills/shared-tool", to: home + "/.agents/skills/shared-tool")
         }
         let bin = try Support.installToolWrappers(
-            try Support.resolveTools(), into: tree, skillsVersion: "1.7.0")
+            try Support.resolveTools(), into: tree, skillsVersion: "1.7.4")
         return (home, bin)
     }
 

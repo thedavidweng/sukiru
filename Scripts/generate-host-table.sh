@@ -33,6 +33,8 @@ appends="$(
                then ", extra: [" + (.extraMarkers | map(@json) | join(", ")) + "]"
                else "" end)
           + (if .globalBase != "Home" then ", base: ." + (.globalBase | ascii_downcase) else "" end)
+          + (if .globalSkillDirBase != null
+               then ", skillBase: ." + (.globalSkillDirBase | ascii_downcase) else "" end)
           + (if .detectInProject then ", detectInProject: true" else "" end)
           + (if .showInUniversalList == false then ", universal: false" else "" end)
           + (if (.legacyProjectSkillDirs | length) > 0
@@ -89,6 +91,7 @@ num_chunks=$(((total + per_chunk - 1) / per_chunk))
         fallback envFallbackDir: String? = nil,
         extra extraMarkers: [String] = [],
         base globalBase: HostSpec.GlobalBase = .home,
+        skillBase globalSkillDirBase: HostSpec.GlobalBase? = nil,
         detectInProject: Bool = false,
         universal showInUniversalList: Bool = true,
         legacyProject legacyProjectSkillDirs: [String] = [],
@@ -105,6 +108,7 @@ num_chunks=$(((total + per_chunk - 1) / per_chunk))
             envFallbackDir: envFallbackDir,
             extraMarkers: extraMarkers,
             globalBase: globalBase,
+            globalSkillDirBase: globalSkillDirBase,
             detectInProject: detectInProject,
             showInUniversalList: showInUniversalList,
             legacyProjectSkillDirs: legacyProjectSkillDirs,

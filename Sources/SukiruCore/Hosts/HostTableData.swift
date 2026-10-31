@@ -64,8 +64,9 @@ extension HostTable {
                 ".codestudio"))
         hosts.append(
             spec(
-                "codex", "Codex", ".agents/skills", "skills", "", env: "CODEX_HOME",
-                fallback: ".codex", base: .env, gh: "codex"))
+                "codex", "Codex", ".agents/skills", ".agents/skills", "", env: "CODEX_HOME",
+                fallback: ".codex", base: .env, skillBase: .home, legacyGlobal: ["skills"],
+                gh: "codex"))
         hosts.append(
             spec(
                 "command-code", "Command Code", ".commandcode/skills", ".commandcode/skills",
@@ -107,7 +108,10 @@ extension HostTable {
                 "firebender", "Firebender", ".agents/skills", ".firebender/skills", ".firebender",
                 gh: "firebender"))
         hosts.append(spec("forgecode", "ForgeCode", ".forge/skills", ".forge/skills", ".forge"))
-        hosts.append(spec("fx", "fx", ".fx/skills", ".fx/skills", ".fx"))
+        hosts.append(
+            spec(
+                "fx", "fx", ".agents/skills", ".agents/skills", ".fx",
+                legacyProject: [".fx/skills"], legacyGlobal: [".fx/skills"]))
         hosts.append(
             spec(
                 "gemini-cli", "Gemini CLI", ".agents/skills", ".gemini/skills", ".gemini",
@@ -200,7 +204,10 @@ extension HostTable {
             spec(
                 "openhands", "OpenHands", ".openhands/skills", ".openhands/skills", ".openhands",
                 gh: "openhands"))
-        hosts.append(spec("pi", "Pi", ".pi/skills", ".pi/agent/skills", ".pi/agent", gh: "pi"))
+        hosts.append(
+            spec(
+                "pi", "Pi", ".agents/skills", ".agents/skills", ".pi/agent",
+                legacyProject: [".pi/skills"], legacyGlobal: [".pi/agent/skills"], gh: "pi"))
         hosts.append(
             spec("pochi", "Pochi", ".pochi/skills", ".pochi/skills", ".pochi", gh: "pochi"))
         hosts.append(
@@ -276,6 +283,7 @@ extension HostTable {
         fallback envFallbackDir: String? = nil,
         extra extraMarkers: [String] = [],
         base globalBase: HostSpec.GlobalBase = .home,
+        skillBase globalSkillDirBase: HostSpec.GlobalBase? = nil,
         detectInProject: Bool = false,
         universal showInUniversalList: Bool = true,
         legacyProject legacyProjectSkillDirs: [String] = [],
@@ -292,6 +300,7 @@ extension HostTable {
             envFallbackDir: envFallbackDir,
             extraMarkers: extraMarkers,
             globalBase: globalBase,
+            globalSkillDirBase: globalSkillDirBase,
             detectInProject: detectInProject,
             showInUniversalList: showInUniversalList,
             legacyProjectSkillDirs: legacyProjectSkillDirs,

@@ -26,7 +26,7 @@ struct HostTableTests {
         return try JSONDecoder().decode(HostTableFile.self, from: data)
     }
 
-    @Test("Exactly 77 hosts are embedded (skills@1.7.0)")
+    @Test("Exactly 77 hosts are embedded (skills@1.7.4)")
     func hostCountIs77() {
         #expect(HostTable.hosts.count == 77)
     }
@@ -91,7 +91,9 @@ struct HostTableTests {
         let withLegacy = HostTable.hosts.filter {
             !$0.legacyProjectSkillDirs.isEmpty || !$0.legacyGlobalSkillDirs.isEmpty
         }
-        #expect(withLegacy.map(\.id) == ["droid", "kilo"])
+        #expect(withLegacy.map(\.id) == ["codex", "droid", "fx", "kilo", "pi"])
+        #expect(HostTable.host(id: "codex")?.legacyGlobalSkillDirs == ["skills"])
+        #expect(HostTable.host(id: "pi")?.legacyGlobalSkillDirs == [".pi/agent/skills"])
         #expect(HostTable.host(id: "droid")?.legacyProjectSkillDirs == [".factory/skills"])
         #expect(HostTable.host(id: "kilo")?.legacyProjectSkillDirs == [".kilocode/skills"])
         #expect(HostTable.host(id: "kilo")?.legacyGlobalSkillDirs == [".kilocode/skills"])
@@ -104,8 +106,20 @@ struct HostTableTests {
         }
     }
 
+    @Test("Codex installs under $HOME but keeps CODEX_HOME for detection and legacy skills")
+    func codexSkillBaseIsHome() throws {
+        let codex = try #require(HostTable.host(id: "codex"))
+        let environment = SukiruEnvironment(
+            reader: DictionaryEnvironmentReader(["HOME": "/h", "CODEX_HOME": "/custom/codex"]))
+        let resolver = HostPathResolver(
+            environment: environment, fileSystem: DefaultFileSystemProbe())
+        #expect(resolver.globalSkillsRoot(for: codex) == "/h/.agents/skills")
+        #expect(resolver.configHome(for: codex) == "/custom/codex")
+        #expect(resolver.legacyGlobalSkillsRoots(for: codex) == ["/custom/codex/skills"])
+    }
+
     /// The `--agent` values `gh skill install --help` lists (gh 2.102.0),
-    /// minus `antigravity2.0`, which has no skills@1.7.0 host.
+    /// minus `antigravity2.0`, which has no skills@1.7.4 host.
     static let ghHelpAgents: Set<String> = [
         "github-copilot", "claude-code", "cursor", "codex", "gemini-cli", "antigravity",
         "antigravity-cli", "adal", "amp", "augment", "bob", "cline", "codebuddy", "command-code",

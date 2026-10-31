@@ -81,6 +81,22 @@ public struct HostDetector: Sendable {
         return false
     }
 
+    /// Ids of every agent installed in user scope: host-table hosts plus the
+    /// agents Sukiru manages that the skills CLI does not list, probed at the
+    /// config homes their hook and add-on readers use.
+    public func installedAgentIDs() -> Set<String> {
+        let home = environment.home
+        let homes = [
+            "openclaude": home + "/.openclaude",
+            "jcode": environment.externalValue(for: "JCODE_HOME") ?? home + "/.jcode",
+            "muse": resolver.xdgConfigBase() + "/muse",
+            "dsh": home + "/.dsh",
+            "omp": home + "/.omp/agent"
+        ]
+        return Set(HostTable.hosts.filter(isDetected).map(\.id))
+            .union(homes.filter { marksInstallation($0.value) }.keys)
+    }
+
     /// The installed/leftover/absent tri-state for a host in user scope.
     ///
     /// A detected host is `.detected`. Otherwise, if the host's global skills

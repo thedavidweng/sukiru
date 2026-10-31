@@ -114,10 +114,12 @@ struct HostRemovalTests {
                 report: report, decisions: [], hostRemovals: [plan.request],
                 hostRemovalContext: context
             ).batch == nil)
-        let managed = try builder.planHostRemoval(
+        // skills@1.7.4 installs Codex's global skills into the shared store, and its
+        // built-in .system skills stay in the legacy CODEX_HOME root, out of reach.
+        let codex = try builder.planHostRemoval(
             hostID: "codex", bucket: "user", report: report, context: context)
-        #expect(managed.leftInPlace.only?.reason == .agentManaged)
-        #expect(managed.removed.isEmpty)
+        #expect(codex.leftInPlace.only?.reason == .sharedFolder)
+        #expect(codex.removed.isEmpty)
         #expect(
             builder.hostRemovalCandidates(bucket: "user", report: report, context: context).map(
                 \.id

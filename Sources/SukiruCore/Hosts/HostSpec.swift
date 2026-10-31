@@ -9,7 +9,9 @@ import Foundation
 ///
 /// - `projectSkillDir` is relative to a project root.
 /// - `globalSkillDirRelative` is relative to the RESOLVED base (see
-///   `HostSpec.GlobalBase`), never to `$HOME` directly.
+///   `HostSpec.GlobalBase`), never to `$HOME` directly. `globalSkillDirBase`,
+///   when set, replaces `globalBase` for this one path, so a host can keep its
+///   config home for detection and legacy dirs while installing elsewhere.
 /// - `detectionMarker` is an existence probe; the empty string means "probe the
 ///   resolved config home itself and never fall through to `$HOME`".
 /// - `extraMarkers` are probed against `$HOME` only.
@@ -40,6 +42,7 @@ public struct HostSpec: Equatable, Sendable, Codable {
     public let envFallbackDir: String?
     public let extraMarkers: [String]
     public let globalBase: GlobalBase
+    public let globalSkillDirBase: GlobalBase?
     public let detectInProject: Bool
     public let showInUniversalList: Bool
     public let legacyProjectSkillDirs: [String]
@@ -56,6 +59,7 @@ public struct HostSpec: Equatable, Sendable, Codable {
         envFallbackDir: String?,
         extraMarkers: [String],
         globalBase: GlobalBase,
+        globalSkillDirBase: GlobalBase? = nil,
         detectInProject: Bool,
         showInUniversalList: Bool,
         legacyProjectSkillDirs: [String],
@@ -71,6 +75,7 @@ public struct HostSpec: Equatable, Sendable, Codable {
         self.envFallbackDir = envFallbackDir
         self.extraMarkers = extraMarkers
         self.globalBase = globalBase
+        self.globalSkillDirBase = globalSkillDirBase
         self.detectInProject = detectInProject
         self.showInUniversalList = showInUniversalList
         self.legacyProjectSkillDirs = legacyProjectSkillDirs
@@ -88,6 +93,7 @@ public struct HostSpec: Equatable, Sendable, Codable {
         case envFallbackDir
         case extraMarkers
         case globalBase
+        case globalSkillDirBase
         case detectInProject
         case showInUniversalList
         case legacyProjectSkillDirs

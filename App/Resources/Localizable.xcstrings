@@ -8259,13 +8259,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This prediction is uncertain: scan problems in this scope or a skills CLI version other than 1.7.0 may change what is deleted. Treat every removed skill as possibly uninstalled from every agent."
+            "value" : "This prediction is uncertain: scan problems in this scope or a skills CLI version other than 1.7.4 may change what is deleted. Treat every removed skill as possibly uninstalled from every agent."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "此预测不确定：该范围内的扫描问题，或 1.7.0 以外的技能 CLI 版本，可能改变实际删除的内容。请将所有被移除的技能视为可能从所有宿主中卸载。"
+            "value" : "此预测不确定：该范围内的扫描问题，或 1.7.4 以外的技能 CLI 版本，可能改变实际删除的内容。请将所有被移除的技能视为可能从所有宿主中卸载。"
           }
         }
       }
