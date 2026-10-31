@@ -9,8 +9,11 @@ struct SidebarView: View {
     @EnvironmentObject private var state: AppState
     @AppStorage(SidebarArrangement.projectsKey) private var projects = SidebarArrangement.standard
     @AppStorage(SidebarArrangement.agentsKey) private var agents = SidebarArrangement.standard
-    /// Agent ids, comma-separated; agents start expanded.
+    /// Agent ids, comma-separated; installed agents start expanded.
     @SceneStorage("sidebarCollapsedAgents") private var collapsedAgents = ""
+    /// Agent ids, comma-separated; agents that are not installed start collapsed.
+    @SceneStorage("sidebarExpandedLeftoverAgents") private var expandedLeftoverAgents = ""
+    @SceneStorage("sidebarShowsNotInstalled") private var showsNotInstalled = true
     @Environment(\.openSettings) private var openSettings
 
     private enum Destination: Hashable {
@@ -76,7 +79,9 @@ struct SidebarView: View {
 
     var body: some View {
         let shownAgents = agents.shown(SidebarAgent.all, available: state.isAvailable)
-        let counts = SkillCounts(state: state, agents: shownAgents)
+        let installedAgents = shownAgents.filter(state.isInstalled)
+        let leftoverAgents = shownAgents.filter { !state.isInstalled($0) }
+        let counts = state.agentIndex.counts
         List(selection: selection) {
             Section("Library") {
                 row("All Skills", surface: .library, icon: "square.stack")
@@ -115,17 +120,19 @@ struct SidebarView: View {
                     }
                 }
             }
-            if !shownAgents.isEmpty {
+            if !installedAgents.isEmpty {
                 Section("Agents") {
-                    ForEach(shownAgents, id: \.self) { agent in
-                        DisclosureGroup(isExpanded: expansion(of: agent)) {
-                            agentItems(agent, skillCount: counts.agents[agent.id, default: 0])
-                        } label: {
-                            HostLabel(name: agent.name, agentID: agent.id)
-                                .accessibilityIdentifier("sukiru.sidebar.agent.\(agent.id)")
-                                .contextMenu { agentMenu(agent) }
-                        }
-                    }
+                    agentRows(installedAgents, counts: counts)
+                }
+            }
+            if !leftoverAgents.isEmpty {
+                Section(isExpanded: $showsNotInstalled) {
+                    agentRows(leftoverAgents, counts: counts)
+                } header: {
+                    Text("Not Installed")
+                        .help(
+                            "Agents not on this Mac that still leave skills, plugins, or hooks behind"
+                        )
                 }
             }
         }
@@ -186,21 +193,40 @@ extension SidebarView {
         state.surface = .library
     }
 
+    private func agentRows(_ shown: [SidebarAgent], counts: AgentIndex.Counts) -> some View {
+        ForEach(shown, id: \.self) { agent in
+            DisclosureGroup(isExpanded: expansion(of: agent)) {
+                agentItems(agent, skillCount: counts.agents[agent.id, default: 0])
+            } label: {
+                HostLabel(name: agent.name, agentID: agent.id)
+                    .accessibilityIdentifier("sukiru.sidebar.agent.\(agent.id)")
+                    .contextMenu { agentMenu(agent) }
+            }
+        }
+    }
+
     private func expansion(of agent: SidebarAgent) -> Binding<Bool> {
-        Binding(
-            get: { !collapsedAgents.split(separator: ",").contains(Substring(agent.id)) },
+        let installed = state.isInstalled(agent)
+        let storage = installed ? $collapsedAgents : $expandedLeftoverAgents
+        return Binding(
+            get: {
+                storage.wrappedValue.split(separator: ",").contains(Substring(agent.id))
+                    != installed
+            },
             set: { expanded in
-                var ids = collapsedAgents.split(separator: ",").map(String.init)
+                var ids = storage.wrappedValue.split(separator: ",").map(String.init)
                 ids.removeAll { $0 == agent.id }
-                if !expanded { ids.append(agent.id) }
-                collapsedAgents = ids.joined(separator: ",")
+                if expanded != installed { ids.append(agent.id) }
+                storage.wrappedValue = ids.joined(separator: ",")
             })
     }
 
-    /// One row per kind of item the agent has, each its own destination.
+    /// One row per kind of item the agent has, each its own destination. An
+    /// agent that is not installed lists only the kinds it still holds.
     @ViewBuilder
     private func agentItems(_ agent: SidebarAgent, skillCount: Int) -> some View {
-        if agent.readsSkills {
+        let installed = state.isInstalled(agent)
+        if agent.readsSkills, installed || skillCount > 0 {
             agentItem(
                 "Skills", icon: "square.stack", token: "skills.\(agent.id)",
                 help: "Show the user skills this agent reads", agent: agent
@@ -208,7 +234,7 @@ extension SidebarView {
             .badge(skillCount)
             .tag(Destination.agentSkills(agent))
         }
-        if let host = agent.plugins {
+        if let host = agent.plugins, installed || !state.pluginInstallations(for: host).isEmpty {
             agentItem(
                 "Plugins", icon: "puzzlepiece.extension", token: "plugins.\(host.rawValue)",
                 help: "Show plugins managed by this host", agent: agent
@@ -216,7 +242,7 @@ extension SidebarView {
             .badge(state.pluginInstallations(for: host).count)
             .tag(Destination.plugins(host))
         }
-        if let host = agent.hooks {
+        if let host = agent.hooks, installed || !state.hooks(for: host).isEmpty {
             agentItem(
                 "Hooks", icon: "bolt.horizontal", token: "hooks.\(host.rawValue)",
                 help: "Inspect lifecycle hooks configured for this host", agent: agent
@@ -224,7 +250,7 @@ extension SidebarView {
             .badge(state.hooks(for: host).count)
             .tag(Destination.hooks(host))
         }
-        if let host = agent.addOns {
+        if let host = agent.addOns, installed || !state.extensions(for: host, mcp: false).isEmpty {
             agentItem(
                 "Extensions", icon: "shippingbox", token: "extensions.\(host.rawValue)",
                 help: "Inspect extensions, packages, and plugins this host loads", agent: agent
@@ -232,7 +258,7 @@ extension SidebarView {
             .badge(state.extensions(for: host, mcp: false).count)
             .tag(Destination.extensions(host))
         }
-        if let host = agent.mcp {
+        if let host = agent.mcp, installed || !state.extensions(for: host, mcp: true).isEmpty {
             agentItem(
                 "MCP Servers", icon: "server.rack", token: "mcp.\(host.rawValue)",
                 help: "Inspect MCP servers this host declares", agent: agent
@@ -300,32 +326,6 @@ extension SidebarView {
         Divider()
         Button("Hide from Sidebar") { arrangement.wrappedValue.set(item, shown: false, in: items) }
         Button("Customize Sidebar…") { openSettings() }
-    }
-}
-
-/// Skill totals per sidebar scope, counted the same way the Library list
-/// groups them so a badge always matches the rows it leads to.
-private struct SkillCounts {
-    var all = 0
-    var user = 0
-    var projects: [String: Int] = [:]
-    var agents: [String: Int] = [:]
-
-    @MainActor
-    init(state: AppState, agents shownAgents: [SidebarAgent]) {
-        let readers = shownAgents.filter(\.readsSkills).map { ($0, state.userSkillRoots(of: $0)) }
-        for skill in state.report?.skills ?? [] {
-            if skill.scope == .user {
-                user += 1
-                all += 1
-                for (agent, roots) in readers where agent.reads(skill, roots: roots) {
-                    agents[agent.id, default: 0] += 1
-                }
-            } else if skill.scope == .project, let root = state.projectRoot(of: skill) {
-                projects[root, default: 0] += 1
-                all += 1
-            }
-        }
     }
 }
 

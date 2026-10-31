@@ -37,6 +37,10 @@ public struct PluginInstallation: Codable, Equatable, Sendable, Identifiable {
     public let installationStatus: String
     public let format: String?
     public let name: String?
+    /// The plugin's own one-line description, from its manifest.
+    public let summary: String?
+    /// The manifest's icon: a file inside the plugin, or an HTTPS address.
+    public let logo: String?
 
     public let id: String
 
@@ -44,7 +48,7 @@ public struct PluginInstallation: Codable, Equatable, Sendable, Identifiable {
         host: PluginHost, source: String, identifier: String, scope: String, scopeRoot: String,
         version: String?, path: String?, enablement: PluginEnablement, loadStatus: String,
         components: [PluginComponent], installationStatus: String = "recorded",
-        format: String? = nil, name: String? = nil
+        format: String? = nil, name: String? = nil, details: PluginManifestDetails = .init()
     ) {
         self.host = host
         self.source = source
@@ -58,11 +62,46 @@ public struct PluginInstallation: Codable, Equatable, Sendable, Identifiable {
         self.components = components
         self.format = format
         self.name = name
+        self.summary = details.summary
+        self.logo = details.logo
         self.installationStatus = installationStatus
         self.id =
             ([host.rawValue, source, identifier, scope, scopeRoot]
             + ([.cursor, .antigravity].contains(host) ? [path ?? ""] : []))
             .map { "\($0.utf8.count):\($0)" }.joined()
+    }
+}
+
+/// What a plugin's manifest says about itself, for display only.
+struct PluginManifestDetails {
+    var summary: String?
+    var logo: String?
+
+    init(summary: String? = nil, logo: String? = nil) {
+        self.summary = summary
+        self.logo = logo
+    }
+
+    /// Codex's `interface` block first, then the keys Claude, Cursor and
+    /// Antigravity manifests share. A relative logo must stay inside `root`.
+    init(_ manifest: [String: Any]?, root: String?) {
+        let interface = manifest?["interface"] as? [String: Any]
+        let text = { (value: Any?) in (value as? String).flatMap { $0.isEmpty ? nil : $0 } }
+        summary = text(interface?["shortDescription"]) ?? text(manifest?["description"])
+        let address =
+            text(interface?["logo"]) ?? text(interface?["composerIcon"]) ?? text(manifest?["logo"])
+            ?? text(manifest?["icon"])
+        guard let address else { return }
+        if address.hasPrefix("https://") {
+            logo = address
+        } else if let root, !address.contains("://") {
+            let boundary = URL(fileURLWithPath: root).resolvingSymlinksInPath().standardizedFileURL
+            let file = boundary.appendingPathComponent(address).resolvingSymlinksInPath()
+                .standardizedFileURL.path
+            if file.hasPrefix(boundary.path + "/"), FileManager.default.fileExists(atPath: file) {
+                logo = file
+            }
+        }
     }
 }
 

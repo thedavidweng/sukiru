@@ -17,6 +17,9 @@ struct PluginDetailView: View {
             if let plugin = state.selectedPlugin {
                 Form {
                     Section {
+                        if let summary = plugin.summary {
+                            Text(verbatim: summary)
+                        }
                         LabeledContent("Host", value: plugin.host.displayName)
                         if let format = plugin.format {
                             LabeledContent(
@@ -44,11 +47,14 @@ struct PluginDetailView: View {
                         }
                         LabeledContent("Runtime", value: String(localized: "Not Checked"))
                     } header: {
-                        Text(verbatim: plugin.displayName)
-                            .font(.title.weight(.semibold))
-                            .textCase(nil)
-                            .foregroundStyle(.primary)
-                            .padding(.bottom, 8)
+                        HStack(spacing: 12) {
+                            PluginLogo(address: plugin.logo, size: 40)
+                            Text(verbatim: plugin.displayName)
+                                .font(.title.weight(.semibold))
+                        }
+                        .textCase(nil)
+                        .foregroundStyle(.primary)
+                        .padding(.bottom, 8)
                     }
                     if !plugin.components.isEmpty {
                         Section("Components") {

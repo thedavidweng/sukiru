@@ -1,6 +1,26 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Not Installed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未安装"
+          }
+        }
+      }
+    },
+    "Agents not on this Mac that still leave skills, plugins, or hooks behind" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已不在这台 Mac 上、但仍留有技能、插件或钩子的智能体"
+          }
+        }
+      }
+    },
     "The cached catalog has no listings" : {
       "localizations" : {
         "zh-Hans" : {

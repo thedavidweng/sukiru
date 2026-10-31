@@ -7,8 +7,10 @@ import SwiftUI
 /// (`sukiru.library.badge.ownership.<name>`); internal skills carry
 /// `sukiru.library.badge.internal.<name>`.
 ///
-/// Scrolling correctness comes from `List`: all rows are
-/// exposed in the AX tree and pointer/keyboard scrolling reaches them.
+/// The list is a one-column `Table`: with hundreds of variable-height rows,
+/// a SwiftUI `List` re-enters AppKit's row-height cache when its rows change
+/// and logs an NSTableView reentrancy warning that AppKit says will become an
+/// assert. Rows stay in the AX tree and pointer/keyboard scrolling reaches them.
 struct LibraryView: View {
     @EnvironmentObject private var state: AppState
 
@@ -21,6 +23,7 @@ struct LibraryView: View {
     @State private var showingHostRemoval = false
 
     var body: some View {
+        let groups = state.report.map(groups(in:)) ?? []
         Group {
             switch state.scanPhase {
             case .loading:
@@ -30,12 +33,12 @@ struct LibraryView: View {
             case .failed(let message):
                 failureState(message)
             case .loaded:
-                loadedState
+                loadedState(groups)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle(libraryTitle)
-        .navigationSubtitle(Text("\(skillCount) skills"))
+        .navigationSubtitle(Text("\(groups.reduce(0) { $0 + $1.skills.count }) skills"))
         .toolbar { libraryToolbar }
         .modifier(UpdateCheckFailureAlert())
         .sheet(isPresented: $showingHostRemoval) {
@@ -78,11 +81,6 @@ struct LibraryView: View {
         case .project(let root): Text(verbatim: URL(fileURLWithPath: root).lastPathComponent)
         case .agent(let agent): Text(verbatim: agent.name)
         }
-    }
-
-    private var skillCount: Int {
-        guard let report = state.report else { return 0 }
-        return groups(in: report).reduce(0) { $0 + $1.skills.count }
     }
 
     // MARK: - states
@@ -131,9 +129,9 @@ struct LibraryView: View {
     }
 
     @ViewBuilder
-    private var loadedState: some View {
+    private func loadedState(_ groups: [SkillGroup]) -> some View {
         if let report = state.report, !report.skills.isEmpty {
-            skillList(report)
+            skillList(groups)
         } else {
             // swiftlint:disable line_length
             let emptyNote: LocalizedStringKey =
@@ -152,9 +150,9 @@ struct LibraryView: View {
 
     // MARK: - skill list
 
-    private func skillList(_ report: ScanReport) -> some View {
+    private func skillList(_ groups: [SkillGroup]) -> some View {
         ScrollViewReader { proxy in
-            skillListContent(report)
+            skillListContent(groups)
                 // The Health → Library deep-link must land with the implicated row visible,
                 // not merely selected somewhere offscreen.
                 .onChange(of: state.selectedSkillIDs) { _, newSelection in
@@ -172,32 +170,27 @@ struct LibraryView: View {
         }
     }
 
-    private func skillListContent(_ report: ScanReport) -> some View {
-        let groups = groups(in: report)
-        return List(selection: $state.selectedSkillIDs) {
+    private func skillListContent(_ groups: [SkillGroup]) -> some View {
+        let visible = groups.flatMap(\.skills)
+        return Group {
             if state.libraryScope == .all {
-                ForEach(groups) { group in
-                    Section(isExpanded: expansion(of: group)) {
-                        skillRows(group.skills)
-                    } header: {
-                        header(group)
+                skillTable(visible) {
+                    ForEach(groups) { group in
+                        Section(isExpanded: expansion(of: group)) {
+                            ForEach(group.skills.map(LibraryRow.init)) { TableRow($0) }
+                        } header: {
+                            header(group)
+                        }
                     }
                 }
             } else {
-                skillRows(groups.flatMap(\.skills))
-            }
-        }
-        .listStyle(.inset)
-        .contextMenu(forSelectionType: String.self) { ids in
-            let skills = groups.flatMap(\.skills).filter { ids.contains($0.selfID) }
-            if skills.count == 1, let skill = skills.first {
-                SkillContextMenu(skill: skill)
-            } else if !skills.isEmpty {
-                SkillsSelectionActions(skills: skills)
+                skillTable(visible) {
+                    ForEach(visible.map(LibraryRow.init)) { TableRow($0) }
+                }
             }
         }
         .searchable(text: $filter, placement: .toolbar, prompt: Text("Filter Library"))
-        .onChange(of: groups.flatMap(\.skills).map(\.selfID), initial: true) { _, visible in
+        .onChange(of: visible.map(\.selfID), initial: true) { _, visible in
             state.selectedSkillIDs.formIntersection(visible)
         }
         .overlay {
@@ -218,10 +211,26 @@ struct LibraryView: View {
         }
     }
 
-    private func skillRows(_ skills: [Skill]) -> some View {
-        ForEach(skills, id: \.selfID) { skill in
-            SkillRow(skill: skill)
-                .tag(skill.selfID)
+    private func skillTable<Rows: TableRowContent>(
+        _ visible: [Skill], @TableRowBuilder<LibraryRow> rows: () -> Rows
+    ) -> some View where Rows.TableRowValue == LibraryRow {
+        Table(of: LibraryRow.self, selection: $state.selectedSkillIDs) {
+            TableColumn("Skill") { row in
+                SkillRow(model: state.rowModel(for: row.skill))
+                    .equatable()
+            }
+        } rows: {
+            rows()
+        }
+        .tableColumnHeaders(.hidden)
+        .tableStyle(.inset(alternatesRowBackgrounds: false))
+        .contextMenu(forSelectionType: String.self) { ids in
+            let skills = visible.filter { ids.contains($0.selfID) }
+            if skills.count == 1, let skill = skills.first {
+                SkillContextMenu(skill: skill)
+            } else if !skills.isEmpty {
+                SkillsSelectionActions(skills: skills)
+            }
         }
     }
 
@@ -333,6 +342,12 @@ extension LibraryView {
             filterMenu
         }
     }
+}
+
+/// One Library table row, identified the way `AppState` selects skills.
+private struct LibraryRow: Identifiable {
+    let skill: Skill
+    var id: String { skill.selfID }
 }
 
 /// One Library list section: the canonical user store, or one project root.

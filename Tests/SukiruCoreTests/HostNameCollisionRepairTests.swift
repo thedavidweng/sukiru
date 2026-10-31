@@ -67,7 +67,7 @@ struct HostNameCollisionRepairTests {
     @Test("Keeping an entry spares links that reach the kept folder")
     func keepSparesAliases() throws {
         let home = try TempTree()
-        try home.dir(".config/opencode")
+        try home.file(".config/opencode/opencode.json", contents: "{}")
         try home.file(".agents/skills/tool/SKILL.md", contents: OwnershipBuilders.skillMD("tool"))
         try home.symlink(".claude/skills/tool", to: "../../.agents/skills/tool")
         try home.symlink(".config/opencode/skills/tool", to: home.path + "/.elsewhere/tool")

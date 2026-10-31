@@ -207,36 +207,54 @@ struct PluginLibraryView: View {
 private struct PluginRow: View {
     let plugin: PluginInstallation
 
+    /// Laid out like a Marketplace listing, so both tabs read the same.
     var body: some View {
-        HStack {
+        HStack(alignment: .top, spacing: 10) {
+            PluginLogo(address: plugin.logo, size: 28)
             VStack(alignment: .leading, spacing: 3) {
-                Text(verbatim: plugin.displayName)
-                    .font(.body.weight(.semibold))
-                    .lineLimit(1)
                 HStack(spacing: 6) {
-                    Text(verbatim: plugin.sourceTitle)
+                    Text(verbatim: plugin.displayName)
+                        .font(.body.weight(.semibold))
+                        .lineLimit(1)
+                    Spacer(minLength: 8)
+                    enablement
+                }
+                if let summary = plugin.summary {
+                    Text(verbatim: summary)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+                HStack(spacing: 0) {
+                    Text(
+                        verbatim: ([plugin.sourceTitle] + [plugin.version].compactMap { $0 })
+                            .joined(separator: " · "))
                     if plugin.scope == "local" {
+                        Text(verbatim: " · ")
                         Text("Local project settings")
                     }
                 }
-                .font(.callout)
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
             }
-            Spacer(minLength: 8)
-            if plugin.offersEnabledSwitch {
-                PluginEnabledToggle(plugin: plugin)
-                    .labelsHidden()
-                    .controlSize(.mini)
-            } else {
-                Text(plugin.enablementStatus)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .help(plugin.fixedEnablementReason)
-            }
         }
         .accessibilityIdentifier("sukiru.plugins.row.\(plugin.id)")
+    }
+
+    @ViewBuilder
+    private var enablement: some View {
+        if plugin.offersEnabledSwitch {
+            PluginEnabledToggle(plugin: plugin)
+                .labelsHidden()
+                .controlSize(.mini)
+        } else {
+            Text(plugin.enablementStatus)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .help(plugin.fixedEnablementReason)
+        }
     }
 }
 

@@ -23,7 +23,7 @@ struct PnpmHealthTests {
     func pnpmDoesNotDivergeFromVercel() throws {
         let fixture = try PnpmFixture()
         try addVercelCopy(to: fixture, name: "original-guide")
-        try fixture.tree.dir("home/.config/opencode")
+        try fixture.tree.file("home/.config/opencode/opencode.json", contents: "{}")
 
         let report = try fixture.scan()
         #expect(report.findings.allSatisfy { $0.ruleID == HostNameCollisionRule.ruleID })
@@ -163,7 +163,7 @@ struct PnpmHealthTests {
     func healthyCliReport() throws {
         let fixture = try PnpmFixture()
         try addPnpmLinks(to: fixture, hosts: [".agents"])
-        try fixture.tree.dir("home/.config/opencode")
+        try fixture.tree.file("home/.config/opencode/opencode.json", contents: "{}")
         let before = try TreeChecksum.manifest(root: fixture.tree.path)
         let report = try fixture.scan()
         let json = try run("health", fixture: fixture, arguments: ["--check"])

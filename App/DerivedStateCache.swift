@@ -10,6 +10,23 @@ final class DerivedStateCache {
     var skillsByID: (reportRevision: Int, skills: [String: Skill])?
     /// SKILL.md locations per skill ID, resolved once per report.
     var markdownURLs: (reportRevision: Int, urls: [String: URL?])?
+    var agents: AgentIndex?
+    var hostEntries: HostEntryCache?
+    var findings: FindingIndex?
+}
+
+/// Agents per skill ID, and hosts per skills root keyed by project root ("" for user scope).
+struct HostEntryCache {
+    let reportRevision: Int
+    var entries: [String: [LibraryHostsSection.HostEntry]] = [:]
+    var roots: [String: [String: [HostSpec]]] = [:]
+}
+
+/// Report finding indices per skill name, and whether each skill needs attention.
+struct FindingIndex {
+    let reportRevision: Int
+    let byName: [String: [Int]]
+    var attention: [String: Bool] = [:]
 }
 
 /// The Health surface's findings after focus and workspace filter.

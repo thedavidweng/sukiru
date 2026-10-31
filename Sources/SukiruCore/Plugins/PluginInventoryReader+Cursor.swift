@@ -64,7 +64,8 @@ extension PluginInventoryReader {
             enablement: .unknown, loadStatus: "unknown",
             components: cursorComponents(
                 path: path, manifest: manifest, native: format == "cursor-plugin", issues: &issues),
-            installationStatus: status, format: format)
+            installationStatus: status, format: format,
+            details: PluginManifestDetails(manifest, root: path))
     }
 
     func cursorContained(_ path: String, in root: String) -> Bool {

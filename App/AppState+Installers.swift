@@ -87,7 +87,10 @@ extension AppState {
                 .first { FileManager.default.isExecutableFile(atPath: $0) }
         }
         await MainActor.run {
-            if !isFixture { setenv("PATH", path, 1) }
+            if !isFixture {
+                setenv("PATH", path, 1)
+                self.refreshInstalledAgents()
+            }
             self.nodeManagers = managers
             self.installedPaths = locations
         }

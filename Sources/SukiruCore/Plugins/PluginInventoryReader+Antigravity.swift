@@ -73,7 +73,8 @@ extension PluginInventoryReader {
                 path, manifest: manifest, manifestPath: manifestPath, issues: &issues),
             installationStatus: "discovered",
             name: manifest["displayName"] as? String
-                ?? manifest["name"] as? String)
+                ?? manifest["name"] as? String,
+            details: PluginManifestDetails(manifest, root: path))
     }
 
     private func antigravityLocations(roots: [String], scope: Scope) -> [(String, String)] {

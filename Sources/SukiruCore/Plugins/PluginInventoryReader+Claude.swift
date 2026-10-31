@@ -88,7 +88,8 @@ extension PluginInventoryReader {
                         version: entry["version"] as? String, path: path,
                         enablement: enabled.map { $0 ? .enabled : .disabled } ?? .unknown,
                         loadStatus: "unknown",
-                        components: components(at: path, manifest: manifest, issues: &issues))
+                        components: components(at: path, manifest: manifest, issues: &issues),
+                        details: PluginManifestDetails(manifest, root: path))
                 )
             }
         }

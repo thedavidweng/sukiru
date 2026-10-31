@@ -45,7 +45,7 @@ final class AppState: ObservableObject {
         didSet { reportRevision &+= 1 }
     }
     /// Host table ids of the agents installed on this Mac, as of the last scan.
-    @Published private(set) var detectedAgentIDs: Set<String> = []
+    @Published var detectedAgentIDs: Set<String> = []
     /// Bumps on every report change; keys the derived-state caches.
     private(set) var reportRevision = 0
     /// Health and lookup derivations, rebuilt only when their inputs change
