@@ -1,0 +1,24 @@
+name: Temporary token permission check
+on:
+  pull_request:
+    branches: [main]
+permissions: {}
+concurrency:
+  group: token-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  check:
+    if: github.event.pull_request.head.ref == 'fix/dependabot-codeql-updates' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify token permissions
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          scopes="$(gh api -i user | sed -nE 's/^[Xx]-[Oo][Aa]uth-[Ss]copes: *//p' | tr -d '\r')"
+          printf 'Token scopes: %s\n' "$scopes"
+          case ",$scopes," in *workflow*) ;; *) exit 1 ;; esac
+          test "$(gh api "repos/$REPO" --jq '.permissions.push')" = true
