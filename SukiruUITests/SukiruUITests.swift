@@ -121,6 +121,24 @@ final class SukiruUITests: XCTestCase {
         XCTAssertFalse(recorded.contains("plugin marketplace add https://"))
     }
 
+    func testDetectedAgentWithoutHooksKeepsItsHooksRow() throws {
+        try FileManager.default.createDirectory(
+            at: home.appendingPathComponent(".config/devin/cli", isDirectory: true),
+            withIntermediateDirectories: true)
+        let app = XCUIApplication()
+        app.launchEnvironment["SUKIRU_HOME"] = home.path
+        app.launchEnvironment["SUKIRU_ROOTS"] = ""
+        app.launchEnvironment["PATH"] =
+            Bundle(for: Self.self).resourceURL!
+            .appendingPathComponent("Fixtures/bin").path
+        app.launchArguments = ["-AppleLanguages", "(en)"]
+        app.launch()
+
+        let devin = app.descendants(matching: .any)["sukiru.sidebar.hooks.devin"].firstMatch
+        XCTAssertTrue(devin.waitForExistence(timeout: 15))
+        app.terminate()
+    }
+
     private func makeCursorFixture() throws {
         let cursorRoot = home.appendingPathComponent(".cursor/plugins", isDirectory: true)
         let local = cursorRoot.appendingPathComponent("local/local-demo", isDirectory: true)

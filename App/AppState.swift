@@ -245,9 +245,7 @@ final class AppState: ObservableObject {
         Task.detached(priority: .userInitiated) { [weak self] in
             do {
                 let report = try engine.scan(request)
-                let detector = HostDetector(
-                    environment: environment, fileSystem: DefaultFileSystemProbe())
-                let detected = Set(HostTable.hosts.filter(detector.isDetected).map(\.id))
+                let detected = AppState.installedAgentIDs(in: environment)
                 await self?.applyScanResult(
                     .success((report, detected)), generation: generation, startedAt: startedAt)
             } catch {
@@ -285,6 +283,7 @@ final class AppState: ObservableObject {
                 switch problem {
                 case .sukiruHomeMissing(let path):
                     self.report = nil
+                    self.detectedAgentIDs = []
                     self.scanPhase = .homeMissing(path)
                 }
             } else {

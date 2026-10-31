@@ -137,12 +137,22 @@ struct SidebarArrangement: RawRepresentable, Equatable {
 /// holds something the scan found, so leftovers written by other tools stay
 /// reachable for cleanup.
 extension AppState {
+    nonisolated static func installedAgentIDs(in environment: SukiruEnvironment) -> Set<String> {
+        let detector = HostDetector(environment: environment, fileSystem: DefaultFileSystemProbe())
+        return Set(HostTable.hosts.filter(detector.isDetected).map(\.id))
+    }
+
     func isAvailable(_ host: PluginHost) -> Bool {
-        detectedAgentIDs.contains(host.agentID) || !pluginInstallations(for: host).isEmpty
+        let inventory = report?.pluginInventory
+        return detectedAgentIDs.contains(host.agentID)
+            || !pluginInstallations(for: host).isEmpty
+            || inventory?.marketplaces.contains { $0.host == host } == true
+            || inventory?.issues.contains { $0.host == host } == true
     }
 
     func isAvailable(_ host: HookHost) -> Bool {
         detectedAgentIDs.contains(host.agentID) || !hooks(for: host).isEmpty
+            || report?.hookInventory?.issues.contains { $0.host == host } == true
     }
 
     func isAvailable(_ host: ExtensionHost, mcp: Bool) -> Bool {
