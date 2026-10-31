@@ -2,24 +2,22 @@ import SukiruCore
 import SwiftUI
 
 /// The system sidebar presents the library and Sukiru's own tools first, then
-/// the user's projects, then each agent host's plugins and hooks. One
-/// destination is selected at a time.
+/// the user's projects, then one expandable row per agent holding its skills,
+/// plugins, hooks, extensions, and MCP servers. One destination is selected
+/// at a time.
 struct SidebarView: View {
     @EnvironmentObject private var state: AppState
     @AppStorage(SidebarArrangement.projectsKey) private var projects = SidebarArrangement.standard
-    @AppStorage(SidebarArrangement.pluginHostsKey) private var pluginHosts =
-        SidebarArrangement.standard
-    @AppStorage(SidebarArrangement.hookHostsKey) private var hookHosts =
-        SidebarArrangement.standard
-    @AppStorage(SidebarArrangement.extensionHostsKey) private var extensionHosts =
-        SidebarArrangement.standard
-    @AppStorage(SidebarArrangement.mcpHostsKey) private var mcpHosts = SidebarArrangement.standard
+    @AppStorage(SidebarArrangement.agentsKey) private var agents = SidebarArrangement.standard
+    /// Agent ids, comma-separated; agents start expanded.
+    @SceneStorage("sidebarCollapsedAgents") private var collapsedAgents = ""
     @Environment(\.openSettings) private var openSettings
 
     private enum Destination: Hashable {
         case surface(AppState.Surface)
         case userLibrary
         case project(String)
+        case agentSkills(SidebarAgent)
         case plugins(PluginHost)
         case hooks(HookHost)
         case extensions(ExtensionHost)
@@ -40,6 +38,7 @@ struct SidebarView: View {
                 case .all: return .surface(.library)
                 case .user: return .userLibrary
                 case .project(let root): return .project(root)
+                case .agent(let agent): return .agentSkills(agent)
                 }
             },
             set: { destination in
@@ -51,13 +50,11 @@ struct SidebarView: View {
                         state.libraryScope = .all
                     }
                 case .userLibrary:
-                    state.libraryScope = .user
-                    state.selectedSkillIDs = []
-                    state.surface = .library
+                    showLibrary(.user)
                 case .project(let root):
-                    state.libraryScope = .project(root)
-                    state.selectedSkillIDs = []
-                    state.surface = .library
+                    showLibrary(.project(root))
+                case .agentSkills(let agent):
+                    showLibrary(.agent(agent))
                 case .plugins(let host):
                     if state.pluginHost != host {
                         state.pluginHost = host
@@ -78,7 +75,8 @@ struct SidebarView: View {
     }
 
     var body: some View {
-        let counts = SkillCounts(state: state)
+        let shownAgents = agents.shown(SidebarAgent.all, available: state.isAvailable)
+        let counts = SkillCounts(state: state, agents: shownAgents)
         List(selection: selection) {
             Section("Library") {
                 row("All Skills", surface: .library, icon: "square.stack")
@@ -117,39 +115,16 @@ struct SidebarView: View {
                     }
                 }
             }
-            if !shownPluginHosts.isEmpty {
-                Section("Plugins") {
-                    ForEach(shownPluginHosts, id: \.self) { host in
-                        pluginRow(host)
-                            .badge(state.pluginInstallations(for: host).count)
-                            .tag(Destination.plugins(host))
-                    }
-                }
-            }
-            if !shownHookHosts.isEmpty {
-                Section("Hooks") {
-                    ForEach(shownHookHosts, id: \.self) { host in
-                        hookRow(host)
-                            .badge(state.hooks(for: host).count)
-                            .tag(Destination.hooks(host))
-                    }
-                }
-            }
-            if !shownExtensionHosts.isEmpty {
-                Section("Extensions") {
-                    ForEach(shownExtensionHosts, id: \.self) { host in
-                        extensionRow(host, mcp: false)
-                            .badge(state.extensions(for: host, mcp: false).count)
-                            .tag(Destination.extensions(host))
-                    }
-                }
-            }
-            if !shownMCPHosts.isEmpty {
-                Section("MCP Servers") {
-                    ForEach(shownMCPHosts, id: \.self) { host in
-                        extensionRow(host, mcp: true)
-                            .badge(state.extensions(for: host, mcp: true).count)
-                            .tag(Destination.mcpServers(host))
+            if !shownAgents.isEmpty {
+                Section("Agents") {
+                    ForEach(shownAgents, id: \.self) { agent in
+                        DisclosureGroup(isExpanded: expansion(of: agent)) {
+                            agentItems(agent, skillCount: counts.agents[agent.id, default: 0])
+                        } label: {
+                            HostLabel(name: agent.name, agentID: agent.id)
+                                .accessibilityIdentifier("sukiru.sidebar.agent.\(agent.id)")
+                                .contextMenu { agentMenu(agent) }
+                        }
                     }
                 }
             }
@@ -167,27 +142,16 @@ struct SidebarView: View {
                 state.selectedSkillIDs = []
             }
         }
-        .onChange(of: pluginHosts) { _, arrangement in
-            let host = state.pluginHost
-            let hidden = !arrangement.isShown(host, available: state.isAvailable(host))
-            if state.surface == .plugins && hidden {
-                state.selectedPluginIDs = []
-                state.surface = .library
-            }
-        }
-        .onChange(of: hookHosts) { _, arrangement in
-            let host = state.hookState.host
-            let hidden = !arrangement.isShown(host, available: state.isAvailable(host))
-            if state.surface == .hooks && hidden {
-                state.hookState.selectedID = nil
-                state.surface = .library
-            }
-        }
-        .onChange(of: extensionHosts) { _, arrangement in
-            leaveHiddenExtensions(arrangement, mcp: false)
-        }
-        .onChange(of: mcpHosts) { _, arrangement in
-            leaveHiddenExtensions(arrangement, mcp: true)
+        .onChange(of: agents) { _, arrangement in
+            guard let agent = state.openAgent,
+                !arrangement.isShown(agent, available: state.isAvailable(agent))
+            else { return }
+            state.selectedPluginIDs = []
+            state.hookState.selectedID = nil
+            state.hookState.selectedExtensionID = nil
+            state.selectedSkillIDs = []
+            state.libraryScope = .all
+            state.surface = .library
         }
         .sidebarFooter {
             Button {
@@ -215,76 +179,88 @@ extension SidebarView {
     }
 
     private var shownProjects: [String] { projects.shown(state.projectRoots.sorted()) }
-    private var shownPluginHosts: [PluginHost] {
-        pluginHosts.shown(PluginHost.allCases, available: state.isAvailable)
+
+    private func showLibrary(_ scope: AppState.LibraryScope) {
+        state.libraryScope = scope
+        state.selectedSkillIDs = []
+        state.surface = .library
     }
-    private var shownHookHosts: [HookHost] {
-        hookHosts.shown(HookHost.allCases, available: state.isAvailable)
+
+    private func expansion(of agent: SidebarAgent) -> Binding<Bool> {
+        Binding(
+            get: { !collapsedAgents.split(separator: ",").contains(Substring(agent.id)) },
+            set: { expanded in
+                var ids = collapsedAgents.split(separator: ",").map(String.init)
+                ids.removeAll { $0 == agent.id }
+                if !expanded { ids.append(agent.id) }
+                collapsedAgents = ids.joined(separator: ",")
+            })
     }
-    private var shownExtensionHosts: [ExtensionHost] {
-        extensionHosts.shown(ExtensionHost.addOnHosts) { state.isAvailable($0, mcp: false) }
+
+    /// One row per kind of item the agent has, each its own destination.
+    @ViewBuilder
+    private func agentItems(_ agent: SidebarAgent, skillCount: Int) -> some View {
+        if agent.readsSkills {
+            agentItem(
+                "Skills", icon: "square.stack", token: "skills.\(agent.id)",
+                help: "Show the user skills this agent reads", agent: agent
+            )
+            .badge(skillCount)
+            .tag(Destination.agentSkills(agent))
+        }
+        if let host = agent.plugins {
+            agentItem(
+                "Plugins", icon: "puzzlepiece.extension", token: "plugins.\(host.rawValue)",
+                help: "Show plugins managed by this host", agent: agent
+            )
+            .badge(state.pluginInstallations(for: host).count)
+            .tag(Destination.plugins(host))
+        }
+        if let host = agent.hooks {
+            agentItem(
+                "Hooks", icon: "bolt.horizontal", token: "hooks.\(host.rawValue)",
+                help: "Inspect lifecycle hooks configured for this host", agent: agent
+            )
+            .badge(state.hooks(for: host).count)
+            .tag(Destination.hooks(host))
+        }
+        if let host = agent.addOns {
+            agentItem(
+                "Extensions", icon: "shippingbox", token: "extensions.\(host.rawValue)",
+                help: "Inspect extensions, packages, and plugins this host loads", agent: agent
+            )
+            .badge(state.extensions(for: host, mcp: false).count)
+            .tag(Destination.extensions(host))
+        }
+        if let host = agent.mcp {
+            agentItem(
+                "MCP Servers", icon: "server.rack", token: "mcp.\(host.rawValue)",
+                help: "Inspect MCP servers this host declares", agent: agent
+            )
+            .badge(state.extensions(for: host, mcp: true).count)
+            .tag(Destination.mcpServers(host))
+        }
     }
-    private var shownMCPHosts: [ExtensionHost] {
-        mcpHosts.shown(ExtensionHost.mcpHosts) { state.isAvailable($0, mcp: true) }
+
+    private func agentItem(
+        _ title: LocalizedStringKey, icon: String, token: String, help: LocalizedStringKey,
+        agent: SidebarAgent
+    ) -> some View {
+        HStack(spacing: 0) {
+            AXToken(token: "sukiru.sidebar.\(token)")
+            Label(title, systemImage: icon)
+        }
+        .accessibilityIdentifier("sukiru.sidebar.\(token)")
+        .help(help)
+        .contextMenu { agentMenu(agent) }
     }
 
     /// Reordering stays in the menu and in Settings: the system's drag image
     /// for a vibrant sidebar row drops the vibrancy and renders black in Dark
     /// Mode, while Settings' plain list drags correctly.
-    private func pluginRow(_ host: PluginHost) -> some View {
-        HStack(spacing: 0) {
-            AXToken(token: "sukiru.sidebar.plugins.\(host.rawValue)")
-            HostLabel(name: host.displayName, agentID: host.agentID)
-        }
-        .accessibilityIdentifier("sukiru.sidebar.plugins.\(host.rawValue)")
-        .help("Show plugins managed by this host")
-        .contextMenu {
-            arrangementMenu(
-                host, in: PluginHost.allCases, arrangement: $pluginHosts,
-                available: state.isAvailable)
-        }
-    }
-
-    private func leaveHiddenExtensions(_ arrangement: SidebarArrangement, mcp: Bool) {
-        let host = state.hookState.extensionHost
-        let hidden = !arrangement.isShown(host, available: state.isAvailable(host, mcp: mcp))
-        guard state.surface == .extensions, state.hookState.showsMCP == mcp, hidden else { return }
-        state.hookState.selectedExtensionID = nil
-        state.surface = .library
-    }
-
-    private func extensionRow(_ host: ExtensionHost, mcp: Bool) -> some View {
-        HostLabel(name: host.displayName, agentID: host.agentID)
-            .accessibilityIdentifier(
-                "sukiru.sidebar.\(mcp ? "mcp" : "extensions").\(host.rawValue)"
-            )
-            .help(
-                mcp
-                    ? "Inspect MCP servers this host declares"
-                    : "Inspect extensions, packages, and plugins this host loads"
-            )
-            .contextMenu {
-                if mcp {
-                    arrangementMenu(host, in: ExtensionHost.mcpHosts, arrangement: $mcpHosts) {
-                        state.isAvailable($0, mcp: true)
-                    }
-                } else {
-                    arrangementMenu(
-                        host, in: ExtensionHost.addOnHosts, arrangement: $extensionHosts
-                    ) { state.isAvailable($0, mcp: false) }
-                }
-            }
-    }
-
-    private func hookRow(_ host: HookHost) -> some View {
-        HostLabel(name: host.displayName, agentID: host.agentID)
-            .accessibilityIdentifier("sukiru.sidebar.hooks.\(host.rawValue)")
-            .help("Inspect lifecycle hooks configured for this host")
-            .contextMenu {
-                arrangementMenu(
-                    host, in: HookHost.allCases, arrangement: $hookHosts,
-                    available: state.isAvailable)
-            }
+    private func agentMenu(_ agent: SidebarAgent) -> some View {
+        arrangementMenu(
+            agent, in: SidebarAgent.all, arrangement: $agents, available: state.isAvailable)
     }
 
     private func projectRow(_ root: String) -> some View {
@@ -333,13 +309,18 @@ private struct SkillCounts {
     var all = 0
     var user = 0
     var projects: [String: Int] = [:]
+    var agents: [String: Int] = [:]
 
     @MainActor
-    init(state: AppState) {
+    init(state: AppState, agents shownAgents: [SidebarAgent]) {
+        let readers = shownAgents.filter(\.readsSkills).map { ($0, state.userSkillRoots(of: $0)) }
         for skill in state.report?.skills ?? [] {
             if skill.scope == .user {
                 user += 1
                 all += 1
+                for (agent, roots) in readers where agent.reads(skill, roots: roots) {
+                    agents[agent.id, default: 0] += 1
+                }
             } else if skill.scope == .project, let root = state.projectRoot(of: skill) {
                 projects[root, default: 0] += 1
                 all += 1

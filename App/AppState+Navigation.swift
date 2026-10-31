@@ -19,6 +19,8 @@ extension AppState {
         case all
         case user
         case project(String)
+        /// The user skills one agent reads.
+        case agent(SidebarAgent)
     }
 
     var isProjectScopeSelected: Bool {

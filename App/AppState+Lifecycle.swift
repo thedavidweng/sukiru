@@ -53,6 +53,7 @@ extension AppState {
         case .all: true
         case .user: skill.scope == .user
         case .project(let root): skill.scope == .project && projectRoot(of: skill) == root
+        case .agent(let agent): agent.reads(skill, roots: userSkillRoots(of: agent))
         }
     }
 

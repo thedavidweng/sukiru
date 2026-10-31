@@ -5954,6 +5954,27 @@
         }
       }
     },
+    "Show the user skills this agent reads" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示此智能体读取的用户技能"
+          }
+        }
+      }
+    },
+    "No Skills" : {
+      "comment" : "Library empty state: the selected scope holds no skills.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有技能"
+          }
+        }
+      }
+    },
     "Show plugins managed by this host" : {
       "localizations" : {
         "zh-Hans" : {

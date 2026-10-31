@@ -1,18 +1,12 @@
 import SukiruCore
 import SwiftUI
 
-/// Which projects and hosts the sidebar shows, and in what order, like
+/// Which projects and agents the sidebar shows, and in what order, like
 /// Finder's Sidebar settings.
 struct SidebarSettingsPane: View {
     @EnvironmentObject private var state: AppState
     @AppStorage(SidebarArrangement.projectsKey) private var projects = SidebarArrangement.standard
-    @AppStorage(SidebarArrangement.pluginHostsKey) private var pluginHosts =
-        SidebarArrangement.standard
-    @AppStorage(SidebarArrangement.hookHostsKey) private var hookHosts =
-        SidebarArrangement.standard
-    @AppStorage(SidebarArrangement.extensionHostsKey) private var extensionHosts =
-        SidebarArrangement.standard
-    @AppStorage(SidebarArrangement.mcpHostsKey) private var mcpHosts = SidebarArrangement.standard
+    @AppStorage(SidebarArrangement.agentsKey) private var agents = SidebarArrangement.standard
 
     var body: some View {
         Form {
@@ -30,25 +24,13 @@ struct SidebarSettingsPane: View {
                 }
             }
             SidebarArrangementSection(
-                "Plugins", items: PluginHost.allCases, arrangement: $pluginHosts,
-                identifier: "plugins", available: state.isAvailable
-            ) { HostLabel(name: $0.displayName, agentID: $0.agentID) }
-            SidebarArrangementSection(
-                "Hooks", items: HookHost.allCases, arrangement: $hookHosts,
-                identifier: "hooks", available: state.isAvailable
-            ) { HostLabel(name: $0.displayName, agentID: $0.agentID) }
-            SidebarArrangementSection(
-                "Extensions", items: ExtensionHost.addOnHosts, arrangement: $extensionHosts,
-                identifier: "extensions", available: { state.isAvailable($0, mcp: false) },
-                label: { HostLabel(name: $0.displayName, agentID: $0.agentID) })
-            SidebarArrangementSection(
-                "MCP Servers", items: ExtensionHost.mcpHosts, arrangement: $mcpHosts,
-                identifier: "mcp", available: { state.isAvailable($0, mcp: true) },
+                "Agents", items: SidebarAgent.all, arrangement: $agents,
+                identifier: "agents", available: state.isAvailable,
                 footer: """
                     Agents not installed on this Mac stay off until they hold items or you turn \
                     them on. Drag items to change their order.
                     """,
-                label: { HostLabel(name: $0.displayName, agentID: $0.agentID) })
+                label: { HostLabel(name: $0.name, agentID: $0.id) })
         }
         .formStyle(.grouped)
         .frame(width: 560, height: 480)
