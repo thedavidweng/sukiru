@@ -59,7 +59,7 @@ public struct HostSpec: Equatable, Sendable, Codable {
         envFallbackDir: String?,
         extraMarkers: [String],
         globalBase: GlobalBase,
-        globalSkillDirBase: GlobalBase?,
+        globalSkillDirBase: GlobalBase? = nil,
         detectInProject: Bool,
         showInUniversalList: Bool,
         legacyProjectSkillDirs: [String],
