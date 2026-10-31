@@ -36,7 +36,8 @@ jobs:
 
       - name: Enable auto-merge for safe updates
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITHUB_TOKEN cannot merge changes to workflow files.
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
           DEP_NAMES: ${{ steps.meta.outputs.dependency-names }}
           PKG_ECOSYSTEM: ${{ steps.meta.outputs.package-ecosystem }}

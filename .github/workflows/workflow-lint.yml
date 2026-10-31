@@ -1,13 +1,11 @@
 name: Workflow lint
 
-# Not a required check, so a path filter is safe here.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
-    paths: [".github/workflows/**"]
   push:
     branches: ["main"]
-    paths: [".github/workflows/**"]
+    paths: [".github/workflows/**", ".github/dependabot.yml"]
   workflow_dispatch:
 
 permissions: {}
@@ -34,3 +32,10 @@ jobs:
         uses: jdx/jactionlint@a65ab044e916760429068fe5794b8306abdfcbb9 # v2.3.0
         with:
           profile: default
+
+      - name: Check CodeQL action versions match
+        run: |
+          set -euo pipefail
+          init="$(sed -nE 's/^[[:space:]]*uses: github\/codeql-action\/init@([^[:space:]]+).*/\1/p' .github/workflows/codeql.yml)"
+          analyze="$(sed -nE 's/^[[:space:]]*uses: github\/codeql-action\/analyze@([^[:space:]]+).*/\1/p' .github/workflows/codeql.yml)"
+          test -n "$init" && test "$init" = "$analyze"

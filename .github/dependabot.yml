@@ -7,10 +7,18 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "chore(deps)"
-
-  # Maintain dependencies for Swift Package Manager
     cooldown:
       default-days: 7
+    groups:
+      codeql:
+        patterns:
+          - "github/codeql-action/*"
+      codeql-security:
+        applies-to: security-updates
+        patterns:
+          - "github/codeql-action/*"
+
+  # Maintain dependencies for Swift Package Manager
   - package-ecosystem: "swift"
     directory: "/"
     schedule:
