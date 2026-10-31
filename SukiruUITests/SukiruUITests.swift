@@ -122,7 +122,10 @@ final class SukiruUITests: XCTestCase {
     }
 
     func testDetectedAgentWithoutHooksKeepsItsHooksRow() throws {
-        try write("", to: home.appendingPathComponent(".local/bin/devin"))
+        let launcher = home.appendingPathComponent(".local/bin/devin")
+        try write("", to: launcher)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o755], ofItemAtPath: launcher.path)
         let app = XCUIApplication()
         app.launchEnvironment["SUKIRU_HOME"] = home.path
         app.launchEnvironment["SUKIRU_ROOTS"] = ""

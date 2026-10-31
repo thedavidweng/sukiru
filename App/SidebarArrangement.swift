@@ -188,9 +188,26 @@ extension AppState {
     /// so commands outside the launch `PATH` count.
     func refreshInstalledAgents() {
         let environment = Self.makeEnvironment(roots: projectRoots)
+        let detection = startAgentDetection()
         Task.detached(priority: .utility) { [weak self] in
-            let detected = AppState.installedAgentIDs(in: environment)
-            await MainActor.run { self?.detectedAgentIDs = detected }
+            await self?.detectInstalledAgents(in: environment, detection)
+        }
+    }
+
+    /// Detection reads the live `PATH`, which login-shell adoption replaces
+    /// mid-launch, so only the latest started detection publishes.
+    func startAgentDetection() -> Int {
+        agentDetectionGeneration += 1
+        return agentDetectionGeneration
+    }
+
+    nonisolated func detectInstalledAgents(
+        in environment: SukiruEnvironment, _ detection: Int
+    ) async {
+        let detected = Self.installedAgentIDs(in: environment)
+        await MainActor.run {
+            guard detection == agentDetectionGeneration else { return }
+            detectedAgentIDs = detected
         }
     }
 
@@ -234,14 +251,14 @@ extension AppState {
             || agent.mcp.map { !extensions(for: $0, mcp: true).isEmpty } == true
     }
 
-    private func holdsItems(_ host: PluginHost) -> Bool {
+    func holdsItems(_ host: PluginHost) -> Bool {
         let inventory = report?.pluginInventory
         return !pluginInstallations(for: host).isEmpty
             || inventory?.marketplaces.contains { $0.host == host } == true
             || inventory?.issues.contains { $0.host == host } == true
     }
 
-    private func holdsItems(_ host: HookHost) -> Bool {
+    func holdsItems(_ host: HookHost) -> Bool {
         !hooks(for: host).isEmpty
             || report?.hookInventory?.issues.contains { $0.host == host } == true
     }

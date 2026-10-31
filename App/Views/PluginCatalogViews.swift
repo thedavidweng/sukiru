@@ -146,7 +146,11 @@ struct PluginLogo: View {
             let loaded: NSImage?
             if address.hasPrefix("/") {
                 loaded = await Task.detached(priority: .utility) {
-                    NSImage(contentsOfFile: address)
+                    let attributes = try? FileManager.default.attributesOfItem(atPath: address)
+                    guard let size = attributes?[.size] as? Int, size <= Self.byteLimit else {
+                        return nil
+                    }
+                    return NSImage(contentsOfFile: address)
                 }.value
             } else if let url = URL(string: address), url.scheme == "https" {
                 loaded = await Self.load(url)
@@ -154,11 +158,12 @@ struct PluginLogo: View {
                 loaded = nil
             }
             if let loaded { Self.cache[address] = loaded }
+            guard !Task.isCancelled else { return }
             image = loaded
         }
     }
 
-    /// Catalog icons are a few kilobytes; a body over the limit is discarded.
+    /// Icons are a few kilobytes; a file or body over the limit is discarded.
     private nonisolated static let byteLimit = 1 << 20
 
     private nonisolated static func load(_ url: URL) async -> NSImage? {

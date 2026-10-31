@@ -111,7 +111,7 @@ public struct HostDetector: Sendable {
     }
 
     /// Whether the agent's app, command, or editor extension is on this Mac;
-    /// nil when Sukiru knows no launcher for it. Commands are looked up on
+    /// nil when Sukiru knows no launcher for it. Commands are executables on
     /// `PATH` and in `~/.local/bin`, where native installers put them even
     /// when the app's inherited `PATH` lacks it. Fixture homes never probe
     /// `/Applications`.
@@ -131,7 +131,7 @@ public struct HostDetector: Sendable {
             appFolders.contains { fileSystem.exists(atPath: $0 + "/" + app + ".app") }
         }
             || probe.commands.contains { command in
-                commandFolders.contains { fileSystem.isFile(atPath: $0 + "/" + command) }
+                commandFolders.contains { fileSystem.isExecutable(atPath: $0 + "/" + command) }
             }
             || probe.extensions.contains { id in
                 extensionFolders.contains { $0.contains { $0.lowercased().hasPrefix(id + "-") } }

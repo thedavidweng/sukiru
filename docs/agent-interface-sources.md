@@ -69,7 +69,7 @@ bundle. Extension ids come from the vendor's VS Code Marketplace listing. For ag
 without a row here, no official source named a command, app bundle, or extension id when
 the table was checked, so Sukiru judges them by their config folder alone: AiderDesk, AstrBot, CodeArts Agent, Codemaker,
 Code Studio, Firebender, inference.sh, Jazz, jcode, Junie, Kimchi, Lingma, Loaf, MCPJam,
-MiniMax Code, Moxby, Mux, Ona, Posit Assistant, Qoder CN, Replit, Sarvam Code, Terramind,
+MiniMax Code, Moxby, Mux, Ona, Posit Assistant, Qoder CN, Sarvam Code, Terramind,
 Tinycloud and Zenflow.
 
 | Agent | Command | App | Extension | Sources | Checked |

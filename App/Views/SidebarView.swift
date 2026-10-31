@@ -234,7 +234,7 @@ extension SidebarView {
             .badge(skillCount)
             .tag(Destination.agentSkills(agent))
         }
-        if let host = agent.plugins, installed || !state.pluginInstallations(for: host).isEmpty {
+        if let host = agent.plugins, installed || state.holdsItems(host) {
             agentItem(
                 "Plugins", icon: "puzzlepiece.extension", token: "plugins.\(host.rawValue)",
                 help: "Show plugins managed by this host", agent: agent
@@ -242,7 +242,7 @@ extension SidebarView {
             .badge(state.pluginInstallations(for: host).count)
             .tag(Destination.plugins(host))
         }
-        if let host = agent.hooks, installed || !state.hooks(for: host).isEmpty {
+        if let host = agent.hooks, installed || state.holdsItems(host) {
             agentItem(
                 "Hooks", icon: "bolt.horizontal", token: "hooks.\(host.rawValue)",
                 help: "Inspect lifecycle hooks configured for this host", agent: agent
