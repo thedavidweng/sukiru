@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.0](https://github.com/thedavidweng/sukiru/compare/v1.15.0...v1.16.0) (2026-10-31)
+
+
+### ✨ Features
+
+* **sidebar:** group each agent's skills, plugins, hooks and MCP under one row ([#100](https://github.com/thedavidweng/sukiru/issues/100)) ([a5608db](https://github.com/thedavidweng/sukiru/commit/a5608db9951cbd793490b918d61862090ec8bfdd))
+
 ## [1.15.0](https://github.com/thedavidweng/sukiru/compare/v1.14.0...v1.15.0) (2026-10-31)
 
 
