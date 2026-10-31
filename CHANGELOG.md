@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.0](https://github.com/thedavidweng/sukiru/compare/v1.16.0...v1.17.0) (2026-10-31)
+
+
+### ✨ Features
+
+* **sidebar:** list only agents installed on this Mac ([#102](https://github.com/thedavidweng/sukiru/issues/102)) ([a0db5c1](https://github.com/thedavidweng/sukiru/commit/a0db5c1686cbf0103ea6b68a7db11fd552dd7fd7))
+
 ## [1.16.0](https://github.com/thedavidweng/sukiru/compare/v1.15.0...v1.16.0) (2026-10-31)
 
 
