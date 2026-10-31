@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.14.0](https://github.com/thedavidweng/sukiru/compare/v1.13.0...v1.14.0) (2026-10-31)
+
+
+### ✨ Features
+
+* **library:** add icons for Grok, ZCode, oh-my-pi and seven more agents ([#96](https://github.com/thedavidweng/sukiru/issues/96)) ([2f27c9b](https://github.com/thedavidweng/sukiru/commit/2f27c9bc77180151319a9cc1d8add79fdbf257ee))
+* **sidebar:** show only installed agents by default ([#95](https://github.com/thedavidweng/sukiru/issues/95)) ([b071f88](https://github.com/thedavidweng/sukiru/commit/b071f88342809eb3a7ed56d7cd08c0723e7399b0))
+
 ## [1.13.0](https://github.com/thedavidweng/sukiru/compare/v1.12.1...v1.13.0) (2026-10-30)
 
 
