@@ -21,14 +21,15 @@ struct AgentLogo: View {
 
     static func assetName(for hostID: String) -> String? {
         switch hostID {
-        case "adal", "aider-desk", "amp", "antigravity", "augment", "bob", "claude-code", "cline",
-            "codearts-agent", "codebuddy", "codemaker", "codestudio", "codex", "command-code",
-            "continue", "cortex", "crush", "cursor", "deepagents", "devin", "dexto", "droid",
-            "firebender", "forgecode", "gemini-cli", "github-copilot", "goose", "hermes-agent",
-            "iflow-cli", "junie", "kilo", "kiro-cli", "mcpjam", "mistral-vibe", "mux", "neovate",
-            "openclaw",
-            "opencode", "openhands", "pi", "pochi", "qoder", "qwen-code", "replit", "roo",
-            "rovodev", "tabnine-cli", "trae", "warp", "windsurf", "zed", "zencoder":
+        case "adal", "aider-desk", "amp", "antigravity", "astrbot", "augment", "bob",
+            "claude-code", "cline", "codearts-agent", "codebuddy", "codemaker", "codestudio",
+            "codex", "command-code", "continue", "cortex", "crush", "cursor", "deepagents",
+            "devin", "dexto", "droid", "dsh", "firebender", "forgecode", "fx", "gemini-cli",
+            "github-copilot", "goose", "grok", "hermes-agent", "iflow-cli", "jcode", "junie",
+            "kilo", "kiro-cli", "mcpjam", "minimax-code", "mistral-vibe", "muse", "mux",
+            "neovate", "omp", "openclaw", "opencode", "openhands", "pi", "pochi", "qoder",
+            "qwen-code", "reasonix", "replit", "roo", "rovodev", "tabnine-cli", "trae", "warp",
+            "windsurf", "zcode", "zed", "zencoder":
             return "agent-\(hostID)"
         case "qoder-cn":
             return "agent-qoder"
