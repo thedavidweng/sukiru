@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.1](https://github.com/thedavidweng/sukiru/compare/v1.17.0...v1.17.1) (2026-10-31)
+
+
+### 🐛 Bug Fixes
+
+* **ci:** keep CodeQL updates synchronized ([#104](https://github.com/thedavidweng/sukiru/issues/104)) ([eb067ed](https://github.com/thedavidweng/sukiru/commit/eb067edf905abd4fb28c02e17e560533a7a6c454))
+
 ## [1.17.0](https://github.com/thedavidweng/sukiru/compare/v1.16.0...v1.17.0) (2026-10-31)
 
 
