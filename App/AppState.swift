@@ -44,6 +44,8 @@ final class AppState: ObservableObject {
     @Published private(set) var report: ScanReport? {
         didSet { reportRevision &+= 1 }
     }
+    /// Host table ids of the agents installed on this Mac, as of the last scan.
+    @Published private(set) var detectedAgentIDs: Set<String> = []
     /// Bumps on every report change; keys the derived-state caches.
     private(set) var reportRevision = 0
     /// Health and lookup derivations, rebuilt only when their inputs change
@@ -243,8 +245,11 @@ final class AppState: ObservableObject {
         Task.detached(priority: .userInitiated) { [weak self] in
             do {
                 let report = try engine.scan(request)
+                let detector = HostDetector(
+                    environment: environment, fileSystem: DefaultFileSystemProbe())
+                let detected = Set(HostTable.hosts.filter(detector.isDetected).map(\.id))
                 await self?.applyScanResult(
-                    .success(report), generation: generation, startedAt: startedAt)
+                    .success((report, detected)), generation: generation, startedAt: startedAt)
             } catch {
                 await self?.applyScanResult(
                     .failure(error), generation: generation, startedAt: startedAt)
@@ -263,14 +268,15 @@ final class AppState: ObservableObject {
     /// Applies a finished scan on the main actor; stale generations (a
     /// newer rescan was requested meanwhile) are ignored entirely.
     private func applyScanResult(
-        _ result: Result<ScanReport, any Error>,
+        _ result: Result<(ScanReport, Set<String>), any Error>,
         generation: Int,
         startedAt: ContinuousClock.Instant
     ) async {
         guard generation == scanGeneration else { return }
         switch result {
-        case .success(let report):
+        case .success(let (report, detected)):
             self.report = report
+            self.detectedAgentIDs = detected
             self.scanPhase = .loaded
             self.pruneSelection(using: report)
             loadSkillDescriptions(for: report, generation: generation)

@@ -46,6 +46,7 @@ final class SukiruUITests: XCTestCase {
 
         let cursor = app.descendants(matching: .any)["sukiru.sidebar.plugins.cursor"].firstMatch
         XCTAssertTrue(cursor.waitForExistence(timeout: 15))
+        XCTAssertFalse(app.descendants(matching: .any)["sukiru.sidebar.hooks.devin"].exists)
         cursor.click()
 
         XCTAssertTrue(app.staticTexts["local-demo"].waitForExistence(timeout: 10))
