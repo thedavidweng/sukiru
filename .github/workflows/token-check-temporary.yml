@@ -18,7 +18,12 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          scopes="$(gh api -i user | sed -nE 's/^[Xx]-[Oo][Aa]uth-[Ss]copes: *//p' | tr -d '\r')"
-          printf 'Token scopes: %s\n' "$scopes"
-          case ",$scopes," in *workflow*) ;; *) exit 1 ;; esac
-          test "$(gh api "repos/$REPO" --jq '.permissions.push')" = true
+          sha="$(gh api "repos/$REPO/git/ref/heads/main" --jq '.object.sha')"
+          gh api "repos/$REPO/git/refs" -f ref=refs/heads/test/dependabot-token-permissions -f sha="$sha" --silent
+          file="$(gh api "repos/$REPO/contents/.github/workflows/codeql.yml?ref=main")"
+          gh api --method PUT "repos/$REPO/contents/.github/workflows/codeql.yml" \
+            -f message='test: verify workflow permissions' \
+            -f branch=test/dependabot-token-permissions \
+            -f sha="$(jq -r .sha <<< "$file")" \
+            -f content="$(jq -r .content <<< "$file" | tr -d '\n')" --silent
+          echo "Token can update workflow files."
