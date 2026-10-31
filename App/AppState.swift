@@ -186,7 +186,6 @@ final class AppState: ObservableObject {
     /// identical wiring to the CLI. Read-only; root edits via
     /// `projectRoots`.
     let environment: SukiruEnvironment
-    private(set) lazy var agentSkillRoots = Self.userSkillRoots(in: environment)
     private let capabilityCache: CapabilityCache
     static let projectRootsDefaultsKey = "projectRoots"
 

@@ -212,6 +212,8 @@ struct LibraryView: View {
                         ownershipFilter = nil
                     }
                 }
+            } else if groups.isEmpty {
+                ContentUnavailableView("No Skills", systemImage: "tray")
             }
         }
     }

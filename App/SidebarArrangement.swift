@@ -55,8 +55,8 @@ struct SidebarAgent: SidebarItem {
     static func agent(id: String) -> SidebarAgent? { all.first { $0.id == id } }
 
     /// Whether the skill sits in one of this agent's user skills folders.
-    func reads(_ skill: Skill, roots: [String: [String]]) -> Bool {
-        guard skill.scope == .user, let roots = roots[id] else { return false }
+    func reads(_ skill: Skill, roots: [String]) -> Bool {
+        guard skill.scope == .user else { return false }
         return skill.placements.contains { placement in
             !placement.internal && roots.contains { placement.path.hasPrefix($0 + "/") }
         }
@@ -183,18 +183,13 @@ extension AppState {
             .installedAgentIDs()
     }
 
-    /// Each skills agent's user-scope skills folders, current and legacy.
-    static func userSkillRoots(in environment: SukiruEnvironment) -> [String: [String]] {
+    /// The agent's user-scope skills folders, current and legacy. Resolved on
+    /// each call: OpenClaw's folder depends on which of its homes exists.
+    func userSkillRoots(of agent: SidebarAgent) -> [String] {
+        guard let host = HostTable.host(id: agent.id) else { return [] }
         let resolver = HostPathResolver(
             environment: environment, fileSystem: DefaultFileSystemProbe())
-        return Dictionary(
-            uniqueKeysWithValues: HostTable.hosts.map { host in
-                (
-                    host.id,
-                    [resolver.globalSkillsRoot(for: host)]
-                        + resolver.legacyGlobalSkillsRoots(for: host)
-                )
-            })
+        return [resolver.globalSkillsRoot(for: host)] + resolver.legacyGlobalSkillsRoots(for: host)
     }
 
     /// The agent whose skills, plugins, hooks, or add-ons are on screen.

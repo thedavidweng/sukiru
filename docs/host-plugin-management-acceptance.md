@@ -30,10 +30,10 @@ and runtime-loaded status remain separate; runtime status is unknown.
 | #27 | Codex marketplace add/upgrade/remove; local-marketplace update limits and full marketplace granularity are shown. | Curated backend installation changes require explicit consent and remain outside filesystem rollback. |
 
 Skills and Plugins are separate sidebar destinations (stories 1 and 6): the
-Library toolbar is unchanged, and each agent row in the Agents section
-(Claude Code, Codex, OpenCode, Cursor, and the rest) holds its own Plugins
-destination with its own count, beside its Skills, Hooks, Extensions, and MCP
-Servers. Users choose which agents the section shows and their order in
+Library toolbar is unchanged, and in the Agents section each agent with a
+plugin lifecycle (Claude Code, Codex, OpenCode, Cursor, Antigravity) holds its
+own Plugins destination with its own count, beside the Skills, Hooks,
+Extensions, and MCP Servers it has. Users choose which agents the section shows and their order in
 Sidebar settings (a native reorderable list with a switch per agent, plus Move
 Up/Down in the row menu), or with Move Up/Down in the sidebar row menu. The sidebar
 itself does not drag: the system drag image of a vibrant sidebar row renders

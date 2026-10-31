@@ -313,12 +313,12 @@ private struct SkillCounts {
 
     @MainActor
     init(state: AppState, agents shownAgents: [SidebarAgent]) {
-        let readers = shownAgents.filter(\.readsSkills)
+        let readers = shownAgents.filter(\.readsSkills).map { ($0, state.userSkillRoots(of: $0)) }
         for skill in state.report?.skills ?? [] {
             if skill.scope == .user {
                 user += 1
                 all += 1
-                for agent in readers where agent.reads(skill, roots: state.agentSkillRoots) {
+                for (agent, roots) in readers where agent.reads(skill, roots: roots) {
                     agents[agent.id, default: 0] += 1
                 }
             } else if skill.scope == .project, let root = state.projectRoot(of: skill) {
