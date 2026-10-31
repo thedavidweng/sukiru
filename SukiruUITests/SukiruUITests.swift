@@ -139,6 +139,34 @@ final class SukiruUITests: XCTestCase {
         app.terminate()
     }
 
+    func testAgentRowGroupsItsSkillsAndPlugins() throws {
+        try write(
+            "---\nname: cursor-only-skill\ndescription: read by Cursor\n---\n",
+            to: home.appendingPathComponent(".cursor/skills/cursor-only-skill/SKILL.md"))
+        try write(
+            "---\nname: claude-only-skill\ndescription: read by Claude Code\n---\n",
+            to: home.appendingPathComponent(".claude/skills/claude-only-skill/SKILL.md"))
+        let app = XCUIApplication()
+        app.launchEnvironment["SUKIRU_HOME"] = home.path
+        app.launchEnvironment["SUKIRU_ROOTS"] = ""
+        app.launchEnvironment["PATH"] =
+            Bundle(for: Self.self).resourceURL!
+            .appendingPathComponent("Fixtures/bin").path
+        app.launchArguments = ["-AppleLanguages", "(en)"]
+        app.launch()
+
+        let agent = app.descendants(matching: .any).matching(
+            identifier: "sukiru.sidebar.agent.cursor")
+        XCTAssertTrue(agent.firstMatch.waitForExistence(timeout: 15))
+        XCTAssertEqual(agent.count, 1)
+        XCTAssertTrue(app.descendants(matching: .any)["sukiru.sidebar.plugins.cursor"].exists)
+
+        app.descendants(matching: .any)["sukiru.sidebar.skills.cursor"].firstMatch.click()
+        XCTAssertTrue(app.staticTexts["cursor-only-skill"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts["claude-only-skill"].exists)
+        app.terminate()
+    }
+
     private func makeCursorFixture() throws {
         let cursorRoot = home.appendingPathComponent(".cursor/plugins", isDirectory: true)
         let local = cursorRoot.appendingPathComponent("local/local-demo", isDirectory: true)

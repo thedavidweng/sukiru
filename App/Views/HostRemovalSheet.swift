@@ -65,7 +65,7 @@ struct HostRemovalSheet: View {
 
     private var initialBucket: String {
         switch state.libraryScope {
-        case .all, .user: "user"
+        case .all, .user, .agent: "user"
         case .project(let root): "project:" + root
         }
     }

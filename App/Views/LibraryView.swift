@@ -76,6 +76,7 @@ struct LibraryView: View {
         case .all: Text("Library")
         case .user: Text("User Library")
         case .project(let root): Text(verbatim: URL(fileURLWithPath: root).lastPathComponent)
+        case .agent(let agent): Text(verbatim: agent.name)
         }
     }
 
