@@ -1,10 +1,13 @@
+import Foundation
+
 /// Per-host installed/leftover/absent detection.
 ///
 /// Detection here is for USER (global) scope. It never consults the process
 /// working directory, so scans stay deterministic and hermetic; the only
 /// external probe is `/etc/codex` existence for the `codex` host (explicitly
-/// permitted by the SUKIRU_HOME hermeticity rule). Project-scope host presence
-/// is a plain existence test and does not use this detector.
+/// permitted by the SUKIRU_HOME hermeticity rule). `launcherPresent` also reads
+/// `PATH`, which only the sidebar's installed-agent list uses. Project-scope
+/// host presence is a plain existence test and does not use this detector.
 public struct HostDetector: Sendable {
     private let environment: SukiruEnvironment
     private let fileSystem: FileSystemProbe
@@ -18,9 +21,10 @@ public struct HostDetector: Sendable {
 
     /// The load-bearing rule: a plain file always counts; a
     /// non-directory does not; an unreadable directory counts (plain
-    /// existence); otherwise a directory marks an installation UNLESS its
-    /// entire content is a bare `skills` entry (ignoring `.DS_Store` /
-    /// `.localized`), which is CLI spray residue, not an installation.
+    /// existence); otherwise a directory marks an installation UNLESS it is
+    /// CLI spray residue: folders holding nothing but `skills` entries and
+    /// empty folders (ignoring `.DS_Store` / `.localized`), such as
+    /// `.adal/skills` or `.astrbot/data/skills`.
     public func marksInstallation(_ path: String) -> Bool {
         if fileSystem.isFile(atPath: path) {
             return true
@@ -28,14 +32,20 @@ public struct HostDetector: Sendable {
         if !fileSystem.isDirectory(atPath: path) {
             return false
         }
-        guard let entries = fileSystem.directoryEntries(atPath: path) else {
-            return true
+        return !isResidue(path, depth: 0)
+    }
+
+    /// The skills CLI nests a host's folder at most a few levels under its
+    /// config home, so deeper trees are treated as real content.
+    private func isResidue(_ path: String, depth: Int) -> Bool {
+        guard depth < 4, let entries = fileSystem.directoryEntries(atPath: path) else {
+            return false
         }
-        let sawSkills = entries.contains("skills")
-        let sawOther = entries.contains { name in
-            name != "skills" && name != ".DS_Store" && name != ".localized"
+        return entries.allSatisfy { name in
+            if name == "skills" || name == ".DS_Store" || name == ".localized" { return true }
+            let child = HostPathResolver.join(path, name)
+            return fileSystem.isDirectory(atPath: child) && isResidue(child, depth: depth + 1)
         }
-        return !(sawSkills && !sawOther)
     }
 
     /// Ordered detection algorithm (`is_detected_at`),
@@ -83,7 +93,8 @@ public struct HostDetector: Sendable {
 
     /// Ids of every agent installed in user scope: host-table hosts plus the
     /// agents Sukiru manages that the skills CLI does not list, probed at the
-    /// config homes their hook and add-on readers use.
+    /// config homes their hook and add-on readers use. An agent with a known
+    /// launcher counts only while that launcher is on this Mac.
     public func installedAgentIDs() -> Set<String> {
         let home = environment.home
         let homes = [
@@ -93,8 +104,38 @@ public struct HostDetector: Sendable {
             "dsh": home + "/.dsh",
             "omp": home + "/.omp/agent"
         ]
-        return Set(HostTable.hosts.filter(isDetected).map(\.id))
+        let configured = Set(HostTable.hosts.filter(isDetected).map(\.id))
             .union(homes.filter { marksInstallation($0.value) }.keys)
+        return configured.filter { launcherPresent($0) != false }
+            .union(AgentLauncher.probes.keys.filter { launcherPresent($0) == true })
+    }
+
+    /// Whether the agent's app, command, or editor extension is on this Mac;
+    /// nil when Sukiru knows no launcher for it. Commands are executables on
+    /// `PATH` and in `~/.local/bin`, where native installers put them even
+    /// when the app's inherited `PATH` lacks it. Fixture homes never probe
+    /// `/Applications`.
+    public func launcherPresent(_ agentID: String) -> Bool? {
+        guard let probe = AgentLauncher.probes[agentID] else { return nil }
+        let home = environment.home
+        let appFolders =
+            [home + "/Applications"] + (environment.homeIsOverridden ? [] : ["/Applications"])
+        let commandFolders =
+            (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":").map(
+                String.init)
+            + [home + "/.local/bin"]
+        let extensionFolders = AgentLauncher.editorHomes.compactMap {
+            fileSystem.directoryEntries(atPath: home + "/" + $0 + "/extensions")
+        }
+        return probe.apps.contains { app in
+            appFolders.contains { fileSystem.exists(atPath: $0 + "/" + app + ".app") }
+        }
+            || probe.commands.contains { command in
+                commandFolders.contains { fileSystem.isExecutable(atPath: $0 + "/" + command) }
+            }
+            || probe.extensions.contains { id in
+                extensionFolders.contains { $0.contains { $0.lowercased().hasPrefix(id + "-") } }
+            }
     }
 
     /// The installed/leftover/absent tri-state for a host in user scope.

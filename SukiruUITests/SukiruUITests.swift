@@ -122,9 +122,10 @@ final class SukiruUITests: XCTestCase {
     }
 
     func testDetectedAgentWithoutHooksKeepsItsHooksRow() throws {
-        try FileManager.default.createDirectory(
-            at: home.appendingPathComponent(".config/devin/cli", isDirectory: true),
-            withIntermediateDirectories: true)
+        let launcher = home.appendingPathComponent(".local/bin/devin")
+        try write("", to: launcher)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o755], ofItemAtPath: launcher.path)
         let app = XCUIApplication()
         app.launchEnvironment["SUKIRU_HOME"] = home.path
         app.launchEnvironment["SUKIRU_ROOTS"] = ""

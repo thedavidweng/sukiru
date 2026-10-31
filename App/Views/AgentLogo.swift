@@ -26,7 +26,7 @@ struct AgentLogo: View {
             "codex", "command-code", "continue", "cortex", "crush", "cursor", "deepagents",
             "devin", "dexto", "droid", "dsh", "firebender", "forgecode", "fx", "gemini-cli",
             "github-copilot", "goose", "grok", "hermes-agent", "iflow-cli", "jcode", "junie",
-            "kilo", "kiro-cli", "mcpjam", "minimax-code", "mistral-vibe", "muse", "mux",
+            "kilo", "kiro-cli", "lingma", "mcpjam", "minimax-code", "mistral-vibe", "muse", "mux",
             "neovate", "omp", "openclaw", "opencode", "openhands", "pi", "pochi", "qoder",
             "qwen-code", "reasonix", "replit", "roo", "rovodev", "tabnine-cli", "trae", "warp",
             "windsurf", "zcode", "zed", "zencoder":
@@ -37,6 +37,8 @@ struct AgentLogo: View {
             return "agent-antigravity"
         case "trae-cn":
             return "agent-trae"
+        case "zenflow":
+            return "agent-zencoder"
         case "kimi-code-cli":
             return "agent-kimi-cli"
         default:
@@ -54,7 +56,9 @@ struct HostLabel: View {
         Label {
             Text(verbatim: name)
         } icon: {
+            // Keeps names aligned for agents without artwork.
             AgentLogo(hostID: agentID, size: 16)
+                .frame(width: 16, height: 16)
         }
     }
 }

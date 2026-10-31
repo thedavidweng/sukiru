@@ -28,7 +28,7 @@ struct HostSkillNameCollisionTests {
     @Test("OpenCode reaching one folder twice is a note: it loads the same files")
     func openCodeCompatibilityRoots() throws {
         let home = try TempTree()
-        try home.dir(".config/opencode")
+        try home.file(".config/opencode/opencode.json", contents: "{}")
         try home.file(".agents/skills/tool/SKILL.md", contents: OwnershipBuilders.skillMD("tool"))
         try home.symlink(".claude/skills/tool", to: "../../.agents/skills/tool")
 
@@ -56,7 +56,7 @@ struct HostSkillNameCollisionTests {
     @Test("A Droid alias seen by OpenCode too stays a problem with only Droid's link removable")
     func droidAndOpenCode() throws {
         let home = try TempTree()
-        try home.dir(".config/opencode")
+        try home.file(".config/opencode/opencode.json", contents: "{}")
         try home.file(".agents/skills/tool/SKILL.md", contents: OwnershipBuilders.skillMD("tool"))
         try home.symlink(".claude/skills/tool", to: "../../.agents/skills/tool")
         try home.symlink(".factory/skills/tool", to: "../../.agents/skills/tool")

@@ -59,8 +59,8 @@ extension AppState {
     func findingEntries(for skill: Skill) -> [FindingEntry] {
         guard let report else { return [] }
         let group = scopeGroup(for: skill)
-        return report.findings.enumerated().compactMap { index, finding in
-            guard finding.skillName == skill.name else { return nil }
+        return findingIndices(named: skill.name).compactMap { index in
+            let finding = report.findings[index]
             let inScope =
                 finding.workspaceID == group
                 || (group == "user"
@@ -87,7 +87,26 @@ extension AppState {
     /// never flag a skill or count toward the Health badge — the same
     /// problem definition Health counts by.
     func needsAttention(_ skill: Skill) -> Bool {
-        findings(for: skill).contains { ProblemKind.of($0).isProblem }
+        let id = Self.skillID(skill)
+        if let cached = findingIndex.attention[id] { return cached }
+        let attention = findings(for: skill).contains { ProblemKind.of($0).isProblem }
+        derived.findings?.attention[id] = attention
+        return attention
+    }
+
+    private var findingIndex: FindingIndex {
+        if let cached = derived.findings, cached.reportRevision == reportRevision { return cached }
+        var byName: [String: [Int]] = [:]
+        for (index, finding) in (report?.findings ?? []).enumerated() {
+            if let name = finding.skillName { byName[name, default: []].append(index) }
+        }
+        let index = FindingIndex(reportRevision: reportRevision, byName: byName)
+        derived.findings = index
+        return index
+    }
+
+    private func findingIndices(named name: String) -> [Int] {
+        findingIndex.byName[name] ?? []
     }
 
     var attentionFindingCount: Int {

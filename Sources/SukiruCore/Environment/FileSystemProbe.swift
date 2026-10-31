@@ -24,6 +24,7 @@ public protocol FileSystemProbe: Sendable {
     func exists(atPath path: String) -> Bool
     func isFile(atPath path: String) -> Bool
     func isDirectory(atPath path: String) -> Bool
+    func isExecutable(atPath path: String) -> Bool
     func directoryEntries(atPath path: String) -> [String]?
     /// The bytes of a regular file, or nil when it cannot be read. Never
     /// throws: unreadable files are data (Issue records), not failures.
@@ -59,6 +60,10 @@ public struct DefaultFileSystemProbe: FileSystemProbe {
         var isDir: ObjCBool = false
         let exists = FileManager.default.fileExists(atPath: path, isDirectory: &isDir)
         return exists && isDir.boolValue
+    }
+
+    public func isExecutable(atPath path: String) -> Bool {
+        isFile(atPath: path) && FileManager.default.isExecutableFile(atPath: path)
     }
 
     public func directoryEntries(atPath path: String) -> [String]? {

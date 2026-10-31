@@ -94,9 +94,7 @@ struct SkillDetailForm: View {
             if !findings.isEmpty {
                 findingsSection(findings)
             }
-            LibraryHostsSection(
-                skill: skill, report: state.report, environment: state.environment,
-                projectRoot: state.projectRoot(of: skill))
+            LibraryHostsSection(skill: skill, entries: state.hostEntries(for: skill))
             LibraryProvenanceSection(skill: skill)
             LibraryLocationsSection(skill: skill)
             SkillContentSection(skill: skill)

@@ -46,7 +46,8 @@ extension PluginInventoryReader {
                     enablement: fields["enabled"] == "false" ? .disabled : .enabled,
                     loadStatus: "unknown",
                     components: components(at: path, manifest: manifest, issues: &issues),
-                    installationStatus: path == nil ? "configured" : "installed"))
+                    installationStatus: path == nil ? "configured" : "installed",
+                    details: PluginManifestDetails(manifest, root: path)))
         }
         return installations
     }

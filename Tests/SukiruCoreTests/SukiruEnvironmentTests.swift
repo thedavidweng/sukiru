@@ -24,6 +24,10 @@ struct StubFileSystem: FileSystemProbe {
         directories.contains(path)
     }
 
+    func isExecutable(atPath path: String) -> Bool {
+        files.contains(path)
+    }
+
     func directoryEntries(atPath path: String) -> [String]? {
         entries[path]
     }

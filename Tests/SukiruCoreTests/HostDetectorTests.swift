@@ -81,20 +81,20 @@ struct HostDetectorTests {
         #expect(rig.detector.marksInstallation("/h/.qoder"))
     }
 
-    @Test("Directories without a skills entry count as installations")
-    func noSkillsEntryMarks() {
+    @Test("Empty directories are not installations")
+    func emptyDirectoryDoesNotMark() {
         let dsOnly = Rig(
             vars: ["SUKIRU_HOME": "/h"],
             directories: ["/h/.qoder"],
             entries: ["/h/.qoder": [".DS_Store"]]
         )
-        #expect(dsOnly.detector.marksInstallation("/h/.qoder"))
+        #expect(!dsOnly.detector.marksInstallation("/h/.qoder"))
         let empty = Rig(
             vars: ["SUKIRU_HOME": "/h"],
             directories: ["/h/.qoder"],
             entries: ["/h/.qoder": []]
         )
-        #expect(empty.detector.marksInstallation("/h/.qoder"))
+        #expect(!empty.detector.marksInstallation("/h/.qoder"))
     }
 
     // MARK: isDetected ordering
@@ -221,7 +221,17 @@ struct HostDetectorTests {
                 "/h/.omp/agent": ["config.yml"], "/h/.dsh": ["skills"]
             ]
         )
-        let ids = rig.detector.installedAgentIDs()
+        let launchers = Rig(
+            vars: ["SUKIRU_HOME": "/h"],
+            files: ["/h/.local/bin/openclaude", "/h/.local/bin/muse", "/h/.local/bin/omp"],
+            directories: ["/h/.openclaude", "/h/.config/muse", "/h/.omp/agent", "/h/.dsh"],
+            entries: [
+                "/h/.openclaude": ["settings.json"], "/h/.config/muse": ["settings.json"],
+                "/h/.omp/agent": ["config.yml"], "/h/.dsh": ["skills"]
+            ]
+        )
+        #expect(rig.detector.installedAgentIDs().isDisjoint(with: ["openclaude", "muse", "omp"]))
+        let ids = launchers.detector.installedAgentIDs()
         #expect(ids.isSuperset(of: ["openclaude", "muse", "omp"]))
         #expect(!ids.contains("dsh"))
         #expect(!ids.contains("jcode"))

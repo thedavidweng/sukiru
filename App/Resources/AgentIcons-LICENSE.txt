@@ -3,7 +3,7 @@ Agent logo artwork
 The agent logos in AgentIcons.xcassets identify compatible tools. Product names
 and brand marks remain the property of their respective owners.
 
-Amp, Antigravity, Claude Code, Codex, Cursor, Droid, Gemini CLI, GitHub
+Amp, Claude Code, Codex, Cursor, Droid, Gemini CLI, GitHub
 Copilot, Hermes Agent, OpenClaw, OpenCode, Pi, and Trae were converted from
 Kitter's provider SVGs at commit 7de9372a8b691c8dffed6e9102d2c1c53b0e46b2:
 https://github.com/what1f/kitter/tree/7de9372a8b691c8dffed6e9102d2c1c53b0e46b2/assets/icons
@@ -19,6 +19,11 @@ Warp, Windsurf, and Zed were converted from aghub's agent SVGs at commit
 61a7ee799a035cd5eb0ccae6515b9d151984ec52:
 https://github.com/AkaraChen/aghub/tree/61a7ee799a035cd5eb0ccae6515b9d151984ec52/crates/desktop/src/assets/agent
 Copyright (c) 2026 akarachen.
+
+Antigravity was converted from the monochrome SVG of
+@lobehub/icons-static-svg 1.101.0 (Lobe Icons, MIT, Copyright (c) 2023 LobeHub).
+Lingma uses the Alibaba Cloud mark from the same package, as Lingma is an
+Alibaba Cloud product. Zenflow, a Zencoder product, shows the Zencoder mark.
 
 CodeArts Agent uses the Huawei Cloud mark and Cortex Code uses the Snowflake
 mark, both from @lobehub/icons-static-svg 1.95.1 (Lobe Icons, MIT, Copyright

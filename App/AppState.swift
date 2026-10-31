@@ -45,7 +45,7 @@ final class AppState: ObservableObject {
         didSet { reportRevision &+= 1 }
     }
     /// Host table ids of the agents installed on this Mac, as of the last scan.
-    @Published private(set) var detectedAgentIDs: Set<String> = []
+    @Published var detectedAgentIDs: Set<String> = []
     /// Bumps on every report change; keys the derived-state caches.
     private(set) var reportRevision = 0
     /// Health and lookup derivations, rebuilt only when their inputs change
@@ -240,14 +240,15 @@ final class AppState: ObservableObject {
         let request = ScanRequest()
         scanGeneration += 1
         let generation = scanGeneration
+        let detection = startAgentDetection()
         let startedAt = ContinuousClock.now
         healthCheckRunning = true
         Task.detached(priority: .userInitiated) { [weak self] in
             do {
                 let report = try engine.scan(request)
-                let detected = AppState.installedAgentIDs(in: environment)
+                await self?.detectInstalledAgents(in: environment, detection)
                 await self?.applyScanResult(
-                    .success((report, detected)), generation: generation, startedAt: startedAt)
+                    .success(report), generation: generation, startedAt: startedAt)
             } catch {
                 await self?.applyScanResult(
                     .failure(error), generation: generation, startedAt: startedAt)
@@ -255,26 +256,26 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// Monotonic counters identifying the latest requested scan and search;
-    /// stale completions are dropped instead of clobbering newer state.
+    /// Monotonic counters identifying the latest requested scan, search and
+    /// agent detection; stale completions are dropped instead of clobbering newer state.
     var scanGeneration = 0
     var searchGeneration = 0
     var searchPreviewGeneration = 0
+    var agentDetectionGeneration = 0
     /// Minimum time the running state stays visible once a scan starts.
     private static let minimumRunVisibility: Duration = .milliseconds(600)
 
     /// Applies a finished scan on the main actor; stale generations (a
     /// newer rescan was requested meanwhile) are ignored entirely.
     private func applyScanResult(
-        _ result: Result<(ScanReport, Set<String>), any Error>,
+        _ result: Result<ScanReport, any Error>,
         generation: Int,
         startedAt: ContinuousClock.Instant
     ) async {
         guard generation == scanGeneration else { return }
         switch result {
-        case .success(let (report, detected)):
+        case .success(let report):
             self.report = report
-            self.detectedAgentIDs = detected
             self.scanPhase = .loaded
             self.pruneSelection(using: report)
             loadSkillDescriptions(for: report, generation: generation)
