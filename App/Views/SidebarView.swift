@@ -117,36 +117,36 @@ struct SidebarView: View {
                     }
                 }
             }
-            if !pluginHosts.shown(PluginHost.allCases).isEmpty {
+            if !shownPluginHosts.isEmpty {
                 Section("Plugins") {
-                    ForEach(pluginHosts.shown(PluginHost.allCases), id: \.self) { host in
+                    ForEach(shownPluginHosts, id: \.self) { host in
                         pluginRow(host)
                             .badge(state.pluginInstallations(for: host).count)
                             .tag(Destination.plugins(host))
                     }
                 }
             }
-            if !hookHosts.shown(HookHost.allCases).isEmpty {
+            if !shownHookHosts.isEmpty {
                 Section("Hooks") {
-                    ForEach(hookHosts.shown(HookHost.allCases), id: \.self) { host in
+                    ForEach(shownHookHosts, id: \.self) { host in
                         hookRow(host)
                             .badge(state.hooks(for: host).count)
                             .tag(Destination.hooks(host))
                     }
                 }
             }
-            if !extensionHosts.shown(ExtensionHost.addOnHosts).isEmpty {
+            if !shownExtensionHosts.isEmpty {
                 Section("Extensions") {
-                    ForEach(extensionHosts.shown(ExtensionHost.addOnHosts), id: \.self) { host in
+                    ForEach(shownExtensionHosts, id: \.self) { host in
                         extensionRow(host, mcp: false)
                             .badge(state.extensions(for: host, mcp: false).count)
                             .tag(Destination.extensions(host))
                     }
                 }
             }
-            if !mcpHosts.shown(ExtensionHost.mcpHosts).isEmpty {
+            if !shownMCPHosts.isEmpty {
                 Section("MCP Servers") {
-                    ForEach(mcpHosts.shown(ExtensionHost.mcpHosts), id: \.self) { host in
+                    ForEach(shownMCPHosts, id: \.self) { host in
                         extensionRow(host, mcp: true)
                             .badge(state.extensions(for: host, mcp: true).count)
                             .tag(Destination.mcpServers(host))
@@ -168,13 +168,17 @@ struct SidebarView: View {
             }
         }
         .onChange(of: pluginHosts) { _, arrangement in
-            if state.surface == .plugins && !arrangement.isShown(state.pluginHost) {
+            let host = state.pluginHost
+            let hidden = !arrangement.isShown(host, available: state.isAvailable(host))
+            if state.surface == .plugins && hidden {
                 state.selectedPluginIDs = []
                 state.surface = .library
             }
         }
         .onChange(of: hookHosts) { _, arrangement in
-            if state.surface == .hooks && !arrangement.isShown(state.hookState.host) {
+            let host = state.hookState.host
+            let hidden = !arrangement.isShown(host, available: state.isAvailable(host))
+            if state.surface == .hooks && hidden {
                 state.hookState.selectedID = nil
                 state.surface = .library
             }
@@ -211,6 +215,18 @@ extension SidebarView {
     }
 
     private var shownProjects: [String] { projects.shown(state.projectRoots.sorted()) }
+    private var shownPluginHosts: [PluginHost] {
+        pluginHosts.shown(PluginHost.allCases, available: state.isAvailable)
+    }
+    private var shownHookHosts: [HookHost] {
+        hookHosts.shown(HookHost.allCases, available: state.isAvailable)
+    }
+    private var shownExtensionHosts: [ExtensionHost] {
+        extensionHosts.shown(ExtensionHost.addOnHosts) { state.isAvailable($0, mcp: false) }
+    }
+    private var shownMCPHosts: [ExtensionHost] {
+        mcpHosts.shown(ExtensionHost.mcpHosts) { state.isAvailable($0, mcp: true) }
+    }
 
     /// Reordering stays in the menu and in Settings: the system's drag image
     /// for a vibrant sidebar row drops the vibrancy and renders black in Dark
@@ -223,12 +239,15 @@ extension SidebarView {
         .accessibilityIdentifier("sukiru.sidebar.plugins.\(host.rawValue)")
         .help("Show plugins managed by this host")
         .contextMenu {
-            arrangementMenu(host, in: PluginHost.allCases, arrangement: $pluginHosts)
+            arrangementMenu(
+                host, in: PluginHost.allCases, arrangement: $pluginHosts,
+                available: state.isAvailable)
         }
     }
 
     private func leaveHiddenExtensions(_ arrangement: SidebarArrangement, mcp: Bool) {
-        let hidden = !arrangement.isShown(state.hookState.extensionHost)
+        let host = state.hookState.extensionHost
+        let hidden = !arrangement.isShown(host, available: state.isAvailable(host, mcp: mcp))
         guard state.surface == .extensions, state.hookState.showsMCP == mcp, hidden else { return }
         state.hookState.selectedExtensionID = nil
         state.surface = .library
@@ -246,10 +265,13 @@ extension SidebarView {
             )
             .contextMenu {
                 if mcp {
-                    arrangementMenu(host, in: ExtensionHost.mcpHosts, arrangement: $mcpHosts)
+                    arrangementMenu(host, in: ExtensionHost.mcpHosts, arrangement: $mcpHosts) {
+                        state.isAvailable($0, mcp: true)
+                    }
                 } else {
                     arrangementMenu(
-                        host, in: ExtensionHost.addOnHosts, arrangement: $extensionHosts)
+                        host, in: ExtensionHost.addOnHosts, arrangement: $extensionHosts
+                    ) { state.isAvailable($0, mcp: false) }
                 }
             }
     }
@@ -259,7 +281,9 @@ extension SidebarView {
             .accessibilityIdentifier("sukiru.sidebar.hooks.\(host.rawValue)")
             .help("Inspect lifecycle hooks configured for this host")
             .contextMenu {
-                arrangementMenu(host, in: HookHost.allCases, arrangement: $hookHosts)
+                arrangementMenu(
+                    host, in: HookHost.allCases, arrangement: $hookHosts,
+                    available: state.isAvailable)
             }
     }
 
@@ -285,15 +309,20 @@ extension SidebarView {
 
     @ViewBuilder
     private func arrangementMenu<Item: SidebarItem>(
-        _ item: Item, in items: [Item], arrangement: Binding<SidebarArrangement>
+        _ item: Item, in items: [Item], arrangement: Binding<SidebarArrangement>,
+        available: @escaping (Item) -> Bool = { _ in true }
     ) -> some View {
-        let shown = arrangement.wrappedValue.shown(items)
-        Button("Move Up") { arrangement.wrappedValue.move(item, by: -1, in: items) }
-            .disabled(shown.first == item)
-        Button("Move Down") { arrangement.wrappedValue.move(item, by: 1, in: items) }
-            .disabled(shown.last == item)
+        let shown = arrangement.wrappedValue.shown(items, available: available)
+        Button("Move Up") {
+            arrangement.wrappedValue.move(item, by: -1, in: items, available: available)
+        }
+        .disabled(shown.first == item)
+        Button("Move Down") {
+            arrangement.wrappedValue.move(item, by: 1, in: items, available: available)
+        }
+        .disabled(shown.last == item)
         Divider()
-        Button("Hide from Sidebar") { arrangement.wrappedValue.set(item, shown: false) }
+        Button("Hide from Sidebar") { arrangement.wrappedValue.set(item, shown: false, in: items) }
         Button("Customize Sidebar…") { openSettings() }
     }
 }

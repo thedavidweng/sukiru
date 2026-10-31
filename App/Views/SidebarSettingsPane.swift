@@ -31,22 +31,24 @@ struct SidebarSettingsPane: View {
             }
             SidebarArrangementSection(
                 "Plugins", items: PluginHost.allCases, arrangement: $pluginHosts,
-                identifier: "plugins"
+                identifier: "plugins", available: state.isAvailable
             ) { HostLabel(name: $0.displayName, agentID: $0.agentID) }
             SidebarArrangementSection(
                 "Hooks", items: HookHost.allCases, arrangement: $hookHosts,
-                identifier: "hooks"
+                identifier: "hooks", available: state.isAvailable
             ) { HostLabel(name: $0.displayName, agentID: $0.agentID) }
             SidebarArrangementSection(
                 "Extensions", items: ExtensionHost.addOnHosts, arrangement: $extensionHosts,
-                identifier: "extensions"
-            ) { HostLabel(name: $0.displayName, agentID: $0.agentID) }
+                identifier: "extensions", available: { state.isAvailable($0, mcp: false) },
+                label: { HostLabel(name: $0.displayName, agentID: $0.agentID) })
             SidebarArrangementSection(
                 "MCP Servers", items: ExtensionHost.mcpHosts, arrangement: $mcpHosts,
-                identifier: "mcp",
-                footer:
-                    "Turn on the items to show in the sidebar. Drag them to change their order."
-            ) { HostLabel(name: $0.displayName, agentID: $0.agentID) }
+                identifier: "mcp", available: { state.isAvailable($0, mcp: true) },
+                footer: """
+                    Agents not installed on this Mac stay off until they hold items or you turn \
+                    them on. Drag items to change their order.
+                    """,
+                label: { HostLabel(name: $0.displayName, agentID: $0.agentID) })
         }
         .formStyle(.grouped)
         .frame(width: 560, height: 480)
@@ -61,18 +63,21 @@ private struct SidebarArrangementSection<Item: SidebarItem, RowLabel: View>: Vie
     let items: [Item]
     @Binding var arrangement: SidebarArrangement
     let identifier: String
+    let available: (Item) -> Bool
     let footer: LocalizedStringKey?
     @ViewBuilder let label: (Item) -> RowLabel
 
     init(
         _ title: LocalizedStringKey, items: [Item], arrangement: Binding<SidebarArrangement>,
-        identifier: String, footer: LocalizedStringKey? = nil,
+        identifier: String, available: @escaping (Item) -> Bool = { _ in true },
+        footer: LocalizedStringKey? = nil,
         @ViewBuilder label: @escaping (Item) -> RowLabel
     ) {
         self.title = title
         self.items = items
         self._arrangement = arrangement
         self.identifier = identifier
+        self.available = available
         self.footer = footer
         self.label = label
     }
@@ -105,8 +110,8 @@ private struct SidebarArrangementSection<Item: SidebarItem, RowLabel: View>: Vie
     /// only signals that it can.
     private func row(_ item: Item, at index: Int, of count: Int) -> some View {
         let shown = Binding(
-            get: { arrangement.isShown(item) },
-            set: { arrangement.set(item, shown: $0) })
+            get: { arrangement.isShown(item, available: available(item)) },
+            set: { arrangement.set(item, shown: $0, in: items) })
         return HStack(spacing: 12) {
             label(item)
                 .lineLimit(1)

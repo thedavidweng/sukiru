@@ -46,6 +46,7 @@ final class SukiruUITests: XCTestCase {
 
         let cursor = app.descendants(matching: .any)["sukiru.sidebar.plugins.cursor"].firstMatch
         XCTAssertTrue(cursor.waitForExistence(timeout: 15))
+        XCTAssertFalse(app.descendants(matching: .any)["sukiru.sidebar.hooks.devin"].exists)
         cursor.click()
 
         XCTAssertTrue(app.staticTexts["local-demo"].waitForExistence(timeout: 10))
@@ -118,6 +119,24 @@ final class SukiruUITests: XCTestCase {
         app.terminate()
         let recorded = try String(contentsOf: probes, encoding: .utf8)
         XCTAssertFalse(recorded.contains("plugin marketplace add https://"))
+    }
+
+    func testDetectedAgentWithoutHooksKeepsItsHooksRow() throws {
+        try FileManager.default.createDirectory(
+            at: home.appendingPathComponent(".config/devin/cli", isDirectory: true),
+            withIntermediateDirectories: true)
+        let app = XCUIApplication()
+        app.launchEnvironment["SUKIRU_HOME"] = home.path
+        app.launchEnvironment["SUKIRU_ROOTS"] = ""
+        app.launchEnvironment["PATH"] =
+            Bundle(for: Self.self).resourceURL!
+            .appendingPathComponent("Fixtures/bin").path
+        app.launchArguments = ["-AppleLanguages", "(en)"]
+        app.launch()
+
+        let devin = app.descendants(matching: .any)["sukiru.sidebar.hooks.devin"].firstMatch
+        XCTAssertTrue(devin.waitForExistence(timeout: 15))
+        app.terminate()
     }
 
     private func makeCursorFixture() throws {

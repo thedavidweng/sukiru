@@ -6439,12 +6439,12 @@
         }
       }
     },
-    "Turn on the items to show in the sidebar. Drag them to change their order." : {
+    "Agents not installed on this Mac stay off until they hold items or you turn them on. Drag items to change their order." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "打开要在边栏中显示的项目。拖移它们以更改顺序。"
+            "value" : "未安装在这台 Mac 上的智能体默认不显示，除非其中有项目或你手动打开。拖移项目以更改顺序。"
           }
         }
       }
