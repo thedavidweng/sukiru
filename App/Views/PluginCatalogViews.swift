@@ -18,6 +18,9 @@ struct PluginCatalogList: View {
                         )
                         .tag(marketplace.catalogID(entry))
                     }
+                    if marketplace.host == .cursor, marketplace.plugins.isEmpty {
+                        Text("The cached catalog has no listings").foregroundStyle(.secondary)
+                    }
                     if marketplace.host == .codex, marketplace.plugins.isEmpty, filter.isEmpty {
                         if inspectionIssues.contains(where: {
                             $0.path.hasPrefix((marketplace.path ?? "") + "/")
@@ -35,6 +38,16 @@ struct PluginCatalogList: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(verbatim: marketplace.name)
+                            if marketplace.host == .cursor {
+                                Text("Cached catalog; registration scope unknown")
+                                    .font(.caption).foregroundStyle(.secondary)
+                                Text(verbatim: marketplace.source)
+                                    .font(.caption).foregroundStyle(.secondary)
+                                if let ref = marketplace.ref {
+                                    Text("Git ref: \(ref)").font(.caption).foregroundStyle(
+                                        .secondary)
+                                }
+                            }
                             if marketplace.host == .droid || marketplace.host == .codex {
                                 Group {
                                     Text(
@@ -70,7 +83,7 @@ struct PluginCatalogList: View {
                             }
                         }
                         Spacer()
-                        if marketplace.host == .codex {
+                        if marketplace.host == .codex || marketplace.host == .cursor {
                             Menu {
                                 Button("Refresh Marketplace") {
                                     state.manageMarketplace(
@@ -91,7 +104,7 @@ struct PluginCatalogList: View {
                     }
                 }
             }
-            if state.pluginHost == .codex, !inspectionIssues.isEmpty {
+            if [.codex, .cursor].contains(state.pluginHost), !inspectionIssues.isEmpty {
                 Section {
                     DisclosureGroup("Inspection Issues") {
                         ForEach(inspectionIssues, id: \.self) { issue in
@@ -161,11 +174,15 @@ struct PluginCatalogList: View {
     }
 
     private var inspectionIssues: [PluginInventoryIssue] {
-        (state.report?.pluginInventory?.issues ?? []).filter { $0.host == state.pluginHost }
+        (state.report?.pluginInventory?.issues ?? []).filter {
+            $0.host == state.pluginHost
+                && (state.pluginHost != .cursor
+                    || $0.path.contains("/.cursor/plugins/marketplaces/"))
+        }
     }
 
     private var showsEmptyCatalog: Bool {
-        state.pluginHost != .codex && inspectionIssues.isEmpty
+        ![.codex, .cursor].contains(state.pluginHost) && inspectionIssues.isEmpty
             && marketplaces.allSatisfy { $0.plugins.isEmpty }
     }
 
@@ -186,6 +203,7 @@ struct PluginCatalogList: View {
         _ entry: PluginCatalogEntry, in marketplace: PluginMarketplace
     ) -> PluginCatalogRow.Installation? {
         let plugins = state.pluginInstallations(for: marketplace.host)
+        if marketplace.host == .cursor { return nil }
         if marketplace.host == .codex {
             guard
                 let plugin = plugins.first(where: {
@@ -265,34 +283,5 @@ private struct PluginCatalogRow: View {
                     .lineLimit(1)
             }
         }
-    }
-}
-
-extension PluginMarketplace {
-    func catalogID(_ entry: PluginCatalogEntry) -> String { id + "\n" + entry.name }
-}
-
-extension PluginCatalogEntry {
-    var title: String { displayName ?? name }
-
-    func matches(_ filter: String) -> Bool {
-        filter.isEmpty
-            || ([name, displayName, summary, author, homepage, repository, license]
-                + ((keywords ?? []) + (categories ?? [])).map(Optional.some))
-                .compactMap { $0 }
-                .contains { $0.localizedCaseInsensitiveContains(filter) }
-    }
-}
-
-extension AppState {
-    var selectedCatalogEntry: (entry: PluginCatalogEntry, marketplace: PluginMarketplace)? {
-        guard let id = selectedCatalogEntryID else { return nil }
-        for marketplace in report?.pluginInventory?.marketplaces ?? []
-        where marketplace.host == pluginHost {
-            if let entry = marketplace.plugins.first(where: { marketplace.catalogID($0) == id }) {
-                return (entry, marketplace)
-            }
-        }
-        return nil
     }
 }

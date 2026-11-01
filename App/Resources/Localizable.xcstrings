@@ -1,6 +1,56 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "In Cursor, open Customize or use /plugin to install %@. Select %@, then refresh Sukiru." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Cursor 中打开自定义页面或使用 /plugin 安装 %1$@。选择 %2$@，然后刷新 Sukiru。"
+          }
+        }
+      }
+    },
+    "Choose a scope and view Cursor installation instructions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择范围并查看 Cursor 安装说明"
+          }
+        }
+      }
+    },
+    "Instructions for Cursor…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Cursor 中操作的说明…"
+          }
+        }
+      }
+    },
+    "Installation, enablement and runtime loading are unknown." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装、启用和运行时加载状态未知。"
+          }
+        }
+      }
+    },
+    "Cursor installs individual plugins in Customize or its interactive /plugin workflow. Choose the project where you want to install it." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在 Cursor 的自定义页面或交互式 /plugin 工作流中安装插件。选择要安装的项目。"
+          }
+        }
+      }
+    },
     "Catalog could not be read" : {
       "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法读取目录" } } }
     },

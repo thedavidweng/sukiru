@@ -57,8 +57,28 @@ extension PluginInventoryReader {
                         message: "Cursor catalog entry requires a name and source path"))
                 return nil
             }
-            return PluginCatalogEntry(
+            var listing = PluginCatalogEntry(
                 name: name, source: source, version: entry["version"] as? String)
+            listing.summary = entry["description"] as? String
+            listing.author = (entry["author"] as? [String: Any])?["name"] as? String
+            listing.homepage = entry["homepage"] as? String
+            listing.repository = entry["repository"] as? String
+            listing.license = entry["license"] as? String
+            listing.categories = (entry["category"] as? String).map { [$0] }
+            listing.keywords =
+                (entry["keywords"] as? [String] ?? [])
+                + (entry["tags"] as? [String] ?? [])
+            if let logo = entry["logo"] as? String {
+                let root = URL(fileURLWithPath: manifestPath)
+                    .deletingLastPathComponent().deletingLastPathComponent().path
+                let path = HostPathResolver.join(root, logo)
+                if logo.hasPrefix("https://") {
+                    listing.logo = logo
+                } else if !logo.hasPrefix("/"), cursorContained(path, in: root) {
+                    listing.logo = path
+                }
+            }
+            return listing
         }
     }
 

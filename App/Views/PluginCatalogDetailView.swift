@@ -79,6 +79,12 @@ struct PluginCatalogDetailView: View {
                 )
                 .foregroundStyle(.secondary)
             }
+        } else if marketplace.host == .cursor {
+            Section {
+                Text("Cached catalog; registration scope unknown")
+                Text("Installation, enablement and runtime loading are unknown.")
+                    .foregroundStyle(.secondary)
+            }
         } else if marketplace.host == .droid {
             Section {
                 Text(
@@ -127,11 +133,18 @@ struct PluginCatalogDetailView: View {
                     state.manageCatalogEntry(selected.entry, marketplace: selected.marketplace)
                 }
             } label: {
-                Label("Install from Marketplace…", systemImage: "arrow.down.circle")
+                if state.pluginHost == .cursor {
+                    Label("Instructions for Cursor…", systemImage: "info.circle")
+                } else {
+                    Label("Install from Marketplace…", systemImage: "arrow.down.circle")
+                }
             }
             .disabled(state.pluginActionsBusy || state.selectedCatalogEntry == nil)
             .accessibilityIdentifier("sukiru.plugins.marketplace.install")
-            .help("Preview installing this listing from its marketplace")
+            .help(
+                state.pluginHost == .cursor
+                    ? String(localized: "Choose a scope and view Cursor installation instructions")
+                    : String(localized: "Preview installing this listing from its marketplace"))
         }
     }
 }

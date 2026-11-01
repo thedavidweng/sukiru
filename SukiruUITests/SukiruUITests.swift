@@ -75,13 +75,29 @@ final class SukiruUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Unknown"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Not Checked"].waitForExistence(timeout: 5))
 
-        app.menuButtons["sukiru.plugins.add"].click()
-        let marketplaces = app.menuItems["Marketplaces…"].firstMatch
-        XCTAssertTrue(marketplaces.waitForExistence(timeout: 5))
-        marketplaces.click()
+        app.radioButtons["Marketplace"].click()
         XCTAssertTrue(
             app.staticTexts["Git ref: refs/heads/main"].waitForExistence(timeout: 5))
-        app.buttons["sukiru.plugins.catalog.done"].click()
+        XCTAssertTrue(app.staticTexts["cached-demo"].exists)
+        XCTAssertFalse(app.staticTexts["Same name installed"].exists)
+        app.staticTexts["remote-demo"].click()
+        XCTAssertTrue(app.staticTexts["A cached listing"].firstMatch.waitForExistence(timeout: 5))
+        let filter = app.searchFields.firstMatch
+        filter.click()
+        filter.typeText("no-such-listing")
+        XCTAssertFalse(app.staticTexts["remote-demo"].exists)
+        XCTAssertFalse(app.staticTexts["A cached listing"].exists)
+        filter.typeKey("a", modifierFlags: .command)
+        filter.typeKey(.delete, modifierFlags: [])
+        XCTAssertTrue(app.staticTexts["remote-demo"].waitForExistence(timeout: 5))
+        app.staticTexts["remote-demo"].click()
+        XCTAssertTrue(app.buttons["sukiru.plugins.marketplace.install"].exists)
+        app.buttons["sukiru.plugins.marketplace.install"].click()
+        let instructions = app.staticTexts["sukiru.plugins.cursor.instructions"]
+        XCTAssertTrue(instructions.waitForExistence(timeout: 5))
+        XCTAssertTrue(instructions.label.contains("remote-demo@personal"))
+        XCTAssertFalse(app.buttons["sukiru.plugins.operation.preview"].exists)
+        app.buttons["sukiru.plugins.operation.cancel"].click()
 
         app.menuButtons["sukiru.plugins.add"].click()
         app.menuItems["Install Plugin…"].firstMatch.click()
@@ -119,6 +135,31 @@ final class SukiruUITests: XCTestCase {
         app.terminate()
         let recorded = try String(contentsOf: probes, encoding: .utf8)
         XCTAssertFalse(recorded.contains("plugin marketplace add https://"))
+    }
+
+    func testCursorMarketplaceInstructionsUseSelectedProject() throws {
+        let project = fixture.appendingPathComponent("project", isDirectory: true)
+        try FileManager.default.createDirectory(at: project, withIntermediateDirectories: true)
+        let app = XCUIApplication()
+        app.launchEnvironment["SUKIRU_HOME"] = home.path
+        app.launchEnvironment["SUKIRU_ROOTS"] = project.path
+        app.launchEnvironment["PATH"] =
+            Bundle(for: Self.self).resourceURL!
+            .appendingPathComponent("Fixtures/bin").path
+        app.launchArguments = ["-AppleLanguages", "(en)"]
+        app.launch()
+        let cursor = app.descendants(matching: .any)["sukiru.sidebar.plugins.cursor"].firstMatch
+        XCTAssertTrue(cursor.waitForExistence(timeout: 15))
+        cursor.click()
+        app.radioButtons["Marketplace"].click()
+        XCTAssertTrue(app.staticTexts["remote-demo"].waitForExistence(timeout: 10))
+        app.staticTexts["remote-demo"].click()
+        app.buttons["sukiru.plugins.marketplace.install"].click()
+        app.popUpButtons["sukiru.plugins.operation.scope"].click()
+        app.menuItems[project.path].click()
+        XCTAssertTrue(
+            app.staticTexts["sukiru.plugins.cursor.instructions"].label.contains(project.path))
+        app.terminate()
     }
 
     func testDetectedAgentWithoutHooksKeepsItsHooksRow() throws {
@@ -238,7 +279,8 @@ final class SukiruUITests: XCTestCase {
         try write(
             "{\"name\":\"personal\",\"gitRef\":\"refs/heads/main\","
                 + "\"plugins\":[{\"name\":\"remote-demo\",\"source\":\"./plugins/remote-demo\","
-                + "\"version\":\"1\"}]}",
+                + "\"version\":\"1\",\"description\":\"A cached listing\"},"
+                + "{\"name\":\"cached-demo\",\"source\":\"./cached-demo\"}]}",
             to: marketplace.appendingPathComponent("marketplace.json"))
 
     }

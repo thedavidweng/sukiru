@@ -515,6 +515,16 @@ result in [parent acceptance evidence](host-plugin-management-acceptance.md).
 
 ### Cursor marketplace registrations use structured output
 
+Rechecked 2026-10-31: `agent --version` returned
+`2026.10.22-27dcf5f`, and `agent --help` identified Cursor Agent. The installed
+marketplace help exposes `add <gitUrl> [--git-ref <ref>]`, `list --format`
+with `text` and `json`, and `update`/`remove <nameOrUrl>`. The public
+[manifest reference](https://cursor.com/docs/reference/plugins) documents the
+listing fields read by Sukiru. This is help inspection, not authenticated
+registration or mutation verification: no account-backed operation was run,
+because a disposable isolated Cursor account and state were not established.
+Fixture executions below do not establish vendor behavior.
+
 The official Cursor CLI package `2026.10.16-e3cb207`, obtained from
 [Cursor's installer](https://cursor.com/install), exposes
 `agent plugin marketplace list --format <format>` with `text` and `json`

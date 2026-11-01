@@ -37,7 +37,7 @@ struct PluginLibraryView: View {
     }
 
     private var showsMarketplaceSheet: Bool {
-        host.hasMarketplaces && host != .codex
+        host.hasMarketplaces && host != .codex && host != .cursor
             && (!host.hasMarketplaceBrowser || host.managesMarketplaces)
     }
 

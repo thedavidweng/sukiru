@@ -82,7 +82,7 @@ extension PluginHost {
     var hasMarketplaces: Bool { self != .opencode }
 
     /// Hosts whose marketplace is browsed inside their own Plugins tab.
-    var hasMarketplaceBrowser: Bool { [.antigravity, .droid, .codex].contains(self) }
+    var hasMarketplaceBrowser: Bool { [.antigravity, .codex, .cursor, .droid].contains(self) }
 
     /// Hosts whose marketplaces Sukiru registers, refreshes and removes.
     var managesMarketplaces: Bool { operations.contains("marketplace-add") }
