@@ -1,6 +1,36 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "error.plugin.chooseConfiguredMarketplace" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose a plugin from a configured host marketplace." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请从宿主已配置的市场中选择插件。" } }
+      }
+    },
+    "error.plugin.expectedMarketplacePlugins" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Expected a marketplace plugins array." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "市场目录中的 plugins 应为数组。" } }
+      }
+    },
+    "error.plugin.invalidMarketplaceEntry" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Invalid marketplace plugin entry." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "市场插件条目无效。" } }
+      }
+    },
+    "error.plugin.invalidCursorCatalogEntry" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cursor catalog entry requires a name and source path." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Cursor 目录条目必须包含名称和来源路径。" } }
+      }
+    },
+    "error.plugin.invalidCursorMarketplace" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cursor marketplace requires a name and plugin entries." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Cursor 市场必须包含名称和插件条目。" } }
+      }
+    },
     "%@ - %@" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ - %2$@" } },

@@ -21,6 +21,8 @@ enum UserFacingError {
 
     private static func message(for error: PluginLifecycleError) -> String {
         switch error.reason {
+        case .chooseConfiguredMarketplace:
+            String(localized: "error.plugin.chooseConfiguredMarketplace")
         case .marketplaceSourceConflict(let name):
             String(localized: "error.plugin.marketplaceSourceConflict \(name)")
         case .selectedCodexMarketplace:
@@ -29,6 +31,23 @@ enum UserFacingError {
             String(localized: "error.plugin.marketplaceNotDeclared \(name) \(scope) \(root)")
         case nil:
             error.message
+        }
+    }
+
+    static func message(for issue: PluginInventoryIssue) -> String {
+        switch (issue.host, issue.kind, issue.message) {
+        case (.claude, "plugin-config", "Expected a marketplace plugins array"),
+            (.codex, "plugin-config", "Expected a marketplace plugins array"):
+            String(localized: "error.plugin.expectedMarketplacePlugins")
+        case (.claude, "plugin-config", "Invalid marketplace plugin entry"),
+            (.codex, "plugin-config", "Invalid marketplace plugin entry"):
+            String(localized: "error.plugin.invalidMarketplaceEntry")
+        case (.cursor, "plugin-manifest", "Cursor catalog entry requires a name and source path"):
+            String(localized: "error.plugin.invalidCursorCatalogEntry")
+        case (.cursor, "plugin-manifest", "Cursor marketplace requires a name and plugin entries"):
+            String(localized: "error.plugin.invalidCursorMarketplace")
+        default:
+            issue.message
         }
     }
 

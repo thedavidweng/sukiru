@@ -28,7 +28,8 @@ extension PluginLifecyclePlanner {
             })
         else {
             throw PluginLifecycleError(
-                message: "Choose a plugin from a configured host marketplace")
+                message: "Choose a plugin from a configured host marketplace",
+                reason: .chooseConfiguredMarketplace)
         }
         if request.host == .claude { try validateClaudeSources(pieces[1], inventory: inventory) }
     }

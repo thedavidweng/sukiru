@@ -49,6 +49,7 @@ public struct PluginLifecycleCapabilities: Codable, Sendable {
 
 public struct PluginLifecycleError: Error, LocalizedError, Sendable {
     public enum Reason: Sendable {
+        case chooseConfiguredMarketplace
         case marketplaceSourceConflict(String)
         case selectedCodexMarketplace
         case marketplaceNotDeclared(name: String, scope: String, root: String)

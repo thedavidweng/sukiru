@@ -219,6 +219,10 @@ extension CursorPluginCLIIntegrationTests {
         #expect(entries.compactMap { $0["name"] as? String } == ["valid"])
         let issues = try #require(inventory["issues"] as? [[String: Any]])
         #expect(issues.filter { ($0["path"] as? String)?.contains("example/") == true }.count == 2)
+        #expect(
+            issues.contains {
+                $0["message"] as? String == "Cursor catalog entry requires a name and source path"
+            })
     }
 
     @Test("Cursor catalogs with matching names stay distinct alongside malformed caches")

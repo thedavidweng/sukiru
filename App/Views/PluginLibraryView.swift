@@ -132,7 +132,7 @@ struct PluginLibraryView: View {
                     DisclosureGroup("Inspection Issues") {
                         ForEach(issues, id: \.self) { issue in
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(verbatim: issue.message)
+                                Text(verbatim: UserFacingError.message(for: issue))
                                 Text(verbatim: issue.path)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)

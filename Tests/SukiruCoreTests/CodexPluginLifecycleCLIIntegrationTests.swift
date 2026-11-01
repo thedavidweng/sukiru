@@ -1,6 +1,8 @@
 import Foundation
 import Testing
 
+@testable import SukiruCore
+
 @Suite("Codex plugin lifecycle CLI")
 struct CodexPluginLifecycleCLIIntegrationTests {
     /// A Git `team` marketplace snapshot listing `demo`, plus a local `lab`
@@ -174,6 +176,28 @@ struct CodexPluginLifecycleCLIIntegrationTests {
 }
 
 extension CodexPluginLifecycleCLIIntegrationTests {
+    @Test("An unconfigured marketplace install exposes a localizable planner reason")
+    func missingMarketplaceReason() throws {
+        let fixture = try Self.codex()
+        let environment = SukiruEnvironment(
+            reader: DictionaryEnvironmentReader(["SUKIRU_HOME": fixture.home]))
+        let planner = PluginLifecyclePlanner(environment: environment)
+        let inventory = PluginInventory(installations: [], marketplaces: [], issues: [])
+        let request = PluginLifecycleRequest(
+            host: .codex, action: "install", target: "demo@missing", scope: "user",
+            scopeRoot: fixture.home)
+        do {
+            try planner.validateInstallMarketplace(request, inventory: inventory)
+            Issue.record("Expected the unconfigured marketplace to be refused")
+        } catch let error as PluginLifecycleError {
+            #expect(error.message == "Choose a plugin from a configured host marketplace")
+            guard case .chooseConfiguredMarketplace = error.reason else {
+                Issue.record("The refusal must identify its localizable reason")
+                return
+            }
+        }
+    }
+
     @Test("Malformed Codex listings do not hide valid siblings")
     func mixedCatalogEntries() throws {
         let fixture = try Self.codex()
@@ -188,6 +212,7 @@ extension CodexPluginLifecycleCLIIntegrationTests {
         #expect(entries.compactMap { $0["name"] as? String } == ["valid"])
         let issues = try #require(inventory["issues"] as? [[String: Any]])
         #expect(issues.filter { ($0["path"] as? String)?.contains("team/") == true }.count == 3)
+        #expect(issues.contains { $0["message"] as? String == "Invalid marketplace plugin entry" })
     }
 
     @Test("Inventory distinguishes missing, unreadable and readable catalogs")

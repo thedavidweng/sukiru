@@ -145,7 +145,7 @@ struct PluginCatalogList: View {
                     DisclosureGroup("Inspection Issues") {
                         ForEach(inspectionIssues, id: \.self) { issue in
                             VStack(alignment: .leading) {
-                                Text(verbatim: issue.message)
+                                Text(verbatim: UserFacingError.message(for: issue))
                                 Text(verbatim: issue.path).foregroundStyle(.secondary)
                             }
                         }

@@ -144,6 +144,7 @@ extension PluginCLIIntegrationTests {
         #expect(entries.map { $0["name"] as? String } == ["valid"])
         let issues = try #require(inventory["issues"] as? [[String: Any]])
         #expect(issues.contains { ($0["path"] as? String)?.hasSuffix("marketplace.json") == true })
+        #expect(issues.contains { $0["message"] as? String == "Invalid marketplace plugin entry" })
     }
 
 }
