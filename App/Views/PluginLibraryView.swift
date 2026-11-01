@@ -36,6 +36,11 @@ struct PluginLibraryView: View {
         state.showsPluginMarketplace && host.hasMarketplaceBrowser
     }
 
+    private var showsMarketplacesSheet: Bool {
+        host != .cursor && host != .claude && host.hasMarketplaces
+            && (!host.hasMarketplaceBrowser || host.managesMarketplaces)
+    }
+
     var body: some View {
         Group {
             if showsMarketplace {
@@ -107,7 +112,7 @@ struct PluginLibraryView: View {
                 .accessibilityIdentifier("sukiru.plugins.marketplace.add")
                 .help("Preview registering a marketplace with this host")
             }
-            if host.hasMarketplaces, host != .claude, showMarketplaceSheet {
+            if showsMarketplacesSheet {
                 Button("Marketplaces…") { showingMarketplaces = true }
                     .accessibilityIdentifier("sukiru.plugins.catalog")
                     .help("Browse configured marketplaces")
@@ -117,10 +122,6 @@ struct PluginLibraryView: View {
         }
         .accessibilityIdentifier("sukiru.plugins.add")
         .help("Install a plugin or browse configured marketplaces")
-    }
-
-    private var showMarketplaceSheet: Bool {
-        !host.hasMarketplaceBrowser || host.managesMarketplaces
     }
 
     private var installedList: some View {
