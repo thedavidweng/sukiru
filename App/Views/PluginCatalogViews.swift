@@ -8,28 +8,6 @@ struct PluginCatalogList: View {
     let marketplaces: [PluginMarketplace]
     let filter: String
 
-    private var claudeIssues: [PluginInventoryIssue] {
-        (state.report?.pluginInventory?.issues ?? []).filter { $0.host == .claude }
-    }
-
-    private var cursorIssues: [PluginInventoryIssue] {
-        guard state.pluginHost == .cursor else { return [] }
-        return (state.report?.pluginInventory?.issues ?? []).filter {
-            $0.host == .cursor && $0.path.contains("/.cursor/plugins/marketplaces/")
-        }
-    }
-
-    private var droidNotFetched: Bool {
-        !marketplaces.isEmpty && marketplaces.allSatisfy { $0.host == .droid && $0.path == nil }
-    }
-
-    private var otherCatalogsEmpty: Bool {
-        !marketplaces.isEmpty
-            && marketplaces.allSatisfy {
-                $0.plugins.isEmpty && $0.host != .cursor && $0.host != .claude
-            }
-    }
-
     var body: some View {
         List(selection: $state.selectedCatalogEntryID) {
             ForEach(marketplaces.filter { filter.isEmpty || !entries($0).isEmpty }) { marketplace in
@@ -40,11 +18,24 @@ struct PluginCatalogList: View {
                         )
                         .tag(marketplace.catalogID(entry))
                     }
+                    if marketplace.host == .cursor, marketplace.plugins.isEmpty {
+                        Text("The cached catalog has no listings").foregroundStyle(.secondary)
+                    }
                     if marketplace.host == .claude, marketplace.plugins.isEmpty, filter.isEmpty {
                         Text("No locally cached plugins").foregroundStyle(.secondary)
                     }
-                    if marketplace.host == .cursor, marketplace.plugins.isEmpty {
-                        Text("The cached catalog has no listings").foregroundStyle(.secondary)
+                    if marketplace.host == .codex, marketplace.plugins.isEmpty, filter.isEmpty {
+                        if inspectionIssues.contains(where: {
+                            $0.path.hasPrefix((marketplace.path ?? "") + "/")
+                        }) {
+                            Text("Catalog could not be read").foregroundStyle(.secondary)
+                        } else {
+                            if codexCatalogExists(marketplace) {
+                                Text("No locally cached plugins").foregroundStyle(.secondary)
+                            } else {
+                                Text("Catalog not found").foregroundStyle(.secondary)
+                            }
+                        }
                     }
                 } header: {
                     HStack {
@@ -60,12 +51,21 @@ struct PluginCatalogList: View {
                                         .secondary)
                                 }
                             }
-                            if marketplace.host == .droid || marketplace.host == .claude {
+                            if [.droid, .codex, .claude].contains(marketplace.host) {
                                 Group {
                                     Text(
                                         verbatim: marketplace.source
                                             + (marketplace.ref.map { " · " + $0 } ?? ""))
-                                    if marketplace.path == nil { Text("Not fetched by Droid yet") }
+                                    if marketplace.host == .codex {
+                                        if marketplace.localSource {
+                                            Text("Local catalog")
+                                        } else {
+                                            Text("Git marketplace")
+                                        }
+                                    }
+                                    if marketplace.host == .droid, marketplace.path == nil {
+                                        Text("Not fetched by Droid yet")
+                                    }
                                     if marketplace.scope == "org" {
                                         Text("Organization settings")
                                     } else if marketplace.scope == "user" {
@@ -90,18 +90,24 @@ struct PluginCatalogList: View {
                             }
                         }
                         Spacer()
-                        if marketplace.host == .claude || marketplace.host == .cursor {
+                        if [.claude, .codex, .cursor].contains(marketplace.host) {
                             Menu {
-                                let actions = ["marketplace-refresh", "marketplace-remove"]
-                                ForEach(actions, id: \.self) { action in
-                                    Button(PluginActionTitle.title(action)) {
-                                        state.manageMarketplace(marketplace, action: action)
-                                    }
-                                    .accessibilityIdentifier(
-                                        "sukiru.plugins.marketplace.\(action).\(marketplace.id)"
-                                    )
-                                    .help("Preview an operation for this marketplace")
+                                Button("Refresh Marketplace") {
+                                    state.manageMarketplace(
+                                        marketplace, action: "marketplace-refresh")
                                 }
+                                .accessibilityIdentifier(
+                                    "sukiru.plugins.marketplace.marketplace-refresh.\(marketplace.id)"
+                                )
+                                .help("Preview an operation for this marketplace")
+                                Button("Remove Marketplace") {
+                                    state.manageMarketplace(
+                                        marketplace, action: "marketplace-remove")
+                                }
+                                .accessibilityIdentifier(
+                                    "sukiru.plugins.marketplace.marketplace-remove.\(marketplace.id)"
+                                )
+                                .help("Preview an operation for this marketplace")
                             } label: {
                                 Label("Marketplace Actions", systemImage: "ellipsis.circle")
                             }
@@ -113,32 +119,41 @@ struct PluginCatalogList: View {
                     }
                 }
             }
-            if state.pluginHost == .claude {
-                if !claudeIssues.isEmpty {
-                    Section {
-                        DisclosureGroup("Inspection Issues") {
-                            ForEach(claudeIssues, id: \.self) { issue in
-                                Text(verbatim: issue.message + ": " + issue.path)
+            if [.claude, .codex, .cursor].contains(state.pluginHost), !inspectionIssues.isEmpty {
+                Section {
+                    DisclosureGroup("Inspection Issues") {
+                        ForEach(inspectionIssues, id: \.self) { issue in
+                            VStack(alignment: .leading) {
+                                Text(verbatim: issue.message)
+                                Text(verbatim: issue.path).foregroundStyle(.secondary)
                             }
                         }
                     }
-                }
-            }
-            if !cursorIssues.isEmpty {
-                Section("Inspection Issues") {
-                    ForEach(cursorIssues, id: \.self) { issue in
-                        VStack(alignment: .leading) {
-                            Text(verbatim: issue.message)
-                            Text(verbatim: issue.path).foregroundStyle(.secondary)
-                        }
-                    }
+                    .accessibilityIdentifier("sukiru.plugins.inspectionIssues")
+                    .help("Inspect plugin inventory errors")
                 }
             }
         }
         .listStyle(.inset)
         .accessibilityIdentifier("sukiru.plugins.marketplace.list")
         .overlay {
-            if marketplaces.isEmpty, state.pluginHost == .droid {
+            if marketplaces.isEmpty, state.pluginHost == .claude, inspectionIssues.isEmpty {
+                ContentUnavailableView {
+                    Label("No configured marketplaces", systemImage: "shippingbox")
+                } actions: {
+                    Button("Add Marketplace…") {
+                        state.newPluginOperation(host: .claude, action: "marketplace-add")
+                    }
+                    .accessibilityIdentifier("sukiru.plugins.marketplace.add.empty")
+                    .help("Preview registering a marketplace with this host")
+                }
+            } else if marketplaces.isEmpty, state.pluginHost == .codex, inspectionIssues.isEmpty {
+                ContentUnavailableView {
+                    Label("No configured marketplaces", systemImage: "shippingbox")
+                } description: {
+                    Text("Add a local catalog or a Git marketplace to Codex.")
+                }
+            } else if marketplaces.isEmpty, state.pluginHost == .droid {
                 ContentUnavailableView {
                     Label("No marketplaces", systemImage: "shippingbox")
                 } description: {
@@ -152,17 +167,7 @@ struct PluginCatalogList: View {
                     .accessibilityIdentifier("sukiru.plugins.marketplace.add.official")
                     .help("Preview registering Factory's official marketplace")
                 }
-            } else if marketplaces.isEmpty, state.pluginHost == .claude, claudeIssues.isEmpty {
-                ContentUnavailableView {
-                    Label("No configured marketplaces", systemImage: "shippingbox")
-                } actions: {
-                    Button("Add Marketplace…") {
-                        state.newPluginOperation(host: .claude, action: "marketplace-add")
-                    }
-                    .accessibilityIdentifier("sukiru.plugins.marketplace.add.empty")
-                    .help("Preview registering a marketplace with this host")
-                }
-            } else if marketplaces.isEmpty, state.pluginHost != .claude, cursorIssues.isEmpty {
+            } else if marketplaces.isEmpty, inspectionIssues.isEmpty {
                 ContentUnavailableView {
                     Label("No cached marketplace catalog", systemImage: "shippingbox")
                 } description: {
@@ -170,27 +175,55 @@ struct PluginCatalogList: View {
                         "Open \(state.pluginHost.displayName) and sign in; Sukiru reads the catalog the host caches."
                     )
                 }
-            } else if droidNotFetched {
+            } else if showsUnfetchedDroidCatalogs {
                 ContentUnavailableView {
                     Label("Not fetched by Droid yet", systemImage: "shippingbox")
                 } description: {
                     Text("Start Droid in a project, or refresh the marketplace in Marketplaces….")
                 }
-            } else if otherCatalogsEmpty {
+            } else if showsEmptyCatalog {
                 ContentUnavailableView(
                     "The cached catalog has no listings", systemImage: "shippingbox")
-            } else if !filter.isEmpty && marketplaces.allSatisfy({ entries($0).isEmpty }) {
+            } else if !filter.isEmpty, marketplaces.allSatisfy({ entries($0).isEmpty }) {
                 ContentUnavailableView.search(text: filter)
             }
         }
-        .onChange(
-            of: marketplaces.flatMap { marketplace in
-                entries(marketplace).map { marketplace.catalogID($0) }
-            }
-        ) { _, visible in
-            if let selected = state.selectedCatalogEntryID, !visible.contains(selected) {
+        .onChange(of: marketplaces) { _, visible in
+            guard let selected = state.selectedCatalogEntryID else { return }
+            if !visible.contains(where: { market in
+                market.plugins.contains { market.catalogID($0) == selected && $0.matches(filter) }
+            }) {
                 state.selectedCatalogEntryID = nil
             }
+        }
+        .onChange(of: filter) { _, value in
+            if let selected = state.selectedCatalogEntry, !selected.entry.matches(value) {
+                state.selectedCatalogEntryID = nil
+            }
+        }
+    }
+
+    private var inspectionIssues: [PluginInventoryIssue] {
+        (state.report?.pluginInventory?.issues ?? []).filter {
+            $0.host == state.pluginHost
+                && (state.pluginHost != .cursor
+                    || $0.path.contains("/.cursor/plugins/marketplaces/"))
+        }
+    }
+
+    private var showsEmptyCatalog: Bool {
+        ![.claude, .codex, .cursor].contains(state.pluginHost) && inspectionIssues.isEmpty
+            && marketplaces.allSatisfy { $0.plugins.isEmpty }
+    }
+
+    private var showsUnfetchedDroidCatalogs: Bool {
+        !marketplaces.isEmpty && marketplaces.allSatisfy { $0.host == .droid && $0.path == nil }
+    }
+
+    private func codexCatalogExists(_ marketplace: PluginMarketplace) -> Bool {
+        guard let root = marketplace.path else { return false }
+        return [".agents/plugins/marketplace.json", ".claude-plugin/marketplace.json"].contains {
+            FileManager.default.fileExists(atPath: root + "/" + $0)
         }
     }
 
@@ -199,20 +232,28 @@ struct PluginCatalogList: View {
     private func installation(
         _ entry: PluginCatalogEntry, in marketplace: PluginMarketplace
     ) -> PluginCatalogRow.Installation? {
-        let installations = state.pluginInstallations(for: state.pluginHost)
+        let plugins = state.pluginInstallations(for: marketplace.host)
         if marketplace.host == .cursor { return nil }
         if marketplace.host == .claude {
-            let recorded = installations.filter {
-                $0.identifier == "\(entry.name)@\(marketplace.name)"
-            }
+            let recorded = plugins.filter { $0.identifier == "\(entry.name)@\(marketplace.name)" }
             return recorded.isEmpty ? nil : .recorded(recorded)
         }
+        if marketplace.host == .codex {
+            guard
+                let plugin = plugins.first(where: {
+                    $0.identifier == "\(entry.name)@\(marketplace.name)"
+                        && $0.scope == marketplace.scope && $0.scopeRoot == marketplace.scopeRoot
+                })
+            else { return nil }
+            return plugin.installationStatus == "installed" ? .installed : .configured
+        }
         if marketplace.host == .droid {
-            return installations.contains { $0.identifier == "\(entry.name)@\(marketplace.name)" }
+            return plugins.contains { $0.identifier == "\(entry.name)@\(marketplace.name)" }
                 ? .installed : nil
         }
-        return installations.contains { $0.identifier == entry.name } ? .sameName : nil
+        return plugins.contains { $0.identifier == entry.name } ? .sameName : nil
     }
+
     /// Category first, then name, so related listings sit together.
     private func entries(_ marketplace: PluginMarketplace) -> [PluginCatalogEntry] {
         marketplace.plugins.filter { $0.matches(filter) }.sorted {
@@ -224,7 +265,7 @@ struct PluginCatalogList: View {
 
 private struct PluginCatalogRow: View {
     enum Installation {
-        case installed, sameName
+        case installed, configured, sameName
         case recorded([PluginInstallation])
     }
 
@@ -248,6 +289,10 @@ private struct PluginCatalogRow: View {
                 Spacer(minLength: 8)
                 if case .installed = installation {
                     Text("Installed")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else if case .configured = installation {
+                    Text("Configured reference")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else if case .sameName = installation {

@@ -38,6 +38,7 @@ extension PluginLifecyclePlanner {
         }
         let localMarketplace = inventory.marketplaces.contains {
             $0.host == .codex && $0.name == request.target && $0.localSource
+                && $0.scope == request.scope && $0.scopeRoot == request.scopeRoot
         }
         if request.action == "marketplace-refresh" && localMarketplace {
             return
@@ -64,7 +65,9 @@ extension PluginLifecyclePlanner {
         let declared = named.contains {
             $0.scope == request.scope && $0.scopeRoot == request.scopeRoot
         }
-        if request.host == .claude, action == "remove", !declared {
+        let requiresDeclaration =
+            request.host == .codex || (request.host == .claude && action == "remove")
+        if !declared && requiresDeclaration {
             throw PluginLifecycleError(
                 message:
                     "Marketplace \(request.target) is not declared in \(request.scope) scope at "

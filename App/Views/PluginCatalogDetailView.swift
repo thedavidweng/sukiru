@@ -69,6 +69,22 @@ struct PluginCatalogDetailView: View {
                 )
                 .foregroundStyle(.secondary)
             }
+        } else if marketplace.host == .codex {
+            Section {
+                Text(
+                    """
+                    Codex installs \(entry.name)@\(marketplace.name) in user scope. \
+                    Local catalogs are used in place; Git marketplaces are refreshed by Codex.
+                    """
+                )
+                .foregroundStyle(.secondary)
+            }
+        } else if marketplace.host == .cursor {
+            Section {
+                Text("Cached catalog; registration scope unknown")
+                Text("Installation, enablement and runtime loading are unknown.")
+                    .foregroundStyle(.secondary)
+            }
         } else if marketplace.host == .droid {
             Section {
                 Text(
@@ -79,12 +95,6 @@ struct PluginCatalogDetailView: View {
                     """
                 )
                 .foregroundStyle(.secondary)
-            }
-        } else if marketplace.host == .cursor {
-            Section {
-                Text("Cached catalog; registration scope unknown")
-                Text("Installation, enablement and runtime loading are unknown.")
-                    .foregroundStyle(.secondary)
             }
         }
     }
