@@ -24,6 +24,11 @@ extension AppState {
     func manageCatalogEntry(_ entry: PluginCatalogEntry, marketplace: PluginMarketplace) {
         manageMarketplace(marketplace, action: "install")
         pluginManagement.target = "\(entry.name)@\(marketplace.name)"
+        // An org marketplace is installable from user or project scope, not from org scope.
+        if marketplace.scope == "org" {
+            pluginManagement.scope = "user"
+            pluginManagement.scopeRoot = environment.home
+        }
     }
 
     func managePlugin(_ plugin: PluginInstallation, action: String) {
@@ -58,10 +63,11 @@ extension AppState {
         pluginManagement.showingSheet = true
     }
 
-    func newPluginOperation(host: PluginHost, action: String = "install") {
+    func newPluginOperation(host: PluginHost, action: String = "install", target: String = "") {
         pluginManagement = PluginManagementState(
             showingSheet: true, host: host, action: action,
-            target: ["list", "import"].contains(action) ? "*" : "", scopeRoot: environment.home)
+            target: ["list", "import"].contains(action) ? "*" : target,
+            scopeRoot: environment.home)
     }
 
     func newPluginRepositoryInstall(host: PluginHost) {

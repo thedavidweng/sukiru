@@ -10,6 +10,7 @@ enum PluginHostContract: Equatable {
     case openCodeV1
     case openCodeV2
     case antigravity
+    case droid
 
     private struct Baseline {
         let host: PluginHost
@@ -22,7 +23,8 @@ enum PluginHostContract: Equatable {
         Baseline(host: .codex, version: [0, 160, 0], contract: .codex),
         Baseline(host: .opencode, version: [1, 18, 34], contract: .openCodeV1),
         Baseline(host: .opencode, version: [2, 0, 22], contract: .openCodeV2),
-        Baseline(host: .antigravity, version: [1, 4, 7], contract: .antigravity)
+        Baseline(host: .antigravity, version: [1, 4, 7], contract: .antigravity),
+        Baseline(host: .droid, version: [1, 1, 0], contract: .droid)
     ]
 
     init?(host: PluginHost, version: String) {

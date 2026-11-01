@@ -6,6 +6,7 @@ public enum PluginHost: String, Codable, CaseIterable, Sendable {
     case opencode
     case cursor
     case antigravity
+    case droid
 
     public var executable: String {
         switch self {
@@ -120,7 +121,7 @@ public struct PluginMarketplace: Codable, Equatable, Sendable, Identifiable {
     public let plugins: [PluginCatalogEntry]
     public var evidence: String?
     /// The settings scope that declares the marketplace (`user`, `project`,
-    /// or Claude's `local`); a declaration in each scope is its own entry.
+    /// Claude's `local` or Droid's `org`); a declaration in each scope is its own entry.
     public var scope: String = "user"
     /// The Git ref a host records for the marketplace source, when any.
     public var ref: String?
@@ -131,7 +132,7 @@ public struct PluginMarketplace: Codable, Equatable, Sendable, Identifiable {
 
     public var id: String {
         "\(host.rawValue):\(scopeRoot):\(name)"
-            + (scope == "local" ? ":local" : "")
+            + (["local", "org"].contains(scope) ? ":" + scope : "")
             + (host == .cursor ? ":" + (path ?? "") : "")
     }
 }

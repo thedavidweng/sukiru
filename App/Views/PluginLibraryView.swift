@@ -100,7 +100,14 @@ struct PluginLibraryView: View {
                     .help("Preview this host’s native plugin command")
                 }
             }
-            if host.hasMarketplaces, !host.hasMarketplaceBrowser {
+            if host.managesMarketplaces {
+                Button("Add Marketplace…") {
+                    state.newPluginOperation(host: host, action: "marketplace-add")
+                }
+                .accessibilityIdentifier("sukiru.plugins.marketplace.add")
+                .help("Preview registering a marketplace with this host")
+            }
+            if host.hasMarketplaces, !host.hasMarketplaceBrowser || host.managesMarketplaces {
                 Button("Marketplaces…") { showingMarketplaces = true }
                     .accessibilityIdentifier("sukiru.plugins.catalog")
                     .help("Browse configured marketplaces")

@@ -10,9 +10,11 @@ public page exists, behind every command and configuration key that Sukiru runs 
 for that agent. When a host renames or drops a command, start here: compare the row with
 the current documentation, then update the route in
 `Sources/SukiruCore/Extensions/AgentExtensionRoutes.swift`, the reader that matches the
-key, and this row. Plugin lifecycles for Claude Code, Codex, OpenCode, Cursor and
-Antigravity are covered in more detail in
-[host-plugin-interface-evidence.md](host-plugin-interface-evidence.md).
+key, and this row. Plugin lifecycles for Claude Code, Codex, OpenCode, Cursor,
+Antigravity and Droid are covered in more detail in
+[host-plugin-interface-evidence.md](host-plugin-interface-evidence.md),
+[antigravity-plugin-interface-evidence.md](antigravity-plugin-interface-evidence.md) and
+[droid-plugin-interface-evidence.md](droid-plugin-interface-evidence.md).
 
 Sukiru tries the host's command first, when its CLI is on `PATH` and
 `<command> --help` lists the subcommand. Otherwise it edits the documented key
@@ -40,8 +42,11 @@ Sukiru tries the host's command first, when its CLI is on `PATH` and
 | OpenClaude | `disableAllHooks` | none | `~/.openclaude/settings.json` `disableAllHooks` (Claude Code setting) | [Claude Code settings](https://code.claude.com/docs/en/settings) | 2026-10-30 |
 | Codex | MCP server remove, on/off | `codex mcp remove <name>` | `config.toml` `[mcp_servers.<name>] enabled` | [MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli), [Config reference](https://learn.chatgpt.com/docs/config-file/config-reference) | 2026-10-30 (0.166.0) |
 | Cursor | MCP server on/off, remove | `cursor-agent mcp disable\|enable <name>` | `~/.cursor/mcp.json` `mcpServers` (removal) | [CLI MCP](https://cursor.com/docs/cli/mcp) | 2026-10-30 (2026.10.22) |
-| Droid | Plugin remove, on/off | `droid plugin uninstall <id> --scope user` | `~/.factory/settings.json` `enabledPlugins` | [Plugins](https://docs.factory.ai/cli/configuration/plugins) | 2026-10-30 (1.0.0) |
-| Droid | MCP server remove, on/off | `droid mcp remove <name>` | `~/.factory/mcp.json` `mcpServers.<name>.disabled` | [MCP](https://docs.factory.ai/cli/configuration/mcp) | 2026-10-30 (1.0.0) |
+| Droid | Plugin install, update, uninstall | `droid plugin install\|update\|uninstall <plugin@marketplace> --scope user\|project` | `~/.factory/plugins/installed_plugins/*.json` (read only) | [Plugins](https://docs.factory.com/harness/plugins), `droid plugin --help` | 2026-10-31 (1.1.0) |
+| Droid | Plugin on/off | none | `enabledPlugins` in `~/.factory/settings.json` or `<project>/.factory/settings.json` | [Plugins](https://docs.factory.com/harness/plugins) | 2026-10-31 (1.1.0) |
+| Droid | Marketplace add, update, remove | `droid plugin marketplace add <source>\|update <name>\|remove <name>` | user `extraKnownMarketplaces`; a project declaration is removed from `<project>/.factory/settings.json`; registry `~/.factory/plugins/known_marketplaces/*.json` (read only) | [Plugins](https://docs.factory.com/harness/plugins), [Internal Plugin Marketplaces](https://docs.factory.com/enterprise/internal-plugin-marketplaces) | 2026-10-31 (1.1.0) |
+| Droid | Org plugin policy (read only) | none | `/Library/Application Support/Factory/settings.json`, else `managedSettings` in `~/.factory/org-managed-settings.cache.json` (observed, undocumented): `extraKnownMarketplaces`, `enabledPlugins`, `strictKnownMarketplaces`, `strictEnabledPlugins` | [Enterprise controls](https://docs.factory.com/enterprise/hierarchical-settings-and-org-control) | 2026-10-31 (1.1.0) |
+| Droid | MCP server remove, on/off | `droid mcp remove <name>` | `~/.factory/mcp.json` `mcpServers.<name>.disabled` | [MCP](https://docs.factory.com/harness/mcp) | 2026-10-31 (1.1.0) |
 | Devin | Plugin remove | `devin plugins remove <name> -y` | `~/.local/share/devin/cli/plugins/lock.json` (read only); no disable | `devin plugins --help` | 2026-10-30 (3000.11.234) |
 | Devin | MCP server remove, on/off | `devin mcp remove\|disable\|enable <name> --scope user` | `~/.config/devin/mcp_config.json` `mcpServers` | `devin mcp --help` | 2026-10-30 (3000.11.234) |
 | Muse | MCP server remove, on/off | none | `~/.config/muse/settings.json` `mcpServers.<name>.enabled` | [MCP servers](https://meta-models.github.io/muse-code-sdk/next/guides/extend/mcp-servers/) | 2026-10-30 (1.4.14) |

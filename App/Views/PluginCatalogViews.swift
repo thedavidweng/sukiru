@@ -14,13 +14,32 @@ struct PluginCatalogList: View {
                 Section {
                     ForEach(entries(marketplace), id: \.name) { entry in
                         PluginCatalogRow(
-                            entry: entry, installed: installedNames.contains(entry.name)
+                            entry: entry, installation: installation(entry, in: marketplace)
                         )
                         .tag(marketplace.catalogID(entry))
                     }
                 } header: {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(verbatim: marketplace.name)
+                        if marketplace.host == .droid {
+                            Group {
+                                Text(
+                                    verbatim: marketplace.source
+                                        + (marketplace.ref.map { " · " + $0 } ?? ""))
+                                if marketplace.path == nil { Text("Not fetched by Droid yet") }
+                                if marketplace.scope == "org" {
+                                    Text("Organization settings")
+                                } else if marketplace.scope == "project" {
+                                    Text(
+                                        verbatim: URL(fileURLWithPath: marketplace.scopeRoot)
+                                            .lastPathComponent
+                                    )
+                                    .help(marketplace.scopeRoot)
+                                }
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        }
                         if let updatedAt = marketplace.updatedAt {
                             Text("Catalog cached by the host: \(updatedAt)")
                                 .font(.caption)
@@ -33,13 +52,33 @@ struct PluginCatalogList: View {
         .listStyle(.inset)
         .accessibilityIdentifier("sukiru.plugins.marketplace.list")
         .overlay {
-            if marketplaces.isEmpty {
+            if marketplaces.isEmpty, state.pluginHost == .droid {
+                ContentUnavailableView {
+                    Label("No marketplaces", systemImage: "shippingbox")
+                } description: {
+                    Text("Add a marketplace to Droid; Sukiru lists the catalogs Droid has fetched.")
+                } actions: {
+                    Button("Add Factory Plugins…") {
+                        state.newPluginOperation(
+                            host: .droid, action: "marketplace-add",
+                            target: "Factory-AI/factory-plugins")
+                    }
+                    .accessibilityIdentifier("sukiru.plugins.marketplace.add.official")
+                    .help("Preview registering Factory's official marketplace")
+                }
+            } else if marketplaces.isEmpty {
                 ContentUnavailableView {
                     Label("No cached marketplace catalog", systemImage: "shippingbox")
                 } description: {
                     Text(
                         "Open \(state.pluginHost.displayName) and sign in; Sukiru reads the catalog the host caches."
                     )
+                }
+            } else if marketplaces.allSatisfy({ $0.host == .droid && $0.path == nil }) {
+                ContentUnavailableView {
+                    Label("Not fetched by Droid yet", systemImage: "shippingbox")
+                } description: {
+                    Text("Start Droid in a project, or refresh the marketplace in Marketplaces….")
                 }
             } else if marketplaces.allSatisfy({ $0.plugins.isEmpty }) {
                 ContentUnavailableView(
@@ -50,8 +89,20 @@ struct PluginCatalogList: View {
         }
     }
 
-    private var installedNames: Set<String> {
+    private var installedIdentifiers: Set<String> {
         Set(state.pluginInstallations(for: state.pluginHost).map(\.identifier))
+    }
+
+    /// Droid identifies an installation by plugin and marketplace, so its match is exact;
+    /// elsewhere only the name can match.
+    private func installation(
+        _ entry: PluginCatalogEntry, in marketplace: PluginMarketplace
+    ) -> PluginCatalogRow.Installation? {
+        if marketplace.host == .droid {
+            return installedIdentifiers.contains("\(entry.name)@\(marketplace.name)")
+                ? .installed : nil
+        }
+        return installedIdentifiers.contains(entry.name) ? .sameName : nil
     }
 
     /// Category first, then name, so related listings sit together.
@@ -64,8 +115,10 @@ struct PluginCatalogList: View {
 }
 
 private struct PluginCatalogRow: View {
+    enum Installation { case installed, sameName }
+
     let entry: PluginCatalogEntry
-    let installed: Bool
+    let installation: Installation?
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -82,7 +135,11 @@ private struct PluginCatalogRow: View {
                     .font(.body.weight(.semibold))
                     .lineLimit(1)
                 Spacer(minLength: 8)
-                if installed {
+                if installation == .installed {
+                    Text("Installed")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else if installation == .sameName {
                     Text("Same name installed")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -208,6 +265,7 @@ struct PluginCatalogDetailView: View {
                 LabeledContent("Marketplace", value: marketplace.name)
                 LabeledContent("Plugin", value: entry.name)
                 LabeledContent("Version", value: entry.version ?? String(localized: "Unknown"))
+                LabeledContent("Source", value: entry.source)
                 if let author = entry.author {
                     LabeledContent("Author", value: author)
                 }
@@ -231,20 +289,38 @@ struct PluginCatalogDetailView: View {
                 .padding(.bottom, 8)
             }
             listingSections(entry)
-            if marketplace.host == .antigravity {
-                Section {
-                    Text(
-                        """
-                        Install runs agy plugin install \(entry.name)@\(marketplace.name) \
-                        and needs a signed-in agy. API keys, OAuth and other setup stay in the host.
-                        """
-                    )
-                    .foregroundStyle(.secondary)
-                }
-            }
+            installNote(entry, marketplace: marketplace)
         }
         .formStyle(.grouped)
         .textSelection(.enabled)
+    }
+
+    @ViewBuilder
+    private func installNote(
+        _ entry: PluginCatalogEntry, marketplace: PluginMarketplace
+    ) -> some View {
+        if marketplace.host == .antigravity {
+            Section {
+                Text(
+                    """
+                    Install runs agy plugin install \(entry.name)@\(marketplace.name) \
+                    and needs a signed-in agy. API keys, OAuth and other setup stay in the host.
+                    """
+                )
+                .foregroundStyle(.secondary)
+            }
+        } else if marketplace.host == .droid {
+            Section {
+                Text(
+                    """
+                    Install runs droid plugin install \(entry.name)@\(marketplace.name) \
+                    in the scope you choose. Droid fetches Git and npm sources itself, and \
+                    organization policy can limit which marketplaces and plugins it accepts.
+                    """
+                )
+                .foregroundStyle(.secondary)
+            }
+        }
     }
 
     @ViewBuilder

@@ -208,6 +208,19 @@ sukiru plugins inspect --host antigravity --scope user --dry-run
 sukiru plugins disable --host antigravity --scope user --dry-run -- -123
 ```
 
+Droid 插件支持覆盖用户、项目和组织三级安装，它们的组件（技能、命令、droid、输出样式、钩子和 MCP 服务器），
+以及 Droid 知道的所有 marketplace：用户和项目的 `extraKnownMarketplaces`、组织管理的 marketplace 和已获取的目录。
+原生操作通过 `droid plugin`（自 1.1.0 起验证）执行：带 `--scope` 的 install、update、uninstall，以及 marketplace add、update、remove。
+Droid 没有启用命令，因此启用和停用会编辑对应作用域 `settings.json` 中的 `enabledPlugins`。
+组织插件和 marketplace 只读；Sukiru 会说明 `strictKnownMarketplaces` 和 `strictEnabledPlugins`，执行交给 Droid。
+
+```bash
+sukiru plugins list --host droid --json
+sukiru plugins marketplaces add Factory-AI/factory-plugins --host droid --scope user --dry-run
+sukiru plugins install security-engineer@factory-plugins --host droid --scope user --dry-run
+sukiru plugins disable security-engineer@factory-plugins --host droid --scope user --dry-run
+```
+
 插件命令接受与 Sukiru 已验证基线主版本相同且不低于基线的宿主版本，执行前仍会检查宿主支持的帮助入口。
 Antigravity 的多数操作检查父命令帮助，因为其子命令可能把 `--help` 当作操作目标。`disable-local` 在快照保护下把不兼容的本地插件文件移出宿主的自动发现范围。
 对 Claude Code，`--settings-scope local` 配合 `--root` 会改为写入 `.claude/settings.local.json`，
