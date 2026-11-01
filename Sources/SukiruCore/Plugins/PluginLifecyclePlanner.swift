@@ -210,6 +210,8 @@ public struct PluginLifecyclePlanner: Sendable {
                 guard pieces.count == 2,
                     inventory.marketplaces.contains(where: {
                         $0.host == request.host && $0.name == pieces[1]
+                            && (request.host != .codex
+                                || ($0.scope == "user" && $0.scopeRoot == environment.home))
                             && $0.plugins.contains(where: { $0.name == pieces[0] })
                     })
                 else {

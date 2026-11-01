@@ -181,6 +181,53 @@ final class SukiruUITests: XCTestCase {
         app.terminate()
     }
 
+    func testCodexMarketplaceListingAndPreview() throws {
+        try write(
+            "[marketplaces.team]\nsource_type = \"local\"\nsource = \"\(fixture.path)/catalog\"\n"
+                + "[plugins.\"sample@team\"]\nenabled = true\n",
+            to: home.appendingPathComponent(".codex/config.toml"))
+        try write(
+            #"{"name":"team","plugins":[{"name":"sample","source":{"source":"local","path":"./sample"},"description":"Searchable description"}]}"#,
+            to: fixture.appendingPathComponent("catalog/.agents/plugins/marketplace.json"))
+        let app = XCUIApplication()
+        app.launchEnvironment["SUKIRU_HOME"] = home.path
+        app.launchEnvironment["SUKIRU_ROOTS"] = ""
+        app.launchEnvironment["PATH"] =
+            Bundle(for: Self.self).resourceURL!
+            .appendingPathComponent("Fixtures/bin").path
+        app.launchEnvironment["SUKIRU_UI_PROBE_LOG"] =
+            fixture.appendingPathComponent("probes.log").path
+        app.launchArguments = ["-AppleLanguages", "(en)"]
+        app.launch()
+        let codex = app.descendants(matching: .any)["sukiru.sidebar.plugins.codex"].firstMatch
+        XCTAssertTrue(codex.waitForExistence(timeout: 15))
+        codex.click()
+        app.radioButtons["Marketplace"].click()
+        let row = app.descendants(matching: .any)["sukiru.plugins.marketplace.row.sample"]
+            .firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Configured reference"].exists)
+        let search = app.searchFields.firstMatch
+        search.click()
+        search.typeText("Searchable description")
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        search.typeKey("a", modifierFlags: .command)
+        search.typeKey(.delete, modifierFlags: [])
+        row.click()
+        XCTAssertTrue(app.staticTexts["Searchable description"].firstMatch.exists)
+        app.buttons["sukiru.plugins.marketplace.install"].click()
+        XCTAssertEqual(
+            app.textFields["sukiru.plugins.operation.target"].value as? String, "sample@team")
+        app.buttons["sukiru.plugins.operation.preview"].click()
+        XCTAssertTrue(app.staticTexts["Review Changes"].waitForExistence(timeout: 10))
+        app.buttons["sukiru.confirm.cancel"].click()
+        app.terminate()
+        let probes =
+            (try? String(contentsOf: fixture.appendingPathComponent("probes.log"), encoding: .utf8))
+            ?? ""
+        XCTAssertFalse(probes.contains("plugin add sample@team"))
+    }
+
     func testAgentRowGroupsItsSkillsAndPlugins() throws {
         try write(
             "---\nname: cursor-only-skill\ndescription: read by Cursor\n---\n",

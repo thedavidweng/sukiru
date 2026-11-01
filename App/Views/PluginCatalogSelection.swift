@@ -10,7 +10,8 @@ extension PluginCatalogEntry {
 
     func matches(_ filter: String) -> Bool {
         filter.isEmpty
-            || ([name, displayName, summary] + (keywords ?? []).map(Optional.some))
+            || ([name, displayName, summary, author, homepage, repository, license]
+                + ((keywords ?? []) + (categories ?? [])).map(Optional.some))
                 .compactMap { $0 }
                 .contains { $0.localizedCaseInsensitiveContains(filter) }
     }
