@@ -362,7 +362,7 @@ final class SukiruUITests: XCTestCase {
                 + "[plugins.\"sample@team\"]\nenabled = true\n",
             to: home.appendingPathComponent(".codex/config.toml"))
         try write(
-            #"{"name":"team","plugins":[{"name":"sample","source":{"source":"local","path":"./sample"},"description":"Searchable description"}]}"#,
+            #"{"name":"team","plugins":[{"name":"sample","source":{"source":"local","path":"./sample"},"description":"Searchable description 12345"}]}"#,
             to: fixture.appendingPathComponent("catalog/.agents/plugins/marketplace.json"))
         let app = XCUIApplication()
         app.launchEnvironment["SUKIRU_HOME"] = home.path
@@ -384,14 +384,14 @@ final class SukiruUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Configured reference"].exists)
         let search = app.searchFields.firstMatch
         search.click()
-        search.typeText("Searchable description")
-        search.typeKey(.return, modifierFlags: [])
+        search.typeText("12345")
+        XCTAssertEqual(search.value as? String, "12345")
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         search.typeKey("a", modifierFlags: .command)
         search.typeKey(.delete, modifierFlags: [])
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         row.click()
-        XCTAssertTrue(app.staticTexts["Searchable description"].firstMatch.exists)
+        XCTAssertTrue(app.staticTexts["Searchable description 12345"].firstMatch.exists)
         app.buttons["sukiru.plugins.marketplace.install"].click()
         XCTAssertEqual(
             app.textFields["sukiru.plugins.operation.target"].value as? String, "sample@team")
