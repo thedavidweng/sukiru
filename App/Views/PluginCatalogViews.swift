@@ -8,6 +8,22 @@ struct PluginCatalogList: View {
     let marketplaces: [PluginMarketplace]
     let filter: String
 
+    private var cursorIssues: [PluginInventoryIssue] {
+        guard state.pluginHost == .cursor else { return [] }
+        return (state.report?.pluginInventory?.issues ?? []).filter {
+            $0.host == .cursor && $0.path.contains("/.cursor/plugins/marketplaces/")
+        }
+    }
+
+    private var droidNotFetched: Bool {
+        !marketplaces.isEmpty && marketplaces.allSatisfy { $0.host == .droid && $0.path == nil }
+    }
+
+    private var otherCatalogsEmpty: Bool {
+        !marketplaces.isEmpty
+            && marketplaces.allSatisfy { $0.plugins.isEmpty && $0.host != .cursor }
+    }
+
     var body: some View {
         List(selection: $state.selectedCatalogEntryID) {
             ForEach(marketplaces.filter { filter.isEmpty || !entries($0).isEmpty }) { marketplace in
@@ -18,32 +34,81 @@ struct PluginCatalogList: View {
                         )
                         .tag(marketplace.catalogID(entry))
                     }
+                    if marketplace.host == .cursor, marketplace.plugins.isEmpty {
+                        Text("The cached catalog has no listings")
+                            .foregroundStyle(.secondary)
+                    }
                 } header: {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(verbatim: marketplace.name)
-                        if marketplace.host == .droid {
-                            Group {
-                                Text(
-                                    verbatim: marketplace.source
-                                        + (marketplace.ref.map { " · " + $0 } ?? ""))
-                                if marketplace.path == nil { Text("Not fetched by Droid yet") }
-                                if marketplace.scope == "org" {
-                                    Text("Organization settings")
-                                } else if marketplace.scope == "project" {
-                                    Text(
-                                        verbatim: URL(fileURLWithPath: marketplace.scopeRoot)
-                                            .lastPathComponent
-                                    )
-                                    .help(marketplace.scopeRoot)
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(verbatim: marketplace.name)
+                            if marketplace.host == .cursor {
+                                Text("Cached catalog; registration scope unknown")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text(verbatim: marketplace.source)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                if let ref = marketplace.ref {
+                                    Text("Git ref: \(ref)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
                                 }
                             }
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        }
-                        if let updatedAt = marketplace.updatedAt {
-                            Text("Catalog cached by the host: \(updatedAt)")
+                            if marketplace.host == .droid {
+                                Group {
+                                    Text(
+                                        verbatim: marketplace.source
+                                            + (marketplace.ref.map { " · " + $0 } ?? ""))
+                                    if marketplace.path == nil { Text("Not fetched by Droid yet") }
+                                    if marketplace.scope == "org" {
+                                        Text("Organization settings")
+                                    } else if marketplace.scope == "project" {
+                                        Text(
+                                            verbatim: URL(fileURLWithPath: marketplace.scopeRoot)
+                                                .lastPathComponent
+                                        )
+                                        .help(marketplace.scopeRoot)
+                                    }
+                                }
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
+                            }
+                            if let updatedAt = marketplace.updatedAt {
+                                Text("Catalog cached by the host: \(updatedAt)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        if marketplace.host == .cursor {
+                            Spacer()
+                            Menu {
+                                let actions = ["marketplace-refresh", "marketplace-remove"]
+                                ForEach(actions, id: \.self) { action in
+                                    Button(PluginActionTitle.title(action)) {
+                                        state.manageMarketplace(marketplace, action: action)
+                                    }
+                                }
+                            } label: {
+                                Label("Marketplace Actions", systemImage: "ellipsis.circle")
+                            }
+                            .menuStyle(.borderlessButton)
+                            .accessibilityIdentifier(
+                                "sukiru.plugins.marketplace.actions.\(marketplace.id)"
+                            )
+                            .help("Preview an operation for this marketplace")
+                        }
+                    }
+                }
+            }
+            if state.pluginHost == .cursor {
+                if !cursorIssues.isEmpty {
+                    Section("Inspection Issues") {
+                        ForEach(cursorIssues, id: \.self) { issue in
+                            VStack(alignment: .leading) {
+                                Text(verbatim: issue.message)
+                                Text(verbatim: issue.path).foregroundStyle(.secondary)
+                            }
                         }
                     }
                 }
@@ -66,7 +131,7 @@ struct PluginCatalogList: View {
                     .accessibilityIdentifier("sukiru.plugins.marketplace.add.official")
                     .help("Preview registering Factory's official marketplace")
                 }
-            } else if marketplaces.isEmpty {
+            } else if marketplaces.isEmpty && cursorIssues.isEmpty {
                 ContentUnavailableView {
                     Label("No cached marketplace catalog", systemImage: "shippingbox")
                 } description: {
@@ -74,21 +139,29 @@ struct PluginCatalogList: View {
                         "Open \(state.pluginHost.displayName) and sign in; Sukiru reads the catalog the host caches."
                     )
                 }
-            } else if marketplaces.allSatisfy({ $0.host == .droid && $0.path == nil }) {
+            } else if droidNotFetched {
                 ContentUnavailableView {
                     Label("Not fetched by Droid yet", systemImage: "shippingbox")
                 } description: {
                     Text("Start Droid in a project, or refresh the marketplace in Marketplaces….")
                 }
-            } else if marketplaces.allSatisfy({ $0.plugins.isEmpty }) {
+            } else if otherCatalogsEmpty {
                 ContentUnavailableView(
                     "The cached catalog has no listings", systemImage: "shippingbox")
-            } else if marketplaces.allSatisfy({ entries($0).isEmpty }) {
+            } else if !filter.isEmpty && marketplaces.allSatisfy({ entries($0).isEmpty }) {
                 ContentUnavailableView.search(text: filter)
             }
         }
+        .onChange(
+            of: marketplaces.flatMap { marketplace in
+                entries(marketplace).map { marketplace.catalogID($0) }
+            }
+        ) { _, visible in
+            if let selected = state.selectedCatalogEntryID, !visible.contains(selected) {
+                state.selectedCatalogEntryID = nil
+            }
+        }
     }
-
     private var installedIdentifiers: Set<String> {
         Set(state.pluginInstallations(for: state.pluginHost).map(\.identifier))
     }
@@ -98,13 +171,13 @@ struct PluginCatalogList: View {
     private func installation(
         _ entry: PluginCatalogEntry, in marketplace: PluginMarketplace
     ) -> PluginCatalogRow.Installation? {
+        if marketplace.host == .cursor { return nil }
         if marketplace.host == .droid {
             return installedIdentifiers.contains("\(entry.name)@\(marketplace.name)")
                 ? .installed : nil
         }
         return installedIdentifiers.contains(entry.name) ? .sameName : nil
     }
-
     /// Category first, then name, so related listings sit together.
     private func entries(_ marketplace: PluginMarketplace) -> [PluginCatalogEntry] {
         marketplace.plugins.filter { $0.matches(filter) }.sorted {
@@ -164,80 +237,6 @@ private struct PluginCatalogRow: View {
                     .lineLimit(1)
             }
         }
-    }
-}
-
-/// A plugin's icon: a file inside an installed plugin, or a listing's HTTPS
-/// address. SVG and bitmap icons both decode through NSImage; anything else
-/// keeps the generic plugin symbol. Decoded icons are kept for the session, so
-/// rows scrolling back into view show theirs at once instead of reloading.
-struct PluginLogo: View {
-    let address: String?
-    let size: CGFloat
-    @State private var image: NSImage?
-
-    @MainActor private static var cache: [String: NSImage] = [:]
-
-    var body: some View {
-        Group {
-            if let image = image ?? address.flatMap({ Self.cache[$0] }) {
-                Image(nsImage: image).resizable().scaledToFit()
-            } else {
-                Image(systemName: "puzzlepiece.extension")
-                    .font(.system(size: size * 0.55))
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(width: size, height: size)
-        .accessibilityHidden(true)
-        .task(id: address) {
-            guard let address else {
-                image = nil
-                return
-            }
-            if let cached = Self.cache[address] {
-                image = cached
-                return
-            }
-            image = nil
-            let loaded: NSImage?
-            if address.hasPrefix("/") {
-                loaded = await Task.detached(priority: .utility) {
-                    let attributes = try? FileManager.default.attributesOfItem(atPath: address)
-                    guard let size = attributes?[.size] as? Int, size <= Self.byteLimit else {
-                        return nil
-                    }
-                    return NSImage(contentsOfFile: address)
-                }.value
-            } else if let url = URL(string: address), url.scheme == "https" {
-                loaded = await Self.load(url)
-            } else {
-                loaded = nil
-            }
-            if let loaded { Self.cache[address] = loaded }
-            guard !Task.isCancelled else { return }
-            image = loaded
-        }
-    }
-
-    /// Icons are a few kilobytes; a file or body over the limit is discarded.
-    private nonisolated static let byteLimit = 1 << 20
-
-    private nonisolated static func load(_ url: URL) async -> NSImage? {
-        guard let (bytes, response) = try? await URLSession.shared.bytes(from: url),
-            (response as? HTTPURLResponse)?.statusCode == 200,
-            response.expectedContentLength <= byteLimit
-        else { return nil }
-        var data = Data()
-        do {
-            for try await byte in bytes {
-                data.append(byte)
-                if data.count > byteLimit { return nil }
-            }
-        } catch {
-            return nil
-        }
-        return NSImage(data: data)
     }
 }
 
@@ -320,6 +319,12 @@ struct PluginCatalogDetailView: View {
                 )
                 .foregroundStyle(.secondary)
             }
+        } else if marketplace.host == .cursor {
+            Section {
+                Text("Cached catalog; registration scope unknown")
+                Text("Installation, enablement and runtime loading are unknown.")
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -357,39 +362,18 @@ struct PluginCatalogDetailView: View {
                     state.manageCatalogEntry(selected.entry, marketplace: selected.marketplace)
                 }
             } label: {
-                Label("Install from Marketplace…", systemImage: "arrow.down.circle")
+                if state.pluginHost == .cursor {
+                    Label("Instructions for Cursor…", systemImage: "info.circle")
+                } else {
+                    Label("Install from Marketplace…", systemImage: "arrow.down.circle")
+                }
             }
             .disabled(state.pluginActionsBusy || state.selectedCatalogEntry == nil)
             .accessibilityIdentifier("sukiru.plugins.marketplace.install")
-            .help("Preview installing this listing from its marketplace")
+            .help(
+                state.pluginHost == .cursor
+                    ? String(localized: "Choose a scope and view Cursor installation instructions")
+                    : String(localized: "Preview installing this listing from its marketplace"))
         }
-    }
-}
-
-extension PluginMarketplace {
-    func catalogID(_ entry: PluginCatalogEntry) -> String { id + "\n" + entry.name }
-}
-
-extension PluginCatalogEntry {
-    var title: String { displayName ?? name }
-
-    func matches(_ filter: String) -> Bool {
-        filter.isEmpty
-            || ([name, displayName, summary] + (keywords ?? []).map(Optional.some))
-                .compactMap { $0 }
-                .contains { $0.localizedCaseInsensitiveContains(filter) }
-    }
-}
-
-extension AppState {
-    var selectedCatalogEntry: (entry: PluginCatalogEntry, marketplace: PluginMarketplace)? {
-        guard let id = selectedCatalogEntryID else { return nil }
-        for marketplace in report?.pluginInventory?.marketplaces ?? []
-        where marketplace.host == pluginHost {
-            if let entry = marketplace.plugins.first(where: { marketplace.catalogID($0) == id }) {
-                return (entry, marketplace)
-            }
-        }
-        return nil
     }
 }
