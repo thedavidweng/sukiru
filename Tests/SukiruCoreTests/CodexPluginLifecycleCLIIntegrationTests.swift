@@ -34,6 +34,12 @@ struct CodexPluginLifecycleCLIIntegrationTests {
         try fixture.tree.file(
             "home/.codex/.tmp/marketplaces/team/.agents/plugins/marketplace.json",
             contents: #"{"name":"team","plugins":[{"name":"demo","source":{"path":"./demo"}}]}"#)
+        try fixture.tree.file(
+            "home/.codex/.tmp/marketplaces/team/.codex-marketplace-install.json",
+            contents: """
+                {"source_type":"git","source":"https://example.test/team.git",
+                "ref_name":"main","sparse_paths":[],"revision":"fixture"}
+                """)
         try fixture.tree.file("home/.codex/plugins/data/demo-team/state", contents: "kept\n")
         return fixture
     }
@@ -225,6 +231,7 @@ extension CodexPluginLifecycleCLIIntegrationTests {
                 [marketplaces.team]
                 source_type = "git"
                 source = "https://example.test/team.git"
+                ref = "main"
                 [marketplaces.lab]
                 source_type = "local"
                 source = "\(fixture.tree.path)/lab"

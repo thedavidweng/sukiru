@@ -104,6 +104,7 @@ extension PluginLifecyclePlanner {
         }
         let declared = named.contains {
             $0.scope == request.scope && $0.scopeRoot == request.scopeRoot
+                && $0.evidence != "cached-catalog"
         }
         let requiresDeclaration =
             request.host == .codex || (request.host == .claude && action == "remove")

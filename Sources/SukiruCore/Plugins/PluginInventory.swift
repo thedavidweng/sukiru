@@ -140,7 +140,11 @@ public struct PluginMarketplace: Codable, Equatable, Sendable, Identifiable {
     }
 
     var sourceIdentity: SourceIdentity {
-        SourceIdentity(source: source, ref: ref, type: sourceType)
+        SourceIdentity(
+            source: localSource
+                ? URL(fileURLWithPath: path ?? source, relativeTo: URL(fileURLWithPath: scopeRoot))
+                    .resolvingSymlinksInPath().path : source,
+            ref: ref, type: sourceType)
     }
 
     public var id: String {

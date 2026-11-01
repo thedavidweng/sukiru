@@ -13,13 +13,11 @@ extension PluginInventoryReader {
         let installations = claudeInstallations(
             records, roots: roots, scope: scope,
             userSettings: userSettings, issues: &issues)
-        // Registered catalogs come first so their install location wins over a
-        // bare user-settings declaration of the same name.
+        let cached = claudeMarketplaces(config, issues: &issues)
         var marketplaces: [PluginMarketplace] = []
         if scope.includes(.user) {
-            marketplaces += claudeMarketplaces(config, issues: &issues)
             marketplaces += claudeDeclarations(
-                userSettings, root: environment.home, scope: "user", config: config,
+                userSettings, root: environment.home, scope: "user", cached: cached,
                 issues: &issues)
         }
         if scope.includes(.project) {
@@ -30,24 +28,20 @@ extension PluginInventoryReader {
                     let settings = json(
                         HostPathResolver.join(root, ".claude/" + file), issues: &issues)
                     marketplaces += claudeDeclarations(
-                        settings, root: root, scope: fileScope, config: config, issues: &issues)
+                        settings, root: root, scope: fileScope, cached: cached, issues: &issues)
                 }
             }
         }
-        var uniqueMarketplaces: [String: PluginMarketplace] = [:]
-        for marketplace in marketplaces {
-            if var cached = uniqueMarketplaces[marketplace.id] {
-                if marketplace.evidence != "cached-catalog" {
-                    cached.evidence = marketplace.evidence
-                    uniqueMarketplaces[marketplace.id] = cached
+        if scope.includes(.user) {
+            marketplaces += cached.filter { cache in
+                !marketplaces.contains {
+                    $0.name == cache.name && $0.sourceIdentity == cache.sourceIdentity
                 }
-            } else {
-                uniqueMarketplaces[marketplace.id] = marketplace
             }
         }
         return PluginInventory(
             installations: installations,
-            marketplaces: uniqueMarketplaces.values.sorted { $0.id < $1.id }, issues: [])
+            marketplaces: marketplaces.sorted { $0.id < $1.id }, issues: [])
     }
 
     private func claudeInstallations(
@@ -203,7 +197,7 @@ extension PluginInventoryReader {
     }
 
     private func claudeDeclarations(
-        _ settings: [String: Any]?, root: String, scope: String, config: String,
+        _ settings: [String: Any]?, root: String, scope: String, cached: [PluginMarketplace],
         issues: inout [Issue]
     ) -> [PluginMarketplace] {
         let entries = settings?["extraKnownMarketplaces"] as? [String: [String: Any]] ?? [:]
@@ -212,17 +206,25 @@ extension PluginInventoryReader {
             let address =
                 source["repo"] as? String ?? source["url"] as? String
                 ?? source["path"] as? String ?? name
+            let declaredPath = (source["path"] as? String).map {
+                resolvePluginPath($0, relativeTo: root)
+            }
             let path =
-                (source["path"] as? String).map { resolvePluginPath($0, relativeTo: root) }
-                ?? HostPathResolver.join(claudePluginRoot(config), "marketplaces/" + name)
-            let manifest = json(
-                HostPathResolver.join(path, ".claude-plugin/marketplace.json"), issues: &issues)
+                declaredPath
+                ?? cached.first {
+                    $0.name == name && $0.source == address && $0.ref == source["ref"] as? String
+                        && $0.sourceType == source["source"] as? String
+                }?.path
+            let manifest = path.flatMap {
+                json(HostPathResolver.join($0, ".claude-plugin/marketplace.json"), issues: &issues)
+            }
             return PluginMarketplace(
                 host: .claude, name: name, source: address, scopeRoot: root,
                 path: path, plugins: claudeCatalog(manifest, root: path, issues: &issues),
                 scope: scope,
                 ref: source["ref"] as? String, localSource: Self.claudeLocalSource(source),
-                sourceType: source["source"] as? String)
+                sourceType: source["source"] as? String,
+                catalogState: path == nil ? "unverified" : nil)
         }
     }
 }

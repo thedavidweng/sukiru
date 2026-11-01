@@ -42,6 +42,8 @@ enum UserFacingError {
         case (.claude, "plugin-config", "Invalid marketplace plugin entry"),
             (.codex, "plugin-config", "Invalid marketplace plugin entry"):
             String(localized: "error.plugin.invalidMarketplaceEntry")
+        case (.codex, "plugin-catalog", "Invalid marketplace source metadata"):
+            String(localized: "Catalog source could not be verified")
         case (.cursor, "plugin-manifest", "Cursor catalog entry requires a name and source path"):
             String(localized: "error.plugin.invalidCursorCatalogEntry")
         case (.cursor, "plugin-manifest", "Cursor marketplace requires a name and plugin entries"):

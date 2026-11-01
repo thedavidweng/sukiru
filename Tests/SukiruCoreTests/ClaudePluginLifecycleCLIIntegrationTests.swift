@@ -29,6 +29,11 @@ struct ClaudePluginLifecycleCLIIntegrationTests {
                 {"version":2,"plugins":{"demo@team":[{"scope":"user","installPath":"\(payload)","version":"1.0.0"}]}}
                 """)
         try fixture.tree.file("home/.claude/plugins/data/demo-team/options", contents: "saved\n")
+        try fixture.tree.file(
+            "home/.claude/settings.json",
+            contents:
+                #"{"extraKnownMarketplaces":{"team":{"source":{"source":"github","repo":"example/team"}}}}"#
+        )
         return fixture
     }
 
@@ -271,6 +276,7 @@ extension ClaudePluginLifecycleCLIIntegrationTests {
     @Test("A registry cache is not another declaration when removing the final project scope")
     func finalProjectMarketplaceRemoval() throws {
         let fixture = try Self.claude(projects: ["project"])
+        try fixture.tree.file("home/.claude/settings.json", contents: "{}")
         let project = try #require(fixture.roots.first)
         try fixture.tree.file(
             "project/.claude/settings.json",

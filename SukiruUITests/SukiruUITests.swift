@@ -342,6 +342,15 @@ final class SukiruUITests: XCTestCase {
         app.radioButtons["Marketplace"].firstMatch.click()
         let row = app.descendants(matching: .any)["sukiru.plugins.marketplace.row.demo"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Cached catalog; registration scope unknown"].exists)
+        let actions = app.menuButtons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@", "sukiru.plugins.marketplace.actions.claude:")
+        ).firstMatch
+        actions.click()
+        XCTAssertTrue(actions.menuItems["Refresh Marketplace"].exists)
+        XCTAssertFalse(actions.menuItems["Remove Marketplace"].exists)
+        app.typeKey(.escape, modifierFlags: [])
         row.click()
         XCTAssertTrue(app.staticTexts["Fixture description"].firstMatch.exists)
         XCTAssertTrue(app.staticTexts["Example"].firstMatch.exists)

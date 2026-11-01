@@ -281,6 +281,35 @@ is not verification of the installed binary's authenticated response. Remote
 listing may contact the backend and update a host catalog cache. Sukiru does not
 invoke it automatically or implement an app-server fallback.
 
+#### Rechecked 2026-11-01: local rollback and Git cache provenance
+
+Real Codex 0.166.0 local marketplace add/install and both rollbacks passed in
+an isolated home with network access denied. Every command exited 0, every
+rollback item was inspected (no `unrestorable-with-reason`), installation
+rollback restored configuration bytes and removed payloads, and add rollback
+removed first-run configuration. The executable was copied into the isolated
+fixture so its temporary self-links could not capture a global installation.
+
+The official 0.166.0 [marketplace upgrade implementation](https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/core-plugins/src/marketplace_upgrade/activation.rs)
+writes `.codex-marketplace-install.json` beside its Git catalog. Sukiru checks
+its `source_type`, `source` and optional `ref_name` against each declaration
+before attributing listings. This check is independent of the requested scan
+scope. Local catalogs are read in place and do not compete for the Git cache.
+Missing, malformed or mismatched provenance leaves the declaration visible as
+unverified; the app offers Refresh Marketplace. Readable malformed metadata
+cannot authorize installation but does not prevent refresh/removal. File-read
+or snapshot-capture failures still block execution.
+
+A second real-host run used Git transport redirected to a disposable local
+repository, with network access denied. Initial add created a Git snapshot
+without the sidecar, which Sukiru correctly withheld. Native marketplace
+refresh wrote matching source metadata; the listing then appeared and native
+installation succeeded. Installation, refresh and add were rolled back in
+reverse order with no conflicts or unrestorable items. This verifies real
+Codex Git-cache behavior over local transport; it does not verify a remote
+Git service, authentication or backend operations. Sukiru never writes the
+host's provenance sidecar or refreshes it during passive browsing.
+
 ```text
 codex plugin add [OPTIONS] <PLUGIN[@MARKETPLACE]>
   -m, --marketplace <MARKETPLACE>

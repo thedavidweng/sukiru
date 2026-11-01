@@ -1,6 +1,22 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Catalog source could not be verified" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Catalog source could not be verified"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法验证目录来源"
+          }
+        }
+      }
+    },
     "error.plugin.chooseConfiguredMarketplace" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose a plugin from a configured host marketplace." } },
@@ -5137,6 +5153,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "引用"
+          }
+        }
+      }
+    },
+    "Refresh Marketplace to verify the cached source." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refresh Marketplace to verify the cached source."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请刷新市场以验证缓存来源。"
           }
         }
       }

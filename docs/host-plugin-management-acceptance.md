@@ -171,3 +171,52 @@ The 2026-10-05 comments' three remaining concerns are resolved as follows:
 - The later explicit-effects consent amendment removes the policy blockers
   for #24 and #25. Execution uses verified official commands, protects known
   captured files, and discloses effects that file restoration cannot undo.
+## Marketplace acceptance (#92, 2026-11-01)
+
+This follow-up checks the remaining acceptance gaps and affected regressions.
+It does not repeat the local full test suite. The earlier 848-test core run and
+five-host English/Chinese fixture flows remain prior evidence.
+
+- Source review found and fixed Claude cache-only removal authorization,
+  relative local source identity, and cached catalogs attributed to a different
+  source. Codex Git catalogs now require matching host-written provenance;
+  local catalogs remain readable in place. Dedicated regressions cover
+  conflicting sources/refs/scopes, missing or malformed provenance, and
+  refresh/removal of readable malformed metadata.
+- The Codex search, Cursor project-path and sidebar-selection tests passed
+  together (3/3). Claude listing/preview and Codex listing/preview passed again
+  after the source fixes. The Claude check now verifies that cached-only
+  records show unknown registration scope and have no Remove action.
+- Actual VoiceOver was enabled on the built app with an isolated example
+  catalog. Its spoken-output API reported the Marketplace radio button,
+  Code Review listing with description/version, Install from Marketplace,
+  the qualified plugin selector, Scope, Cancel and Preview in Pending Changes.
+  VoiceOver navigation/action entered the listing and opened the review;
+  review was cancelled. VoiceOver and AppleScript control were restored to
+  their initial off state. This was an English VoiceOver pass; Chinese labels
+  and layout are covered by the earlier UI run and screenshots, not by a
+  claimed Chinese speech pass.
+- Actual Codex 0.166.0 local and Git-via-local-transport add/install/refresh and
+  itemized rollback checks passed with network denied. See the dated
+  [interface evidence](host-plugin-interface-evidence.md#rechecked-2026-11-01-local-rollback-and-git-cache-provenance).
+  Prior real Claude local add/install/rollback evidence remains applicable.
+- The captured SwiftUI state-update warnings occur on sidebar selection before
+  Marketplace is clicked. Their 66 nonzero stack addresses match the baseline
+  Skills-sidebar warning. The symbolicated chain is NSOutlineView selection,
+  SwiftUI OutlineListCoordinator, Binding setter, Published setter and
+  ObservableObjectPublisher. Application frames remain unresolved; this does
+  not establish an Apple-only defect. Existing thread/QoS diagnostics also
+  remain; these runs are not described as runtime-warning-free.
+
+Authenticated remote mutations remain unverified. Remote catalog fetching was
+explicitly deferred by #109; host login/trust and backend rollback limits remain
+part of the existing contract. The rollback CLI can still return `rolledBack`
+and exit 0 despite unrestorable items, so every real-host check inspected the
+itemized report.
+
+The screenshots use only example fixture data, with no personal account or
+local home/project paths:
+
+| English | Simplified Chinese |
+| --- | --- |
+| ![English marketplace](images/marketplace-en.png) | ![Chinese marketplace](images/marketplace-zh.jpg) |

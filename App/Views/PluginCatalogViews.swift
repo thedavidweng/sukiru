@@ -11,6 +11,10 @@ struct PluginCatalogList: View {
     var body: some View {
         List(selection: $state.selectedCatalogEntryID) {
             ForEach(marketplaces.filter { filter.isEmpty || !entries($0).isEmpty }) { marketplace in
+                let cachedClaude =
+                    marketplace.host == .claude && marketplace.evidence == "cached-catalog"
+                let showsEmpty =
+                    filter.isEmpty || [.cursor, .antigravity].contains(marketplace.host)
                 Section {
                     HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 2) {
@@ -46,7 +50,9 @@ struct PluginCatalogList: View {
                                             Text("Git marketplace")
                                         }
                                     }
-                                    if marketplace.scope == "org" {
+                                    if marketplace.evidence == "cached-catalog" {
+                                        Text("Cached catalog; registration scope unknown")
+                                    } else if marketplace.scope == "org" {
                                         Text("Organization settings")
                                         Text("Organization settings manage this marketplace.")
                                     } else if marketplace.scope == "user" {
@@ -88,7 +94,7 @@ struct PluginCatalogList: View {
                                     "sukiru.plugins.marketplace.marketplace-refresh.\(marketplace.id)"
                                 )
                                 .help("Preview an operation for this marketplace")
-                                if marketplace.scope != "org" {
+                                if marketplace.scope != "org", !cachedClaude {
                                     Button("Remove Marketplace") {
                                         state.manageMarketplace(
                                             marketplace, action: "marketplace-remove")
@@ -115,36 +121,8 @@ struct PluginCatalogList: View {
                         )
                         .tag(marketplace.catalogID(entry))
                     }
-                    if marketplace.host == .cursor, marketplace.plugins.isEmpty {
-                        Text("The cached catalog has no listings").foregroundStyle(.secondary)
-                    }
-                    if marketplace.host == .claude, marketplace.plugins.isEmpty, filter.isEmpty {
-                        Text("No locally cached plugins").foregroundStyle(.secondary)
-                    }
-                    if marketplace.host == .droid, marketplace.plugins.isEmpty, filter.isEmpty {
-                        if marketplace.catalogState == "not-fetched" {
-                            Text("Not fetched by Droid yet").foregroundStyle(.secondary)
-                        } else if marketplace.catalogState == "unreadable" {
-                            Text("Catalog could not be read").foregroundStyle(.secondary)
-                        } else if marketplace.catalogState == "missing" {
-                            Text("Catalog not found").foregroundStyle(.secondary)
-                        } else {
-                            Text("No locally cached plugins").foregroundStyle(.secondary)
-                        }
-                    }
-                    if marketplace.host == .antigravity, marketplace.plugins.isEmpty {
-                        Text("No locally cached plugins").foregroundStyle(.secondary)
-                    }
-                    if marketplace.host == .codex, marketplace.plugins.isEmpty, filter.isEmpty {
-                        if marketplace.catalogState == "unreadable" {
-                            Text("Catalog could not be read").foregroundStyle(.secondary)
-                        } else {
-                            if marketplace.catalogState == "available" {
-                                Text("No locally cached plugins").foregroundStyle(.secondary)
-                            } else {
-                                Text("Catalog not found").foregroundStyle(.secondary)
-                            }
-                        }
+                    if marketplace.plugins.isEmpty, showsEmpty {
+                        Text(emptyCatalogMessage(marketplace)).foregroundStyle(.secondary)
                     }
                 }
             }
@@ -220,6 +198,24 @@ struct PluginCatalogList: View {
             }) {
                 state.selectedCatalogEntryID = nil
             }
+        }
+    }
+
+    private func emptyCatalogMessage(_ marketplace: PluginMarketplace) -> LocalizedStringKey {
+        if marketplace.host == .cursor { return "The cached catalog has no listings" }
+        switch marketplace.catalogState {
+        case "unverified":
+            return marketplace.host == .codex
+                ? "Refresh Marketplace to verify the cached source."
+                : "Catalog source could not be verified"
+        case "unreadable": return "Catalog could not be read"
+        case "not-fetched": return "Not fetched by Droid yet"
+        case "missing": return "Catalog not found"
+        default:
+            if marketplace.host == .codex, marketplace.catalogState != "available" {
+                return "Catalog not found"
+            }
+            return "No locally cached plugins"
         }
     }
 

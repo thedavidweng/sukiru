@@ -10,6 +10,22 @@ final class MarketplaceLayoutUITests: XCTestCase {
         try checkPopulatedMarketplace(host: "droid")
     }
 
+    func testCodexUnverifiedCatalogKeepsManagementAvailable() throws {
+        let root = temporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        try write(
+            "[marketplaces.team]\nsource_type = \"git\"\nsource = \"https://example.com/team.git\"\n",
+            to: root.appendingPathComponent(".codex/config.toml"))
+        let app = launch(root: root, host: "codex")
+        defer { app.terminate() }
+        let message = app.staticTexts["Refresh Marketplace to verify the cached source."]
+        XCTAssertTrue(message.waitForExistence(timeout: 10))
+        let actions = checkMetadata(app, host: "codex", firstRow: message)
+        actions.click()
+        XCTAssertTrue(actions.menuItems["Refresh Marketplace"].exists)
+        XCTAssertTrue(actions.menuItems["Remove Marketplace"].exists)
+    }
+
     func testDroidEmptyCatalogKeepsActionsVisible() throws {
         let root = temporaryRoot()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -86,7 +102,8 @@ final class MarketplaceLayoutUITests: XCTestCase {
             NSPredicate(
                 format: "identifier BEGINSWITH %@", "sukiru.plugins.marketplace.actions.\(host):")
         ).firstMatch
-        let scope = app.staticTexts["User Library"].firstMatch
+        let scope = app.descendants(matching: .any)["sukiru.plugins.marketplace.list"].firstMatch
+            .staticTexts["User Library"].firstMatch
         XCTAssertTrue(source.waitForExistence(timeout: 5))
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Marketplace metadata - \(host)"

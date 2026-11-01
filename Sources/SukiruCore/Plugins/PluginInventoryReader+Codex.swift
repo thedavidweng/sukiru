@@ -86,11 +86,21 @@ extension PluginInventoryReader {
         for (key, fields) in tables where key.hasPrefix("marketplaces.") {
             let name = String(key.dropFirst("marketplaces.".count))
             guard let source = fields["source"] else { continue }
-            let path: String
-            if fields["source_type"] == "local" {
-                path = resolvePluginPath(source, relativeTo: root)
-            } else {
-                path = HostPathResolver.join(config, ".tmp/marketplaces/" + name)
+            let path =
+                fields["source_type"] == "local"
+                ? resolvePluginPath(source, relativeTo: root)
+                : HostPathResolver.join(config, ".tmp/marketplaces/" + name)
+            let verified =
+                fields["source_type"] == "local"
+                || codexSnapshotMatches(path, fields: fields, issues: &issues)
+            if !verified {
+                marketplaces.append(
+                    PluginMarketplace(
+                        host: .codex, name: name, source: source, scopeRoot: root,
+                        path: nil, plugins: [],
+                        scope: root == environment.home ? "user" : "project",
+                        ref: fields["ref"], catalogState: "unverified"))
+                continue
             }
             var manifest: [String: Any]?
             var manifestPath = ""
@@ -118,6 +128,33 @@ extension PluginInventoryReader {
                         : (issues.count > issueCount ? "unreadable" : "available")))
         }
         return marketplaces
+    }
+
+    private func codexSnapshotMatches(
+        _ path: String, fields: [String: String], issues: inout [Issue]
+    ) -> Bool {
+        let file = HostPathResolver.join(path, ".codex-marketplace-install.json")
+        guard FileManager.default.fileExists(atPath: file) else { return false }
+        let data: Data
+        do {
+            data = try Data(contentsOf: URL(fileURLWithPath: file))
+        } catch {
+            issues.append(
+                Issue(kind: "plugin-config", path: file, message: error.localizedDescription))
+            return false
+        }
+        guard let metadata = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+        else {
+            issues.append(
+                Issue(
+                    kind: "plugin-catalog", path: file,
+                    message: "Invalid marketplace source metadata"))
+            return false
+        }
+        if let ref = metadata["ref_name"], !(ref is NSNull), !(ref is String) { return false }
+        return metadata["source_type"] as? String == "git"
+            && metadata["source"] as? String == fields["source"]
+            && metadata["ref_name"] as? String == fields["ref"]
     }
 
     private func codexCatalog(
