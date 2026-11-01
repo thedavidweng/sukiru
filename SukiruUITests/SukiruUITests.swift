@@ -159,7 +159,7 @@ final class SukiruUITests: XCTestCase {
         app.staticTexts["remote-demo"].click()
         app.buttons["sukiru.plugins.marketplace.install"].click()
         app.popUpButtons["sukiru.plugins.operation.scope"].click()
-        app.menuItems[project.path].click()
+        app.menuItems.matching(NSPredicate(format: "title == %@", project.path)).firstMatch.click()
         XCTAssertTrue(
             (app.staticTexts["sukiru.plugins.cursor.instructions"].value as? String ?? "")
                 .contains(project.path))
