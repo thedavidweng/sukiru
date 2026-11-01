@@ -385,9 +385,11 @@ final class SukiruUITests: XCTestCase {
         let search = app.searchFields.firstMatch
         search.click()
         search.typeText("Searchable description")
+        search.typeKey(.return, modifierFlags: [])
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         search.typeKey("a", modifierFlags: .command)
         search.typeKey(.delete, modifierFlags: [])
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
         row.click()
         XCTAssertTrue(app.staticTexts["Searchable description"].firstMatch.exists)
         app.buttons["sukiru.plugins.marketplace.install"].click()
@@ -401,6 +403,109 @@ final class SukiruUITests: XCTestCase {
             (try? String(contentsOf: fixture.appendingPathComponent("probes.log"), encoding: .utf8))
             ?? ""
         XCTAssertFalse(probes.contains("plugin add sample@team"))
+    }
+
+    func testFiveMarketplaceBrowsersInEnglish() throws {
+        try exerciseMarketplaces(language: "en", marketplaceTitle: "Marketplace")
+    }
+
+    func testFiveMarketplaceBrowsersInSimplifiedChinese() throws {
+        try exerciseMarketplaces(language: "zh-Hans", marketplaceTitle: "市场")
+    }
+
+    private func exerciseMarketplaces(language: String, marketplaceTitle: String) throws {
+        let claudeCatalog = home.appendingPathComponent(".claude/plugins/marketplaces/team")
+        try write(
+            "{\"team\":{\"source\":{\"source\":\"github\",\"repo\":\"example/team\"},"
+                + "\"installLocation\":\"\(claudeCatalog.path)\"}}",
+            to: home.appendingPathComponent(".claude/plugins/known_marketplaces.json"))
+        try write(
+            #"{"name":"team","plugins":[{"name":"claude-only","source":"./claude-only"}]}"#,
+            to: claudeCatalog.appendingPathComponent(".claude-plugin/marketplace.json"))
+        try write(
+            "[marketplaces.team]\nsource_type = \"local\"\nsource = \"\(fixture.path)/codex-catalog\"\n",
+            to: home.appendingPathComponent(".codex/config.toml"))
+        try write(
+            #"{"name":"team","plugins":[{"name":"codex-only","source":{"source":"local","path":"./codex-only"}}]}"#,
+            to: fixture.appendingPathComponent("codex-catalog/.agents/plugins/marketplace.json"))
+        let droidCatalog = fixture.appendingPathComponent("droid-catalog")
+        try write(
+            "{\"extraKnownMarketplaces\":{\"team\":{\"source\":{\"source\":\"local\","
+                + "\"path\":\"\(droidCatalog.path)\"}}}}",
+            to: home.appendingPathComponent(".factory/settings.json"))
+        try write(
+            #"{"name":"team","plugins":[{"name":"droid-only","source":"./droid-only"}]}"#,
+            to: droidCatalog.appendingPathComponent(".factory-plugin/marketplace.json"))
+        try write(
+            #"{"name":"official","plugins":[{"name":"antigravity-only","source":"./antigravity-only"}]}"#,
+            to: home.appendingPathComponent(
+                ".gemini/antigravity-cli/cache/marketplaces/official/marketplace.json"))
+        let launcher = home.appendingPathComponent(".local/bin/agy")
+        try write("", to: launcher)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o755], ofItemAtPath: launcher.path)
+
+        let app = XCUIApplication()
+        app.launchEnvironment["SUKIRU_HOME"] = home.path
+        app.launchEnvironment["SUKIRU_ROOTS"] = ""
+        app.launchEnvironment["PATH"] =
+            Bundle(for: Self.self).resourceURL!.appendingPathComponent("Fixtures/bin").path
+        app.launchArguments = ["-AppleLanguages", "(\(language))"]
+        app.launch()
+
+        let hosts = [
+            ("claude", "claude-only"), ("codex", "codex-only"), ("cursor", "remote-demo"),
+            ("droid", "droid-only"), ("antigravity", "antigravity-only")
+        ]
+        let sidebar = app.outlines.firstMatch
+        for (host, listing) in hosts {
+            let destination = app.descendants(matching: .any)["sukiru.sidebar.plugins.\(host)"]
+                .firstMatch
+            XCTAssertTrue(destination.waitForExistence(timeout: 15), host)
+            sidebar.scroll(byDeltaX: 0, deltaY: -1000)
+            destination.click()
+            let marketplace = app.radioButtons[marketplaceTitle].firstMatch
+            XCTAssertTrue(marketplace.waitForExistence(timeout: 10), host)
+            XCTAssertFalse(marketplace.label.isEmpty, host)
+            marketplace.click()
+            let row = app.descendants(matching: .any)["sukiru.plugins.marketplace.row.\(listing)"]
+                .firstMatch
+            XCTAssertTrue(row.waitForExistence(timeout: 10), host)
+            for (_, other) in hosts where other != listing {
+                XCTAssertFalse(
+                    app.descendants(matching: .any)["sukiru.plugins.marketplace.row.\(other)"]
+                        .exists,
+                    "\(other) appeared in \(host)")
+            }
+            row.click()
+            let install = app.buttons["sukiru.plugins.marketplace.install"]
+            XCTAssertTrue(install.waitForExistence(timeout: 5), host)
+            XCTAssertFalse(install.label.isEmpty, host)
+            let screenshot = XCTAttachment(screenshot: app.screenshot())
+            screenshot.name = "\(host)-\(language)"
+            screenshot.lifetime = .keepAlways
+            add(screenshot)
+            app.typeKey("i", modifierFlags: [.command, .control])
+            XCTAssertTrue(
+                app.buttons["sukiru.plugins.operation.cancel"].waitForExistence(timeout: 5), host)
+            app.typeKey(.escape, modifierFlags: [])
+            XCTAssertTrue(
+                app.buttons["sukiru.plugins.operation.cancel"].waitForNonExistence(timeout: 5), host
+            )
+        }
+
+        let window = app.windows.firstMatch
+        let original = window.frame
+        let corner = window.coordinate(withNormalizedOffset: CGVector(dx: 0.995, dy: 0.995))
+        let smaller = corner.withOffset(CGVector(dx: -200, dy: -150))
+        corner.click(forDuration: 0.2, thenDragTo: smaller)
+        XCTAssertLessThan(window.frame.width, original.width)
+        XCTAssertTrue(app.buttons["sukiru.plugins.marketplace.install"].isHittable)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "resized-\(language)"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        app.terminate()
     }
 
     func testAgentRowGroupsItsSkillsAndPlugins() throws {
