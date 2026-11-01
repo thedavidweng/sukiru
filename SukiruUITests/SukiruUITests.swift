@@ -209,19 +209,20 @@ final class SukiruUITests: XCTestCase {
         app.menuButtons["sukiru.plugins.add"].click()
         XCTAssertFalse(app.menuItems["Marketplaces…"].exists)
         app.typeKey(.escape, modifierFlags: [])
+        let id = "sukiru.plugins.marketplace.actions.droid:\(home.path):team"
         let actions = app.menuButtons.matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "sukiru.plugins.marketplace.actions.")
+            NSPredicate(format: "identifier == %@", id)
         ).firstMatch
         XCTAssertTrue(actions.exists)
         actions.click()
-        app.menuItems["Refresh Marketplace"].click()
+        actions.menuItems["Refresh Marketplace"].click()
         app.buttons["sukiru.plugins.operation.preview"].click()
         XCTAssertTrue(
             app.staticTexts["sukiru.plugins.operation.error"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.staticTexts["Review Changes"].exists)
         app.buttons["sukiru.plugins.operation.cancel"].click()
         actions.click()
-        app.menuItems["Remove Marketplace"].click()
+        actions.menuItems["Remove Marketplace"].click()
         XCTAssertEqual(app.textFields["sukiru.plugins.operation.target"].value as? String, "team")
         app.buttons["sukiru.plugins.operation.preview"].click()
         XCTAssertTrue(app.staticTexts["Review Changes"].waitForExistence(timeout: 10))
@@ -277,9 +278,12 @@ final class SukiruUITests: XCTestCase {
             app.staticTexts["Organization settings manage this marketplace."].waitForExistence(
                 timeout: 10))
         let id = "sukiru.plugins.marketplace.actions.droid:\(home.path):corp:org"
-        app.menuButtons.matching(NSPredicate(format: "identifier == %@", id)).firstMatch.click()
-        XCTAssertTrue(app.menuItems["Refresh Marketplace"].exists)
-        XCTAssertFalse(app.menuItems["Remove Marketplace"].exists)
+        let actions = app.menuButtons.matching(
+            NSPredicate(format: "identifier == %@", id)
+        ).firstMatch
+        actions.click()
+        XCTAssertTrue(actions.menuItems["Refresh Marketplace"].exists)
+        XCTAssertFalse(actions.menuItems["Remove Marketplace"].exists)
         app.typeKey(.escape, modifierFlags: [])
         app.terminate()
     }
