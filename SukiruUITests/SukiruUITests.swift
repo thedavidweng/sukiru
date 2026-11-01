@@ -85,7 +85,10 @@ final class SukiruUITests: XCTestCase {
         let filter = app.searchFields.firstMatch
         filter.click()
         filter.typeText("no-such-listing")
-        XCTAssertFalse(app.staticTexts["remote-demo"].exists)
+        filter.typeKey(.return, modifierFlags: [])
+        let remoteRow = app.descendants(matching: .any)[
+            "sukiru.plugins.marketplace.row.remote-demo"]
+        XCTAssertTrue(remoteRow.firstMatch.waitForNonExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["A cached listing"].exists)
         filter.typeKey("a", modifierFlags: .command)
         filter.typeKey(.delete, modifierFlags: [])
@@ -95,7 +98,7 @@ final class SukiruUITests: XCTestCase {
         app.buttons["sukiru.plugins.marketplace.install"].click()
         let instructions = app.staticTexts["sukiru.plugins.cursor.instructions"]
         XCTAssertTrue(instructions.waitForExistence(timeout: 5))
-        XCTAssertTrue(instructions.label.contains("remote-demo@personal"))
+        XCTAssertTrue((instructions.value as? String ?? "").contains("remote-demo@personal"))
         XCTAssertFalse(app.buttons["sukiru.plugins.operation.preview"].exists)
         app.buttons["sukiru.plugins.operation.cancel"].click()
 
@@ -158,7 +161,8 @@ final class SukiruUITests: XCTestCase {
         app.popUpButtons["sukiru.plugins.operation.scope"].click()
         app.menuItems[project.path].click()
         XCTAssertTrue(
-            app.staticTexts["sukiru.plugins.cursor.instructions"].label.contains(project.path))
+            (app.staticTexts["sukiru.plugins.cursor.instructions"].value as? String ?? "")
+                .contains(project.path))
         app.terminate()
     }
 
@@ -198,6 +202,7 @@ final class SukiruUITests: XCTestCase {
 
         let droid = app.descendants(matching: .any)["sukiru.sidebar.plugins.droid"].firstMatch
         XCTAssertTrue(droid.waitForExistence(timeout: 15))
+        app.outlines["Sidebar"].scroll(byDeltaX: 0, deltaY: -500)
         droid.click()
         app.radioButtons["Marketplace"].click()
         XCTAssertTrue(app.staticTexts["Not fetched by Droid yet"].waitForExistence(timeout: 10))
@@ -243,7 +248,9 @@ final class SukiruUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["remote-demo"].waitForExistence(timeout: 10))
         app.staticTexts["remote-demo"].click()
         XCTAssertTrue(app.staticTexts["A cached listing"].firstMatch.exists)
+        app.outlines["Sidebar"].scroll(byDeltaX: 0, deltaY: -500)
         app.descendants(matching: .any)["sukiru.sidebar.plugins.droid"].firstMatch.click()
+        XCTAssertTrue(app.staticTexts["Not fetched by Droid yet"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.staticTexts["A cached listing"].exists)
         XCTAssertFalse(app.buttons["sukiru.plugins.marketplace.install"].isEnabled)
         app.terminate()
@@ -263,13 +270,14 @@ final class SukiruUITests: XCTestCase {
         app.launch()
         let droid = app.descendants(matching: .any)["sukiru.sidebar.plugins.droid"].firstMatch
         XCTAssertTrue(droid.waitForExistence(timeout: 15))
+        app.outlines["Sidebar"].scroll(byDeltaX: 0, deltaY: -500)
         droid.click()
         app.radioButtons["Marketplace"].click()
         XCTAssertTrue(
             app.staticTexts["Organization settings manage this marketplace."].waitForExistence(
                 timeout: 10))
         let id = "sukiru.plugins.marketplace.actions.droid:\(home.path):corp:org"
-        app.menuButtons[id].click()
+        app.menuButtons.matching(NSPredicate(format: "identifier == %@", id)).firstMatch.click()
         XCTAssertTrue(app.menuItems["Refresh Marketplace"].exists)
         XCTAssertFalse(app.menuItems["Remove Marketplace"].exists)
         app.typeKey(.escape, modifierFlags: [])
@@ -296,7 +304,11 @@ final class SukiruUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["remote-demo"].waitForExistence(timeout: 10))
         app.searchFields.firstMatch.click()
         app.searchFields.firstMatch.typeText("no-such-listing")
-        XCTAssertTrue(app.disclosureTriangles["sukiru.plugins.inspectionIssues"].exists)
+        app.searchFields.firstMatch.typeKey(.return, modifierFlags: [])
+        let row = app.descendants(matching: .any)["sukiru.plugins.marketplace.row.remote-demo"]
+        XCTAssertTrue(row.firstMatch.waitForNonExistence(timeout: 5))
+        let issues = app.descendants(matching: .any)["sukiru.plugins.inspectionIssues"].firstMatch
+        XCTAssertTrue(issues.waitForExistence(timeout: 5))
         app.terminate()
     }
 
