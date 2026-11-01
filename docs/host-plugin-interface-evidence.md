@@ -53,8 +53,85 @@ home/config/cache, adding a local directory marketplace and installing its
 `demo@sukiru-test` listing in user scope both returned JSON `outcome: ok`;
 `plugin list --json` recorded the user installation as enabled. Sukiru's
 dry-run against that state produced the expected qualified install argv.
-This does not verify remote authentication, project/local scope, or rollback;
-the lifecycle execution and rollback tests use a fixture CLI, not Claude.
+That probe did not verify remote authentication, project/local scope, or rollback;
+the earlier lifecycle execution and rollback tests used a fixture CLI, not Claude.
+
+#### Independent local execution and rollback probe (2026-10-31)
+
+At integration commit `59fe990`, a separate worktree built SukiruCore and the
+CLI directly with the installed Swift compiler. SwiftPM's build failed under the
+outer sandbox, so this was not a SwiftPM or test-suite run. The real Claude
+2.1.316 and Codex 0.166.0 binaries were used, not host-command substitutes.
+The local fixture was a `sukiru-local-probe` marketplace whose `.claude-plugin/marketplace.json`
+listed `demo` at `./demo`; its `.claude-plugin/plugin.json` declared version
+`1.0.0`.
+
+All commands below ran with an empty process environment except the variables
+shown. `RUN` was `/private/tmp/sukiru-92-native-run`, `CLI` was the freshly
+built `$RUN/build/sukiru`, and the current directory was `$RUN`. The sandbox
+denied network, all Mach service lookups, reads under `/Users/david`, and writes
+outside `$RUN` (except `/dev/null`). Separate probes confirmed that reading a
+file under `/Users/david`, writing outside `$RUN`, and connecting to
+`127.0.0.1:9` each failed with `Operation not permitted`. The profile and common
+environment were:
+
+```sh
+PROFILE='(version 1)(allow default)(deny network*)(deny mach-lookup)(deny file-write*)(allow file-write* (subpath "/private/tmp/sukiru-92-native-run") (literal "/dev/null"))(deny file-read* (subpath "/Users/david"))'
+env -i HOME="$RUN/home" SUKIRU_SYSTEM_ROOT="$RUN/system" \
+  SUKIRU_RESOLVING_ENVIRONMENT=1 TMPDIR="$RUN/runtime-tmp" \
+  PATH=/opt/homebrew/bin:/usr/bin:/bin CI=1 NO_COLOR=1 \
+  sandbox-exec -p "$PROFILE" "$CLI" <arguments>
+```
+
+For marketplace-add planning and execution only, `SUKIRU_HOME="$RUN/home"`
+was also set and `TMPDIR` was `$RUN/tmp`. Request files were JSON arrays with
+`host`, `action`, `target`, `scope` and `scopeRoot`; the Claude requests used
+`host: "claude"`, `scope: "user"`, `scopeRoot: "$RUN/home"` (expanded to
+its absolute path), and these action/target pairs:
+
+```text
+marketplace-add  /private/tmp/sukiru-92-native-run/catalog
+install          demo@sukiru-local-probe
+```
+
+The commands and observations were:
+
+- `plugins plan --requests $RUN/claude-add.json` planned
+  `claude plugin marketplace add $RUN/catalog --scope user --json`.
+- `plugins execute --requests $RUN/claude-add.json --yes --confirm-dangerous --json`
+  returned exit 0, `batchStatus: succeeded` and a snapshot; the captured
+  native stdout reported `outcome: ok`. The diff included the new marketplace
+  registry and user settings.
+- `plugins plan --requests $RUN/claude-install.json --json` planned
+  `claude plugin install demo@sukiru-local-probe --scope user --json`.
+  `plugins execute --requests $RUN/claude-install.json --yes --confirm-dangerous --json`
+  returned exit 0, `batchStatus: succeeded` and a snapshot. The native stdout
+  reported `outcome: ok`; the diff included the installation record, payload
+  cache and changed settings.
+- `rollback --batch 81D3A520-E70E-434A-960C-0C667190B5C4 --dry-run --json`
+  reported no conflicts. The corresponding `--yes --json` rollback returned
+  exit 0 and `batchStatus: rolledBack`. The installation record and payload
+  cache were absent afterwards, and settings still declared the marketplace.
+  The report nevertheless contained eight `unrestorable-with-reason` entries:
+  both `/private/tmp/...` and `/tmp/...` named the same files, so the latter
+  deletion attempts found paths already removed through the former alias. The
+  diff also listed both aliases. This is not a clean rollback report.
+- `rollback --batch 819C84B9-40D8-42A9-8A2C-74F44DDAE9F4 --dry-run --json`
+  reported no conflicts; the corresponding `--yes --json` rollback returned
+  exit 0 with no unrestorable items and removed the captured `.claude` tree.
+  It did not remove `$RUN/home/.claude.json`: this file's creation timestamp
+  fell within the native marketplace-add command, and it was not among the
+  snapshot's generic capture roots. Thus this first-run host side effect remains
+  outside the observed file rollback. No claim of a complete home-directory
+  restoration follows from the batch status.
+
+The `/tmp` capture root above is an ancestor symlink entry, not a recursive
+capture of its target. No remote marketplace, authentication, project scope,
+repository installation, refresh, or removal was exercised. For Codex,
+`plugins plan --requests $RUN/codex-add.json --json` planned the local
+marketplace add but also included the real Codex executable in capture roots:
+the version probe had created links to it under the temporary `.codex/tmp`.
+That Codex plan was not executed or rolled back in this investigation.
 
 ```text
 claude plugin install|i [options] <plugin>
