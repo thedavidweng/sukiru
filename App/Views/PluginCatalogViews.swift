@@ -25,13 +25,11 @@ struct PluginCatalogList: View {
                         Text("No locally cached plugins").foregroundStyle(.secondary)
                     }
                     if marketplace.host == .droid, marketplace.plugins.isEmpty, filter.isEmpty {
-                        if marketplace.path == nil {
+                        if marketplace.catalogState == "not-fetched" {
                             Text("Not fetched by Droid yet").foregroundStyle(.secondary)
-                        } else if inspectionIssues.contains(where: {
-                            $0.path.hasPrefix((marketplace.path ?? "") + "/")
-                        }) {
+                        } else if marketplace.catalogState == "unreadable" {
                             Text("Catalog could not be read").foregroundStyle(.secondary)
-                        } else if !droidCatalogExists(marketplace) {
+                        } else if marketplace.catalogState == "missing" {
                             Text("Catalog not found").foregroundStyle(.secondary)
                         } else {
                             Text("No locally cached plugins").foregroundStyle(.secondary)
@@ -43,12 +41,10 @@ struct PluginCatalogList: View {
                         }
                     }
                     if marketplace.host == .codex, marketplace.plugins.isEmpty, filter.isEmpty {
-                        if inspectionIssues.contains(where: {
-                            $0.path.hasPrefix((marketplace.path ?? "") + "/")
-                        }) {
+                        if marketplace.catalogState == "unreadable" {
                             Text("Catalog could not be read").foregroundStyle(.secondary)
                         } else {
-                            if codexCatalogExists(marketplace) {
+                            if marketplace.catalogState == "available" {
                                 Text("No locally cached plugins").foregroundStyle(.secondary)
                             } else {
                                 Text("Catalog not found").foregroundStyle(.secondary)
@@ -214,11 +210,6 @@ struct PluginCatalogList: View {
                 state.selectedCatalogEntryID = nil
             }
         }
-        .onChange(of: filter) { _, value in
-            if let selected = state.selectedCatalogEntry, !selected.entry.matches(value) {
-                state.selectedCatalogEntryID = nil
-            }
-        }
     }
 
     /// Droid identifies an installation by plugin and marketplace, so its match is exact;
@@ -229,7 +220,9 @@ struct PluginCatalogList: View {
         let plugins = state.pluginInstallations(for: marketplace.host)
         if marketplace.host == .cursor { return nil }
         if marketplace.host == .claude {
-            let recorded = plugins.filter { $0.identifier == "\(entry.name)@\(marketplace.name)" }
+            let recorded =
+                state.report?.pluginInventory?.recordedClaudeInstallations(
+                    entry, marketplace: marketplace) ?? []
             return recorded.isEmpty ? nil : .recorded(recorded)
         }
         if marketplace.host == .codex {
@@ -270,19 +263,6 @@ extension PluginCatalogList {
         }
     }
 
-    fileprivate func codexCatalogExists(_ marketplace: PluginMarketplace) -> Bool {
-        guard let root = marketplace.path else { return false }
-        return [".agents/plugins/marketplace.json", ".claude-plugin/marketplace.json"].contains {
-            FileManager.default.fileExists(atPath: root + "/" + $0)
-        }
-    }
-
-    fileprivate func droidCatalogExists(_ marketplace: PluginMarketplace) -> Bool {
-        guard let root = marketplace.path else { return false }
-        return [".factory-plugin/marketplace.json", ".claude-plugin/marketplace.json"].contains {
-            FileManager.default.fileExists(atPath: root + "/" + $0)
-        }
-    }
 }
 
 private struct PluginCatalogRow: View {

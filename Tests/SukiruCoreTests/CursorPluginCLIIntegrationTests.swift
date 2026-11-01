@@ -203,6 +203,24 @@ extension CursorPluginCLIIntegrationTests {
         #expect(entry["logo"] as? String == "https://example.com/logo.png")
     }
 
+    @Test("Malformed Cursor listings do not hide valid siblings")
+    func mixedCatalogEntries() throws {
+        let tree = try TempTree()
+        let home = try tree.dir("home")
+        try tree.file(
+            "home/.cursor/plugins/marketplaces/example/.cursor-plugin/marketplace.json",
+            contents: #"{"name":"example","plugins":[{"name":"valid","source":"./valid"},42,{}]}"#)
+        let result = try CLIRunner.run(
+            ["scan"], environment: CLIRunner.fixtureEnvironment(home: home))
+        let inventory = try #require(try result.jsonObject()?["pluginInventory"] as? [String: Any])
+        let markets = try #require(inventory["marketplaces"] as? [[String: Any]])
+        let market = try #require(markets.first { $0["name"] as? String == "example" })
+        let entries = try #require(market["plugins"] as? [[String: Any]])
+        #expect(entries.compactMap { $0["name"] as? String } == ["valid"])
+        let issues = try #require(inventory["issues"] as? [[String: Any]])
+        #expect(issues.filter { ($0["path"] as? String)?.contains("example/") == true }.count == 2)
+    }
+
     @Test("Cursor catalogs with matching names stay distinct alongside malformed caches")
     func distinctCatalogs() throws {
         let tree = try TempTree()

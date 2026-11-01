@@ -174,6 +174,24 @@ struct ClaudePluginLifecycleCLIIntegrationTests {
         #expect(undeclared.stderrText.contains("not declared in project scope"))
     }
 
+    @Test("A registry cache is not another declaration when removing the final project scope")
+    func finalProjectMarketplaceRemoval() throws {
+        let fixture = try Self.claude(projects: ["project"])
+        let project = try #require(fixture.roots.first)
+        try fixture.tree.file(
+            "project/.claude/settings.json",
+            contents:
+                #"{"extraKnownMarketplaces":{"team":{"source":{"source":"github","repo":"example/team"}}}}"#
+        )
+        let result = try fixture.plan([
+            fixture.request("marketplace-remove", "team", scope: "project", root: project)
+        ])
+        let warning = try #require(try result.plannedCommands().first?["warning"] as? String)
+        #expect(warning.contains("may be the final scope"))
+        #expect(warning.contains("demo@team"))
+        #expect(warning.contains("secrets and data may be deleted"))
+    }
+
     @Test("Catalog entries with typed sources keep their source instead of 'inline'")
     func typedCatalogSource() throws {
         let fixture = try Self.claude(

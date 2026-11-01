@@ -50,12 +50,7 @@ struct PluginLibraryView: View {
                 )
                 : Text("\(installations.count) plugins")
         )
-        .searchable(text: $filter, placement: .toolbar, prompt: Text("Filter Plugins"))
-        .onChange(of: filter) { _, _ in
-            if let selected = state.selectedCatalogEntry, !selected.entry.matches(filter) {
-                state.selectedCatalogEntryID = nil
-            }
-        }
+        .searchable(text: filterBinding, placement: .toolbar, prompt: Text("Filter Plugins"))
         .onChange(of: host) { _, _ in
             state.selectedCatalogEntryID = nil
             filter = ""
@@ -76,6 +71,17 @@ struct PluginLibraryView: View {
                 addMenu
             }
         }
+    }
+
+    private var filterBinding: Binding<String> {
+        Binding(
+            get: { filter },
+            set: { value in
+                if let selected = state.selectedCatalogEntry, !selected.entry.matches(value) {
+                    state.selectedCatalogEntryID = nil
+                }
+                filter = value
+            })
     }
 
     private var addMenu: some View {

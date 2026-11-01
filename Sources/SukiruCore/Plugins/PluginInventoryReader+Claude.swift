@@ -35,8 +35,15 @@ extension PluginInventoryReader {
             }
         }
         var uniqueMarketplaces: [String: PluginMarketplace] = [:]
-        for marketplace in marketplaces where uniqueMarketplaces[marketplace.id] == nil {
-            uniqueMarketplaces[marketplace.id] = marketplace
+        for marketplace in marketplaces {
+            if var cached = uniqueMarketplaces[marketplace.id] {
+                if marketplace.evidence != "cached-catalog" {
+                    cached.evidence = marketplace.evidence
+                    uniqueMarketplaces[marketplace.id] = cached
+                }
+            } else {
+                uniqueMarketplaces[marketplace.id] = marketplace
+            }
         }
         return PluginInventory(
             installations: installations,
@@ -118,6 +125,7 @@ extension PluginInventoryReader {
                     PluginMarketplace(
                         host: .claude, name: name, source: address, scopeRoot: environment.home,
                         path: path, plugins: claudeCatalog(manifest, root: path, issues: &issues),
+                        evidence: "cached-catalog",
                         ref: source?["ref"] as? String,
                         localSource: Self.claudeLocalSource(source),
                         sourceType: source?["source"] as? String))

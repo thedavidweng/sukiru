@@ -14,7 +14,21 @@ enum UserFacingError {
         case let error as RollbackError: message(for: error)
         case let error as SnapshotError: message(for: error)
         case let error as BatchBuildError: message(for: error)
+        case let error as PluginLifecycleError: message(for: error)
         default: fallback(for: error)
+        }
+    }
+
+    private static func message(for error: PluginLifecycleError) -> String {
+        switch error.reason {
+        case .marketplaceSourceConflict(let name):
+            String(localized: "error.plugin.marketplaceSourceConflict \(name)")
+        case .selectedCodexMarketplace:
+            String(localized: "error.plugin.selectedCodexMarketplace")
+        case .marketplaceNotDeclared(let name, let scope, let root):
+            String(localized: "error.plugin.marketplaceNotDeclared \(name) \(scope) \(root)")
+        case nil:
+            error.message
         }
     }
 

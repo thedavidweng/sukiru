@@ -17,6 +17,13 @@ extension PluginCatalogEntry {
 }
 
 extension AppState {
+    var activeCatalogEntry: (entry: PluginCatalogEntry, marketplace: PluginMarketplace)? {
+        guard surface == .plugins, showsPluginMarketplace, pluginHost.hasMarketplaceBrowser else {
+            return nil
+        }
+        return selectedCatalogEntry
+    }
+
     var selectedCatalogEntry: (entry: PluginCatalogEntry, marketplace: PluginMarketplace)? {
         guard let id = selectedCatalogEntryID else { return nil }
         for marketplace in report?.pluginInventory?.marketplaces ?? []

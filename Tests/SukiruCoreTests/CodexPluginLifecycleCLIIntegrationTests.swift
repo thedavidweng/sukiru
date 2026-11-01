@@ -171,6 +171,56 @@ struct CodexPluginLifecycleCLIIntegrationTests {
         #expect(fixture.invocations.isEmpty)
     }
 
+}
+
+extension CodexPluginLifecycleCLIIntegrationTests {
+    @Test("Malformed Codex listings do not hide valid siblings")
+    func mixedCatalogEntries() throws {
+        let fixture = try Self.codex()
+        try fixture.tree.file(
+            "home/.codex/.tmp/marketplaces/team/.agents/plugins/marketplace.json",
+            contents: #"{"plugins":[{"name":"valid","source":"./valid"},42,{}, {"name":""}]}"#)
+        let result = try CLIRunner.run(["scan"], environment: fixture.environment)
+        let inventory = try #require(try result.jsonObject()?["pluginInventory"] as? [String: Any])
+        let markets = try #require(inventory["marketplaces"] as? [[String: Any]])
+        let market = try #require(markets.first { $0["name"] as? String == "team" })
+        let entries = try #require(market["plugins"] as? [[String: Any]])
+        #expect(entries.compactMap { $0["name"] as? String } == ["valid"])
+        let issues = try #require(inventory["issues"] as? [[String: Any]])
+        #expect(issues.filter { ($0["path"] as? String)?.contains("team/") == true }.count == 3)
+    }
+
+    @Test("Inventory distinguishes missing, unreadable and readable catalogs")
+    func catalogState() throws {
+        let fixture = try Self.codex()
+        try fixture.tree.file("lab/.agents/plugins/marketplace.json", contents: "{")
+        try fixture.tree.file(
+            "home/.codex/config.toml",
+            contents: """
+                [marketplaces.team]
+                source_type = "git"
+                source = "https://example.test/team.git"
+                [marketplaces.lab]
+                source_type = "local"
+                source = "\(fixture.tree.path)/lab"
+                [marketplaces.missing]
+                source_type = "local"
+                source = "\(fixture.tree.path)/missing"
+                """)
+        let result = try CLIRunner.run(["scan"], environment: fixture.environment)
+        let inventory = try #require(try result.jsonObject()?["pluginInventory"] as? [String: Any])
+        let markets = try #require(inventory["marketplaces"] as? [[String: Any]])
+        #expect(
+            markets.first { $0["name"] as? String == "team" }?["catalogState"] as? String
+                == "available")
+        #expect(
+            markets.first { $0["name"] as? String == "lab" }?["catalogState"] as? String
+                == "unreadable")
+        #expect(
+            markets.first { $0["name"] as? String == "missing" }?["catalogState"] as? String
+                == "missing")
+    }
+
     @Test("A user cache does not prove a project installation")
     func projectDeclarationDoesNotInheritPayload() throws {
         let fixture = try Self.codex(projects: ["project"])
@@ -203,6 +253,35 @@ struct CodexPluginLifecycleCLIIntegrationTests {
         let result = try fixture.plan([fixture.request("install", "demo@project-only")])
         #expect(result.exitCode != 0)
         #expect(fixture.invocations.isEmpty)
+    }
+
+    @Test("A selected project catalog cannot silently install from a same-name user catalog")
+    func selectedProjectCatalogIsNotUserCatalog() throws {
+        let fixture = try Self.codex(projects: ["project"])
+        let project = try #require(fixture.roots.first)
+        try fixture.tree.file(
+            "project/.codex/config.toml",
+            contents: "[marketplaces.team]\nsource_type = \"local\"\nsource = \"catalog\"\n")
+        try fixture.tree.file(
+            "project/catalog/.agents/plugins/marketplace.json",
+            contents: #"{"name":"team","plugins":[{"name":"demo","source":"./other"}]}"#)
+        var request = fixture.request("install", "demo@team")
+        request["selectedMarketplaceID"] = "codex:\(project):team:7:catalog::true"
+        let result = try fixture.plan([request])
+        #expect(result.exitCode != 0)
+        #expect(fixture.invocations.isEmpty)
+    }
+
+    @Test("A selected user catalog remains installable while its source is unchanged")
+    func selectedUserCatalog() throws {
+        let fixture = try Self.codex()
+        let source = "https://example.test/team.git"
+        var request = fixture.request("install", "demo@team")
+        request["selectedMarketplaceID"] =
+            "codex:\(fixture.home):team:\(source.utf8.count):\(source):main:false"
+        let result = try fixture.plan([request])
+        #expect(result.exitCode == 0, "\(result.stderrText)")
+        #expect(try result.plannedCommands().count == 1)
     }
 
     @Test("Project-only marketplace cannot authorize user refresh or removal")
