@@ -1,6 +1,158 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Catalog source could not be verified" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Catalog source could not be verified"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法验证目录来源"
+          }
+        }
+      }
+    },
+    "error.plugin.chooseConfiguredMarketplace" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose a plugin from a configured host marketplace." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请从宿主已配置的市场中选择插件。" } }
+      }
+    },
+    "error.plugin.expectedMarketplacePlugins" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Expected a marketplace plugins array." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "市场目录中的 plugins 应为数组。" } }
+      }
+    },
+    "error.plugin.invalidMarketplaceEntry" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Invalid marketplace plugin entry." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "市场插件条目无效。" } }
+      }
+    },
+    "error.plugin.invalidCursorCatalogEntry" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cursor catalog entry requires a name and source path." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Cursor 目录条目必须包含名称和来源路径。" } }
+      }
+    },
+    "error.plugin.invalidCursorMarketplace" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cursor marketplace requires a name and plugin entries." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Cursor 市场必须包含名称和插件条目。" } }
+      }
+    },
+    "%@ - %@" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ - %2$@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ - %2$@" } }
+      }
+    },
+    "error.plugin.marketplaceSourceConflict %@" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Marketplace %@ refers to multiple sources." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "市场 %@ 对应多个来源。" } }
+      }
+    },
+    "error.plugin.selectedCodexMarketplace" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The selected Codex marketplace is not available in user scope." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "所选 Codex 市场在用户范围内不可用。" } }
+      }
+    },
+    "error.plugin.marketplaceNotDeclared %@ %@ %@" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Marketplace %1$@ is not declared in %2$@ scope at %3$@." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "市场 %1$@ 未在 %3$@ 的 %2$@ 范围中声明。" } }
+      }
+    },
+    "Manage marketplaces in Antigravity." : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请在 Antigravity 中管理市场。" } } }
+    },
+    "Add a marketplace to Cursor to see its cached catalog." : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "为 Cursor 添加市场后，即可查看缓存的目录。" } } }
+    },
+    "In Cursor, open Customize or use /plugin to install %@. Select %@, then refresh Sukiru." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Cursor 中打开自定义页面或使用 /plugin 安装 %1$@。选择 %2$@，然后刷新 Sukiru。"
+          }
+        }
+      }
+    },
+    "Choose a scope and view Cursor installation instructions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择范围并查看 Cursor 安装说明"
+          }
+        }
+      }
+    },
+    "Instructions for Cursor…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Cursor 中操作的说明…"
+          }
+        }
+      }
+    },
+    "Installation, enablement and runtime loading are unknown." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装、启用和运行时加载状态未知。"
+          }
+        }
+      }
+    },
+    "Cursor installs individual plugins in Customize or its interactive /plugin workflow. Choose the project where you want to install it." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在 Cursor 的自定义页面或交互式 /plugin 工作流中安装插件。选择要安装的项目。"
+          }
+        }
+      }
+    },
+    "Catalog could not be read" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法读取目录" } } }
+    },
+    "Catalog not found" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未找到目录" } } }
+    },
+    "Local catalog" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "本地目录" } } }
+    },
+    "Git marketplace" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Git 市场" } } }
+    },
+    "Add a local catalog or a Git marketplace to Codex." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "为 Codex 添加本地目录或 Git 市场。" }
+        }
+      }
+    },
+    "Codex installs %@@%@ in user scope. Local catalogs are used in place; Git marketplaces are refreshed by Codex." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "Codex 在用户范围内安装 %1$@@%2$@。本地目录直接使用，Git 市场由 Codex 刷新。" }
+        }
+      }
+    },
     "Not fetched by Droid yet" : {
       "localizations" : {
         "zh-Hans" : {
@@ -11,12 +163,12 @@
         }
       }
     },
-    "Start Droid in a project, or refresh the marketplace in Marketplaces…." : {
+    "Organization settings manage this marketplace." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在项目中启动 Droid，或在“市场…”中刷新该市场。"
+            "value" : "此市场由组织设置管理。"
           }
         }
       }
@@ -347,16 +499,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有已缓存的市场目录"
-          }
-        }
-      }
-    },
-    "Open %@ and sign in; Sukiru reads the catalog the host caches." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "打开 %@ 并登录；Sukiru 读取宿主缓存的目录。"
           }
         }
       }
@@ -1642,16 +1784,6 @@
         }
       }
     },
-    "Browse configured marketplaces" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "浏览已配置的市场"
-          }
-        }
-      }
-    },
     "Cached catalog; registration scope unknown" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1861,16 +1993,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除筛选条件"
-          }
-        }
-      }
-    },
-    "Close marketplace browsing" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "关闭市场浏览"
           }
         }
       }
@@ -4002,16 +4124,6 @@
         }
       }
     },
-    "Marketplaces…" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "市场…"
-          }
-        }
-      }
-    },
     "Matcher" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4719,16 +4831,6 @@
         }
       }
     },
-    "Preview installation from this configured marketplace" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "预览从此已配置市场安装插件"
-          }
-        }
-      }
-    },
     "Preview removing the selected plugins" : {
       "localizations" : {
         "zh-Hans" : {
@@ -5051,6 +5153,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "引用"
+          }
+        }
+      }
+    },
+    "Refresh Marketplace to verify the cached source." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refresh Marketplace to verify the cached source."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请刷新市场以验证缓存来源。"
           }
         }
       }
@@ -5824,16 +5942,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "搜索失败"
-          }
-        }
-      }
-    },
-    "Search plugin names in configured marketplaces" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在已配置的市场中搜索插件名称"
           }
         }
       }

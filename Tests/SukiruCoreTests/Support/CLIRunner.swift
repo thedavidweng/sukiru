@@ -44,7 +44,10 @@ enum CLIRunner {
         path: String = "/usr/bin:/bin",
         extra: [String: String] = [:]
     ) -> [String: String] {
-        var env = ["PATH": path, "SUKIRU_HOME": home]
+        var env = [
+            "PATH": path, "SUKIRU_HOME": home,
+            "TMPDIR": FileManager.default.temporaryDirectory.path
+        ]
         if !roots.isEmpty {
             env["SUKIRU_ROOTS"] = roots.joined(separator: ":")
         }

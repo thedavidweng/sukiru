@@ -8,7 +8,7 @@ extension PluginLifecycleCapture {
             let config =
                 environment.externalValue(for: "CLAUDE_CONFIG_DIR")
                 ?? HostPathResolver.join(home, ".claude")
-            var roots = [config]
+            var roots = [config, HostPathResolver.join(home, ".claude.json")]
             if let cache = environment.externalValue(for: "CLAUDE_CODE_PLUGIN_CACHE_DIR") {
                 roots.append(cache)
             }

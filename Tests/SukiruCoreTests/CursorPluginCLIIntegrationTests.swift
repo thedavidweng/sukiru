@@ -169,6 +169,85 @@ struct CursorPluginCLIIntegrationTests {
             })
     }
 
+}
+
+extension CursorPluginCLIIntegrationTests {
+    @Test("Cursor cached catalog metadata is available through marketplace inventory")
+    func marketplaceMetadata() throws {
+        let tree = try TempTree()
+        let home = try tree.dir("home")
+        try tree.file(
+            "home/.cursor/plugins/marketplaces/example/.cursor-plugin/marketplace.json",
+            contents: """
+                {"name":"catalog","plugins":[{"name":"demo","source":"./demo",
+                  "description":"Useful tools",
+                  "author":{"name":"Example"},"homepage":"https://example.com",
+                  "repository":"https://example.com/repo","license":"MIT",
+                  "keywords":["swift"],"category":"development",
+                  "logo":"https://example.com/logo.png"}]}
+                """)
+        let result = try CLIRunner.run(
+            ["plugins", "marketplaces", "list", "--host", "cursor"],
+            environment: CLIRunner.fixtureEnvironment(home: home))
+        let catalogs = try #require(
+            try JSONSerialization.jsonObject(with: result.stdout) as? [[String: Any]])
+        let entries = try #require(catalogs.first?["plugins"] as? [[String: Any]])
+        let entry = try #require(entries.first)
+        #expect(entry["summary"] as? String == "Useful tools")
+        #expect(entry["author"] as? String == "Example")
+        #expect(entry["homepage"] as? String == "https://example.com")
+        #expect(entry["repository"] as? String == "https://example.com/repo")
+        #expect(entry["license"] as? String == "MIT")
+        #expect(entry["keywords"] as? [String] == ["swift"])
+        #expect(entry["categories"] as? [String] == ["development"])
+        #expect(entry["logo"] as? String == "https://example.com/logo.png")
+    }
+
+    @Test("Malformed Cursor listings do not hide valid siblings")
+    func mixedCatalogEntries() throws {
+        let tree = try TempTree()
+        let home = try tree.dir("home")
+        try tree.file(
+            "home/.cursor/plugins/marketplaces/example/.cursor-plugin/marketplace.json",
+            contents: #"{"name":"example","plugins":[{"name":"valid","source":"./valid"},42,{}]}"#)
+        let result = try CLIRunner.run(
+            ["scan"], environment: CLIRunner.fixtureEnvironment(home: home))
+        let inventory = try #require(try result.jsonObject()?["pluginInventory"] as? [String: Any])
+        let markets = try #require(inventory["marketplaces"] as? [[String: Any]])
+        let market = try #require(markets.first { $0["name"] as? String == "example" })
+        let entries = try #require(market["plugins"] as? [[String: Any]])
+        #expect(entries.compactMap { $0["name"] as? String } == ["valid"])
+        let issues = try #require(inventory["issues"] as? [[String: Any]])
+        #expect(issues.filter { ($0["path"] as? String)?.contains("example/") == true }.count == 2)
+        #expect(
+            issues.contains {
+                $0["message"] as? String == "Cursor catalog entry requires a name and source path"
+            })
+    }
+
+    @Test("Cursor catalogs with matching names stay distinct alongside malformed caches")
+    func distinctCatalogs() throws {
+        let tree = try TempTree()
+        let home = try tree.dir("home")
+        for directory in ["one", "two"] {
+            try tree.file(
+                "home/.cursor/plugins/marketplaces/\(directory)/.cursor-plugin/marketplace.json",
+                contents: #"{"name":"shared","plugins":[{"name":"demo","source":"./demo"}]}"#)
+        }
+        try tree.file(
+            "home/.cursor/plugins/marketplaces/broken/.cursor-plugin/marketplace.json",
+            contents: "{")
+        let result = try CLIRunner.run(
+            ["plugins", "health", "--host", "cursor"],
+            environment: CLIRunner.fixtureEnvironment(home: home))
+        let report = try #require(try result.jsonObject())
+        let catalogs = try #require(report["marketplaces"] as? [[String: Any]])
+        #expect(catalogs.count == 2)
+        #expect(Set(catalogs.compactMap { $0["path"] as? String }).count == 2)
+        let issues = try #require(report["issues"] as? [[String: Any]])
+        #expect(issues.contains { ($0["path"] as? String)?.contains("/broken/") == true })
+    }
+
     @Test("Cursor explicit skill directories and mixed MCP declarations are inspected")
     func declaredComponents() throws {
         let tree = try TempTree()

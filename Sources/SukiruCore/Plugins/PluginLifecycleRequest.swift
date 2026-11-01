@@ -9,10 +9,12 @@ public struct PluginLifecycleRequest: Codable, Equatable, Sendable {
     public let gitRef: String?
     public let marketplace: String?
     public let strict: Bool?
+    public let selectedMarketplaceID: String?
 
     public init(
         host: PluginHost, action: String, target: String, scope: String, scopeRoot: String,
-        gitRef: String? = nil, marketplace: String? = nil, strict: Bool? = nil
+        gitRef: String? = nil, marketplace: String? = nil, strict: Bool? = nil,
+        selectedMarketplaceID: String? = nil
     ) {
         self.host = host
         self.action = action
@@ -22,6 +24,7 @@ public struct PluginLifecycleRequest: Codable, Equatable, Sendable {
         self.gitRef = gitRef
         self.marketplace = marketplace
         self.strict = strict
+        self.selectedMarketplaceID = selectedMarketplaceID
     }
 
     public static let actions = [
@@ -45,7 +48,18 @@ public struct PluginLifecycleCapabilities: Codable, Sendable {
 }
 
 public struct PluginLifecycleError: Error, LocalizedError, Sendable {
+    public enum Reason: Sendable {
+        case chooseConfiguredMarketplace
+        case marketplaceSourceConflict(String)
+        case selectedCodexMarketplace
+        case marketplaceNotDeclared(name: String, scope: String, root: String)
+    }
+
     public let message: String
-    public init(message: String) { self.message = message }
+    public let reason: Reason?
+    public init(message: String, reason: Reason? = nil) {
+        self.message = message
+        self.reason = reason
+    }
     public var errorDescription: String? { message }
 }

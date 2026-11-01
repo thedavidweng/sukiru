@@ -129,11 +129,32 @@ public struct PluginMarketplace: Codable, Equatable, Sendable, Identifiable {
     public var localSource = false
     /// When the host last fetched a cached catalog, as the host records it.
     public var updatedAt: String?
+    /// The source type recorded by the host, when present.
+    public var sourceType: String?
+    public var catalogState: String?
+
+    struct SourceIdentity: Hashable {
+        let source: String
+        let ref: String?
+        let type: String?
+    }
+
+    var sourceIdentity: SourceIdentity {
+        SourceIdentity(
+            source: localSource
+                ? URL(fileURLWithPath: path ?? source, relativeTo: URL(fileURLWithPath: scopeRoot))
+                    .resolvingSymlinksInPath().path : source,
+            ref: ref, type: sourceType)
+    }
 
     public var id: String {
         "\(host.rawValue):\(scopeRoot):\(name)"
             + (["local", "org"].contains(scope) ? ":" + scope : "")
             + (host == .cursor ? ":" + (path ?? "") : "")
+            + (host == .claude
+                ? ":\(source.utf8.count):\(source):\(ref ?? ""):\(sourceType ?? "")" : "")
+            + (host == .codex
+                ? ":\(source.utf8.count):\(source):\(ref ?? ""):\(localSource)" : "")
     }
 }
 
@@ -188,4 +209,20 @@ public struct PluginInventory: Codable, Equatable, Sendable {
     }
 
     public var isEmpty: Bool { installations.isEmpty && marketplaces.isEmpty && issues.isEmpty }
+
+    func claudeHasUniqueSource(_ name: String) -> Bool {
+        Set(marketplaces.filter { $0.host == .claude && $0.name == name }.map(\.sourceIdentity))
+            .count == 1
+    }
+
+    public func recordedClaudeInstallations(
+        _ entry: PluginCatalogEntry, marketplace: PluginMarketplace
+    ) -> [PluginInstallation] {
+        guard marketplace.host == .claude, claudeHasUniqueSource(marketplace.name) else {
+            return []
+        }
+        return installations.filter {
+            $0.host == .claude && $0.identifier == "\(entry.name)@\(marketplace.name)"
+        }
+    }
 }

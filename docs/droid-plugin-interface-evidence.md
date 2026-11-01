@@ -16,6 +16,11 @@ temporary directory; nothing touched a real profile.
 state that enablement lives in `enabledPlugins`. `list` prints a table only, so Sukiru reads
 the records below instead.
 
+On 2026-10-31, operation help was rechecked against the installed `droid` 1.1.0:
+install specifies `plugin@marketplace` and user/project scope; marketplace add, update,
+remove and list show the arguments above and no JSON option. This recheck inspected help
+only; it did not establish authentication requirements or execute a mutation.
+
 Sukiru routes:
 
 | Operation | Route |

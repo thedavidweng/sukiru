@@ -6,8 +6,6 @@ import SwiftUI
 struct PluginLibraryView: View {
     @EnvironmentObject private var state: AppState
     @State private var filter = ""
-    @State private var showingMarketplaces = false
-    @State private var catalogAction: (() -> Void)?
 
     private var host: PluginHost { state.pluginHost }
 
@@ -52,18 +50,10 @@ struct PluginLibraryView: View {
                 )
                 : Text("\(installations.count) plugins")
         )
-        .searchable(text: $filter, placement: .toolbar, prompt: Text("Filter Plugins"))
-        .sheet(isPresented: $showingMarketplaces, onDismiss: runCatalogAction) {
-            PluginMarketplacesSheet(
-                marketplaces: marketplaces,
-                onInstall: { entry, marketplace in
-                    catalogAction = { state.manageCatalogEntry(entry, marketplace: marketplace) }
-                    showingMarketplaces = false
-                },
-                onManage: { marketplace, action in
-                    catalogAction = { state.manageMarketplace(marketplace, action: action) }
-                    showingMarketplaces = false
-                })
+        .searchable(text: filterBinding, placement: .toolbar, prompt: Text("Filter Plugins"))
+        .onChange(of: host) { _, _ in
+            state.selectedCatalogEntryID = nil
+            filter = ""
         }
         .toolbar {
             if host.hasMarketplaceBrowser {
@@ -81,6 +71,17 @@ struct PluginLibraryView: View {
                 addMenu
             }
         }
+    }
+
+    private var filterBinding: Binding<String> {
+        Binding(
+            get: { filter },
+            set: { value in
+                if let selected = state.selectedCatalogEntry, !selected.entry.matches(value) {
+                    state.selectedCatalogEntryID = nil
+                }
+                filter = value
+            })
     }
 
     private var addMenu: some View {
@@ -107,11 +108,6 @@ struct PluginLibraryView: View {
                 .accessibilityIdentifier("sukiru.plugins.marketplace.add")
                 .help("Preview registering a marketplace with this host")
             }
-            if host.hasMarketplaces, !host.hasMarketplaceBrowser || host.managesMarketplaces {
-                Button("Marketplaces…") { showingMarketplaces = true }
-                    .accessibilityIdentifier("sukiru.plugins.catalog")
-                    .help("Browse configured marketplaces")
-            }
         } label: {
             Label("Add Plugin", systemImage: "plus")
         }
@@ -136,7 +132,7 @@ struct PluginLibraryView: View {
                     DisclosureGroup("Inspection Issues") {
                         ForEach(issues, id: \.self) { issue in
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(verbatim: issue.message)
+                                Text(verbatim: UserFacingError.message(for: issue))
                                 Text(verbatim: issue.path)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
@@ -204,11 +200,6 @@ struct PluginLibraryView: View {
         }
     }
 
-    private func runCatalogAction() {
-        let action = catalogAction
-        catalogAction = nil
-        action?()
-    }
 }
 
 private struct PluginRow: View {

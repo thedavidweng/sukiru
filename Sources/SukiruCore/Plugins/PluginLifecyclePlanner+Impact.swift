@@ -55,6 +55,7 @@ extension PluginLifecyclePlanner {
         }
         let remaining = inventory.marketplaces.filter {
             $0.host == .claude && $0.name == request.target
+                && $0.evidence != "cached-catalog"
                 && !($0.scope == request.scope && $0.scopeRoot == request.scopeRoot)
         }
         if !remaining.isEmpty {
@@ -68,7 +69,8 @@ extension PluginLifecyclePlanner {
         let cascade = try claudeCascade(marketplace: request.target)
         return
             "Remove marketplace \(request.target) from \(request.scope). "
-            + "Final-scope removal cascades to installations: \(cascade.isEmpty ? "none observed" : cascade). "
+            + "This may be the final scope; removal may cascade to installations: "
+            + "\(cascade.isEmpty ? "none observed" : cascade). "
             + "Payloads, saved options, secrets and data may be deleted; "
             + "complete captured file state can be restored."
     }

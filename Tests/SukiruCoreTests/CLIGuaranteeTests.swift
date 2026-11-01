@@ -52,7 +52,8 @@ struct CLIGuaranteeTests {
         let perProject = FixturePaths.homeAndRoots("own-per-project")
         let rootA = perProject.roots[0]
         let rootB = perProject.roots[1]
-        let rootC = FixturePaths.tree("clean-copy-mode") + "/proj"
+        let rootC = URL(fileURLWithPath: FixturePaths.tree("clean-copy-mode") + "/proj")
+            .resolvingSymlinksInPath().path
         let env = CLIRunner.fixtureEnvironment(home: perProject.home, roots: [rootA, rootB])
 
         // SUKIRU_ROOTS alone → a and b present.

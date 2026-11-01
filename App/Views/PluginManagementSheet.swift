@@ -27,12 +27,22 @@ struct PluginManagementSheet: View {
                         .help("Use Claude's local project scope instead of shared project settings")
                 }
             }
-            Text(
-                "plugin.preview.explanation"
-            )
-            .foregroundStyle(.secondary)
+            if cursorInstructions {
+                Text(
+                    """
+                    In Cursor, open Customize or use /plugin to install \(state.pluginManagement.target). \
+                    Select \(state.pluginManagement.scopeRoot), then refresh Sukiru.
+                    """
+                )
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("sukiru.plugins.cursor.instructions")
+            } else {
+                Text("plugin.preview.explanation")
+                    .foregroundStyle(.secondary)
+            }
             if let error = state.pluginManagement.error {
                 Text(verbatim: error).foregroundStyle(.secondary).textSelection(.enabled)
+                    .accessibilityIdentifier("sukiru.plugins.operation.error")
             }
             HStack {
                 Spacer()
@@ -40,18 +50,26 @@ struct PluginManagementSheet: View {
                     .keyboardShortcut(.cancelAction)
                     .accessibilityIdentifier("sukiru.plugins.operation.cancel")
                     .help("Close without creating a command batch")
-                Button("Preview in Pending Changes") { state.previewPluginOperation() }
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(
-                        state.pluginManagement.planning || state.pluginManagement.target.isEmpty
-                    )
-                    .accessibilityIdentifier("sukiru.plugins.operation.preview")
-                    .help("Review exact commands, affected files and consequences before execution")
+                if !cursorInstructions {
+                    Button("Preview in Pending Changes") { state.previewPluginOperation() }
+                        .keyboardShortcut(.defaultAction)
+                        .disabled(
+                            state.pluginManagement.planning || state.pluginManagement.target.isEmpty
+                        )
+                        .accessibilityIdentifier("sukiru.plugins.operation.preview")
+                        .help(
+                            "Review exact commands, affected files and consequences before execution"
+                        )
+                }
             }
         }
         .padding(20)
         .frame(width: 520)
         .disabled(state.pluginManagement.planning)
+    }
+
+    private var cursorInstructions: Bool {
+        state.pluginManagement.host == .cursor && state.pluginManagement.action == "install"
     }
 
     /// Repository installs go through `agy plugin install`, which manages user plugins only.
@@ -99,6 +117,15 @@ struct PluginManagementSheet: View {
                 Add Marketplace accepts owner/repo, a Git URL or a local path; append #ref \
                 to follow a branch or tag, or @ and a 40-character SHA to pin a commit. \
                 Enable and Disable edit enabledPlugins in the chosen scope's settings.json.
+                """
+            )
+            .foregroundStyle(.secondary)
+        }
+        if state.pluginManagement.host == .cursor && state.pluginManagement.action == "install" {
+            Text(
+                """
+                Cursor installs individual plugins in Customize or its interactive /plugin workflow. \
+                Choose the project where you want to install it.
                 """
             )
             .foregroundStyle(.secondary)

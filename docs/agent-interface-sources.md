@@ -1,6 +1,6 @@
 # Agent interface sources
 
-Version: 2026-10-31
+Version: 2026-11-01
 
 The version is the date of the most recent change to this file. Update it, and the row's
 Checked date, whenever a source is re-verified or a command or key changes.
@@ -36,12 +36,15 @@ Sukiru tries the host's command first, when its CLI is on `PATH` and
 | OpenCode | Local plugin file on/off | none | none; moved to `<config>/disabled-extensions` | [Plugins](https://opencode.ai/docs/plugins/) | 2026-10-30 (v2.2.2) |
 | OpenCode | MCP server remove, on/off | none | `opencode.json` `mcp.<name>.enabled` | [MCP servers](https://opencode.ai/docs/mcp-servers/) | 2026-10-30 (v2.2.2) |
 | Claude Code | MCP server remove | `claude mcp remove <name> --scope user` | `~/.claude.json` `mcpServers`; no user-scope switch | [MCP](https://code.claude.com/docs/en/mcp) | 2026-10-30 (2.1.314) |
+| Claude Code | Plugin install; marketplace add, update, remove | `claude plugin install <plugin@marketplace> --scope user\|project\|local --json`; `claude plugin marketplace add\|remove <target> --scope <scope> --json`; `claude plugin marketplace update <name> --json` | `known_marketplaces.json`, `extraKnownMarketplaces`, installed plugin records (read only) | [Plugin CLI reference](https://code.claude.com/docs/en/plugins/cli-reference), installed operation help; [evidence](host-plugin-interface-evidence.md) | 2026-10-31 (2.1.316; help and isolated local install) |
 | Claude Code | `disableAllHooks` | none | settings `disableAllHooks` | [Settings](https://code.claude.com/docs/en/settings), [Hooks](https://code.claude.com/docs/en/hooks) | 2026-10-30 |
 | OpenClaude | Plugin remove, on/off | `openclaude plugin uninstall\|disable\|enable <id> --scope user` | `~/.openclaude/settings.json` `enabledPlugins` | [Repository](https://github.com/Twigpine/openclaude), `openclaude plugin --help` | 2026-10-30 (0.16.1) |
 | OpenClaude | MCP server remove | `openclaude mcp remove <name> --scope user` | `~/.openclaude.json` `mcpServers` | `openclaude mcp --help` | 2026-10-30 (0.16.1) |
 | OpenClaude | `disableAllHooks` | none | `~/.openclaude/settings.json` `disableAllHooks` (Claude Code setting) | [Claude Code settings](https://code.claude.com/docs/en/settings) | 2026-10-30 |
 | Codex | MCP server remove, on/off | `codex mcp remove <name>` | `config.toml` `[mcp_servers.<name>] enabled` | [MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli), [Config reference](https://learn.chatgpt.com/docs/config-file/config-reference) | 2026-10-30 (0.166.0) |
+| Codex | Plugin and marketplace lifecycle | `codex plugin add <plugin@marketplace> --json`; `codex plugin marketplace add\|upgrade\|remove ... --json` | `config.toml` `[marketplaces]`, `[plugins]`; catalog snapshots and `.codex-marketplace-install.json` source/ref evidence (read only) | [CLI evidence](host-plugin-interface-evidence.md#codex-cli-01600), installed operation help | 2026-11-01 (0.166.0; isolated local/Git transport, refresh, install and rollback verified) |
 | Cursor | MCP server on/off, remove | `cursor-agent mcp disable\|enable <name>` | `~/.cursor/mcp.json` `mcpServers` (removal) | [CLI MCP](https://cursor.com/docs/cli/mcp) | 2026-10-30 (2026.10.22) |
+| Cursor | Marketplace add, update, remove | `agent plugin marketplace add <gitUrl> [--git-ref <ref>]\|update <nameOrUrl>\|remove <nameOrUrl>`; registration lookup `list --format json` | cached `.cursor-plugin/marketplace.json` (read only) | [Plugins reference](https://cursor.com/docs/reference/plugins), installed operation help | 2026-10-31 (2026.10.22-27dcf5f; help only) |
 | Droid | Plugin install, update, uninstall | `droid plugin install\|update\|uninstall <plugin@marketplace> --scope user\|project` | `~/.factory/plugins/installed_plugins/*.json` (read only) | [Plugins](https://docs.factory.com/harness/plugins), `droid plugin --help` | 2026-10-31 (1.1.0) |
 | Droid | Plugin on/off | none | `enabledPlugins` in `~/.factory/settings.json` or `<project>/.factory/settings.json` | [Plugins](https://docs.factory.com/harness/plugins) | 2026-10-31 (1.1.0) |
 | Droid | Marketplace add, update, remove | `droid plugin marketplace add <source>\|update <name>\|remove <name>` | user `extraKnownMarketplaces`; a project declaration is removed from `<project>/.factory/settings.json`; registry `~/.factory/plugins/known_marketplaces/*.json` (read only) | [Plugins](https://docs.factory.com/harness/plugins), [Internal Plugin Marketplaces](https://docs.factory.com/enterprise/internal-plugin-marketplaces) | 2026-10-31 (1.1.0) |

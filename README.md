@@ -238,6 +238,14 @@ and `--host HOST` use the same selectors throughout the CLI (for example
 `--host claude-code`). Installation and Plugin mutations require one concrete
 user or project scope. `--root` replaces `SUKIRU_ROOTS`.
 
+Each supported host's Plugins tab has its own marketplace view. Claude Code,
+Codex, Droid and Antigravity listings come from their host catalogs; Cursor
+shows cached catalogs without claiming registration or installation. A matching
+name does not prove provenance. Marketplace installs and repository installs
+are separate operations reviewed in Pending Changes. Codex installs from its
+user marketplace only; project-only selections cannot silently switch sources.
+Claude marketplace removal may uninstall plugins and delete their data when
+the last declaration is removed, so its preview includes the possible cascade.
 
 Cursor Plugin inventory is passive: local development plugins, cached payloads,
 formats and components are visible; cache presence does not establish installation,

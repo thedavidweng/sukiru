@@ -1,5 +1,14 @@
 # Host Plugin Interface Evidence
 
+## Marketplace scope decisions (2026-10-31)
+
+Droid's lifecycle and host-owned marketplace browser are supported; see
+[Droid evidence](droid-plugin-interface-evidence.md). OpenClaude, Muse, Grok Build,
+Hermes Agent, GitHub Copilot CLI, Gemini CLI, Qwen Code and Kiro are deferred until
+their individual lifecycle and catalog contracts are verified. Pi's package gallery
+is outside this Agent Plugin increment. OpenCode, Devin and Amp are outside this
+marketplace work.
+
 Initial verification: 2026-10-03; parent acceptance review: 2026-10-25.
 Execution decisions include the user-approved explicit-effects consent amendment
 to ADR-0008 and its Cursor amendment. Initial installed-host verification used
@@ -27,6 +36,154 @@ missing, so a later release that changes the interface fails closed. Other
 majors, and versions below a baseline, are refused with host instructions.
 
 ### Claude Code 2.1.288
+
+#### Rechecked 2026-10-31: Claude Code 2.1.316
+
+The installed `/opt/homebrew/bin/claude --version` identified Claude Code 2.1.316.
+Operation help identifies `plugin install <plugin>` with `plugin@marketplace`,
+`--scope user|project|local`, and `--json`; `--marketplace <source>` can add a
+marketplace first, so Sukiru does not use it for a listing. Marketplace add and
+remove expose `--scope` and `--json`, while named update exposes `--json` and
+no scope flag. Install help retains explicit command/headersHelper approval;
+Sukiru does not pass `--yes` or `--accept-command`.
+
+With a disposable HOME, `CLAUDE_CONFIG_DIR` and `CLAUDE_CODE_PLUGIN_CACHE_DIR`,
+`claude plugin marketplace list --json` returned `[]`. In a separate disposable
+home/config/cache, adding a local directory marketplace and installing its
+`demo@sukiru-test` listing in user scope both returned JSON `outcome: ok`;
+`plugin list --json` recorded the user installation as enabled. Sukiru's
+dry-run against that state produced the expected qualified install argv.
+That probe did not verify remote authentication, project/local scope, or rollback;
+the earlier lifecycle execution and rollback tests used a fixture CLI, not Claude.
+
+#### Independent local execution and rollback probe (2026-10-31)
+
+At integration commit `59fe990`, a separate worktree built SukiruCore and the
+CLI directly with the installed Swift compiler. SwiftPM's build failed under the
+outer sandbox, so this was not a SwiftPM or test-suite run. The real Claude
+2.1.316 and Codex 0.166.0 binaries were used, not host-command substitutes.
+The local fixture was a `sukiru-local-probe` marketplace whose `.claude-plugin/marketplace.json`
+listed `demo` at `./demo`; its `.claude-plugin/plugin.json` declared version
+`1.0.0`.
+
+All commands below ran with an empty process environment except the variables
+shown. `RUN` was `/private/tmp/sukiru-92-native-run`, `CLI` was the freshly
+built `$RUN/build/sukiru`, and the current directory was `$RUN`. The sandbox
+denied network, all Mach service lookups, reads under the user's home, and writes
+outside `$RUN` (except `/dev/null`). Separate probes confirmed that reading a
+file under the user's home, writing outside `$RUN`, and connecting to
+`127.0.0.1:9` each failed with `Operation not permitted`. The profile and common
+environment were (the user's home path is redacted):
+
+```sh
+PROFILE='(version 1)(allow default)(deny network*)(deny mach-lookup)(deny file-write*)(allow file-write* (subpath "/private/tmp/sukiru-92-native-run") (literal "/dev/null"))(deny file-read* (subpath "<user-home>"))'
+env -i HOME="$RUN/home" SUKIRU_SYSTEM_ROOT="$RUN/system" \
+  SUKIRU_RESOLVING_ENVIRONMENT=1 TMPDIR="$RUN/runtime-tmp" \
+  PATH=/opt/homebrew/bin:/usr/bin:/bin CI=1 NO_COLOR=1 \
+  sandbox-exec -p "$PROFILE" "$CLI" <arguments>
+```
+
+For marketplace-add planning and execution only, `SUKIRU_HOME="$RUN/home"`
+was also set and `TMPDIR` was `$RUN/tmp`. Request files were JSON arrays with
+`host`, `action`, `target`, `scope` and `scopeRoot`; the Claude requests used
+`host: "claude"`, `scope: "user"`, `scopeRoot: "$RUN/home"` (expanded to
+its absolute path), and these action/target pairs:
+
+```text
+marketplace-add  /private/tmp/sukiru-92-native-run/catalog
+install          demo@sukiru-local-probe
+```
+
+The commands and observations were:
+
+- `plugins plan --requests $RUN/claude-add.json` planned
+  `claude plugin marketplace add $RUN/catalog --scope user --json`.
+- `plugins execute --requests $RUN/claude-add.json --yes --confirm-dangerous --json`
+  returned exit 0, `batchStatus: succeeded` and a snapshot; the captured
+  native stdout reported `outcome: ok`. The diff included the new marketplace
+  registry and user settings.
+- `plugins plan --requests $RUN/claude-install.json --json` planned
+  `claude plugin install demo@sukiru-local-probe --scope user --json`.
+  `plugins execute --requests $RUN/claude-install.json --yes --confirm-dangerous --json`
+  returned exit 0, `batchStatus: succeeded` and a snapshot. The native stdout
+  reported `outcome: ok`; the diff included the installation record, payload
+  cache and changed settings.
+- `rollback --batch 81D3A520-E70E-434A-960C-0C667190B5C4 --dry-run --json`
+  reported no conflicts. The corresponding `--yes --json` rollback returned
+  exit 0 and `batchStatus: rolledBack`. The installation record and payload
+  cache were absent afterwards, and settings still declared the marketplace.
+  The report nevertheless contained eight `unrestorable-with-reason` entries:
+  both `/private/tmp/...` and `/tmp/...` named the same files, so the latter
+  deletion attempts found paths already removed through the former alias. The
+  diff also listed both aliases. This is not a clean rollback report.
+- `rollback --batch 819C84B9-40D8-42A9-8A2C-74F44DDAE9F4 --dry-run --json`
+  reported no conflicts; the corresponding `--yes --json` rollback returned
+  exit 0 with no unrestorable items and removed the captured `.claude` tree.
+  It did not remove `$RUN/home/.claude.json`: this file's creation timestamp
+  fell within the native marketplace-add command, and it was not among the
+  snapshot's generic capture roots. Thus this first-run host side effect remains
+  outside the observed file rollback. No claim of a complete home-directory
+  restoration follows from the batch status.
+
+The `/tmp` capture root above is an ancestor symlink entry, not a recursive
+capture of its target. No remote marketplace, authentication, project scope,
+repository installation, refresh, or removal was exercised. For Codex,
+`plugins plan --requests $RUN/codex-add.json --json` planned the local
+marketplace add but also included the real Codex executable in capture roots:
+the version probe had created links to it under the temporary `.codex/tmp`.
+That Codex plan was not executed or rolled back in this investigation.
+
+#### Claude rollback fix verification (2026-10-31)
+
+After adding `~/.claude.json` to Claude capture and deduplicating plugin capture
+paths through ancestor links, the same real Claude 2.1.316 local marketplace
+and plugin were tested in a new empty `/private/tmp/sukiru-92-verify/home`.
+The sandbox profile and isolated environment were the same as above, with
+`SUKIRU_HOME` set and all paths under `/private/tmp/sukiru-92-verify` as its
+only writable tree. The CLI was built from the independent worktree with
+`swift test --build-system native --disable-sandbox` under a separate sandbox.
+
+Using the same JSON request shape as above, these commands ran in order:
+
+```sh
+sukiru plugins plan --requests "$RUN/add.json" --json
+sukiru plugins execute --requests "$RUN/add.json" --yes --confirm-dangerous --json
+sukiru plugins plan --requests "$RUN/install.json" --json
+sukiru plugins execute --requests "$RUN/install.json" --yes --confirm-dangerous --json
+sukiru rollback --batch "$INSTALL" --dry-run --json
+sukiru rollback --batch "$INSTALL" --yes --json
+sukiru rollback --batch "$ADD" --dry-run --json
+sukiru rollback --batch "$ADD" --yes --json
+```
+
+Both native commands returned exit 0, `outcome: ok`, and `batchStatus:
+succeeded`, with a snapshot. The marketplace-add diff included the newly
+created `.claude.json`. Both previews reported zero conflicts; both rollbacks
+returned exit 0 and `rolledBack`, with zero `unrestorable-with-reason` items.
+The installation record and payload were present after installation and absent
+after its rollback. SHA-256 checks of `.claude.json`, `.claude/settings.json`,
+and `.claude/plugins/known_marketplaces.json` matched their pre-install bytes
+after that rollback. After rolling back marketplace add, `.claude.json` and
+`.claude` were absent, as they were before the first command. The install diff
+listed each changed file once, rather than under both temporary-path aliases.
+
+The first verification script stopped after the successful marketplace add
+because it used an incorrect `jq` path; it resumed from the existing batch
+using `/usr/bin/jq` without rerunning the add. This validates only these local
+filesystem effects in an isolated home; it does not establish remote, runtime,
+account, project-scope, or arbitrary plugin-effect rollback.
+
+The CLI regression fixtures additionally cover retargeted terminal file and
+directory links and retargeted ancestor links. For each restore/preserve
+choice, they check conflict detection, the selected link target, restored
+original external bytes, unchanged replacement bytes, and the absence of
+unrestorable items. These are fixture-host tests, separate from the real Claude
+run above.
+
+The existing rollback CLI can still return exit 0 and `rolledBack` when its
+itemized report contains a genuine `unrestorable-with-reason`; callers must
+inspect the items. The capture fixes here do not change that CLI contract or
+repair snapshots already created with duplicate alias roots.
 
 ```text
 claude plugin install|i [options] <plugin>
@@ -100,6 +257,58 @@ Never present that operation as a catalog-only removal. Sources:
 [marketplace commands](https://code.claude.com/docs/en/plugins/cli-reference#claude-plugin-marketplace-commands).
 
 ### Codex CLI 0.160.0
+
+#### Rechecked 2026-10-31: Codex CLI 0.166.0
+
+Installed help confirms `plugin add <PLUGIN[@MARKETPLACE]> --json` and
+`plugin list --available --json`; marketplace add, upgrade and remove accept
+`--json`, and upgrade applies to a whole Git marketplace. In a disposable HOME
+and CODEX_HOME, a local marketplace was registered, its available plugin was
+listed, and `plugin add sample@sukiru-probe --json` installed its payload into
+that temporary CODEX_HOME. This is real-host evidence for a local marketplace,
+not for Git, project mutations or authenticated remote catalogs.
+
+The local list JSON had `installed` and `available` arrays. Entries included
+plugin and marketplace identity, version, installed/enabled flags, source,
+marketplace source and installation/authentication policies. It did not include
+the fixture description. With no login, explicitly listing
+`openai-curated-remote` failed with `chatgpt authentication required for remote
+plugin catalog`; no authenticated remote response was observed. The current
+[CLI source](https://github.com/openai/codex/blob/main/codex-rs/cli/src/plugin_cmd.rs)
+maps remote summaries to the same identity, version, state, source and policy
+fields, not descriptions or other rich listing details; that source inspection
+is not verification of the installed binary's authenticated response. Remote
+listing may contact the backend and update a host catalog cache. Sukiru does not
+invoke it automatically or implement an app-server fallback.
+
+#### Rechecked 2026-11-01: local rollback and Git cache provenance
+
+Real Codex 0.166.0 local marketplace add/install and both rollbacks passed in
+an isolated home with network access denied. Every command exited 0, every
+rollback item was inspected (no `unrestorable-with-reason`), installation
+rollback restored configuration bytes and removed payloads, and add rollback
+removed first-run configuration. The executable was copied into the isolated
+fixture so its temporary self-links could not capture a global installation.
+
+The official 0.166.0 [marketplace upgrade implementation](https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/core-plugins/src/marketplace_upgrade/activation.rs)
+writes `.codex-marketplace-install.json` beside its Git catalog. Sukiru checks
+its `source_type`, `source` and optional `ref_name` against each declaration
+before attributing listings. This check is independent of the requested scan
+scope. Local catalogs are read in place and do not compete for the Git cache.
+Missing, malformed or mismatched provenance leaves the declaration visible as
+unverified; the app offers Refresh Marketplace. Readable malformed metadata
+cannot authorize installation but does not prevent refresh/removal. File-read
+or snapshot-capture failures still block execution.
+
+A second real-host run used Git transport redirected to a disposable local
+repository, with network access denied. Initial add created a Git snapshot
+without the sidecar, which Sukiru correctly withheld. Native marketplace
+refresh wrote matching source metadata; the listing then appeared and native
+installation succeeded. Installation, refresh and add were rolled back in
+reverse order with no conflicts or unrestorable items. This verifies real
+Codex Git-cache behavior over local transport; it does not verify a remote
+Git service, authentication or backend operations. Sukiru never writes the
+host's provenance sidecar or refreshes it during passive browsing.
 
 ```text
 codex plugin add [OPTIONS] <PLUGIN[@MARKETPLACE]>
@@ -491,6 +700,16 @@ review inspected those tests; the integration owner runs them and records the
 result in [parent acceptance evidence](host-plugin-management-acceptance.md).
 
 ### Cursor marketplace registrations use structured output
+
+Rechecked 2026-10-31: `agent --version` returned
+`2026.10.22-27dcf5f`, and `agent --help` identified Cursor Agent. The installed
+marketplace help exposes `add <gitUrl> [--git-ref <ref>]`, `list --format`
+with `text` and `json`, and `update`/`remove <nameOrUrl>`. The public
+[manifest reference](https://cursor.com/docs/reference/plugins) documents the
+listing fields read by Sukiru. This is help inspection, not authenticated
+registration or mutation verification: no account-backed operation was run,
+because a disposable isolated Cursor account and state were not established.
+Fixture executions below do not establish vendor behavior.
 
 The official Cursor CLI package `2026.10.16-e3cb207`, obtained from
 [Cursor's installer](https://cursor.com/install), exposes

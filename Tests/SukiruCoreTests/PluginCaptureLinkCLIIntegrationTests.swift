@@ -3,8 +3,10 @@ import Testing
 
 @Suite("Plugin capture through links")
 struct PluginCaptureLinkCLIIntegrationTests {
-    @Test("Retargeted ancestor links require a choice and preserve the new target")
-    func ancestorLinkConflict() throws {
+    @Test(
+        "Retargeted ancestor links require a choice and preserve the new target",
+        arguments: [false, true])
+    func ancestorLinkConflict(preserve: Bool) throws {
         let tree = try TempTree()
         let home = try tree.dir("home")
         let external = try tree.dir("external")
@@ -38,15 +40,18 @@ struct PluginCaptureLinkCLIIntegrationTests {
         #expect(try String(contentsOfFile: newFile, encoding: .utf8) == "new target bytes")
         let rollback = try CLIRunner.run(
             [
-                "rollback", "--yes", "--batch", batchID, "--preserve", link, "--preserve",
-                link + "/plugins/demo"
+                "rollback", "--yes", "--batch", batchID, preserve ? "--preserve" : "--restore", link
             ], environment: env)
         #expect(
             rollback.exitCode == 0)
+        let items = try #require(try rollback.jsonObject()?["items"] as? [[String: Any]])
+        #expect(!items.contains { $0["category"] as? String == "unrestorable-with-reason" })
         #expect(try String(contentsOfFile: original, encoding: .utf8) == "original")
         #expect(try String(contentsOfFile: newFile, encoding: .utf8) == "new target bytes")
         #expect(try String(contentsOfFile: unrelated, encoding: .utf8) == "later unrelated edit")
-        #expect(try FileManager.default.destinationOfSymbolicLink(atPath: link) == newTarget)
+        #expect(
+            try FileManager.default.destinationOfSymbolicLink(atPath: link)
+                == (preserve ? newTarget : external))
     }
 
     @Test(

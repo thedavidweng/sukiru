@@ -203,19 +203,8 @@ public struct PluginLifecyclePlanner: Sendable {
             let action =
                 request.action == "install" && request.host != .claude ? "add" : request.action
             args.append(action)
-            let curated =
-                request.host == .codex && request.target.hasSuffix("@openai-curated-remote")
-            if request.action == "install", request.host != .opencode, !curated {
-                let pieces = request.target.split(separator: "@", maxSplits: 1).map(String.init)
-                guard pieces.count == 2,
-                    inventory.marketplaces.contains(where: {
-                        $0.host == request.host && $0.name == pieces[1]
-                            && $0.plugins.contains(where: { $0.name == pieces[0] })
-                    })
-                else {
-                    throw PluginLifecycleError(
-                        message: "Choose a plugin from a configured host marketplace")
-                }
+            if request.action == "install" {
+                try validateInstallMarketplace(request, inventory: inventory)
             }
         }
         if request.host != .opencode || request.target != "*" {
