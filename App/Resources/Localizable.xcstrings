@@ -1,6 +1,176 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Add Factory Plugins…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加 Factory 官方市场…"
+          }
+        }
+      }
+    },
+    "Add Marketplace…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加市场…"
+          }
+        }
+      }
+    },
+    "Add a marketplace to Droid; Sukiru lists the catalogs Droid has fetched." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "先为 Droid 添加市场；Sukiru 会列出 Droid 已获取的目录。"
+          }
+        }
+      }
+    },
+    "Droid Plugin Guide" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Droid 插件指南"
+          }
+        }
+      }
+    },
+    "Droids" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自定义 Droid"
+          }
+        }
+      }
+    },
+    "Install accepts plugin@marketplace from a marketplace Droid has registered. Add Marketplace accepts owner/repo, a Git URL or a local path; append #ref to follow a branch or tag, or @ and a 40-character SHA to pin a commit. Enable and Disable edit enabledPlugins in the chosen scope's settings.json." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装接受 Droid 已注册市场中的 plugin@marketplace。添加市场接受 owner/repo、Git URL 或本地路径；末尾加 #ref 可跟随分支或标签，加 @ 和 40 位 SHA 可固定到某个提交。启用和停用会编辑所选范围 settings.json 中的 enabledPlugins。"
+          }
+        }
+      }
+    },
+    "Install runs droid plugin install %@@%@ in the scope you choose. Droid fetches Git and npm sources itself, and organization policy can limit which marketplaces and plugins it accepts." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装会在你选择的范围内运行 droid plugin install %1$@@%2$@。Droid 自行获取 Git 和 npm 来源，组织策略可能限制它接受哪些市场和插件。"
+          }
+        }
+      }
+    },
+    "Manage in Droid" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Droid 中管理"
+          }
+        }
+      }
+    },
+    "No marketplaces" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有市场"
+          }
+        }
+      }
+    },
+    "Open the official Droid plugin guide" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开 Droid 官方插件指南"
+          }
+        }
+      }
+    },
+    "Organization settings" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "组织设置"
+          }
+        }
+      }
+    },
+    "Organization settings control this plugin; Droid offers only its details" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此插件由组织设置控制；Droid 只提供它的详情"
+          }
+        }
+      }
+    },
+    "Organization settings set this plugin's version" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此插件的版本由组织设置决定"
+          }
+        }
+      }
+    },
+    "Output Styles" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输出样式"
+          }
+        }
+      }
+    },
+    "Preview registering Factory's official marketplace" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览注册 Factory 官方市场"
+          }
+        }
+      }
+    },
+    "Preview registering a marketplace with this host" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览向此宿主注册市场"
+          }
+        }
+      }
+    },
+    "Use /plugins in Droid for marketplace auto-update and plugin details. Organization plugins and marketplaces follow org settings, and Droid installs them when it starts." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Droid 中用 /plugins 管理市场自动更新和查看插件详情。组织插件和市场遵循组织设置，Droid 启动时会安装它们。"
+          }
+        }
+      }
+    },
     "Not Installed" : {
       "localizations" : {
         "zh-Hans" : {

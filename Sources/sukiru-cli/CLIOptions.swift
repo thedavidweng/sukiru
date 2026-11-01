@@ -349,6 +349,7 @@ func resolvedPluginHost(for host: String) -> PluginHost? {
     case "opencode": .opencode
     case "cursor": .cursor
     case "antigravity", "antigravity-cli": .antigravity
+    case "droid": .droid
     default: nil
     }
 }

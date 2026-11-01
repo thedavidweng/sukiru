@@ -13,6 +13,7 @@ public struct PluginLifecyclePlanner: Sendable {
         if host == .antigravity {
             return try antigravityCapabilities(probe: probe, version: version)
         }
+        if host == .droid { return try droidCapabilities(probe: probe, version: version) }
         try probe.help(host: host, arguments: ["plugin"], requiredFlags: [])
         var native: [String] = []
         var limits: [String: String] = [:]
@@ -45,7 +46,7 @@ public struct PluginLifecyclePlanner: Sendable {
             let localCursor =
                 request.host == .cursor
                 && (request.action == "disable-local" || cursorLimitation(request) != nil)
-            if localCursor || Self.isCodexEnablement(request) {
+            if localCursor || Self.isCodexEnablement(request) || Self.isDroidSettingsEdit(request) {
                 version = "not probed"
             } else if let known = versions[request.host] {
                 version = known
@@ -58,6 +59,7 @@ public struct PluginLifecyclePlanner: Sendable {
             case .instructions(let text): instructions.append(text)
             }
         }
+        commands = try AgentExtensionMutation.merged(commands)
         let refs = requests.enumerated().map { index, request in
             FindingRef(
                 findingID: "plugin:\(index)", ruleID: "plugin-lifecycle", skillName: nil,
@@ -90,11 +92,7 @@ public struct PluginLifecyclePlanner: Sendable {
                     request: request, inventory: inventory,
                     environment: environment, hostVersion: version))
         }
-        if Self.isCodexEnablement(request) {
-            return .native(
-                try CodexPluginEnablement.command(
-                    request: request, inventory: inventory, environment: environment))
-        }
+        if let edit = try settingsEdit(request, inventory: inventory) { return .native(edit) }
         if let limit = limitation(request, version: version, inventory: inventory) {
             return .instructions(limit)
         }
@@ -128,10 +126,22 @@ public struct PluginLifecyclePlanner: Sendable {
                 argv: args, displayString: BatchCommand.display(for: args),
                 owningCLI: owner(request.host), intent: impact,
                 dangerFlags: flags, warning: impact,
-                workingDirectory: [.opencode, .antigravity].contains(request.host)
+                workingDirectory: [.opencode, .antigravity, .droid].contains(request.host)
                     ? request.scopeRoot
                     : (["user", "managed"].contains(request.scope) ? nil : request.scopeRoot),
                 captureRoots: capturePaths))
+    }
+
+    /// Documented settings keys the host has no command for (ADR-0014 rule 2).
+    private func settingsEdit(
+        _ request: PluginLifecycleRequest, inventory: PluginInventory
+    ) throws -> BatchCommand? {
+        if Self.isCodexEnablement(request) {
+            return try CodexPluginEnablement.command(
+                request: request, inventory: inventory, environment: environment)
+        }
+        return Self.isDroidSettingsEdit(request)
+            ? try droidSettingsEdit(request, inventory: inventory) : nil
     }
 
     private func verifiedArguments(
@@ -141,6 +151,9 @@ public struct PluginLifecyclePlanner: Sendable {
         if request.host == .cursor { return try cursorArguments(request) }
         if request.host == .antigravity {
             return try antigravityArguments(request, probe: probe)
+        }
+        if request.host == .droid {
+            return try droidArguments(request, inventory: inventory, probe: probe)
         }
         let args = try arguments(request, inventory: inventory, version: version)
         try probe.help(
@@ -163,6 +176,7 @@ public struct PluginLifecyclePlanner: Sendable {
         case .opencode: openCodeLimitation(request, version: version, inventory: inventory)
         case .cursor: cursorLimitation(request)
         case .antigravity: antigravityLimitation(request, version: version, inventory: inventory)
+        case .droid: droidLimitation(request, version: version, inventory: inventory)
         }
     }
 
@@ -221,6 +235,7 @@ public struct PluginLifecyclePlanner: Sendable {
         case .opencode: .opencode
         case .cursor: .cursor
         case .antigravity: .antigravity
+        case .droid: .droid
         }
     }
 

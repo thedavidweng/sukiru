@@ -288,6 +288,22 @@ sukiru plugins inspect --host antigravity --scope user --dry-run
 sukiru plugins disable --host antigravity --scope user --dry-run -- -123
 ```
 
+Droid plugin support covers user, project and org installations, their components
+(skills, commands, droids, output styles, hooks and MCP servers), and every marketplace
+Droid knows: user and project `extraKnownMarketplaces`, org-managed marketplaces, and
+their fetched catalogs. Native operations use `droid plugin` (verified from 1.1.0):
+install, update and uninstall with `--scope`, and marketplace add, update and remove.
+Droid has no enable command, so enable and disable edit `enabledPlugins` in the scope's
+`settings.json`. Org plugins and marketplaces are read only; Sukiru reports
+`strictKnownMarketplaces` and `strictEnabledPlugins` and leaves enforcement to Droid.
+
+```bash
+sukiru plugins list --host droid --json
+sukiru plugins marketplaces add Factory-AI/factory-plugins --host droid --scope user --dry-run
+sukiru plugins install security-engineer@factory-plugins --host droid --scope user --dry-run
+sukiru plugins disable security-engineer@factory-plugins --host droid --scope user --dry-run
+```
+
 Plugin commands accept a host version at or above Sukiru's verified baseline within
 the same major version, and still check the host's supported help surface before running.
 Antigravity uses parent help for most operations because subcommands may treat `--help`

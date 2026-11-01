@@ -81,7 +81,7 @@ struct PluginLifecycleCapture {
             guard let path = marketplace.path else { continue }
             let manifests = [
                 ".claude-plugin/marketplace.json", ".agents/plugins/marketplace.json",
-                ".cursor-plugin/marketplace.json"
+                ".cursor-plugin/marketplace.json", ".factory-plugin/marketplace.json"
             ]
             for relative in manifests {
                 let manifest = HostPathResolver.join(path, relative)
@@ -154,7 +154,8 @@ struct PluginLifecycleCapture {
             paths.append(absolute)
             for manifest in [
                 absolute, HostPathResolver.join(absolute, ".claude-plugin/marketplace.json"),
-                HostPathResolver.join(absolute, ".agents/plugins/marketplace.json")
+                HostPathResolver.join(absolute, ".agents/plugins/marketplace.json"),
+                HostPathResolver.join(absolute, ".factory-plugin/marketplace.json")
             ] {
                 if manifest.hasSuffix(".json"), let object = try json(at: manifest) {
                     approval = approval || containsApproval(object)

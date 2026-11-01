@@ -35,6 +35,11 @@ extension PluginLifecycleCapture {
                 + environment.projectRoots.flatMap {
                     PluginInventoryReader(environment: environment).antigravityProjectLocations($0)
                 }
+        case .droid:
+            return [
+                HostPathResolver.join(home, ".factory/plugins"),
+                HostPathResolver.join(home, ".factory/settings.json")
+            ] + environment.projectRoots.map { HostPathResolver.join($0, ".factory/settings.json") }
         }
     }
 

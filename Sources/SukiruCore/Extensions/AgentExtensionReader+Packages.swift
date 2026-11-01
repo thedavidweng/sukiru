@@ -1,7 +1,7 @@
 import Foundation
 
 /// Declared packages (Pi \`packages\`, DSH profile dependencies) and plugins of hosts without a
-/// \`PluginHost\` lifecycle (Droid, OpenClaude, Devin), read from their documented records.
+/// \`PluginHost\` lifecycle (OpenClaude, Devin), read from their documented records.
 extension AgentExtensionReader {
     static let piPackageFilters = ["extensions", "skills", "prompts", "themes"]
 
@@ -10,7 +10,7 @@ extension AgentExtensionReader {
     }
 
     func plugins() -> [AgentExtension] {
-        droidPlugins() + openClaudePlugins() + devinPlugins()
+        openClaudePlugins() + devinPlugins()
     }
 
     var dshHome: String { environment.home + "/.dsh" }
@@ -43,17 +43,6 @@ extension AgentExtensionReader {
                         detail: file.value["dependencies"]?[name]?.stringValue, scopeName: profile)
                 }
         }
-    }
-
-    /// Droid documents \`enabledPlugins\` as its user-scope enablement record.
-    private func droidPlugins() -> [AgentExtension] {
-        guard let file = HostConfigFile.json(environment.home + "/.factory/settings.json") else {
-            return []
-        }
-        return (file.value["enabledPlugins"]?.objectValue ?? [:]).sorted { $0.key < $1.key }
-            .map { id, value in
-                configEntry(.droid, .plugin, name: id, file: file, enabled: value.boolValue)
-            }
     }
 
     /// OpenClaude keeps Claude Code's \`installed_plugins.json\` and \`enabledPlugins\`.

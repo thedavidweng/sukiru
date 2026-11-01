@@ -49,6 +49,7 @@ extension PluginHost {
         case .opencode: "OpenCode"
         case .cursor: "Cursor"
         case .antigravity: "Antigravity"
+        case .droid: "Droid"
         }
     }
 
@@ -74,13 +75,17 @@ extension PluginHost {
             ["install", "replace", "update", "check", "list", "remove"]
         case .antigravity:
             ["install", "enable", "disable", "remove", "list", "import", "validate", "link"]
+        case .droid: PluginLifecyclePlanner.droidActions
         }
     }
 
     var hasMarketplaces: Bool { self != .opencode }
 
     /// Hosts whose marketplace is browsed inside their own Plugins tab.
-    var hasMarketplaceBrowser: Bool { self == .antigravity }
+    var hasMarketplaceBrowser: Bool { [.antigravity, .droid].contains(self) }
+
+    /// Hosts whose marketplaces Sukiru registers, refreshes and removes.
+    var managesMarketplaces: Bool { operations.contains("marketplace-add") }
 }
 
 extension PluginInstallation {
@@ -90,6 +95,8 @@ extension PluginInstallation {
             String(identifier.prefix { $0 != "@" })
         case .antigravity:
             name ?? identifier
+        case .droid:
+            PluginInventoryReader.droidPluginID(identifier)?.plugin ?? identifier
         case .opencode:
             identifier.hasPrefix("./") ? String(identifier.dropFirst(2)) : identifier
         }
@@ -110,6 +117,8 @@ extension PluginInstallation {
             scope == "managed" ? ["update"] : enablementActions + ["update", "remove"]
         case .codex:
             enablementActions + ["remove"]
+        case .droid:
+            scope == "org" ? [] : enablementActions + ["update", "remove"]
         case .antigravity:
             enablementActions + ["validate"]
                 + (path == HostPathResolver.join(scopeRoot, ".gemini/config/plugins/" + identifier)
@@ -133,6 +142,8 @@ extension PluginInstallation {
             "Codex reads this plugin's enablement from the enabled key in config.toml; edit it there"
         case .claude where scope == "managed":
             "Managed settings control this plugin; change it where your organization manages Claude Code"
+        case .droid where scope == "org":
+            "Organization settings control this plugin; Droid offers only its details"
         case .cursor:
             """
             Cursor has no command to enable or disable one plugin, \
@@ -162,6 +173,8 @@ extension PluginInstallation {
             "Local plugin files have no package update"
         case .claude:
             "This plugin has no update the host can run here"
+        case .droid:
+            "Organization settings set this plugin's version"
         }
     }
 
@@ -204,6 +217,8 @@ extension PluginComponent {
         case "sidecars": String(localized: "Sidecars")
         case "contextProviders": String(localized: "Context Providers")
         case "variables": String(localized: "Variables")
+        case "droids": String(localized: "Droids")
+        case "outputStyles": String(localized: "Output Styles")
         case "local": String(localized: "Local Plugin")
         default: kind
         }

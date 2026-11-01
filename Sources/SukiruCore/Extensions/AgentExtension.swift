@@ -34,8 +34,8 @@ public enum ExtensionHost: String, Codable, CaseIterable, Sendable {
         case .omp, .opencode, .hermes: [.autoloaded, .mcpServer]
         case .amp: [.autoloaded]
         case .dsh: [.package]
-        case .droid, .openclaude, .devin: [.plugin, .mcpServer]
-        case .claude, .codex, .cursor, .muse, .gemini, .grok: [.mcpServer]
+        case .openclaude, .devin: [.plugin, .mcpServer]
+        case .claude, .codex, .cursor, .droid, .muse, .gemini, .grok: [.mcpServer]
         }
     }
 }

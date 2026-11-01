@@ -15,12 +15,14 @@ public struct PluginInventoryReader: Sendable {
         var openCodeIssues: [Issue] = []
         var cursorIssues: [Issue] = []
         var antigravityIssues: [Issue] = []
+        var droidIssues: [Issue] = []
         let claude = readClaude(roots: roots, scope: request.scope, issues: &claudeIssues)
         let codex = readCodex(roots: roots, scope: request.scope, issues: &codexIssues)
         let openCode = readOpenCode(roots: roots, scope: request.scope, issues: &openCodeIssues)
         let cursor = readCursor(scope: request.scope, issues: &cursorIssues)
         let antigravity = readAntigravity(
             roots: roots, scope: request.scope, issues: &antigravityIssues)
+        let droid = readDroid(roots: roots, scope: request.scope, issues: &droidIssues)
         let cursorMarketplaces =
             request.scope.includes(.user) ? cursorCatalogs(issues: &cursorIssues) : []
         let antigravityMarketplaces =
@@ -31,15 +33,17 @@ public struct PluginInventoryReader: Sendable {
             + openCodeIssues.map { PluginInventoryIssue(host: .opencode, $0) }
             + cursorIssues.map { PluginInventoryIssue(host: .cursor, $0) }
             + antigravityIssues.map { PluginInventoryIssue(host: .antigravity, $0) }
+            + droidIssues.map { PluginInventoryIssue(host: .droid, $0) }
         let discovered =
             claude.installations + codex.installations + openCode + cursor + antigravity
+            + droid.installations
         let installations = discovered.sorted {
             $0.id < $1.id
         }
         return PluginInventory(
             installations: installations,
             marketplaces: (claude.marketplaces + codex.marketplaces + cursorMarketplaces
-                + antigravityMarketplaces).sorted {
+                + antigravityMarketplaces + droid.marketplaces).sorted {
                     $0.id < $1.id
                 },
             issues: issues.sorted { ($0.path, $0.kind) < ($1.path, $1.kind) },

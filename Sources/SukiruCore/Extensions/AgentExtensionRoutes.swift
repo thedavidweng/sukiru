@@ -109,18 +109,6 @@ struct AgentExtensionRoutes {
 
     private func plugin(_ item: AgentExtension, _ action: ExtensionAction) throws -> Route {
         switch (item.host, action) {
-        case (.droid, .remove):
-            return nativeOrHint(
-                item, ["droid", "plugin", "uninstall", item.name, "--scope", "user"], help: 3)
-        case (.droid, _):
-            return .commands([
-                try edit(
-                    item, path: item.path,
-                    [
-                        .jsonMember(
-                            keys: ["enabledPlugins", item.name], value: .bool(action == .enable))
-                    ], action)
-            ])
         case (.openclaude, _):
             let verb = action == .remove ? "uninstall" : action.rawValue
             let argv = ["openclaude", "plugin", verb, item.name, "--scope", "user"]
@@ -257,7 +245,6 @@ struct AgentExtensionRoutes {
         case (.dsh, _):
             let profile = URL(fileURLWithPath: item.path).deletingLastPathComponent().path
             roots += [profile + "/pnpm-lock.yaml", profile + "/cordis.patch.yml"]
-        case (.droid, .plugin): roots.append(home + "/.factory/plugins")
         case (.openclaude, .plugin): roots.append(home + "/.openclaude/settings.json")
         case (.devin, .plugin): roots.append(home + "/.local/share/devin/cli/plugins")
         default: break

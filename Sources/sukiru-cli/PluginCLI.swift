@@ -73,7 +73,8 @@ struct PluginOperationOptions {
     func run(action: String) throws {
         let environment = try cliEnvironment(roots: inputs.roots)
         guard let hostName = inputs.host, let host = resolvedPluginHost(for: hostName) else {
-            throw CLIError("Choose --host claude-code, codex, opencode, cursor, or antigravity")
+            throw CLIError(
+                "Choose --host claude-code, codex, opencode, cursor, antigravity, or droid")
         }
         let targetScope = try inputs.installTarget(environment: environment)
         let root: String
@@ -102,7 +103,8 @@ func runPluginRequests(
     let environment = try cliEnvironment(roots: inputs.roots)
     let report = try ScanEngine(environment: environment).scan(inputs.mutationRequest)
     let inventory = PluginInventoryReader(environment: environment).read(
-        requests.contains { $0.host == .antigravity } ? inputs.mutationRequest : inputs.request)
+        requests.contains { [.antigravity, .droid].contains($0.host) }
+            ? inputs.mutationRequest : inputs.request)
     let plan = try PluginLifecyclePlanner(environment: environment).plan(
         requests: requests, inventory: inventory)
     if mutation.dryRun || !plan.instructions.isEmpty || plan.batch == nil {
@@ -238,7 +240,8 @@ extension CLI {
                 options: [
                     CLIOption(
                         "host", takesValue: true,
-                        help: "Agent Host: claude-code, codex, opencode, cursor, or antigravity.",
+                        help:
+                            "Agent Host: claude-code, codex, opencode, cursor, antigravity, or droid.",
                         required: true)
                 ] + outputOptions
             ) { arguments in

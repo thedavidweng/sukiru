@@ -76,7 +76,10 @@ struct PluginMarketplacesSheet: View {
                             }
                             Spacer()
                             Menu {
-                                let actions = ["marketplace-refresh", "marketplace-remove"]
+                                let actions =
+                                    marketplace.scope == "org"
+                                    ? ["marketplace-refresh"]
+                                    : ["marketplace-refresh", "marketplace-remove"]
                                 ForEach(actions, id: \.self) { action in
                                     Button(PluginActionTitle.title(action)) {
                                         onManage(marketplace, action)
@@ -124,6 +127,7 @@ struct PluginMarketplacesSheet: View {
     private func scopeLabel(_ marketplace: PluginMarketplace) -> Text {
         switch marketplace.scope {
         case "user": Text("User Library")
+        case "org": Text("Organization settings")
         case "local": Text("Local project settings: \(marketplace.scopeRoot)")
         default: Text(verbatim: marketplace.scopeRoot)
         }

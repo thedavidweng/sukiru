@@ -105,6 +105,25 @@ struct PluginDetailView: View {
                             .help("Open the official Antigravity plugin management guide")
                         }
                     }
+                    if plugin.host == .droid {
+                        Section("Manage in Droid") {
+                            Text(
+                                """
+                                Use /plugins in Droid for marketplace auto-update and plugin \
+                                details. Organization plugins and marketplaces follow org \
+                                settings, and Droid installs them when it starts.
+                                """
+                            )
+                            .foregroundStyle(.secondary)
+                            Link(
+                                "Droid Plugin Guide",
+                                destination: URL(
+                                    string: "https://docs.factory.com/harness/plugins")!
+                            )
+                            .accessibilityIdentifier("sukiru.plugins.droid.guide")
+                            .help("Open the official Droid plugin guide")
+                        }
+                    }
                     actionsSection(plugin)
                 }
                 .formStyle(.grouped)

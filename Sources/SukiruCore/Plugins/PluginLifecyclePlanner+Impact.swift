@@ -5,6 +5,7 @@ extension PluginLifecyclePlanner {
         _ request: PluginLifecycleRequest, inventory: PluginInventory
     ) throws -> String {
         if request.host == .antigravity { return antigravityImpact(request, inventory: inventory) }
+        if request.host == .droid { return droidImpact(request, inventory: inventory) }
         let affected = inventory.installations.filter {
             $0.host == request.host
                 && ($0.identifier == request.target || $0.source == request.target)

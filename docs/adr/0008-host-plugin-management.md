@@ -235,6 +235,13 @@ accepts GitHub only and states that it installs the default branch, not a
 marketplace version. See the
 [Antigravity evidence](../antigravity-plugin-interface-evidence.md).
 
+Droid joins this view (2026-10-31). Its plugin id names the marketplace
+(`plugin@marketplace`), so a listing shows as installed only on an exact id
+match. Droid's marketplaces carry their declaring level, including org-managed
+ones, and Sukiru adds, refreshes and removes them through `droid plugin
+marketplace`; a project declaration is removed from that project's settings.
+See the [Droid evidence](../droid-plugin-interface-evidence.md).
+
 ## Amendment (2026-10-05): version contract and host-specific limits
 
 Exact version matching refused every host release after the one inspected. A

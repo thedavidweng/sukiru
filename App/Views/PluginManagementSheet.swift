@@ -92,6 +92,17 @@ struct PluginManagementSheet: View {
         if state.pluginManagement.host == .antigravity {
             antigravityOptions
         }
+        if state.pluginManagement.host == .droid {
+            Text(
+                """
+                Install accepts plugin@marketplace from a marketplace Droid has registered. \
+                Add Marketplace accepts owner/repo, a Git URL or a local path; append #ref \
+                to follow a branch or tag, or @ and a 40-character SHA to pin a commit. \
+                Enable and Disable edit enabledPlugins in the chosen scope's settings.json.
+                """
+            )
+            .foregroundStyle(.secondary)
+        }
         let showsGitRef =
             state.pluginManagement.host == .cursor
             && state.pluginManagement.action == "marketplace-add"
