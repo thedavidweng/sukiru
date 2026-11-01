@@ -109,7 +109,7 @@ struct PluginCatalogDetailView: View {
         }.filter { $0.1.scheme == "https" }
         if !links.isEmpty {
             Section("Project Links") {
-                ForEach(links, id: \.1) { label, url in
+                ForEach(links, id: \.0) { label, url in
                     Link(label, destination: url)
                         .help(url.absoluteString)
                 }

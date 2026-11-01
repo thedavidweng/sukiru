@@ -109,6 +109,13 @@ struct MarketplaceSourceIdentityTests {
             try fixture.tree.file(metadata, contents: "{")
         } else if kind == "invalid-ref" {
             try fixture.tree.file(
+                "home/.codex/config.toml",
+                contents: """
+                    [marketplaces.team]
+                    source_type = "git"
+                    source = "https://example.test/team.git"
+                    """)
+            try fixture.tree.file(
                 metadata,
                 contents: """
                     {"source_type":"git","source":"https://example.test/team.git","ref_name":1}

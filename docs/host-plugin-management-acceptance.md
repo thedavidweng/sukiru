@@ -183,10 +183,20 @@ five-host English/Chinese fixture flows remain prior evidence.
   local catalogs remain readable in place. Dedicated regressions cover
   conflicting sources/refs/scopes, missing or malformed provenance, and
   refresh/removal of readable malformed metadata.
+- The related core run passed 68 tests; after the final provenance repair,
+  the 22-test Codex/source subset passed. The invalid-ref case was tightened
+  to omit the configured ref and passed separately. Remote CI found an older
+  cascade fixture that lacked an actual Claude registration; it now declares
+  the marketplace before testing removal.
 - The Codex search, Cursor project-path and sidebar-selection tests passed
   together (3/3). Claude listing/preview and Codex listing/preview passed again
   after the source fixes. The Claude check now verifies that cached-only
-  records show unknown registration scope and have no Remove action.
+  records show unknown registration scope and have no Remove action. Both new
+  Codex management checks passed: unverified user catalogs retain Refresh/Remove,
+  while project declarations do not offer unsupported user-only actions.
+  The layout assertion is scoped to the market list, avoiding the sidebar
+  label with the same name. Project links use their distinct labels as row
+  identities, so Homepage and Repository may safely share a URL.
 - Actual VoiceOver was enabled on the built app with an isolated example
   catalog. Its spoken-output API reported the Marketplace radio button,
   Code Review listing with description/version, Install from Marketplace,

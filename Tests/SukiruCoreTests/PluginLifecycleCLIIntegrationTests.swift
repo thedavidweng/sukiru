@@ -52,6 +52,11 @@ struct PluginLifecycleCLIIntegrationTests {
         let unadded = try tree.dir("unadded-project")
         let payload = try tree.dir("external-payload")
         try tree.file(
+            "home/.claude/settings.json",
+            contents:
+                #"{"extraKnownMarketplaces":{"team":{"source":{"source":"github","repo":"example/team"}}}}"#
+        )
+        try tree.file(
             "home/.claude/plugins/known_marketplaces.json",
             contents: """
                 {"team":{"source":{"source":"github","repo":"example/team"}}}

@@ -26,6 +26,24 @@ final class MarketplaceLayoutUITests: XCTestCase {
         XCTAssertTrue(actions.menuItems["Remove Marketplace"].exists)
     }
 
+    func testCodexProjectCatalogDoesNotOfferUserOnlyManagement() throws {
+        let root = temporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let project = root.appendingPathComponent("project")
+        try write(
+            "[marketplaces.team]\nsource_type = \"git\"\nsource = \"https://example.com/team.git\"\n",
+            to: project.appendingPathComponent(".codex/config.toml"))
+        let app = launch(root: root, host: "codex", project: project)
+        defer { app.terminate() }
+        XCTAssertTrue(
+            app.staticTexts["Catalog source could not be verified"].waitForExistence(timeout: 10))
+        XCTAssertFalse(
+            app.menuButtons.matching(
+                NSPredicate(
+                    format: "identifier BEGINSWITH %@", "sukiru.plugins.marketplace.actions.codex:")
+            ).firstMatch.exists)
+    }
+
     func testDroidEmptyCatalogKeepsActionsVisible() throws {
         let root = temporaryRoot()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -72,10 +90,10 @@ final class MarketplaceLayoutUITests: XCTestCase {
         XCTAssertTrue(actions.menuItems["Refresh Marketplace"].exists)
     }
 
-    private func launch(root: URL, host: String) -> XCUIApplication {
+    private func launch(root: URL, host: String, project: URL? = nil) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["SUKIRU_HOME"] = root.path
-        app.launchEnvironment["SUKIRU_ROOTS"] = ""
+        app.launchEnvironment["SUKIRU_ROOTS"] = project?.path ?? ""
         app.launchEnvironment["PATH"] =
             Bundle(for: Self.self).resourceURL!.appendingPathComponent("Fixtures/bin").path
         app.launchArguments = ["-AppleLanguages", "(en)"]

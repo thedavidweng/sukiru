@@ -15,6 +15,9 @@ struct PluginCatalogList: View {
                     marketplace.host == .claude && marketplace.evidence == "cached-catalog"
                 let showsEmpty =
                     filter.isEmpty || [.cursor, .antigravity].contains(marketplace.host)
+                let canManage =
+                    marketplace.host.managesMarketplaces
+                    && (marketplace.host != .codex || marketplace.scope == "user")
                 Section {
                     HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 2) {
@@ -84,7 +87,7 @@ struct PluginCatalogList: View {
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        if marketplace.host.managesMarketplaces {
+                        if canManage {
                             Menu {
                                 Button("Refresh Marketplace") {
                                     state.manageMarketplace(
@@ -205,7 +208,7 @@ struct PluginCatalogList: View {
         if marketplace.host == .cursor { return "The cached catalog has no listings" }
         switch marketplace.catalogState {
         case "unverified":
-            return marketplace.host == .codex
+            return marketplace.host == .codex && marketplace.scope == "user"
                 ? "Refresh Marketplace to verify the cached source."
                 : "Catalog source could not be verified"
         case "unreadable": return "Catalog could not be read"
