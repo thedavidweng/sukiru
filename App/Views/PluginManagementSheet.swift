@@ -42,6 +42,7 @@ struct PluginManagementSheet: View {
             }
             if let error = state.pluginManagement.error {
                 Text(verbatim: error).foregroundStyle(.secondary).textSelection(.enabled)
+                    .accessibilityIdentifier("sukiru.plugins.operation.error")
             }
             HStack {
                 Spacer()

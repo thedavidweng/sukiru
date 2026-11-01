@@ -24,6 +24,24 @@ struct PluginCatalogList: View {
                     if marketplace.host == .claude, marketplace.plugins.isEmpty, filter.isEmpty {
                         Text("No locally cached plugins").foregroundStyle(.secondary)
                     }
+                    if marketplace.host == .droid, marketplace.plugins.isEmpty, filter.isEmpty {
+                        if marketplace.path == nil {
+                            Text("Not fetched by Droid yet").foregroundStyle(.secondary)
+                        } else if inspectionIssues.contains(where: {
+                            $0.path.hasPrefix((marketplace.path ?? "") + "/")
+                        }) {
+                            Text("Catalog could not be read").foregroundStyle(.secondary)
+                        } else if !droidCatalogExists(marketplace) {
+                            Text("Catalog not found").foregroundStyle(.secondary)
+                        } else {
+                            Text("No locally cached plugins").foregroundStyle(.secondary)
+                        }
+                    }
+                    if marketplace.host == .antigravity, marketplace.plugins.isEmpty {
+                        if filter.isEmpty {
+                            Text("No locally cached plugins").foregroundStyle(.secondary)
+                        }
+                    }
                     if marketplace.host == .codex, marketplace.plugins.isEmpty, filter.isEmpty {
                         if inspectionIssues.contains(where: {
                             $0.path.hasPrefix((marketplace.path ?? "") + "/")
@@ -63,11 +81,9 @@ struct PluginCatalogList: View {
                                             Text("Git marketplace")
                                         }
                                     }
-                                    if marketplace.host == .droid, marketplace.path == nil {
-                                        Text("Not fetched by Droid yet")
-                                    }
                                     if marketplace.scope == "org" {
                                         Text("Organization settings")
+                                        Text("Organization settings manage this marketplace.")
                                     } else if marketplace.scope == "user" {
                                         Text("User Library")
                                     } else if marketplace.scope == "local" {
@@ -88,9 +104,13 @@ struct PluginCatalogList: View {
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
+                            if marketplace.host == .antigravity {
+                                Text("Manage marketplaces in Antigravity.")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
                         }
                         Spacer()
-                        if [.claude, .codex, .cursor].contains(marketplace.host) {
+                        if marketplace.host.managesMarketplaces {
                             Menu {
                                 Button("Refresh Marketplace") {
                                     state.manageMarketplace(
@@ -100,14 +120,16 @@ struct PluginCatalogList: View {
                                     "sukiru.plugins.marketplace.marketplace-refresh.\(marketplace.id)"
                                 )
                                 .help("Preview an operation for this marketplace")
-                                Button("Remove Marketplace") {
-                                    state.manageMarketplace(
-                                        marketplace, action: "marketplace-remove")
+                                if marketplace.scope != "org" {
+                                    Button("Remove Marketplace") {
+                                        state.manageMarketplace(
+                                            marketplace, action: "marketplace-remove")
+                                    }
+                                    .accessibilityIdentifier(
+                                        "sukiru.plugins.marketplace.marketplace-remove.\(marketplace.id)"
+                                    )
+                                    .help("Preview an operation for this marketplace")
                                 }
-                                .accessibilityIdentifier(
-                                    "sukiru.plugins.marketplace.marketplace-remove.\(marketplace.id)"
-                                )
-                                .help("Preview an operation for this marketplace")
                             } label: {
                                 Label("Marketplace Actions", systemImage: "ellipsis.circle")
                             }
@@ -119,7 +141,7 @@ struct PluginCatalogList: View {
                     }
                 }
             }
-            if [.claude, .codex, .cursor].contains(state.pluginHost), !inspectionIssues.isEmpty {
+            if !inspectionIssues.isEmpty {
                 Section {
                     DisclosureGroup("Inspection Issues") {
                         ForEach(inspectionIssues, id: \.self) { issue in
@@ -153,7 +175,7 @@ struct PluginCatalogList: View {
                 } description: {
                     Text("Add a local catalog or a Git marketplace to Codex.")
                 }
-            } else if marketplaces.isEmpty, state.pluginHost == .droid {
+            } else if marketplaces.isEmpty, state.pluginHost == .droid, inspectionIssues.isEmpty {
                 ContentUnavailableView {
                     Label("No marketplaces", systemImage: "shippingbox")
                 } description: {
@@ -171,19 +193,12 @@ struct PluginCatalogList: View {
                 ContentUnavailableView {
                     Label("No cached marketplace catalog", systemImage: "shippingbox")
                 } description: {
-                    Text(
-                        "Open \(state.pluginHost.displayName) and sign in; Sukiru reads the catalog the host caches."
-                    )
+                    if state.pluginHost == .antigravity {
+                        Text("Manage marketplaces in Antigravity.")
+                    } else {
+                        Text("Add a marketplace to Cursor to see its cached catalog.")
+                    }
                 }
-            } else if showsUnfetchedDroidCatalogs {
-                ContentUnavailableView {
-                    Label("Not fetched by Droid yet", systemImage: "shippingbox")
-                } description: {
-                    Text("Start Droid in a project, or refresh the marketplace in Marketplaces….")
-                }
-            } else if showsEmptyCatalog {
-                ContentUnavailableView(
-                    "The cached catalog has no listings", systemImage: "shippingbox")
             } else if !filter.isEmpty, marketplaces.allSatisfy({ entries($0).isEmpty }) {
                 ContentUnavailableView.search(text: filter)
             }
@@ -208,22 +223,6 @@ struct PluginCatalogList: View {
             $0.host == state.pluginHost
                 && (state.pluginHost != .cursor
                     || $0.path.contains("/.cursor/plugins/marketplaces/"))
-        }
-    }
-
-    private var showsEmptyCatalog: Bool {
-        ![.claude, .codex, .cursor].contains(state.pluginHost) && inspectionIssues.isEmpty
-            && marketplaces.allSatisfy { $0.plugins.isEmpty }
-    }
-
-    private var showsUnfetchedDroidCatalogs: Bool {
-        !marketplaces.isEmpty && marketplaces.allSatisfy { $0.host == .droid && $0.path == nil }
-    }
-
-    private func codexCatalogExists(_ marketplace: PluginMarketplace) -> Bool {
-        guard let root = marketplace.path else { return false }
-        return [".agents/plugins/marketplace.json", ".claude-plugin/marketplace.json"].contains {
-            FileManager.default.fileExists(atPath: root + "/" + $0)
         }
     }
 
@@ -259,6 +258,22 @@ struct PluginCatalogList: View {
         marketplace.plugins.filter { $0.matches(filter) }.sorted {
             ($0.categories?.first ?? "~", $0.title.lowercased())
                 < ($1.categories?.first ?? "~", $1.title.lowercased())
+        }
+    }
+}
+
+extension PluginCatalogList {
+    fileprivate func codexCatalogExists(_ marketplace: PluginMarketplace) -> Bool {
+        guard let root = marketplace.path else { return false }
+        return [".agents/plugins/marketplace.json", ".claude-plugin/marketplace.json"].contains {
+            FileManager.default.fileExists(atPath: root + "/" + $0)
+        }
+    }
+
+    fileprivate func droidCatalogExists(_ marketplace: PluginMarketplace) -> Bool {
+        guard let root = marketplace.path else { return false }
+        return [".factory-plugin/marketplace.json", ".claude-plugin/marketplace.json"].contains {
+            FileManager.default.fileExists(atPath: root + "/" + $0)
         }
     }
 }

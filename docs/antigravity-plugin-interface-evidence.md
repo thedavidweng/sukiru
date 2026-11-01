@@ -30,6 +30,10 @@ Only `validate --help` is a verified subcommand help interface. Other
 subcommands can interpret `--help` as their target. Verify this host through
 the group help, rather than probing mutation subcommands with help flags.
 
+On 2026-10-31 the installed `agy` identified itself as 1.4.12 and rejected
+`agy plugin install --help` as a directory target. This was help inspection only,
+not verification of a successful install or of authentication.
+
 | Operation | Verified native contract / boundary |
 | --- | --- |
 | Install | `<target>` accepts `<plugin>@<marketplace>`, a GitHub repository URL, or a local directory. No scope flag. A local fixture was staged under the shared user root below. [Plugin guide](https://antigravity.google/docs/plugins/). Re-checked 2026-10-30 against agy **1.4.11** (see below): a bare plugin name is rejected despite the guide. |

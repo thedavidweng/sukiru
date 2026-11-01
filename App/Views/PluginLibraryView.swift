@@ -6,8 +6,6 @@ import SwiftUI
 struct PluginLibraryView: View {
     @EnvironmentObject private var state: AppState
     @State private var filter = ""
-    @State private var showingMarketplaces = false
-    @State private var catalogAction: (() -> Void)?
 
     private var host: PluginHost { state.pluginHost }
 
@@ -36,11 +34,6 @@ struct PluginLibraryView: View {
         state.showsPluginMarketplace && host.hasMarketplaceBrowser
     }
 
-    private var showsMarketplaceSheet: Bool {
-        host.hasMarketplaces && host != .claude && host != .codex && host != .cursor
-            && (!host.hasMarketplaceBrowser || host.managesMarketplaces)
-    }
-
     var body: some View {
         Group {
             if showsMarketplace {
@@ -66,18 +59,6 @@ struct PluginLibraryView: View {
         .onChange(of: host) { _, _ in
             state.selectedCatalogEntryID = nil
             filter = ""
-        }
-        .sheet(isPresented: $showingMarketplaces, onDismiss: runCatalogAction) {
-            PluginMarketplacesSheet(
-                marketplaces: marketplaces,
-                onInstall: { entry, marketplace in
-                    catalogAction = { state.manageCatalogEntry(entry, marketplace: marketplace) }
-                    showingMarketplaces = false
-                },
-                onManage: { marketplace, action in
-                    catalogAction = { state.manageMarketplace(marketplace, action: action) }
-                    showingMarketplaces = false
-                })
         }
         .toolbar {
             if host.hasMarketplaceBrowser {
@@ -120,11 +101,6 @@ struct PluginLibraryView: View {
                 }
                 .accessibilityIdentifier("sukiru.plugins.marketplace.add")
                 .help("Preview registering a marketplace with this host")
-            }
-            if showsMarketplaceSheet {
-                Button("Marketplaces…") { showingMarketplaces = true }
-                    .accessibilityIdentifier("sukiru.plugins.catalog")
-                    .help("Browse configured marketplaces")
             }
         } label: {
             Label("Add Plugin", systemImage: "plus")
@@ -218,11 +194,6 @@ struct PluginLibraryView: View {
         }
     }
 
-    private func runCatalogAction() {
-        let action = catalogAction
-        catalogAction = nil
-        action?()
-    }
 }
 
 private struct PluginRow: View {

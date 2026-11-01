@@ -1,6 +1,12 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Manage marketplaces in Antigravity." : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请在 Antigravity 中管理市场。" } } }
+    },
+    "Add a marketplace to Cursor to see its cached catalog." : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "为 Cursor 添加市场后，即可查看缓存的目录。" } } }
+    },
     "In Cursor, open Customize or use /plugin to install %@. Select %@, then refresh Sukiru." : {
       "localizations" : {
         "zh-Hans" : {
@@ -87,12 +93,12 @@
         }
       }
     },
-    "Start Droid in a project, or refresh the marketplace in Marketplaces…." : {
+    "Organization settings manage this marketplace." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在项目中启动 Droid，或在“市场…”中刷新该市场。"
+            "value" : "此市场由组织设置管理。"
           }
         }
       }

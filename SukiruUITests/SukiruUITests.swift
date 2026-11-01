@@ -181,6 +181,101 @@ final class SukiruUITests: XCTestCase {
         app.terminate()
     }
 
+    func testDroidUnfetchedMarketplaceActionsStayInItsBrowser() throws {
+        try write(
+            #"{"extraKnownMarketplaces":{"team":{"source":{"source":"github","repo":"example/team","ref":"main"}}}}"#,
+            to: home.appendingPathComponent(".factory/settings.json"))
+        let app = XCUIApplication()
+        app.launchEnvironment["SUKIRU_HOME"] = home.path
+        app.launchEnvironment["SUKIRU_ROOTS"] = ""
+        app.launchEnvironment["SUKIRU_UI_PROBE_LOG"] =
+            fixture.appendingPathComponent("probes.log").path
+        app.launchEnvironment["PATH"] =
+            Bundle(for: Self.self).resourceURL!
+            .appendingPathComponent("Fixtures/bin").path
+        app.launchArguments = ["-AppleLanguages", "(en)"]
+        app.launch()
+
+        let droid = app.descendants(matching: .any)["sukiru.sidebar.plugins.droid"].firstMatch
+        XCTAssertTrue(droid.waitForExistence(timeout: 15))
+        droid.click()
+        app.radioButtons["Marketplace"].click()
+        XCTAssertTrue(app.staticTexts["Not fetched by Droid yet"].waitForExistence(timeout: 10))
+        app.menuButtons["sukiru.plugins.add"].click()
+        XCTAssertFalse(app.menuItems["Marketplaces…"].exists)
+        app.typeKey(.escape, modifierFlags: [])
+        let actions = app.menuButtons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "sukiru.plugins.marketplace.actions.")
+        ).firstMatch
+        XCTAssertTrue(actions.exists)
+        actions.click()
+        app.menuItems["Refresh Marketplace"].click()
+        app.buttons["sukiru.plugins.operation.preview"].click()
+        XCTAssertTrue(
+            app.staticTexts["sukiru.plugins.operation.error"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts["Review Changes"].exists)
+        app.buttons["sukiru.plugins.operation.cancel"].click()
+        actions.click()
+        app.menuItems["Remove Marketplace"].click()
+        XCTAssertEqual(app.textFields["sukiru.plugins.operation.target"].value as? String, "team")
+        app.buttons["sukiru.plugins.operation.preview"].click()
+        XCTAssertTrue(app.staticTexts["Review Changes"].waitForExistence(timeout: 10))
+        app.buttons["sukiru.confirm.cancel"].click()
+        app.terminate()
+    }
+
+    func testMarketplaceSelectionClearsWhenChangingHosts() throws {
+        try write(
+            #"{"extraKnownMarketplaces":{"team":{"source":{"source":"github","repo":"example/team"}}}}"#,
+            to: home.appendingPathComponent(".factory/settings.json"))
+        let app = XCUIApplication()
+        app.launchEnvironment["SUKIRU_HOME"] = home.path
+        app.launchEnvironment["SUKIRU_ROOTS"] = ""
+        app.launchEnvironment["PATH"] =
+            Bundle(for: Self.self).resourceURL!
+            .appendingPathComponent("Fixtures/bin").path
+        app.launchArguments = ["-AppleLanguages", "(en)"]
+        app.launch()
+        let cursor = app.descendants(matching: .any)["sukiru.sidebar.plugins.cursor"].firstMatch
+        XCTAssertTrue(cursor.waitForExistence(timeout: 15))
+        cursor.click()
+        app.radioButtons["Marketplace"].click()
+        XCTAssertTrue(app.staticTexts["remote-demo"].waitForExistence(timeout: 10))
+        app.staticTexts["remote-demo"].click()
+        XCTAssertTrue(app.staticTexts["A cached listing"].firstMatch.exists)
+        app.descendants(matching: .any)["sukiru.sidebar.plugins.droid"].firstMatch.click()
+        XCTAssertFalse(app.staticTexts["A cached listing"].exists)
+        XCTAssertFalse(app.buttons["sukiru.plugins.marketplace.install"].isEnabled)
+        app.terminate()
+    }
+
+    func testDroidOrganizationMarketplaceCannotBeRemoved() throws {
+        try write(
+            #"{"managedSettings":{"extraKnownMarketplaces":{"corp":{"source":{"source":"github","repo":"example/corp"}}}}}"#,
+            to: home.appendingPathComponent(".factory/org-managed-settings.cache.json"))
+        let app = XCUIApplication()
+        app.launchEnvironment["SUKIRU_HOME"] = home.path
+        app.launchEnvironment["SUKIRU_ROOTS"] = ""
+        app.launchEnvironment["PATH"] =
+            Bundle(for: Self.self).resourceURL!
+            .appendingPathComponent("Fixtures/bin").path
+        app.launchArguments = ["-AppleLanguages", "(en)"]
+        app.launch()
+        let droid = app.descendants(matching: .any)["sukiru.sidebar.plugins.droid"].firstMatch
+        XCTAssertTrue(droid.waitForExistence(timeout: 15))
+        droid.click()
+        app.radioButtons["Marketplace"].click()
+        XCTAssertTrue(
+            app.staticTexts["Organization settings manage this marketplace."].waitForExistence(
+                timeout: 10))
+        let id = "sukiru.plugins.marketplace.actions.droid:\(home.path):corp:org"
+        app.menuButtons[id].click()
+        XCTAssertTrue(app.menuItems["Refresh Marketplace"].exists)
+        XCTAssertFalse(app.menuItems["Remove Marketplace"].exists)
+        app.typeKey(.escape, modifierFlags: [])
+        app.terminate()
+    }
+
     func testClaudeMarketplaceListingPreview() throws {
         let catalog = home.appendingPathComponent(".claude/plugins/marketplaces/team")
         try write(
