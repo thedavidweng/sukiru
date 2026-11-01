@@ -24,11 +24,11 @@ struct PluginCatalogList: View {
                         }) {
                             Text("Catalog could not be read").foregroundStyle(.secondary)
                         } else {
-                            Text(
-                                codexCatalogExists(marketplace)
-                                    ? "No locally cached plugins" : "Catalog not found"
-                            )
-                            .foregroundStyle(.secondary)
+                            if codexCatalogExists(marketplace) {
+                                Text("No locally cached plugins").foregroundStyle(.secondary)
+                            } else {
+                                Text("Catalog not found").foregroundStyle(.secondary)
+                            }
                         }
                     }
                 } header: {
@@ -41,9 +41,11 @@ struct PluginCatalogList: View {
                                         verbatim: marketplace.source
                                             + (marketplace.ref.map { " · " + $0 } ?? ""))
                                     if marketplace.host == .codex {
-                                        Text(
-                                            marketplace.localSource
-                                                ? "Local catalog" : "Git marketplace")
+                                        if marketplace.localSource {
+                                            Text("Local catalog")
+                                        } else {
+                                            Text("Git marketplace")
+                                        }
                                     }
                                     if marketplace.host == .droid, marketplace.path == nil {
                                         Text("Not fetched by Droid yet")
