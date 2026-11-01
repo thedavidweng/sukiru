@@ -111,8 +111,10 @@ struct PluginLifecycleCapture {
             let config =
                 environment.externalValue(for: "CLAUDE_CONFIG_DIR")
                 ?? HostPathResolver.join(environment.home, ".claude")
-            let known = try json(
-                at: HostPathResolver.join(config, "plugins/known_marketplaces.json"))
+            let cache =
+                environment.externalValue(for: "CLAUDE_CODE_PLUGIN_CACHE_DIR")
+                ?? HostPathResolver.join(config, "plugins")
+            let known = try json(at: HostPathResolver.join(cache, "known_marketplaces.json"))
             let name =
                 request.action == "marketplace-refresh"
                 ? request.target

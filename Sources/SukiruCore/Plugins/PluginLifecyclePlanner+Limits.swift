@@ -59,6 +59,9 @@ extension PluginLifecyclePlanner {
         guard !named.isEmpty else {
             throw PluginLifecycleError(message: "Marketplace is not configured: " + request.target)
         }
+        if request.host == .claude {
+            try validateClaudeSources(request.target, inventory: inventory)
+        }
         let declared = named.contains {
             $0.scope == request.scope && $0.scopeRoot == request.scopeRoot
         }

@@ -1,0 +1,7 @@
+#!/bin/sh
+printf '%s\n' "$*" >> "$SUKIRU_UI_PROBE_LOG"
+case "$*" in
+  "--version") echo "2.1.316 (Claude Code)" ;;
+  "plugin install --help") echo "Usage: claude plugin install --scope user --json" ;;
+  *) exit 64 ;;
+esac

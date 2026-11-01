@@ -62,6 +62,7 @@ struct SidebarView: View {
                     if state.pluginHost != host {
                         state.pluginHost = host
                         state.selectedPluginIDs = []
+                        state.selectedCatalogEntryID = nil
                     }
                     state.surface = .plugins
                 case .hooks(let host):

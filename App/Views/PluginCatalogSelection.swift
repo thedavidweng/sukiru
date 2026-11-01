@@ -1,5 +1,4 @@
 import SukiruCore
-import SwiftUI
 
 extension PluginMarketplace {
     func catalogID(_ entry: PluginCatalogEntry) -> String { id + "\n" + entry.name }

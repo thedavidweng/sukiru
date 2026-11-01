@@ -21,6 +21,9 @@ struct PluginCatalogList: View {
                     if marketplace.host == .cursor, marketplace.plugins.isEmpty {
                         Text("The cached catalog has no listings").foregroundStyle(.secondary)
                     }
+                    if marketplace.host == .claude, marketplace.plugins.isEmpty, filter.isEmpty {
+                        Text("No locally cached plugins").foregroundStyle(.secondary)
+                    }
                     if marketplace.host == .codex, marketplace.plugins.isEmpty, filter.isEmpty {
                         if inspectionIssues.contains(where: {
                             $0.path.hasPrefix((marketplace.path ?? "") + "/")
@@ -48,7 +51,7 @@ struct PluginCatalogList: View {
                                         .secondary)
                                 }
                             }
-                            if marketplace.host == .droid || marketplace.host == .codex {
+                            if [.droid, .codex, .claude].contains(marketplace.host) {
                                 Group {
                                     Text(
                                         verbatim: marketplace.source
@@ -65,6 +68,10 @@ struct PluginCatalogList: View {
                                     }
                                     if marketplace.scope == "org" {
                                         Text("Organization settings")
+                                    } else if marketplace.scope == "user" {
+                                        Text("User Library")
+                                    } else if marketplace.scope == "local" {
+                                        Text("Local project settings: \(marketplace.scopeRoot)")
                                     } else if marketplace.scope == "project" {
                                         Text(
                                             verbatim: URL(fileURLWithPath: marketplace.scopeRoot)
@@ -83,16 +90,24 @@ struct PluginCatalogList: View {
                             }
                         }
                         Spacer()
-                        if marketplace.host == .codex || marketplace.host == .cursor {
+                        if [.claude, .codex, .cursor].contains(marketplace.host) {
                             Menu {
                                 Button("Refresh Marketplace") {
                                     state.manageMarketplace(
                                         marketplace, action: "marketplace-refresh")
                                 }
+                                .accessibilityIdentifier(
+                                    "sukiru.plugins.marketplace.marketplace-refresh.\(marketplace.id)"
+                                )
+                                .help("Preview an operation for this marketplace")
                                 Button("Remove Marketplace") {
                                     state.manageMarketplace(
                                         marketplace, action: "marketplace-remove")
                                 }
+                                .accessibilityIdentifier(
+                                    "sukiru.plugins.marketplace.marketplace-remove.\(marketplace.id)"
+                                )
+                                .help("Preview an operation for this marketplace")
                             } label: {
                                 Label("Marketplace Actions", systemImage: "ellipsis.circle")
                             }
@@ -104,7 +119,7 @@ struct PluginCatalogList: View {
                     }
                 }
             }
-            if [.codex, .cursor].contains(state.pluginHost), !inspectionIssues.isEmpty {
+            if [.claude, .codex, .cursor].contains(state.pluginHost), !inspectionIssues.isEmpty {
                 Section {
                     DisclosureGroup("Inspection Issues") {
                         ForEach(inspectionIssues, id: \.self) { issue in
@@ -122,7 +137,17 @@ struct PluginCatalogList: View {
         .listStyle(.inset)
         .accessibilityIdentifier("sukiru.plugins.marketplace.list")
         .overlay {
-            if marketplaces.isEmpty, state.pluginHost == .codex, inspectionIssues.isEmpty {
+            if marketplaces.isEmpty, state.pluginHost == .claude, inspectionIssues.isEmpty {
+                ContentUnavailableView {
+                    Label("No configured marketplaces", systemImage: "shippingbox")
+                } actions: {
+                    Button("Add Marketplace…") {
+                        state.newPluginOperation(host: .claude, action: "marketplace-add")
+                    }
+                    .accessibilityIdentifier("sukiru.plugins.marketplace.add.empty")
+                    .help("Preview registering a marketplace with this host")
+                }
+            } else if marketplaces.isEmpty, state.pluginHost == .codex, inspectionIssues.isEmpty {
                 ContentUnavailableView {
                     Label("No configured marketplaces", systemImage: "shippingbox")
                 } description: {
@@ -171,6 +196,11 @@ struct PluginCatalogList: View {
                 state.selectedCatalogEntryID = nil
             }
         }
+        .onChange(of: filter) { _, value in
+            if let selected = state.selectedCatalogEntry, !selected.entry.matches(value) {
+                state.selectedCatalogEntryID = nil
+            }
+        }
     }
 
     private var inspectionIssues: [PluginInventoryIssue] {
@@ -182,7 +212,7 @@ struct PluginCatalogList: View {
     }
 
     private var showsEmptyCatalog: Bool {
-        ![.codex, .cursor].contains(state.pluginHost) && inspectionIssues.isEmpty
+        ![.claude, .codex, .cursor].contains(state.pluginHost) && inspectionIssues.isEmpty
             && marketplaces.allSatisfy { $0.plugins.isEmpty }
     }
 
@@ -204,6 +234,10 @@ struct PluginCatalogList: View {
     ) -> PluginCatalogRow.Installation? {
         let plugins = state.pluginInstallations(for: marketplace.host)
         if marketplace.host == .cursor { return nil }
+        if marketplace.host == .claude {
+            let recorded = plugins.filter { $0.identifier == "\(entry.name)@\(marketplace.name)" }
+            return recorded.isEmpty ? nil : .recorded(recorded)
+        }
         if marketplace.host == .codex {
             guard
                 let plugin = plugins.first(where: {
@@ -230,7 +264,10 @@ struct PluginCatalogList: View {
 }
 
 private struct PluginCatalogRow: View {
-    enum Installation { case installed, configured, sameName }
+    enum Installation {
+        case installed, configured, sameName
+        case recorded([PluginInstallation])
+    }
 
     let entry: PluginCatalogEntry
     let installation: Installation?
@@ -250,21 +287,37 @@ private struct PluginCatalogRow: View {
                     .font(.body.weight(.semibold))
                     .lineLimit(1)
                 Spacer(minLength: 8)
-                if installation == .installed {
+                if case .installed = installation {
                     Text("Installed")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                } else if installation == .configured {
+                } else if case .configured = installation {
                     Text("Configured reference")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                } else if installation == .sameName {
+                } else if case .sameName = installation {
                     Text("Same name installed")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .help(
                             "An installed plugin has this directory name; that does not prove it came from this listing"
                         )
+                }
+            }
+            if case .recorded(let records) = installation {
+                ForEach(records) { record in
+                    HStack(spacing: 4) {
+                        Text("Recorded by host")
+                        if record.scope == "user" {
+                            Text("User Library")
+                        } else if record.scope == "local" {
+                            Text("Local project settings: \(record.scopeRoot)")
+                        } else {
+                            Text(verbatim: "\(record.scope): \(record.scopeRoot)")
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 }
             }
             if let summary = entry.summary {

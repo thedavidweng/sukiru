@@ -129,11 +129,15 @@ public struct PluginMarketplace: Codable, Equatable, Sendable, Identifiable {
     public var localSource = false
     /// When the host last fetched a cached catalog, as the host records it.
     public var updatedAt: String?
+    /// The source type recorded by the host, when present.
+    public var sourceType: String?
 
     public var id: String {
         "\(host.rawValue):\(scopeRoot):\(name)"
             + (["local", "org"].contains(scope) ? ":" + scope : "")
             + (host == .cursor ? ":" + (path ?? "") : "")
+            + (host == .claude
+                ? ":\(source.utf8.count):\(source):\(ref ?? ""):\(sourceType ?? "")" : "")
     }
 }
 

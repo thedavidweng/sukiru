@@ -181,6 +181,46 @@ final class SukiruUITests: XCTestCase {
         app.terminate()
     }
 
+    func testClaudeMarketplaceListingPreview() throws {
+        let catalog = home.appendingPathComponent(".claude/plugins/marketplaces/team")
+        try write(
+            "{\"team\":{\"source\":{\"source\":\"github\",\"repo\":\"example/team\"},"
+                + "\"installLocation\":\"\(catalog.path)\"}}",
+            to: home.appendingPathComponent(".claude/plugins/known_marketplaces.json"))
+        try write(
+            "{\"name\":\"team\",\"plugins\":[{\"name\":\"demo\",\"source\":\"./demo\","
+                + "\"description\":\"Fixture description\",\"author\":{\"name\":\"Example\"}}]}",
+            to: catalog.appendingPathComponent(".claude-plugin/marketplace.json"))
+        let app = XCUIApplication()
+        app.launchEnvironment["SUKIRU_HOME"] = home.path
+        app.launchEnvironment["SUKIRU_ROOTS"] = ""
+        app.launchEnvironment["PATH"] =
+            Bundle(for: Self.self).resourceURL!
+            .appendingPathComponent("Fixtures/bin").path
+        let probes = fixture.appendingPathComponent("probes.log")
+        app.launchEnvironment["SUKIRU_UI_PROBE_LOG"] = probes.path
+        app.launchArguments = ["-AppleLanguages", "(en)"]
+        app.launch()
+        let claude = app.descendants(matching: .any)["sukiru.sidebar.plugins.claude"].firstMatch
+        XCTAssertTrue(claude.waitForExistence(timeout: 15))
+        claude.click()
+        app.radioButtons["Marketplace"].firstMatch.click()
+        let row = app.descendants(matching: .any)["sukiru.plugins.marketplace.row.demo"].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        row.click()
+        XCTAssertTrue(app.staticTexts["Fixture description"].firstMatch.exists)
+        XCTAssertTrue(app.staticTexts["Example"].firstMatch.exists)
+        app.buttons["sukiru.plugins.marketplace.install"].click()
+        XCTAssertEqual(
+            app.textFields["sukiru.plugins.operation.target"].value as? String, "demo@team")
+        app.buttons["sukiru.plugins.operation.preview"].click()
+        XCTAssertTrue(app.staticTexts["Review Changes"].waitForExistence(timeout: 10))
+        app.buttons["sukiru.confirm.cancel"].click()
+        app.terminate()
+        let recorded = try String(contentsOf: probes, encoding: .utf8)
+        XCTAssertFalse(recorded.contains("plugin install demo@team"))
+    }
+
     func testCodexMarketplaceListingAndPreview() throws {
         try write(
             "[marketplaces.team]\nsource_type = \"local\"\nsource = \"\(fixture.path)/catalog\"\n"
