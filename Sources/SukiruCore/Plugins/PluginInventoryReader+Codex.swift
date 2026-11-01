@@ -93,27 +93,58 @@ extension PluginInventoryReader {
                 path = HostPathResolver.join(config, ".tmp/marketplaces/" + name)
             }
             var manifest: [String: Any]?
+            var manifestPath = ""
             let candidates = [".agents/plugins/marketplace.json", ".claude-plugin/marketplace.json"]
+            let catalogExists = candidates.contains {
+                FileManager.default.fileExists(atPath: HostPathResolver.join(path, $0))
+            }
+            let issueCount = issues.count
             for candidate in candidates {
                 if let object = json(HostPathResolver.join(path, candidate), issues: &issues) {
                     manifest = object
+                    manifestPath = HostPathResolver.join(path, candidate)
                     break
                 }
             }
-            let entries = manifest?["plugins"] as? [[String: Any]] ?? []
-            let catalog = entries.compactMap(codexCatalogEntry)
+            let catalog = codexCatalog(manifest, path: manifestPath, issues: &issues)
             marketplaces.append(
                 PluginMarketplace(
                     host: .codex, name: name, source: source,
                     scopeRoot: root, path: path, plugins: catalog,
                     scope: root == environment.home ? "user" : "project", ref: fields["ref"],
-                    localSource: fields["source_type"] == "local"))
+                    localSource: fields["source_type"] == "local",
+                    catalogState: !catalogExists
+                        ? "missing"
+                        : (issues.count > issueCount ? "unreadable" : "available")))
         }
         return marketplaces
     }
 
+    private func codexCatalog(
+        _ manifest: [String: Any]?, path: String, issues: inout [Issue]
+    ) -> [PluginCatalogEntry] {
+        guard let manifest else { return [] }
+        guard let entries = manifest["plugins"] as? [Any] else {
+            issues.append(
+                Issue(
+                    kind: "plugin-config", path: path,
+                    message: "Expected a marketplace plugins array"))
+            return []
+        }
+        return entries.compactMap { value in
+            guard let entry = value as? [String: Any], let listing = codexCatalogEntry(entry) else {
+                issues.append(
+                    Issue(
+                        kind: "plugin-config", path: path,
+                        message: "Invalid marketplace plugin entry"))
+                return nil
+            }
+            return listing
+        }
+    }
+
     private func codexCatalogEntry(_ entry: [String: Any]) -> PluginCatalogEntry? {
-        guard let pluginName = entry["name"] as? String else { return nil }
+        guard let pluginName = entry["name"] as? String, !pluginName.isEmpty else { return nil }
         let source = entry["source"] as? [String: Any]
         var listing = PluginCatalogEntry(
             name: pluginName,

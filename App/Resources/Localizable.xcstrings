@@ -1,6 +1,30 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ - %@" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ - %2$@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ - %2$@" } }
+      }
+    },
+    "error.plugin.marketplaceSourceConflict %@" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Marketplace %@ refers to multiple sources." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "市场 %@ 对应多个来源。" } }
+      }
+    },
+    "error.plugin.selectedCodexMarketplace" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The selected Codex marketplace is not available in user scope." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "所选 Codex 市场在用户范围内不可用。" } }
+      }
+    },
+    "error.plugin.marketplaceNotDeclared %@ %@ %@" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Marketplace %1$@ is not declared in %2$@ scope at %3$@." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "市场 %1$@ 未在 %3$@ 的 %2$@ 范围中声明。" } }
+      }
+    },
     "Manage marketplaces in Antigravity." : {
       "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请在 Antigravity 中管理市场。" } } }
     },
@@ -429,16 +453,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有已缓存的市场目录"
-          }
-        }
-      }
-    },
-    "Open %@ and sign in; Sukiru reads the catalog the host caches." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "打开 %@ 并登录；Sukiru 读取宿主缓存的目录。"
           }
         }
       }
@@ -1724,16 +1738,6 @@
         }
       }
     },
-    "Browse configured marketplaces" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "浏览已配置的市场"
-          }
-        }
-      }
-    },
     "Cached catalog; registration scope unknown" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1943,16 +1947,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除筛选条件"
-          }
-        }
-      }
-    },
-    "Close marketplace browsing" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "关闭市场浏览"
           }
         }
       }
@@ -4084,16 +4078,6 @@
         }
       }
     },
-    "Marketplaces…" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "市场…"
-          }
-        }
-      }
-    },
     "Matcher" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4797,16 +4781,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在待处理变更中预览"
-          }
-        }
-      }
-    },
-    "Preview installation from this configured marketplace" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "预览从此已配置市场安装插件"
           }
         }
       }
@@ -5906,16 +5880,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "搜索失败"
-          }
-        }
-      }
-    },
-    "Search plugin names in configured marketplaces" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在已配置的市场中搜索插件名称"
           }
         }
       }

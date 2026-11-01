@@ -241,14 +241,28 @@ extension PluginInventoryReader {
             ? (source?["path"] as? String).map { resolvePluginPath($0, relativeTo: level.root) }
             : nil
         let path = localPath ?? record?["installLocation"] as? String
+        let catalogExists =
+            path.map { root in
+                [".factory-plugin/marketplace.json", ".claude-plugin/marketplace.json"].contains {
+                    FileManager.default.fileExists(atPath: HostPathResolver.join(root, $0))
+                }
+            } ?? false
+        let issueCount = issues.count
+        let plugins = path.map { droidCatalog($0, issues: &issues) } ?? []
+        let catalogState =
+            path == nil
+            ? "not-fetched"
+            : !catalogExists
+                ? "missing"
+                : issues.count > issueCount ? "unreadable" : "available"
         return PluginMarketplace(
             host: .droid, name: name, source: Self.droidSourceLabel(source),
             scopeRoot: level.root, path: path,
-            plugins: path.map { droidCatalog($0, issues: &issues) } ?? [],
+            plugins: plugins,
             evidence: level.scope == "org" ? "org-managed" : (record == nil ? "declared" : nil),
             scope: level.scope,
             ref: source?["ref"] as? String ?? source?["sha"] as? String, localSource: local,
-            updatedAt: record?["lastUpdated"] as? String)
+            updatedAt: record?["lastUpdated"] as? String, catalogState: catalogState)
     }
 
     static func droidSourceLabel(_ source: [String: Any]?) -> String {

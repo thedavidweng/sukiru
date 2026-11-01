@@ -12,6 +12,7 @@ struct PluginManagementState {
     var scopeRoot = ""
     var gitRef: String?
     var marketplace = ""
+    var selectedMarketplaceID: String?
     var strict = false
     /// The install target is a GitHub repository rather than a marketplace listing.
     var repositoryInstall = false
@@ -24,6 +25,7 @@ extension AppState {
     func manageCatalogEntry(_ entry: PluginCatalogEntry, marketplace: PluginMarketplace) {
         manageMarketplace(marketplace, action: "install")
         pluginManagement.target = "\(entry.name)@\(marketplace.name)"
+        pluginManagement.selectedMarketplaceID = marketplace.host == .codex ? marketplace.id : nil
         // An org marketplace is installable from user or project scope, not from org scope.
         if marketplace.scope == "org" {
             pluginManagement.scope = "user"
@@ -43,6 +45,7 @@ extension AppState {
         pluginManagement.scopeRoot = plugin.scopeRoot
         pluginManagement.gitRef = nil
         pluginManagement.marketplace = ""
+        pluginManagement.selectedMarketplaceID = nil
         pluginManagement.strict = false
         pluginManagement.repositoryInstall = false
         pluginManagement.error = nil
@@ -57,6 +60,7 @@ extension AppState {
         pluginManagement.scopeRoot = marketplace.scopeRoot
         pluginManagement.gitRef = nil
         pluginManagement.marketplace = ""
+        pluginManagement.selectedMarketplaceID = nil
         pluginManagement.strict = false
         pluginManagement.repositoryInstall = false
         pluginManagement.error = nil
@@ -83,7 +87,7 @@ extension AppState {
                     "https://github.com/"
                     + (try InstallPlanBuilder.ownerRepo(fromSource: target))
             } catch {
-                pluginManagement.error = error.localizedDescription
+                pluginManagement.error = UserFacingError.message(for: error)
                 return
             }
         }
@@ -93,7 +97,8 @@ extension AppState {
             scope: pluginManagement.scope, scopeRoot: pluginManagement.scopeRoot,
             gitRef: pluginManagement.gitRef,
             marketplace: pluginManagement.action == "link" ? pluginManagement.marketplace : nil,
-            strict: pluginManagement.action == "validate" ? pluginManagement.strict : nil)
+            strict: pluginManagement.action == "validate" ? pluginManagement.strict : nil,
+            selectedMarketplaceID: pluginManagement.selectedMarketplaceID)
         pluginManagement.error = nil
         planPluginOperations([request]) { [weak self] error in
             self?.pluginManagement.error = error
@@ -137,7 +142,7 @@ extension AppState {
             } catch {
                 await MainActor.run {
                     self?.pluginManagement.planning = false
-                    onError(error.localizedDescription)
+                    onError(UserFacingError.message(for: error))
                 }
             }
         }

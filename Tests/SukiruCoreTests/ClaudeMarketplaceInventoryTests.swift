@@ -1,7 +1,29 @@
 import Foundation
 import Testing
 
+@testable import SukiruCore
+
 extension ClaudePluginLifecycleCLIIntegrationTests {
+    @Test("Conflicting Claude catalog sources cannot claim an installation record")
+    func conflictingSourceBadges() throws {
+        let fixture = try Self.claude()
+        let environment = SukiruEnvironment(
+            reader: DictionaryEnvironmentReader(["SUKIRU_HOME": fixture.home]))
+        let reader = PluginInventoryReader(environment: environment)
+        let original = reader.read(ScanRequest())
+        let market = try #require(original.marketplaces.first { $0.host == .claude })
+        let entry = try #require(market.plugins.first)
+        #expect(original.recordedClaudeInstallations(entry, marketplace: market).count == 1)
+        try fixture.tree.file(
+            "home/.claude/settings.json",
+            contents:
+                #"{"extraKnownMarketplaces":{"team":{"source":{"source":"github","repo":"other/team"}}}}"#
+        )
+        let conflicting = reader.read(ScanRequest())
+        for catalog in conflicting.marketplaces where catalog.host == .claude {
+            #expect(conflicting.recordedClaudeInstallations(entry, marketplace: catalog).isEmpty)
+        }
+    }
     @Test("Marketplace inventory exposes declared listing metadata")
     func listingMetadata() throws {
         let fixture = try Self.claude(

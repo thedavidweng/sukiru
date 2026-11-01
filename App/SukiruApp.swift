@@ -147,6 +147,7 @@ struct SukiruApp: App {
                 }
                 .keyboardShortcut("i", modifiers: [.command, .option])
             }
+            PluginCommands(state: state)
             // The repair flow, fully keyboard-operable.
             // Full Keyboard Access off means the Pending/Snapshots buttons
             // are not Tab stops, so every step — fix deep-link, decision,
@@ -241,6 +242,73 @@ struct SukiruApp: App {
             state.surface = surface
         }
         .keyboardShortcut(key, modifiers: .command)
+    }
+}
+
+private struct PluginCommands: Commands {
+    @ObservedObject var state: AppState
+
+    var body: some Commands {
+        CommandMenu("Plugins") {
+            Button("Add Marketplace…") {
+                state.newPluginOperation(host: state.pluginHost, action: "marketplace-add")
+            }
+            .keyboardShortcut("m", modifiers: [.command, .control])
+            .disabled(
+                state.surface != .plugins || !state.pluginHost.managesMarketplaces
+                    || state.pluginActionsBusy)
+            Button {
+                if let selected = state.activeCatalogEntry {
+                    state.manageCatalogEntry(selected.entry, marketplace: selected.marketplace)
+                }
+            } label: {
+                if state.pluginHost == .cursor {
+                    Text("Instructions for Cursor…")
+                } else {
+                    Text("Install from Marketplace…")
+                }
+            }
+            .keyboardShortcut("i", modifiers: [.command, .control])
+            .disabled(state.activeCatalogEntry == nil || state.pluginActionsBusy)
+            Button("Refresh Marketplace") {
+                if let selected = state.activeCatalogEntry {
+                    state.manageMarketplace(selected.marketplace, action: "marketplace-refresh")
+                }
+            }
+            .keyboardShortcut("r", modifiers: [.command, .control])
+            .disabled(
+                state.pluginActionsBusy || state.activeCatalogEntry == nil
+                    || !state.pluginHost.managesMarketplaces)
+            Button("Remove Marketplace") {
+                if let selected = state.activeCatalogEntry {
+                    state.manageMarketplace(selected.marketplace, action: "marketplace-remove")
+                }
+            }
+            .keyboardShortcut(.delete, modifiers: [.command, .control])
+            .disabled(
+                state.pluginActionsBusy || state.activeCatalogEntry == nil
+                    || !state.pluginHost.managesMarketplaces
+                    || state.activeCatalogEntry?.marketplace.scope == "org")
+            Menu("Marketplaces") {
+                ForEach(
+                    (state.report?.pluginInventory?.marketplaces ?? []).filter {
+                        $0.host == state.pluginHost && $0.host.managesMarketplaces
+                    }
+                ) { marketplace in
+                    Menu("\(marketplace.name) - \(marketplace.scopeRoot)") {
+                        Button("Refresh Marketplace") {
+                            state.manageMarketplace(marketplace, action: "marketplace-refresh")
+                        }
+                        if marketplace.scope != "org" {
+                            Button("Remove Marketplace") {
+                                state.manageMarketplace(marketplace, action: "marketplace-remove")
+                            }
+                        }
+                    }
+                }
+            }
+            .disabled(state.surface != .plugins || state.pluginActionsBusy)
+        }
     }
 }
 

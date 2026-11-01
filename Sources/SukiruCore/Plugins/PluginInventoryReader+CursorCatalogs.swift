@@ -21,7 +21,7 @@ extension PluginInventoryReader {
                 let manifest = json(file.path, issues: &issues)
             else { continue }
             guard let name = manifest["name"] as? String,
-                let entries = manifest["plugins"] as? [[String: Any]]
+                let entries = manifest["plugins"] as? [Any]
             else {
                 issues.append(
                     Issue(
@@ -41,16 +41,25 @@ extension PluginInventoryReader {
         return result
     }
     private func cursorEntries(
-        _ entries: [[String: Any]], manifestPath: String, issues: inout [Issue]
+        _ entries: [Any], manifestPath: String, issues: inout [Issue]
     ) -> [PluginCatalogEntry] {
-        entries.compactMap { entry -> PluginCatalogEntry? in
+        entries.compactMap { value -> PluginCatalogEntry? in
+            guard let entry = value as? [String: Any] else {
+                issues.append(
+                    Issue(
+                        kind: "plugin-manifest", path: manifestPath,
+                        message: "Cursor catalog entry requires a name and source path"))
+                return nil
+            }
             let source: String?
             if let path = entry["source"] as? String {
                 source = path
             } else {
                 source = (entry["source"] as? [String: Any])?["path"] as? String
             }
-            guard let name = entry["name"] as? String, let source else {
+            guard let name = entry["name"] as? String, !name.isEmpty,
+                let source, !source.isEmpty
+            else {
                 issues.append(
                     Issue(
                         kind: "plugin-manifest", path: manifestPath,

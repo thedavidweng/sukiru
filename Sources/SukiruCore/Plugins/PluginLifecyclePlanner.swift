@@ -203,24 +203,8 @@ public struct PluginLifecyclePlanner: Sendable {
             let action =
                 request.action == "install" && request.host != .claude ? "add" : request.action
             args.append(action)
-            let curated =
-                request.host == .codex && request.target.hasSuffix("@openai-curated-remote")
-            if request.action == "install", request.host != .opencode, !curated {
-                let pieces = request.target.split(separator: "@", maxSplits: 1).map(String.init)
-                guard pieces.count == 2,
-                    inventory.marketplaces.contains(where: {
-                        $0.host == request.host && $0.name == pieces[1]
-                            && (request.host != .codex
-                                || ($0.scope == "user" && $0.scopeRoot == environment.home))
-                            && $0.plugins.contains(where: { $0.name == pieces[0] })
-                    })
-                else {
-                    throw PluginLifecycleError(
-                        message: "Choose a plugin from a configured host marketplace")
-                }
-                if request.host == .claude {
-                    try validateClaudeSources(pieces[1], inventory: inventory)
-                }
+            if request.action == "install" {
+                try validateInstallMarketplace(request, inventory: inventory)
             }
         }
         if request.host != .opencode || request.target != "*" {
@@ -231,17 +215,6 @@ public struct PluginLifecyclePlanner: Sendable {
         }
         if request.host != .opencode { args.append("--json") }
         return args
-    }
-
-    func validateClaudeSources(_ name: String, inventory: PluginInventory) throws {
-        let sources = Set(
-            inventory.marketplaces.filter {
-                $0.host == .claude && $0.name == name
-            }.map { "\($0.source.utf8.count):\($0.source):\($0.ref ?? ""):\($0.sourceType ?? "")" })
-        guard sources.count == 1 else {
-            throw PluginLifecycleError(
-                message: "Marketplace name refers to multiple sources: " + name)
-        }
     }
 
     private func owner(_ host: PluginHost) -> OwningCLI {
