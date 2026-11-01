@@ -253,6 +253,7 @@ struct PluginInventoryConfigTests {
         for key in SukiruEnvironment.externalEnvKeys {
             environment.removeValue(forKey: key)
         }
+        environment["TMPDIR"] = FileManager.default.temporaryDirectory.path
         environment.merge(extra) { _, new in new }
         return environment
     }

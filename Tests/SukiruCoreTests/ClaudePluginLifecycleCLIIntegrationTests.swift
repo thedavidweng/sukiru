@@ -74,7 +74,101 @@ struct ClaudePluginLifecycleCLIIntegrationTests {
         #expect(rollback.exitCode == 0, "\(rollback.stderrText)")
         #expect(try String(contentsOfFile: data, encoding: .utf8) == "saved\n")
     }
+}
 
+extension ClaudePluginLifecycleCLIIntegrationTests {
+    @Test(
+        "Claude's main configuration is restored after a native marketplace command",
+        arguments: [false, true])
+    func mainConfigurationRollback(preexisting: Bool) throws {
+        let fixture = try Self.claude(onRun: "printf '%s' changed > \"$HOME/.claude.json\"")
+        let config = fixture.home + "/.claude.json"
+        if preexisting {
+            try fixture.tree.file("home/.claude.json", contents: "original bytes\n")
+        }
+        let result = try fixture.execute([fixture.request("marketplace-add", "example/other")])
+        #expect(result.exitCode == 0, "\(result.stderrText)")
+        #expect(try String(contentsOfFile: config, encoding: .utf8) == "changed")
+        let rollback = try fixture.rollback(result)
+        #expect(rollback.exitCode == 0)
+        if preexisting {
+            #expect(try String(contentsOfFile: config, encoding: .utf8) == "original bytes\n")
+        } else {
+            #expect(!FileManager.default.fileExists(atPath: config))
+        }
+    }
+
+    @Test("Aliased capture roots do not report successful deletions as failures")
+    func aliasedCaptureRollback() throws {
+        let fixture = try Self.claude(
+            onRun:
+                "mkdir -p \"$HOME/.claude/created\"; printf batch > \"$HOME/.claude/created/file\"")
+        let alias = try fixture.tree.symlink("alias", to: fixture.home + "/.claude")
+        try fixture.tree.file(
+            "catalog/.claude-plugin/marketplace.json",
+            contents: """
+                {"name":"team","plugins":[{"name":"demo","source":"\(alias)"}]}
+                """)
+        let result = try fixture.execute([fixture.request("marketplace-add", "example/other")])
+        #expect(result.exitCode == 0, "\(result.stderrText)")
+        #expect(FileManager.default.fileExists(atPath: fixture.home + "/.claude/created/file"))
+        let rollback = try fixture.rollback(result)
+        #expect(rollback.exitCode == 0)
+        let record = try #require(try rollback.jsonObject())
+        let items = try #require(record["items"] as? [[String: Any]])
+        #expect(!items.contains { $0["category"] as? String == "unrestorable-with-reason" })
+        #expect(!FileManager.default.fileExists(atPath: fixture.home + "/.claude/created"))
+    }
+
+    @Test(
+        "Retargeted terminal file and directory links require a choice and protect both targets",
+        arguments: [false, true], [false, true])
+    func terminalLinkRollback(directory: Bool, preserve: Bool) throws {
+        let suffix = directory ? "/item" : ""
+        let fixture = try Self.claude(onRun: "printf changed > \"$HOME/target-link\(suffix)\"")
+        let original = try fixture.tree.file(
+            "external/original" + suffix, contents: "original bytes")
+        let replacement = try fixture.tree.file(
+            "external/replacement" + suffix, contents: "later bytes")
+        let oldTarget = directory ? fixture.tree.path + "/external/original" : original
+        let newTarget = directory ? fixture.tree.path + "/external/replacement" : replacement
+        let link = try fixture.tree.symlink("home/target-link", to: oldTarget)
+        try fixture.tree.file(
+            "catalog/.claude-plugin/marketplace.json",
+            contents: """
+                {"name":"team","plugins":[{"name":"demo","source":"\(link)"}]}
+                """)
+        let executed = try fixture.execute([fixture.request("marketplace-add", "example/other")])
+        #expect(executed.exitCode == 0, "\(executed.stderrText)")
+        #expect(try String(contentsOfFile: original, encoding: .utf8) == "changed")
+        let record = try #require(try executed.jsonObject())
+        let batch = try #require(record["batchID"] as? String)
+        try FileManager.default.removeItem(atPath: link)
+        try FileManager.default.createSymbolicLink(atPath: link, withDestinationPath: newTarget)
+        let preview = try CLIRunner.run(
+            ["rollback", "--batch", batch, "--dry-run"], environment: fixture.environment)
+        let conflicts = try #require(try preview.jsonObject()?["conflicts"] as? [[String: Any]])
+        #expect(conflicts.contains { $0["path"] as? String == link })
+        let refused = try CLIRunner.run(
+            ["rollback", "--yes", "--batch", batch], environment: fixture.environment)
+        #expect(refused.exitCode != 0)
+        #expect(try String(contentsOfFile: original, encoding: .utf8) == "changed")
+        #expect(try String(contentsOfFile: replacement, encoding: .utf8) == "later bytes")
+        let rollback = try CLIRunner.run(
+            ["rollback", "--yes", "--batch", batch, preserve ? "--preserve" : "--restore", link],
+            environment: fixture.environment)
+        #expect(rollback.exitCode == 0, "\(rollback.stderrText)")
+        let items = try #require(try rollback.jsonObject()?["items"] as? [[String: Any]])
+        #expect(!items.contains { $0["category"] as? String == "unrestorable-with-reason" })
+        #expect(try String(contentsOfFile: original, encoding: .utf8) == "original bytes")
+        #expect(try String(contentsOfFile: replacement, encoding: .utf8) == "later bytes")
+        #expect(
+            try FileManager.default.destinationOfSymbolicLink(atPath: link)
+                == (preserve ? newTarget : oldTarget))
+    }
+}
+
+extension ClaudePluginLifecycleCLIIntegrationTests {
     @Test("Uninstall discloses data deletion and the installations that stay in other scopes")
     func removeImpact() throws {
         let fixture = try Self.claude(projects: ["project"])

@@ -3,12 +3,15 @@ import Foundation
 /// Keeps link identities and the physical files a native command can write through them.
 enum PluginCaptureLinks {
     static func expand(_ paths: [String], environment: SukiruEnvironment) throws -> [String] {
-        var roots = Set(paths)
+        var roots = Set<String>()
         var visited = Set<String>()
         for path in paths {
             try collectAncestorLinks(path, roots: &roots)
             let resolved = URL(fileURLWithPath: path).resolvingSymlinksInPath().path
             try validate(resolved, environment: environment)
+            if case .symlink = DefaultFileSystemProbe().entryKind(atPath: path) {
+                roots.insert(path)
+            }
             roots.insert(resolved)
             try collect(path, roots: &roots, visited: &visited, environment: environment)
         }

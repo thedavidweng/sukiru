@@ -133,6 +133,58 @@ marketplace add but also included the real Codex executable in capture roots:
 the version probe had created links to it under the temporary `.codex/tmp`.
 That Codex plan was not executed or rolled back in this investigation.
 
+#### Claude rollback fix verification (2026-10-31)
+
+After adding `~/.claude.json` to Claude capture and deduplicating plugin capture
+paths through ancestor links, the same real Claude 2.1.316 local marketplace
+and plugin were tested in a new empty `/private/tmp/sukiru-92-verify/home`.
+The sandbox profile and isolated environment were the same as above, with
+`SUKIRU_HOME` set and all paths under `/private/tmp/sukiru-92-verify` as its
+only writable tree. The CLI was built from the independent worktree with
+`swift test --build-system native --disable-sandbox` under a separate sandbox.
+
+Using the same JSON request shape as above, these commands ran in order:
+
+```sh
+sukiru plugins plan --requests "$RUN/add.json" --json
+sukiru plugins execute --requests "$RUN/add.json" --yes --confirm-dangerous --json
+sukiru plugins plan --requests "$RUN/install.json" --json
+sukiru plugins execute --requests "$RUN/install.json" --yes --confirm-dangerous --json
+sukiru rollback --batch "$INSTALL" --dry-run --json
+sukiru rollback --batch "$INSTALL" --yes --json
+sukiru rollback --batch "$ADD" --dry-run --json
+sukiru rollback --batch "$ADD" --yes --json
+```
+
+Both native commands returned exit 0, `outcome: ok`, and `batchStatus:
+succeeded`, with a snapshot. The marketplace-add diff included the newly
+created `.claude.json`. Both previews reported zero conflicts; both rollbacks
+returned exit 0 and `rolledBack`, with zero `unrestorable-with-reason` items.
+The installation record and payload were present after installation and absent
+after its rollback. SHA-256 checks of `.claude.json`, `.claude/settings.json`,
+and `.claude/plugins/known_marketplaces.json` matched their pre-install bytes
+after that rollback. After rolling back marketplace add, `.claude.json` and
+`.claude` were absent, as they were before the first command. The install diff
+listed each changed file once, rather than under both temporary-path aliases.
+
+The first verification script stopped after the successful marketplace add
+because it used an incorrect `jq` path; it resumed from the existing batch
+using `/usr/bin/jq` without rerunning the add. This validates only these local
+filesystem effects in an isolated home; it does not establish remote, runtime,
+account, project-scope, or arbitrary plugin-effect rollback.
+
+The CLI regression fixtures additionally cover retargeted terminal file and
+directory links and retargeted ancestor links. For each restore/preserve
+choice, they check conflict detection, the selected link target, restored
+original external bytes, unchanged replacement bytes, and the absence of
+unrestorable items. These are fixture-host tests, separate from the real Claude
+run above.
+
+The existing rollback CLI can still return exit 0 and `rolledBack` when its
+itemized report contains a genuine `unrestorable-with-reason`; callers must
+inspect the items. The capture fixes here do not change that CLI contract or
+repair snapshots already created with duplicate alias roots.
+
 ```text
 claude plugin install|i [options] <plugin>
   --accept-command <sha256>
