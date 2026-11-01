@@ -240,7 +240,7 @@ extension PluginInventoryReader {
             local
             ? (source?["path"] as? String).map { resolvePluginPath($0, relativeTo: level.root) }
             : nil
-        let path = record?["installLocation"] as? String ?? localPath
+        let path = localPath ?? record?["installLocation"] as? String
         return PluginMarketplace(
             host: .droid, name: name, source: Self.droidSourceLabel(source),
             scopeRoot: level.root, path: path,

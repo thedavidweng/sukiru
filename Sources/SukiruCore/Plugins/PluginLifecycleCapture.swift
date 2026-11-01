@@ -9,7 +9,11 @@ struct PluginLifecycleCapture {
     }
 
     func roots(request: PluginLifecycleRequest, inventory: PluginInventory) throws -> Result {
-        guard !inventory.issues.contains(where: { $0.kind.hasPrefix("plugin-config") }) else {
+        guard
+            !inventory.issues.contains(where: {
+                $0.host == request.host && $0.kind.hasPrefix("plugin-config")
+            })
+        else {
             throw PluginLifecycleError(
                 message: "Unreadable host plugin configuration prevents a complete capture plan")
         }

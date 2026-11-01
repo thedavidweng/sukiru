@@ -1,6 +1,26 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Not fetched by Droid yet" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Droid 尚未获取"
+          }
+        }
+      }
+    },
+    "Start Droid in a project, or refresh the marketplace in Marketplaces…." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在项目中启动 Droid，或在“市场…”中刷新该市场。"
+          }
+        }
+      }
+    },
     "Add Factory Plugins…" : {
       "localizations" : {
         "zh-Hans" : {

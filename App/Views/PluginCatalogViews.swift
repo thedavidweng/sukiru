@@ -22,25 +22,23 @@ struct PluginCatalogList: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(verbatim: marketplace.name)
                         if marketplace.host == .droid {
-                            Text(
-                                verbatim: marketplace.source
-                                    + (marketplace.ref.map { " · " + $0 } ?? "")
-                            )
+                            Group {
+                                Text(
+                                    verbatim: marketplace.source
+                                        + (marketplace.ref.map { " · " + $0 } ?? ""))
+                                if marketplace.path == nil { Text("Not fetched by Droid yet") }
+                                if marketplace.scope == "org" {
+                                    Text("Organization settings")
+                                } else if marketplace.scope == "project" {
+                                    Text(
+                                        verbatim: URL(fileURLWithPath: marketplace.scopeRoot)
+                                            .lastPathComponent
+                                    )
+                                    .help(marketplace.scopeRoot)
+                                }
+                            }
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                            if marketplace.scope == "org" {
-                                Text("Organization settings")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            } else if marketplace.scope == "project" {
-                                Text(
-                                    verbatim: URL(fileURLWithPath: marketplace.scopeRoot)
-                                        .lastPathComponent
-                                )
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .help(marketplace.scopeRoot)
-                            }
                         }
                         if let updatedAt = marketplace.updatedAt {
                             Text("Catalog cached by the host: \(updatedAt)")
@@ -75,6 +73,12 @@ struct PluginCatalogList: View {
                     Text(
                         "Open \(state.pluginHost.displayName) and sign in; Sukiru reads the catalog the host caches."
                     )
+                }
+            } else if marketplaces.allSatisfy({ $0.host == .droid && $0.path == nil }) {
+                ContentUnavailableView {
+                    Label("Not fetched by Droid yet", systemImage: "shippingbox")
+                } description: {
+                    Text("Start Droid in a project, or refresh the marketplace in Marketplaces….")
                 }
             } else if marketplaces.allSatisfy({ $0.plugins.isEmpty }) {
                 ContentUnavailableView(

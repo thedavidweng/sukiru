@@ -2,7 +2,7 @@ import Foundation
 import Testing
 
 struct DroidPluginTests {
-    private let help = """
+    let help = """
         Usage: droid plugin install|i [options] <plugin>
         Usage: droid plugin uninstall|remove [options] <plugin>
         Usage: droid plugin update [options] [plugin]
@@ -14,7 +14,7 @@ struct DroidPluginTests {
 
     /// The layout `droid` 1.1.0 wrote in an isolated home: one record per installation,
     /// enablement in the installing level's settings, and a marketplace registry.
-    private func seed(_ fixture: PluginHostFixture) throws -> (cache: String, catalog: String) {
+    func seed(_ fixture: PluginHostFixture) throws -> (cache: String, catalog: String) {
         let tree = fixture.tree
         let catalog = try tree.dir("mkt")
         try tree.file(
@@ -56,7 +56,7 @@ struct DroidPluginTests {
         return (cache, catalog)
     }
 
-    private func seedSettings(_ fixture: PluginHostFixture, catalog: String) throws {
+    func seedSettings(_ fixture: PluginHostFixture, catalog: String) throws {
         let tree = fixture.tree
         try tree.file(
             "home/.factory/plugins/known_marketplaces/mkt-1.json",
@@ -85,10 +85,13 @@ struct DroidPluginTests {
         }
     }
 
-    private func fixture(version: String = "1.1.0") throws -> PluginHostFixture {
+    func fixture(version: String = "1.1.0") throws -> PluginHostFixture {
         try PluginHostFixture(host: "droid", version: version, help: help, projects: ["project"])
     }
 
+}
+
+extension DroidPluginTests {
     @Test("Inventory reads Droid records, settings levels, org policy and fetched catalogs")
     func inventory() throws {
         let fixture = try fixture()
@@ -169,6 +172,14 @@ struct DroidPluginTests {
         let intents = commands.compactMap { $0["intent"] as? String }
         #expect(intents[0].contains("strictEnabledPlugins"))
         #expect(intents[6].contains("does not uninstall") && intents[6].contains("hello@mkt"))
+        #expect(!intents[6].contains("still declare it"))
+        try fixture.tree.file(
+            String(project.dropFirst(fixture.tree.path.count + 1)) + "/.factory/settings.json",
+            contents:
+                #"{"extraKnownMarketplaces":{"mkt":{"source":{"source":"github","repo":"o/r"}}}}"#)
+        let shared = try fixture.plan([fixture.request("marketplace-remove", "mkt")])
+        let note = try #require(try shared.plannedCommands().first?["intent"] as? String)
+        #expect(note.contains("still declare it") && note.contains(project))
         #expect(fixture.invocations.isEmpty)
         #expect(fixture.helpInvocations.contains("plugin marketplace update --help"))
     }

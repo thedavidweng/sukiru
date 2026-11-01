@@ -208,6 +208,7 @@ extension PluginLifecyclePlanner {
                 + "registry. A cloned checkout is deleted; a local directory stays. "
                 + "Droid does not uninstall its plugins: "
                 + droidInstalled(from: request.target, inventory) + "."
+                + droidProjectDeclarations(request.target, inventory)
         }
         return text
             + " Captured files can be restored; loading after the operation remains unknown."
@@ -228,6 +229,17 @@ extension PluginLifecyclePlanner {
             $0.host == .droid && $0.source == marketplace
         }.map { "\($0.identifier) [\($0.scope): \($0.scopeRoot)]" }.sorted()
         return installed.isEmpty ? "none observed" : installed.joined(separator: "; ")
+    }
+
+    private func droidProjectDeclarations(
+        _ marketplace: String, _ inventory: PluginInventory
+    ) -> String {
+        let projects = inventory.marketplaces.filter {
+            $0.host == .droid && $0.name == marketplace && $0.scope == "project"
+        }.map(\.scopeRoot).sorted()
+        guard !projects.isEmpty else { return "" }
+        return " These projects still declare it, so Droid fetches it again there: "
+            + projects.joined(separator: "; ") + "."
     }
 
     /// Org policy Droid enforces itself; Sukiru reports it rather than second-guessing it.
