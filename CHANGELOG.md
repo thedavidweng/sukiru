@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.18.0](https://github.com/thedavidweng/sukiru/compare/v1.17.0...v1.18.0) (2026-11-01)
+
+
+### ✨ Features
+
+* **plugins:** manage Droid plugins and marketplaces natively ([#107](https://github.com/thedavidweng/sukiru/issues/107)) ([0dfba7c](https://github.com/thedavidweng/sukiru/commit/0dfba7cc018be210dc81d64b864238e87d0b9b1e))
+
+
+### 🐛 Bug Fixes
+
+* **ci:** keep CodeQL updates synchronized ([#104](https://github.com/thedavidweng/sukiru/issues/104)) ([eb067ed](https://github.com/thedavidweng/sukiru/commit/eb067edf905abd4fb28c02e17e560533a7a6c454))
+
 ## [1.17.0](https://github.com/thedavidweng/sukiru/compare/v1.16.0...v1.17.0) (2026-10-31)
 
 
