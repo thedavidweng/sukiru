@@ -12,6 +12,103 @@ struct PluginCatalogList: View {
         List(selection: $state.selectedCatalogEntryID) {
             ForEach(marketplaces.filter { filter.isEmpty || !entries($0).isEmpty }) { marketplace in
                 Section {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(verbatim: marketplace.name)
+                            if marketplace.host == .cursor {
+                                Text("Cached catalog; registration scope unknown")
+                                    .font(.caption).foregroundStyle(.secondary)
+                                Text(verbatim: marketplace.source)
+                                    .font(.caption).foregroundStyle(.secondary)
+                                    .lineLimit(1).truncationMode(.middle)
+                                    .help(marketplace.source)
+                                if let ref = marketplace.ref {
+                                    Text("Git ref: \(ref)").font(.caption).foregroundStyle(
+                                        .secondary)
+                                }
+                            }
+                            if [.droid, .codex, .claude].contains(marketplace.host) {
+                                Group {
+                                    Text(
+                                        verbatim: marketplace.source
+                                            + (marketplace.ref.map { " · " + $0 } ?? "")
+                                    )
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                    .help(marketplace.source)
+                                    .accessibilityIdentifier(
+                                        "sukiru.plugins.marketplace.source.\(marketplace.id)"
+                                    )
+                                    if marketplace.host == .codex {
+                                        if marketplace.localSource {
+                                            Text("Local catalog")
+                                        } else {
+                                            Text("Git marketplace")
+                                        }
+                                    }
+                                    if marketplace.scope == "org" {
+                                        Text("Organization settings")
+                                        Text("Organization settings manage this marketplace.")
+                                    } else if marketplace.scope == "user" {
+                                        Text("User Library")
+                                    } else if marketplace.scope == "local" {
+                                        Text("Local project settings: \(marketplace.scopeRoot)")
+                                            .lineLimit(1)
+                                            .truncationMode(.middle)
+                                            .help(marketplace.scopeRoot)
+                                    } else if marketplace.scope == "project" {
+                                        Text(
+                                            verbatim: URL(fileURLWithPath: marketplace.scopeRoot)
+                                                .lastPathComponent
+                                        )
+                                        .help(marketplace.scopeRoot)
+                                    }
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            }
+                            if let updatedAt = marketplace.updatedAt {
+                                Text("Catalog cached by the host: \(updatedAt)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            if marketplace.host == .antigravity {
+                                Text("Manage marketplaces in Antigravity.")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        if marketplace.host.managesMarketplaces {
+                            Menu {
+                                Button("Refresh Marketplace") {
+                                    state.manageMarketplace(
+                                        marketplace, action: "marketplace-refresh")
+                                }
+                                .accessibilityIdentifier(
+                                    "sukiru.plugins.marketplace.marketplace-refresh.\(marketplace.id)"
+                                )
+                                .help("Preview an operation for this marketplace")
+                                if marketplace.scope != "org" {
+                                    Button("Remove Marketplace") {
+                                        state.manageMarketplace(
+                                            marketplace, action: "marketplace-remove")
+                                    }
+                                    .accessibilityIdentifier(
+                                        "sukiru.plugins.marketplace.marketplace-remove.\(marketplace.id)"
+                                    )
+                                    .help("Preview an operation for this marketplace")
+                                }
+                            } label: {
+                                Label("Marketplace Actions", systemImage: "ellipsis.circle")
+                            }
+                            .labelStyle(.iconOnly)
+                            .accessibilityIdentifier(
+                                "sukiru.plugins.marketplace.actions.\(marketplace.id)"
+                            )
+                            .help("Preview an operation for this marketplace")
+                            .fixedSize()
+                        }
+                    }
                     ForEach(entries(marketplace), id: \.name) { entry in
                         PluginCatalogRow(
                             entry: entry, installation: installation(entry, in: marketplace)
@@ -36,9 +133,7 @@ struct PluginCatalogList: View {
                         }
                     }
                     if marketplace.host == .antigravity, marketplace.plugins.isEmpty {
-                        if filter.isEmpty {
-                            Text("No locally cached plugins").foregroundStyle(.secondary)
-                        }
+                        Text("No locally cached plugins").foregroundStyle(.secondary)
                     }
                     if marketplace.host == .codex, marketplace.plugins.isEmpty, filter.isEmpty {
                         if marketplace.catalogState == "unreadable" {
@@ -49,90 +144,6 @@ struct PluginCatalogList: View {
                             } else {
                                 Text("Catalog not found").foregroundStyle(.secondary)
                             }
-                        }
-                    }
-                } header: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(verbatim: marketplace.name)
-                            if marketplace.host == .cursor {
-                                Text("Cached catalog; registration scope unknown")
-                                    .font(.caption).foregroundStyle(.secondary)
-                                Text(verbatim: marketplace.source)
-                                    .font(.caption).foregroundStyle(.secondary)
-                                if let ref = marketplace.ref {
-                                    Text("Git ref: \(ref)").font(.caption).foregroundStyle(
-                                        .secondary)
-                                }
-                            }
-                            if [.droid, .codex, .claude].contains(marketplace.host) {
-                                Group {
-                                    Text(
-                                        verbatim: marketplace.source
-                                            + (marketplace.ref.map { " · " + $0 } ?? ""))
-                                    if marketplace.host == .codex {
-                                        if marketplace.localSource {
-                                            Text("Local catalog")
-                                        } else {
-                                            Text("Git marketplace")
-                                        }
-                                    }
-                                    if marketplace.scope == "org" {
-                                        Text("Organization settings")
-                                        Text("Organization settings manage this marketplace.")
-                                    } else if marketplace.scope == "user" {
-                                        Text("User Library")
-                                    } else if marketplace.scope == "local" {
-                                        Text("Local project settings: \(marketplace.scopeRoot)")
-                                    } else if marketplace.scope == "project" {
-                                        Text(
-                                            verbatim: URL(fileURLWithPath: marketplace.scopeRoot)
-                                                .lastPathComponent
-                                        )
-                                        .help(marketplace.scopeRoot)
-                                    }
-                                }
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            }
-                            if let updatedAt = marketplace.updatedAt {
-                                Text("Catalog cached by the host: \(updatedAt)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            if marketplace.host == .antigravity {
-                                Text("Manage marketplaces in Antigravity.")
-                                    .font(.caption).foregroundStyle(.secondary)
-                            }
-                        }
-                        Spacer()
-                        if marketplace.host.managesMarketplaces {
-                            Menu {
-                                Button("Refresh Marketplace") {
-                                    state.manageMarketplace(
-                                        marketplace, action: "marketplace-refresh")
-                                }
-                                .accessibilityIdentifier(
-                                    "sukiru.plugins.marketplace.marketplace-refresh.\(marketplace.id)"
-                                )
-                                .help("Preview an operation for this marketplace")
-                                if marketplace.scope != "org" {
-                                    Button("Remove Marketplace") {
-                                        state.manageMarketplace(
-                                            marketplace, action: "marketplace-remove")
-                                    }
-                                    .accessibilityIdentifier(
-                                        "sukiru.plugins.marketplace.marketplace-remove.\(marketplace.id)"
-                                    )
-                                    .help("Preview an operation for this marketplace")
-                                }
-                            } label: {
-                                Label("Marketplace Actions", systemImage: "ellipsis.circle")
-                            }
-                            .accessibilityIdentifier(
-                                "sukiru.plugins.marketplace.actions.\(marketplace.id)"
-                            )
-                            .help("Preview an operation for this marketplace")
                         }
                     }
                 }
