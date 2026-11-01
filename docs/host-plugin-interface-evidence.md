@@ -1,5 +1,14 @@
 # Host Plugin Interface Evidence
 
+## Marketplace scope decisions (2026-10-31)
+
+Droid's lifecycle and host-owned marketplace browser are supported; see
+[Droid evidence](droid-plugin-interface-evidence.md). OpenClaude, Muse, Grok Build,
+Hermes Agent, GitHub Copilot CLI, Gemini CLI, Qwen Code and Kiro are deferred until
+their individual lifecycle and catalog contracts are verified. Pi's package gallery
+is outside this Agent Plugin increment. OpenCode, Devin and Amp are outside this
+marketplace work.
+
 Initial verification: 2026-10-03; parent acceptance review: 2026-10-25.
 Execution decisions include the user-approved explicit-effects consent amendment
 to ADR-0008 and its Cursor amendment. Initial installed-host verification used

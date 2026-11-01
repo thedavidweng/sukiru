@@ -1,0 +1,7 @@
+#!/bin/sh
+printf '%s\n' "$*" >> "$SUKIRU_UI_PROBE_LOG"
+case "$*" in
+  --version) printf '%s\n' '1.1.0' ;;
+  'plugin marketplace remove --help') printf '%s\n' 'Usage: droid plugin marketplace remove' ;;
+  *) exit 1 ;;
+esac
