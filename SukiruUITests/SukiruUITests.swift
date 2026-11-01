@@ -276,6 +276,30 @@ final class SukiruUITests: XCTestCase {
         app.terminate()
     }
 
+    func testFilteredCatalogKeepsInspectionIssuesAccessible() throws {
+        try write(
+            "{invalid",
+            to: home.appendingPathComponent(
+                ".cursor/plugins/marketplaces/broken/.cursor-plugin/marketplace.json"))
+        let app = XCUIApplication()
+        app.launchEnvironment["SUKIRU_HOME"] = home.path
+        app.launchEnvironment["SUKIRU_ROOTS"] = ""
+        app.launchEnvironment["PATH"] =
+            Bundle(for: Self.self).resourceURL!
+            .appendingPathComponent("Fixtures/bin").path
+        app.launchArguments = ["-AppleLanguages", "(en)"]
+        app.launch()
+        let cursor = app.descendants(matching: .any)["sukiru.sidebar.plugins.cursor"].firstMatch
+        XCTAssertTrue(cursor.waitForExistence(timeout: 15))
+        cursor.click()
+        app.radioButtons["Marketplace"].click()
+        XCTAssertTrue(app.staticTexts["remote-demo"].waitForExistence(timeout: 10))
+        app.searchFields.firstMatch.click()
+        app.searchFields.firstMatch.typeText("no-such-listing")
+        XCTAssertTrue(app.disclosureTriangles["sukiru.plugins.inspectionIssues"].exists)
+        app.terminate()
+    }
+
     func testClaudeMarketplaceListingPreview() throws {
         let catalog = home.appendingPathComponent(".claude/plugins/marketplaces/team")
         try write(

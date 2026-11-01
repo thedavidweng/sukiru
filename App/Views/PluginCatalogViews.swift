@@ -141,6 +141,9 @@ struct PluginCatalogList: View {
                     }
                 }
             }
+            if showsFilteredEmpty, !inspectionIssues.isEmpty {
+                ContentUnavailableView.search(text: filter)
+            }
             if !inspectionIssues.isEmpty {
                 Section {
                     DisclosureGroup("Inspection Issues") {
@@ -199,7 +202,7 @@ struct PluginCatalogList: View {
                         Text("Add a marketplace to Cursor to see its cached catalog.")
                     }
                 }
-            } else if !filter.isEmpty, marketplaces.allSatisfy({ entries($0).isEmpty }) {
+            } else if showsFilteredEmpty, inspectionIssues.isEmpty {
                 ContentUnavailableView.search(text: filter)
             }
         }
@@ -215,14 +218,6 @@ struct PluginCatalogList: View {
             if let selected = state.selectedCatalogEntry, !selected.entry.matches(value) {
                 state.selectedCatalogEntryID = nil
             }
-        }
-    }
-
-    private var inspectionIssues: [PluginInventoryIssue] {
-        (state.report?.pluginInventory?.issues ?? []).filter {
-            $0.host == state.pluginHost
-                && (state.pluginHost != .cursor
-                    || $0.path.contains("/.cursor/plugins/marketplaces/"))
         }
     }
 
@@ -263,6 +258,18 @@ struct PluginCatalogList: View {
 }
 
 extension PluginCatalogList {
+    fileprivate var showsFilteredEmpty: Bool {
+        !filter.isEmpty && marketplaces.allSatisfy { entries($0).isEmpty }
+    }
+
+    fileprivate var inspectionIssues: [PluginInventoryIssue] {
+        (state.report?.pluginInventory?.issues ?? []).filter {
+            $0.host == state.pluginHost
+                && (state.pluginHost != .cursor
+                    || $0.path.contains("/.cursor/plugins/marketplaces/"))
+        }
+    }
+
     fileprivate func codexCatalogExists(_ marketplace: PluginMarketplace) -> Bool {
         guard let root = marketplace.path else { return false }
         return [".agents/plugins/marketplace.json", ".claude-plugin/marketplace.json"].contains {
