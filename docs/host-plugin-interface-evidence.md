@@ -69,14 +69,14 @@ listed `demo` at `./demo`; its `.claude-plugin/plugin.json` declared version
 All commands below ran with an empty process environment except the variables
 shown. `RUN` was `/private/tmp/sukiru-92-native-run`, `CLI` was the freshly
 built `$RUN/build/sukiru`, and the current directory was `$RUN`. The sandbox
-denied network, all Mach service lookups, reads under `/Users/david`, and writes
+denied network, all Mach service lookups, reads under the user's home, and writes
 outside `$RUN` (except `/dev/null`). Separate probes confirmed that reading a
-file under `/Users/david`, writing outside `$RUN`, and connecting to
+file under the user's home, writing outside `$RUN`, and connecting to
 `127.0.0.1:9` each failed with `Operation not permitted`. The profile and common
-environment were:
+environment were (the user's home path is redacted):
 
 ```sh
-PROFILE='(version 1)(allow default)(deny network*)(deny mach-lookup)(deny file-write*)(allow file-write* (subpath "/private/tmp/sukiru-92-native-run") (literal "/dev/null"))(deny file-read* (subpath "/Users/david"))'
+PROFILE='(version 1)(allow default)(deny network*)(deny mach-lookup)(deny file-write*)(allow file-write* (subpath "/private/tmp/sukiru-92-native-run") (literal "/dev/null"))(deny file-read* (subpath "<user-home>"))'
 env -i HOME="$RUN/home" SUKIRU_SYSTEM_ROOT="$RUN/system" \
   SUKIRU_RESOLVING_ENVIRONMENT=1 TMPDIR="$RUN/runtime-tmp" \
   PATH=/opt/homebrew/bin:/usr/bin:/bin CI=1 NO_COLOR=1 \
