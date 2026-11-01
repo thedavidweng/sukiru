@@ -28,6 +28,25 @@ majors, and versions below a baseline, are refused with host instructions.
 
 ### Claude Code 2.1.288
 
+#### Rechecked 2026-10-31: Claude Code 2.1.316
+
+The installed `/opt/homebrew/bin/claude --version` identified Claude Code 2.1.316.
+Operation help identifies `plugin install <plugin>` with `plugin@marketplace`,
+`--scope user|project|local`, and `--json`; `--marketplace <source>` can add a
+marketplace first, so Sukiru does not use it for a listing. Marketplace add and
+remove expose `--scope` and `--json`, while named update exposes `--json` and
+no scope flag. Install help retains explicit command/headersHelper approval;
+Sukiru does not pass `--yes` or `--accept-command`.
+
+With a disposable HOME, `CLAUDE_CONFIG_DIR` and `CLAUDE_CODE_PLUGIN_CACHE_DIR`,
+`claude plugin marketplace list --json` returned `[]`. In a separate disposable
+home/config/cache, adding a local directory marketplace and installing its
+`demo@sukiru-test` listing in user scope both returned JSON `outcome: ok`;
+`plugin list --json` recorded the user installation as enabled. Sukiru's
+dry-run against that state produced the expected qualified install argv.
+This does not verify remote authentication, project/local scope, or rollback;
+the lifecycle execution and rollback tests use a fixture CLI, not Claude.
+
 ```text
 claude plugin install|i [options] <plugin>
   --accept-command <sha256>

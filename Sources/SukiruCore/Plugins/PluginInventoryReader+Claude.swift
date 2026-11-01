@@ -117,9 +117,10 @@ extension PluginInventoryReader {
                 marketplaces.append(
                     PluginMarketplace(
                         host: .claude, name: name, source: address, scopeRoot: environment.home,
-                        path: path, plugins: claudeCatalog(manifest),
+                        path: path, plugins: claudeCatalog(manifest, root: path, issues: &issues),
                         ref: source?["ref"] as? String,
-                        localSource: Self.claudeLocalSource(source)))
+                        localSource: Self.claudeLocalSource(source),
+                        sourceType: source?["source"] as? String))
             }
         }
         return marketplaces
@@ -130,13 +131,45 @@ extension PluginInventoryReader {
             ?? HostPathResolver.join(config, "plugins")
     }
 
-    private func claudeCatalog(_ manifest: [String: Any]?) -> [PluginCatalogEntry] {
-        let entries = manifest?["plugins"] as? [[String: Any]] ?? []
-        return entries.compactMap { entry -> PluginCatalogEntry? in
-            guard let name = entry["name"] as? String else { return nil }
-            return PluginCatalogEntry(
+    private func claudeCatalog(
+        _ manifest: [String: Any]?, root: String?, issues: inout [Issue]
+    ) -> [PluginCatalogEntry] {
+        guard let manifest, let root else { return [] }
+        guard let entries = manifest["plugins"] as? [Any] else {
+            issues.append(
+                Issue(
+                    kind: "plugin-config", path: root + "/.claude-plugin/marketplace.json",
+                    message: "Expected a marketplace plugins array"))
+            return []
+        }
+        return entries.compactMap { value -> PluginCatalogEntry? in
+            guard let entry = value as? [String: Any], let name = entry["name"] as? String,
+                !name.isEmpty
+            else {
+                issues.append(
+                    Issue(
+                        kind: "plugin-config", path: root + "/.claude-plugin/marketplace.json",
+                        message: "Invalid marketplace plugin entry"))
+                return nil
+            }
+            var listing = PluginCatalogEntry(
                 name: name, source: Self.claudeSourceLabel(entry["source"]),
                 version: entry["version"] as? String)
+            listing.displayName = entry["displayName"] as? String
+            listing.summary = entry["description"] as? String
+            listing.logo = PluginManifestDetails(entry, root: root).logo
+            listing.author =
+                (entry["author"] as? [String: Any])?["name"] as? String
+                ?? entry["author"] as? String
+            listing.homepage = entry["homepage"] as? String
+            listing.repository = entry["repository"] as? String
+            listing.license = entry["license"] as? String
+            listing.categories =
+                (entry["category"] as? String).map { [$0] }
+                ?? entry["category"] as? [String]
+            listing.keywords = entry["keywords"] as? [String]
+            listing.suggestedPrompts = entry["suggestedPrompts"] as? [String]
+            return listing
         }
     }
 
@@ -178,8 +211,10 @@ extension PluginInventoryReader {
                 HostPathResolver.join(path, ".claude-plugin/marketplace.json"), issues: &issues)
             return PluginMarketplace(
                 host: .claude, name: name, source: address, scopeRoot: root,
-                path: path, plugins: claudeCatalog(manifest), scope: scope,
-                ref: source["ref"] as? String, localSource: Self.claudeLocalSource(source))
+                path: path, plugins: claudeCatalog(manifest, root: path, issues: &issues),
+                scope: scope,
+                ref: source["ref"] as? String, localSource: Self.claudeLocalSource(source),
+                sourceType: source["source"] as? String)
         }
     }
 }
