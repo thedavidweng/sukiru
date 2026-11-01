@@ -101,6 +101,29 @@ Never present that operation as a catalog-only removal. Sources:
 
 ### Codex CLI 0.160.0
 
+#### Rechecked 2026-10-31: Codex CLI 0.166.0
+
+Installed help confirms `plugin add <PLUGIN[@MARKETPLACE]> --json` and
+`plugin list --available --json`; marketplace add, upgrade and remove accept
+`--json`, and upgrade applies to a whole Git marketplace. In a disposable HOME
+and CODEX_HOME, a local marketplace was registered, its available plugin was
+listed, and `plugin add sample@sukiru-probe --json` installed its payload into
+that temporary CODEX_HOME. This is real-host evidence for a local marketplace,
+not for Git, project mutations or authenticated remote catalogs.
+
+The local list JSON had `installed` and `available` arrays. Entries included
+plugin and marketplace identity, version, installed/enabled flags, source,
+marketplace source and installation/authentication policies. It did not include
+the fixture description. With no login, explicitly listing
+`openai-curated-remote` failed with `chatgpt authentication required for remote
+plugin catalog`; no authenticated remote response was observed. The current
+[CLI source](https://github.com/openai/codex/blob/main/codex-rs/cli/src/plugin_cmd.rs)
+maps remote summaries to the same identity, version, state, source and policy
+fields, not descriptions or other rich listing details; that source inspection
+is not verification of the installed binary's authenticated response. Remote
+listing may contact the backend and update a host catalog cache. Sukiru does not
+invoke it automatically or implement an app-server fallback.
+
 ```text
 codex plugin add [OPTIONS] <PLUGIN[@MARKETPLACE]>
   -m, --marketplace <MARKETPLACE>

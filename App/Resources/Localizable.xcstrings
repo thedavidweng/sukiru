@@ -1,6 +1,32 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Catalog could not be read" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法读取目录" } } }
+    },
+    "Catalog not found" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未找到目录" } } }
+    },
+    "Local catalog" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "本地目录" } } }
+    },
+    "Git marketplace" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Git 市场" } } }
+    },
+    "Add a local catalog or a Git marketplace to Codex." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "为 Codex 添加本地目录或 Git 市场。" }
+        }
+      }
+    },
+    "Codex installs %@@%@ in user scope. Local catalogs are used in place; Git marketplaces are refreshed by Codex." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "Codex 在用户范围内安装 %1$@@%2$@。本地目录直接使用，Git 市场由 Codex 刷新。" }
+        }
+      }
+    },
     "Not fetched by Droid yet" : {
       "localizations" : {
         "zh-Hans" : {

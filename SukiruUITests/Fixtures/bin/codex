@@ -1,0 +1,6 @@
+#!/bin/sh
+case "$*" in
+  --version) echo 'codex-cli 0.166.0' ;;
+  *--help*) echo 'Usage: codex plugin --json' ;;
+  *) echo "$*" >> "$SUKIRU_UI_PROBE_LOG" ;;
+esac

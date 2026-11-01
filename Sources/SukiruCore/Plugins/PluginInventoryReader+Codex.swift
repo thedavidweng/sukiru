@@ -35,7 +35,7 @@ extension PluginInventoryReader {
             let pieces = identifier.split(separator: "@", maxSplits: 1).map(String.init)
             guard pieces.count == 2 else { continue }
             let base = HostPathResolver.join(config, "plugins/cache/\(pieces[1])/\(pieces[0])")
-            let version = CodexPluginVersion.active(in: base)
+            let version = root == environment.home ? CodexPluginVersion.active(in: base) : nil
             let path = version.map { HostPathResolver.join(base, $0) }
             let manifest = path.flatMap { codexManifest(at: $0, issues: &issues) }
             installations.append(
@@ -101,14 +101,7 @@ extension PluginInventoryReader {
                 }
             }
             let entries = manifest?["plugins"] as? [[String: Any]] ?? []
-            let catalog = entries.compactMap { entry -> PluginCatalogEntry? in
-                guard let pluginName = entry["name"] as? String else { return nil }
-                let source = entry["source"] as? [String: Any]
-                return PluginCatalogEntry(
-                    name: pluginName,
-                    source: source?["path"] as? String ?? entry["source"] as? String ?? "inline",
-                    version: entry["version"] as? String)
-            }
+            let catalog = entries.compactMap(codexCatalogEntry)
             marketplaces.append(
                 PluginMarketplace(
                     host: .codex, name: name, source: source,
@@ -117,6 +110,36 @@ extension PluginInventoryReader {
                     localSource: fields["source_type"] == "local"))
         }
         return marketplaces
+    }
+
+    private func codexCatalogEntry(_ entry: [String: Any]) -> PluginCatalogEntry? {
+        guard let pluginName = entry["name"] as? String else { return nil }
+        let source = entry["source"] as? [String: Any]
+        var listing = PluginCatalogEntry(
+            name: pluginName,
+            source: source?["path"] as? String ?? Self.claudeSourceLabel(entry["source"]),
+            version: entry["version"] as? String)
+        let interface = entry["interface"] as? [String: Any]
+        listing.displayName = interface?["displayName"] as? String
+        listing.summary =
+            interface?["shortDescription"] as? String ?? entry["description"] as? String
+        listing.author =
+            (entry["author"] as? [String: Any])?["name"] as? String
+            ?? entry["author"] as? String ?? interface?["developerName"] as? String
+        listing.homepage = entry["homepage"] as? String ?? interface?["websiteURL"] as? String
+        listing.repository = entry["repository"] as? String
+        listing.license = entry["license"] as? String
+        listing.categories =
+            (entry["category"] as? String).map { [$0] } ?? entry["category"] as? [String]
+        listing.keywords = entry["keywords"] as? [String] ?? entry["tags"] as? [String]
+        listing.suggestedPrompts = interface?["defaultPrompts"] as? [String]
+        listing.logo = (interface?["logo"] as? String).flatMap { logo in
+            guard let url = URL(string: logo), url.scheme == "https", url.host != nil else {
+                return nil
+            }
+            return logo
+        }
+        return listing
     }
 
     func resolvePluginPath(_ value: String, relativeTo root: String) -> String {

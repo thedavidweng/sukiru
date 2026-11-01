@@ -36,6 +36,11 @@ struct PluginLibraryView: View {
         state.showsPluginMarketplace && host.hasMarketplaceBrowser
     }
 
+    private var showsMarketplaceSheet: Bool {
+        host.hasMarketplaces && host != .codex
+            && (!host.hasMarketplaceBrowser || host.managesMarketplaces)
+    }
+
     var body: some View {
         Group {
             if showsMarketplace {
@@ -53,6 +58,15 @@ struct PluginLibraryView: View {
                 : Text("\(installations.count) plugins")
         )
         .searchable(text: $filter, placement: .toolbar, prompt: Text("Filter Plugins"))
+        .onChange(of: filter) { _, _ in
+            if let selected = state.selectedCatalogEntry, !selected.entry.matches(filter) {
+                state.selectedCatalogEntryID = nil
+            }
+        }
+        .onChange(of: host) { _, _ in
+            state.selectedCatalogEntryID = nil
+            filter = ""
+        }
         .sheet(isPresented: $showingMarketplaces, onDismiss: runCatalogAction) {
             PluginMarketplacesSheet(
                 marketplaces: marketplaces,
@@ -107,7 +121,7 @@ struct PluginLibraryView: View {
                 .accessibilityIdentifier("sukiru.plugins.marketplace.add")
                 .help("Preview registering a marketplace with this host")
             }
-            if host.hasMarketplaces, !host.hasMarketplaceBrowser || host.managesMarketplaces {
+            if showsMarketplaceSheet {
                 Button("Marketplaces…") { showingMarketplaces = true }
                     .accessibilityIdentifier("sukiru.plugins.catalog")
                     .help("Browse configured marketplaces")
