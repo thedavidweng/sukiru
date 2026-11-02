@@ -38,6 +38,8 @@ final class AppState: ObservableObject {
     /// The Plugins tab shows the host's marketplace instead of its installations.
     @Published var showsPluginMarketplace = false
     @Published var selectedCatalogEntryID: String?
+    /// Cursor's own marketplace list and official catalog, read on Refresh (ADR-0008).
+    @Published var cursorCatalog = CursorCatalogState()
     @Published var pluginManagement = PluginManagementState()
     @Published var hookState = HookNavigationState()
     @Published private(set) var scanPhase: ScanPhase = .loading
@@ -215,13 +217,6 @@ final class AppState: ObservableObject {
         // launch and survive relaunches.
         loadHistory()
         pruneHistoryOnLaunch()
-    }
-
-    /// Refresh (toolbar and ⌘R): re-reads everything Sukiru shows from disk,
-    /// the library and the batch history alike.
-    func refresh() {
-        rescan()
-        loadHistory()
     }
 
     /// Re-runs the scan against the current environment and project roots.

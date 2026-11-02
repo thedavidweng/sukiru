@@ -102,8 +102,14 @@ extension PluginInstallation {
         }
     }
 
-    var sourceTitle: String {
-        source.hasPrefix("/") || source.hasPrefix("./") ? String(localized: "Local Plugin") : source
+    /// The marketplace a host records for this installation. Antigravity records its
+    /// discovery folder, Cursor its download cache and OpenCode a plugin file; those
+    /// are not names a user knows, so only a recorded marketplace name is shown.
+    var sourceTitle: String? {
+        guard [.claude, .codex, .droid].contains(host), !source.isEmpty,
+            !source.hasPrefix("/"), !source.hasPrefix("./")
+        else { return nil }
+        return source
     }
 
     /// Per-installation operations. Claude's managed installations accept

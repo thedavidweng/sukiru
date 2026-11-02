@@ -120,19 +120,20 @@ extension PluginInventoryReader {
                 path: directory,
                 plugins: entries.compactMap { entry in
                     guard let name = entry["name"] as? String else { return nil }
-                    return antigravityCatalogEntry(entry, name: name, source: directory)
+                    return antigravityCatalogEntry(entry, name: name)
                 }, evidence: "cached-catalog", updatedAt: updatedAt)
         }
     }
 
     /// Partner listings give `category` as a string or a list, and `author` as an object.
     private func antigravityCatalogEntry(
-        _ entry: [String: Any], name: String, source: String
+        _ entry: [String: Any], name: String
     ) -> PluginCatalogEntry {
         let author = entry["author"] as? [String: Any]
         let category = entry["category"]
         return PluginCatalogEntry(
-            name: name, source: source, version: entry["version"] as? String,
+            name: name, source: Self.antigravityArchive(entry["source"]),
+            version: entry["version"] as? String,
             displayName: entry["displayName"] as? String,
             summary: entry["description"] as? String,
             logo: entry["logo"] as? String,
@@ -143,5 +144,13 @@ extension PluginInventoryReader {
             categories: (category as? String).map { [$0] } ?? category as? [String],
             keywords: entry["keywords"] as? [String],
             suggestedPrompts: entry["suggestedPrompts"] as? [String])
+    }
+
+    /// A listing's payload is an archive the host downloads, not the cache directory
+    /// that holds this catalog.
+    private static func antigravityArchive(_ source: Any?) -> String {
+        guard let url = (source as? [String: Any])?["url"] as? String, url.hasPrefix("https://")
+        else { return "" }
+        return url
     }
 }

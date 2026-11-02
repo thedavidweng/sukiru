@@ -650,7 +650,7 @@ protocol. The implementation's current evidence boundaries are:
 | Cached payloads | The same reader enumerates `~/.cursor/plugins/cache/<source>/<plugin>/<version>`. | Each source/path/version remains distinct. A cache entry proves neither installation nor enablement. No same-name marketplace precedence or project installation is inferred from it. |
 | Symlinks | Resolved manifest and payload paths must stay inside the appropriate discovery/cache boundary. | Escaping local links produce inspection Problems; contained aliases can be inspected but cannot be locally disabled. |
 | Components | `PluginInventoryReader+CursorComponents` reads declarative rules, skills, agents, commands, MCP, hooks and variable metadata. | Plugin code and component commands are never run. Variable names/schema metadata are available without exposing defaults or secret values. Hooks remain plugin components, not new standalone Hook cleanup capabilities. |
-| Cached catalogs | `PluginInventoryReader+CursorCatalogs` reads `.cursor-plugin/marketplace.json` descendants of `~/.cursor/plugins/marketplaces`, retaining catalog source, entries and Git ref. | Evidence is `cached-catalog`; registration scope and mutability remain Unknown. Explicit official listing supplies registration targeting only when requested. |
+| Cached catalogs | `PluginInventoryReader+CursorCatalogs` reads one catalog per cached payload under `~/.cursor/plugins/marketplaces`, in precedence order `.cursor-plugin/marketplace.json`, `.claude-plugin/marketplace.json`, `.agents/plugins/marketplace.json`, retaining catalog source, entries and Git ref. Entry sources and relative logos resolve from the payload root that holds the catalog's hidden directory. | Evidence is `cached-catalog`; registration scope and mutability remain Unknown. A payload with several catalog files still yields one marketplace. Explicit official listing supplies registration targeting only when requested. Rechecked 2026-11-02: a registered `github.com/dietrichgebert/ponytail/<sha>` payload holds only `.claude-plugin` and `.agents/plugins` catalogs and is visible in `agent plugin marketplace list --format json`, which is why the other locations are read. The [Plugins reference](https://cursor.com/docs/reference/plugins) still documents only `.cursor-plugin/marketplace.json` for multi-plugin repositories. |
 | State store | No Cursor SQLite/global-storage key is used as installation or enablement evidence. | Uncalibrated or absent state yields Unknown. Runtime loading also remains Unknown. This is the required graceful fallback, not permission to repair private state. |
 | Individual plugin lifecycle | `PluginLifecyclePlanner.cursorLimitation` returns Customize and interactive `agent` `/plugin` instructions for install/remove/enable/disable/update, including selected user/project scope and explicit Sukiru refresh. | No non-interactive command, cache deletion or SQLite edit substitutes for an unsupported host operation. Marketplace refresh is not a plugin update. |
 | Local disable exception | `CursorLocalDisable` accepts only a physical discovered plugin directly within `~/.cursor/plugins/local`; destination is `~/.cursor/plugins/disabled-local/<UUID>/<name>`. | Explicit reviewed move with manifest precondition, snapshot and conflict-aware rollback. Cache payloads and symlink aliases are refused. No ledger tracks disabled installations. |
@@ -732,6 +732,47 @@ advertising a native marketplace operation. Registration listing runs only
 for an explicit lifecycle request; passive inventory remains subprocess-free.
 Personal mutation, duplicate protection, backend-effects consent, capture,
 observation and rollback retain the ADR-0008 boundaries.
+
+### Cursor's marketplace page reads registrations and the official catalog
+
+Rechecked 2026-11-02 on `agent` `2026.10.22-27dcf5f`. `agent plugin marketplace list
+--format json` returned five registrations: `cursor-public` (`displayName` "Cursor Plugin
+Marketplace", empty `gitUrl`, scope `global`) and `mobile-mcp`, `ponytail`,
+`claude-code-warp` and `vercel` in user scope with `gitUrl` and `gitRef`. Only `ponytail`
+had a local checkout (`~/.cursor/plugins/marketplaces/github.com/dietrichgebert/ponytail/
+<commit>/`); the other three had no payload, so their catalogs are not on this Mac. This is
+a read of the developer's own account, not a mutation or an isolated-account
+verification.
+
+`~/.cursor/plugins/cache/.cloud-plugin-manifest.json` held
+`{manifestVersion, manifestDigest, plugins: [], createdAt}`, so the official catalog is not
+cached either. Installed official plugins live in
+`~/.cursor/plugins/cache/cursor-public/<plugin>/<version>/` (cloudflare, shadcn, github,
+pstack, x and cli-for-agent here).
+
+The public repository [cursor/plugins](https://github.com/cursor/plugins) publishes
+`.cursor-plugin/marketplace.json` (raw:
+`https://raw.githubusercontent.com/cursor/plugins/main/.cursor-plugin/marketplace.json`)
+with `name` `cursor-plugins`, `owner`, `metadata` and 129 `plugins` entries whose `source`
+is a relative directory. It is part of the official catalog, not all of it: `github`,
+`pstack`, `x` and `cli-for-agent` are listed there, while `cloudflare` and `shadcn` are
+not. The complete catalog is only on [cursor.com/marketplace](https://cursor.com/marketplace),
+which has no documented API; Sukiru links to it and does not scrape it.
+
+Sukiru reads both sources when the user opens the Cursor Marketplace page or refreshes it
+(`CursorMarketplaceLoader`): registrations through the same version/help-gated probe used
+for targeting, and the catalog over the shared marketplace transport. A source that fails
+is reported on its own and the other stays usable. The page paints the previous read first
+(the validated registrations in `~/Library/Caches/app.sukiru/cursor-registrations.json` and
+the catalog from the bounded HTTP cache), then revalidates and replaces it; that cache is
+display state, not a catalog Sukiru maintains, and deleting it only costs a first paint
+(ADR-0008 amendment 2026-11-02). A cached catalog is shown only when Cursor registers its
+Git source, matched by `<host>/<path>` under `~/.cursor/plugins/marketplaces`; the Installed
+marker reads the `cursor-public` cache folder for an official listing, and that match is
+display only. Nothing on Cursor's side is written. `CursorMarketplaceCatalogTests` covers
+the official listings and links, a registration without a cache, a cached catalog Cursor
+does not register, the installed marker, the paint-then-revalidate order, and each failure
+path.
 
 ### Capability regression expectations
 

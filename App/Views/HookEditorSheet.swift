@@ -108,7 +108,7 @@ struct HookEditorSheet: View {
         switch choice.scope {
         case "project": return String(localized: "hook.scope.project \(name)")
         case "local": return String(localized: "hook.scope.local \(name)")
-        default: return String(localized: "User Library")
+        default: return String(localized: "User scope")
         }
     }
 

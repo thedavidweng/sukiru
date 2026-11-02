@@ -10,11 +10,21 @@ struct PluginLibraryView: View {
     private var host: PluginHost { state.pluginHost }
 
     private var installations: [PluginInstallation] {
-        state.pluginInstallations(for: host).filter {
-            filter.isEmpty || $0.displayName.localizedCaseInsensitiveContains(filter)
-                || $0.identifier.localizedCaseInsensitiveContains(filter)
-                || $0.sourceTitle.localizedCaseInsensitiveContains(filter)
-        }.sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
+        state.pluginInstallations(for: host).filter { plugin in
+            filter.isEmpty || title(plugin).localizedCaseInsensitiveContains(filter)
+                || plugin.identifier.localizedCaseInsensitiveContains(filter)
+                || (plugin.sourceTitle?.localizedCaseInsensitiveContains(filter) ?? false)
+        }.sorted { title($0).localizedStandardCompare(title($1)) == .orderedAscending }
+    }
+
+    /// The listing that names a plugin, when the inventory holds a match; a
+    /// catalog's name and icon read better than a bare manifest.
+    private func listing(_ plugin: PluginInstallation) -> PluginCatalogEntry? {
+        state.pluginListing(for: plugin)
+    }
+
+    private func title(_ plugin: PluginInstallation) -> String {
+        listing(plugin)?.title ?? plugin.displayName
     }
 
     /// User scope first, then each added project, matching the Skills Library.
@@ -27,7 +37,7 @@ struct PluginLibraryView: View {
     }
 
     private var marketplaces: [PluginMarketplace] {
-        (state.report?.pluginInventory?.marketplaces ?? []).filter { $0.host == host }
+        state.pluginMarketplaces(for: host)
     }
 
     private var showsMarketplace: Bool {
@@ -41,6 +51,20 @@ struct PluginLibraryView: View {
             } else {
                 installedList
             }
+        }
+        .task(id: showsMarketplace && host == .cursor) {
+            if showsMarketplace, host == .cursor, !state.cursorCatalog.loaded {
+                state.loadCursorMarketplaces()
+            }
+        }
+        .alert(
+            "The plugins could not be previewed",
+            isPresented: Binding(
+                get: { state.pluginManagement.directError != nil },
+                set: { if !$0 { state.pluginManagement.directError = nil } })
+        ) {
+        } message: {
+            Text(verbatim: state.pluginManagement.directError ?? "")
         }
         .navigationTitle(Text(verbatim: host.displayName))
         .navigationSubtitle(
@@ -130,7 +154,7 @@ struct PluginLibraryView: View {
             ForEach(groups, id: \.root) { group in
                 Section {
                     ForEach(group.plugins) { plugin in
-                        PluginRow(plugin: plugin)
+                        PluginRow(plugin: plugin, listing: listing(plugin))
                             .tag(plugin.id)
                     }
                 } header: {
@@ -163,15 +187,6 @@ struct PluginLibraryView: View {
             guard !state.pluginActionsBusy else { return }
             state.removePlugins(state.selectedPlugins)
         }
-        .alert(
-            "The plugins could not be previewed",
-            isPresented: Binding(
-                get: { state.pluginManagement.removalError != nil },
-                set: { if !$0 { state.pluginManagement.removalError = nil } })
-        ) {
-        } message: {
-            Text(verbatim: state.pluginManagement.removalError ?? "")
-        }
         .overlay {
             if installations.isEmpty {
                 if filter.isEmpty {
@@ -197,7 +212,7 @@ struct PluginLibraryView: View {
     private func header(root: String, count: Int) -> some View {
         HStack(spacing: 6) {
             if root == state.environment.home {
-                Text("User Library")
+                Text("User scope")
             } else {
                 Text(verbatim: URL(fileURLWithPath: root).lastPathComponent)
                     .lineLimit(1)
@@ -214,14 +229,15 @@ struct PluginLibraryView: View {
 
 private struct PluginRow: View {
     let plugin: PluginInstallation
+    let listing: PluginCatalogEntry?
 
     /// Laid out like a Marketplace listing, so both tabs read the same.
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            PluginLogo(address: plugin.logo, size: 28)
+            PluginLogo(address: listing?.logo ?? plugin.logo, size: 28)
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
-                    Text(verbatim: plugin.displayName)
+                    Text(verbatim: listing?.title ?? plugin.displayName)
                         .font(.body.weight(.semibold))
                         .lineLimit(1)
                     Spacer(minLength: 8)
@@ -233,21 +249,23 @@ private struct PluginRow: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
-                HStack(spacing: 0) {
-                    Text(
-                        verbatim: ([plugin.sourceTitle] + [plugin.version].compactMap { $0 })
-                            .joined(separator: " · "))
-                    if plugin.scope == "local" {
-                        Text(verbatim: " · ")
-                        Text("Local project settings")
-                    }
+                if !details.isEmpty {
+                    Text(verbatim: details.joined(separator: " · "))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
             }
         }
         .accessibilityIdentifier("sukiru.plugins.row.\(plugin.id)")
+    }
+
+    /// The marketplace, version and project scope a user recognises. A host path
+    /// or cache folder is not one of them.
+    private var details: [String] {
+        var parts = [plugin.sourceTitle, plugin.version].compactMap { $0 }
+        if plugin.scope == "local" { parts.append(String(localized: "Local project settings")) }
+        return parts
     }
 
     @ViewBuilder
@@ -269,6 +287,12 @@ private struct PluginRow: View {
 extension AppState {
     func pluginInstallations(for host: PluginHost) -> [PluginInstallation] {
         (report?.pluginInventory?.installations ?? []).filter { $0.host == host }
+    }
+
+    /// The listing whose name and icon describe an installation, when a catalog
+    /// names it; see `PluginInventory.catalogEntry(for:)`.
+    func pluginListing(for plugin: PluginInstallation) -> PluginCatalogEntry? {
+        report?.pluginInventory?.catalogEntry(for: plugin)
     }
 
     var selectedPlugins: [PluginInstallation] {

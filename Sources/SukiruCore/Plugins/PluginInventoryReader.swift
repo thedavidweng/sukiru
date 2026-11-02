@@ -43,7 +43,7 @@ public struct PluginInventoryReader: Sendable {
         return PluginInventory(
             installations: installations,
             marketplaces: (claude.marketplaces + codex.marketplaces + cursorMarketplaces
-                + antigravityMarketplaces + droid.marketplaces).sorted {
+                + antigravityMarketplaces + droid.marketplaces).map(withPluginDetails).sorted {
                     $0.id < $1.id
                 },
             issues: issues.sorted { ($0.path, $0.kind) < ($1.path, $1.kind) },

@@ -13,7 +13,7 @@ struct StubMarketplaceTransport: MarketplaceTransport {
         self.responses = responses
     }
 
-    func fetch(_ url: URL) async throws -> Data {
+    func fetch(_ url: URL, cachePolicy: URLRequest.CachePolicy) async throws -> Data {
         guard let response = responses[url.absoluteString] else {
             throw MarketplaceError.transport("no stub for \(url.absoluteString)")
         }

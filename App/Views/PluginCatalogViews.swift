@@ -10,84 +10,32 @@ struct PluginCatalogList: View {
 
     var body: some View {
         List(selection: $state.selectedCatalogEntryID) {
+            if !readProblems.isEmpty || isReadingCursor {
+                Section {
+                    ForEach(readProblems, id: \.self) { problem in
+                        Text(verbatim: problem)
+                            .foregroundStyle(.secondary)
+                    }
+                    if isReadingCursor {
+                        HStack(spacing: 8) {
+                            ProgressView().controlSize(.small)
+                            Text("Reading Cursor's marketplaces…")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .accessibilityIdentifier("sukiru.plugins.marketplace.readState")
+            }
             ForEach(marketplaces.filter { filter.isEmpty || !entries($0).isEmpty }) { marketplace in
                 let cachedClaude =
                     marketplace.host == .claude && marketplace.evidence == "cached-catalog"
                 let showsEmpty =
                     filter.isEmpty || [.cursor, .antigravity].contains(marketplace.host)
-                let canManage =
-                    marketplace.host.managesMarketplaces
-                    && (marketplace.host != .codex || marketplace.scope == "user")
                 Section {
                     HStack(alignment: .top) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(verbatim: marketplace.name)
-                            if marketplace.host == .cursor {
-                                Text("Cached catalog; registration scope unknown")
-                                    .font(.caption).foregroundStyle(.secondary)
-                                Text(verbatim: marketplace.source)
-                                    .font(.caption).foregroundStyle(.secondary)
-                                    .lineLimit(1).truncationMode(.middle)
-                                    .help(marketplace.source)
-                                if let ref = marketplace.ref {
-                                    Text("Git ref: \(ref)").font(.caption).foregroundStyle(
-                                        .secondary)
-                                }
-                            }
-                            if [.droid, .codex, .claude].contains(marketplace.host) {
-                                Group {
-                                    Text(
-                                        verbatim: marketplace.source
-                                            + (marketplace.ref.map { " · " + $0 } ?? "")
-                                    )
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
-                                    .help(marketplace.source)
-                                    .accessibilityIdentifier(
-                                        "sukiru.plugins.marketplace.source.\(marketplace.id)"
-                                    )
-                                    if marketplace.host == .codex {
-                                        if marketplace.localSource {
-                                            Text("Local catalog")
-                                        } else {
-                                            Text("Git marketplace")
-                                        }
-                                    }
-                                    if marketplace.evidence == "cached-catalog" {
-                                        Text("Cached catalog; registration scope unknown")
-                                    } else if marketplace.scope == "org" {
-                                        Text("Organization settings")
-                                        Text("Organization settings manage this marketplace.")
-                                    } else if marketplace.scope == "user" {
-                                        Text("User Library")
-                                    } else if marketplace.scope == "local" {
-                                        Text("Local project settings: \(marketplace.scopeRoot)")
-                                            .lineLimit(1)
-                                            .truncationMode(.middle)
-                                            .help(marketplace.scopeRoot)
-                                    } else if marketplace.scope == "project" {
-                                        Text(
-                                            verbatim: URL(fileURLWithPath: marketplace.scopeRoot)
-                                                .lastPathComponent
-                                        )
-                                        .help(marketplace.scopeRoot)
-                                    }
-                                }
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            }
-                            if let updatedAt = marketplace.updatedAt {
-                                Text("Catalog cached by the host: \(updatedAt)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            if marketplace.host == .antigravity {
-                                Text("Manage marketplaces in Antigravity.")
-                                    .font(.caption).foregroundStyle(.secondary)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        if canManage {
+                        PluginCatalogHeading(marketplace: marketplace)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        if marketplace.allowsMarketplaceActions {
                             Menu {
                                 Button("Refresh Marketplace") {
                                     state.manageMarketplace(
@@ -172,22 +120,19 @@ struct PluginCatalogList: View {
                 } description: {
                     Text("Add a marketplace to Droid; Sukiru lists the catalogs Droid has fetched.")
                 } actions: {
-                    Button("Add Factory Plugins…") {
-                        state.newPluginOperation(
-                            host: .droid, action: "marketplace-add",
-                            target: "Factory-AI/factory-plugins")
-                    }
-                    .accessibilityIdentifier("sukiru.plugins.marketplace.add.official")
-                    .help("Preview registering Factory's official marketplace")
+                    Button("Add Factory Plugins…") { state.addFactoryMarketplace() }
+                        .disabled(state.pluginActionsBusy)
+                        .accessibilityIdentifier("sukiru.plugins.marketplace.add.official")
+                        .help("Preview registering Factory's official marketplace")
                 }
-            } else if marketplaces.isEmpty, inspectionIssues.isEmpty {
+            } else if marketplaces.isEmpty, inspectionIssues.isEmpty, !isReadingCursor {
                 ContentUnavailableView {
                     Label("No cached marketplace catalog", systemImage: "shippingbox")
                 } description: {
                     if state.pluginHost == .antigravity {
                         Text("Manage marketplaces in Antigravity.")
                     } else {
-                        Text("Add a marketplace to Cursor to see its cached catalog.")
+                        Text("Refresh to list the marketplaces Cursor has registered.")
                     }
                 }
             } else if showsFilteredEmpty, inspectionIssues.isEmpty {
@@ -205,7 +150,10 @@ struct PluginCatalogList: View {
     }
 
     private func emptyCatalogMessage(_ marketplace: PluginMarketplace) -> LocalizedStringKey {
-        if marketplace.host == .cursor { return "The cached catalog has no listings" }
+        if marketplace.host == .cursor {
+            return marketplace.isCursorRegistration && marketplace.path == nil
+                ? "Not cached" : "The cached catalog has no listings"
+        }
         switch marketplace.catalogState {
         case "unverified":
             return marketplace.host == .codex && marketplace.scope == "user"
@@ -228,12 +176,16 @@ struct PluginCatalogList: View {
         _ entry: PluginCatalogEntry, in marketplace: PluginMarketplace
     ) -> PluginCatalogRow.Installation? {
         let plugins = state.pluginInstallations(for: marketplace.host)
-        if marketplace.host == .cursor { return nil }
+        if marketplace.host == .cursor {
+            let installed =
+                state.report?.pluginInventory?.cursorHasInstalled(entry, in: marketplace)
+            return installed == true ? .installed(help: nil) : nil
+        }
         if marketplace.host == .claude {
             let recorded =
                 state.report?.pluginInventory?.recordedClaudeInstallations(
                     entry, marketplace: marketplace) ?? []
-            return recorded.isEmpty ? nil : .recorded(recorded)
+            return recorded.isEmpty ? nil : .installed(help: recordedScopes(recorded))
         }
         if marketplace.host == .codex {
             guard
@@ -242,13 +194,33 @@ struct PluginCatalogList: View {
                         && $0.scope == marketplace.scope && $0.scopeRoot == marketplace.scopeRoot
                 })
             else { return nil }
-            return plugin.installationStatus == "installed" ? .installed : .configured
+            return plugin.installationStatus == "installed"
+                ? .installed(help: nil) : .configured
         }
         if marketplace.host == .droid {
             return plugins.contains { $0.identifier == "\(entry.name)@\(marketplace.name)" }
-                ? .installed : nil
+                ? .installed(help: nil) : nil
         }
-        return plugins.contains { $0.identifier == entry.name } ? .sameName : nil
+        return plugins.contains { $0.identifier == entry.name }
+            ? .installed(
+                help:
+                    "An installed plugin has this directory name; that does not prove it came from this listing"
+            ) : nil
+    }
+
+    /// Claude Code records the scopes it installed a plugin in; a listing's name alone does not.
+    private func recordedScopes(_ records: [PluginInstallation]) -> String {
+        let scopes = records.map { record in
+            switch record.scope {
+            case "user": String(localized: "User scope")
+            case "project", "local": URL(fileURLWithPath: record.scopeRoot).lastPathComponent
+            default: record.scope
+            }
+        }
+        return String(
+            localized:
+                "Claude Code records this plugin as installed in \(scopes.formatted(.list(type: .and)))"
+        )
     }
 
     /// Category first, then name, so related listings sit together.
@@ -273,12 +245,31 @@ extension PluginCatalogList {
         }
     }
 
+    /// The page states what an explicit Refresh could not read rather than showing the
+    /// part that answered as if it were the whole list.
+    fileprivate var readProblems: [String] {
+        guard state.pluginHost == .cursor else { return [] }
+        var problems: [String] = []
+        if state.cursorCatalog.registrationsUnavailable {
+            problems.append(
+                String(localized: "Cursor's registered marketplaces could not be read."))
+        }
+        if state.cursorCatalog.officialUnavailable {
+            problems.append(String(localized: "The official Cursor catalog could not be loaded."))
+        }
+        return problems
+    }
+
+    fileprivate var isReadingCursor: Bool {
+        state.pluginHost == .cursor && state.cursorCatalog.loading
+    }
 }
 
 private struct PluginCatalogRow: View {
     enum Installation {
-        case installed, configured, sameName
-        case recorded([PluginInstallation])
+        /// `help` carries the nuance of a name-only or host-recorded match.
+        case installed(help: String?)
+        case configured
     }
 
     let entry: PluginCatalogEntry
@@ -299,38 +290,7 @@ private struct PluginCatalogRow: View {
                     .font(.body.weight(.semibold))
                     .lineLimit(1)
                 Spacer(minLength: 8)
-                if case .installed = installation {
-                    Text("Installed")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } else if case .configured = installation {
-                    Text("Configured reference")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } else if case .sameName = installation {
-                    Text("Same name installed")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .help(
-                            "An installed plugin has this directory name; that does not prove it came from this listing"
-                        )
-                }
-            }
-            if case .recorded(let records) = installation {
-                ForEach(records) { record in
-                    HStack(spacing: 4) {
-                        Text("Recorded by host")
-                        if record.scope == "user" {
-                            Text("User Library")
-                        } else if record.scope == "local" {
-                            Text("Local project settings: \(record.scopeRoot)")
-                        } else {
-                            Text(verbatim: "\(record.scope): \(record.scopeRoot)")
-                        }
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                }
+                status
             }
             if let summary = entry.summary {
                 Text(verbatim: summary)
@@ -348,5 +308,29 @@ private struct PluginCatalogRow: View {
                     .lineLimit(1)
             }
         }
+    }
+
+    @ViewBuilder
+    private var status: some View {
+        switch installation {
+        case .installed(let help):
+            if let help {
+                installed.help(help)
+            } else {
+                installed
+            }
+        case .configured:
+            Text("Configured reference")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        case nil:
+            EmptyView()
+        }
+    }
+
+    private var installed: Text {
+        Text("Installed")
+            .font(.caption)
+            .foregroundStyle(.secondary)
     }
 }

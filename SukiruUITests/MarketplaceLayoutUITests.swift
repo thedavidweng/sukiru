@@ -121,7 +121,7 @@ final class MarketplaceLayoutUITests: XCTestCase {
                 format: "identifier BEGINSWITH %@", "sukiru.plugins.marketplace.actions.\(host):")
         ).firstMatch
         let scope = app.descendants(matching: .any)["sukiru.plugins.marketplace.list"].firstMatch
-            .staticTexts["User Library"].firstMatch
+            .staticTexts["User scope"].firstMatch
         XCTAssertTrue(source.waitForExistence(timeout: 5))
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Marketplace metadata - \(host)"

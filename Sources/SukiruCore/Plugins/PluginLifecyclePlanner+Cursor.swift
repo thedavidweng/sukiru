@@ -45,7 +45,7 @@ extension PluginLifecyclePlanner {
             ? "update" : String(request.action.dropFirst("marketplace-".count))
         let output = try probe.output(
             host: .cursor, arguments: ["plugin", "marketplace", "list", "--format", "json"])
-        let registrations = try cursorRegistrations(output)
+        let registrations = try CursorMarketplaceRegistration.decode(output)
         if verb == "add" {
             guard
                 !registrations.contains(where: {
@@ -96,32 +96,6 @@ extension PluginLifecyclePlanner {
             requiredFlags: ["--git-ref"])
     }
 
-    private struct CursorRegistration: Decodable {
-        let name: String
-        let scope: String
-        let gitUrl: String
-    }
-
-    private func cursorRegistrations(_ output: String) throws -> [CursorRegistration] {
-        let registrations: [CursorRegistration]
-        do {
-            registrations = try JSONDecoder().decode(
-                [CursorRegistration].self, from: Data(output.utf8))
-        } catch {
-            throw PluginLifecycleError(
-                message: "Unrecognized Cursor marketplace JSON output; use Customize")
-        }
-        guard
-            registrations.allSatisfy({
-                !$0.name.isEmpty && ["user", "team", "global"].contains($0.scope)
-            })
-        else {
-            throw PluginLifecycleError(
-                message: "Unrecognized Cursor marketplace JSON registration; use Customize")
-        }
-        return registrations
-    }
-
     func cursorLimitation(_ request: PluginLifecycleRequest) -> String? {
         if request.action.hasPrefix("marketplace-") {
             return request.scope == "user"
@@ -131,7 +105,8 @@ extension PluginLifecyclePlanner {
         }
         return
             "Cursor has no verified non-interactive single-plugin \(request.action) operation. "
-            + "Open Cursor Customize or run agent and use the interactive /plugin workflow for \(request.target). "
+            + "Use Customize or cursor.com/marketplace, or run agent and use the interactive "
+            + "/plugin workflow for \(request.target). "
             + "Choose \(request.scope) scope\(request.scope == "user" ? "" : " in " + request.scopeRoot), "
             + "then refresh Sukiru. Marketplace refresh is not a single-plugin update."
     }

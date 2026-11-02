@@ -1,6 +1,6 @@
 # Sukiru Privacy Policy
 
-Last updated: October 30, 2026
+Last updated: November 2, 2026
 
 Sukiru does not collect, sell, or share personal data. It has no accounts,
 analytics, advertising, telemetry, or cloud service of its own.
@@ -55,7 +55,15 @@ Sukiru makes these network requests, and no others:
   Plugins, Sukiru downloads each listing's icon from the HTTPS address in that
   host's own cached catalog (for Antigravity, `www.gstatic.com`). The request
   carries only the icon address; nothing about your Mac or your plugins is
-  sent.
+  sent. An icon you have already seen is kept in the display cache below.
+- **Cursor's marketplaces**: when you open or refresh the Cursor Marketplace
+  page in Plugins, Sukiru runs `agent plugin marketplace list --format json`, which
+  asks Cursor for the marketplaces registered to your Cursor account using
+  your existing Cursor login. At the same time it downloads Cursor's
+  published catalog from `raw.githubusercontent.com` (`cursor/plugins`).
+  Nothing about your Mac, your plugins, or your account is sent with that
+  download. That page first shows what the previous read stored, then
+  replaces it with the fresh answer.
 - **Commands you confirm**: installs, updates, and repairs run `npx skills` or
   `gh skill`, which may contact npm, GitHub, or a skill's source repository.
   Plugin operations run the host's own CLI, such as `agy plugin install`,
@@ -86,8 +94,15 @@ Sukiru runs, and Sukiru never writes it to disk.
   in the standard macOS user defaults. The history limits are stored in
   `settings.json` in the folder above, so the app and the `sukiru` CLI use
   the same limits.
+- **A display cache** in `~/Library/Caches/app.sukiru`: the plugin icons you
+  have seen and Cursor's marketplace data from the page described above, so
+  those views open at once and still show something offline. It is bounded at
+  32 MB (8 MB in memory), macOS may purge it at any time, and deleting it is
+  always safe; Sukiru downloads what it needs again. Nothing in it is
+  uploaded, and it is never read as the truth about an installed or
+  registered plugin.
 
-This data stays on your Mac. Sukiru never uploads it. Delete the folder above
+This data stays on your Mac. Sukiru never uploads it. Delete the folders above
 to remove it.
 
 ## This website

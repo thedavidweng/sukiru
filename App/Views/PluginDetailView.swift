@@ -15,6 +15,7 @@ struct PluginDetailView: View {
     private var installationDetail: some View {
         Group {
             if let plugin = state.selectedPlugin {
+                let listing = state.pluginListing(for: plugin)
                 Form {
                     Section {
                         if let summary = plugin.summary {
@@ -28,13 +29,16 @@ struct PluginDetailView: View {
                                     ? String(localized: "Agent Plugin")
                                     : String(localized: "Cursor Plugin"))
                         }
-                        LabeledContent("Source", value: plugin.sourceTitle)
-                        LabeledContent(
-                            "Scope",
-                            value: plugin.scopeRoot == state.environment.home
-                                ? String(localized: "User Library") : plugin.scopeRoot)
-                        LabeledContent(
-                            "Version", value: plugin.version ?? String(localized: "Unknown"))
+                        if let source = plugin.sourceTitle {
+                            LabeledContent("Source", value: source)
+                        }
+                        LabeledContent("Scope") {
+                            Text(verbatim: scopeValue(plugin))
+                                .help(plugin.scopeRoot)
+                        }
+                        if let version = plugin.version {
+                            LabeledContent("Version", value: version)
+                        }
                         if plugin.offersEnabledSwitch {
                             PluginEnabledToggle(plugin: plugin)
                         } else {
@@ -45,11 +49,10 @@ struct PluginDetailView: View {
                                 "This is the host's configured state; runtime loading has not been checked."
                             )
                         }
-                        LabeledContent("Runtime", value: String(localized: "Not Checked"))
                     } header: {
                         HStack(spacing: 12) {
-                            PluginLogo(address: plugin.logo, size: 40)
-                            Text(verbatim: plugin.displayName)
+                            PluginLogo(address: listing?.logo ?? plugin.logo, size: 40)
+                            Text(verbatim: listing?.title ?? plugin.displayName)
                                 .font(.title.weight(.semibold))
                         }
                         .textCase(nil)
@@ -141,6 +144,15 @@ struct PluginDetailView: View {
     }
 
     private let updateHelp: LocalizedStringKey = "Preview the host's update command for this plugin"
+
+    /// User and organization settings have names; a project scope is its folder.
+    private func scopeValue(_ plugin: PluginInstallation) -> String {
+        switch plugin.scope {
+        case "user": String(localized: "User scope")
+        case "org": String(localized: "Organization settings")
+        default: URL(fileURLWithPath: plugin.scopeRoot).lastPathComponent
+        }
+    }
 
     /// Finder-style item actions beside the inspector, each a standard
     /// toolbar button that previews its command before anything runs. They

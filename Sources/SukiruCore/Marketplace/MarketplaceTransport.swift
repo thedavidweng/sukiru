@@ -8,9 +8,17 @@ import Foundation
 /// writes anything. The transport is injectable so core tests stay fully
 /// offline (stub transports return fixture payloads).
 public protocol MarketplaceTransport: Sendable {
-    /// Fetches the URL and returns the body. Throws on any transport error
-    /// (unreachable, non-2xx, malformed body). Never returns partial data.
-    func fetch(_ url: URL) async throws -> Data
+    /// Fetches the URL under `cachePolicy` and returns the body. Throws on any
+    /// transport error (unreachable, non-2xx, malformed body). Never returns
+    /// partial data.
+    func fetch(_ url: URL, cachePolicy: URLRequest.CachePolicy) async throws -> Data
+}
+
+extension MarketplaceTransport {
+    /// The ordinary read: HTTP caching (ETag, 304) decides what is fresh.
+    public func fetch(_ url: URL) async throws -> Data {
+        try await fetch(url, cachePolicy: .useProtocolCachePolicy)
+    }
 }
 
 /// The real URLSession-backed transport: `GET`, `Accept: application/json`,
@@ -31,9 +39,8 @@ public struct URLSessionMarketplaceTransport: MarketplaceTransport {
         self.timeout = timeout
     }
 
-    public func fetch(_ url: URL) async throws -> Data {
-        var request = URLRequest(url: url)
-        request.timeoutInterval = timeout
+    public func fetch(_ url: URL, cachePolicy: URLRequest.CachePolicy) async throws -> Data {
+        var request = URLRequest(url: url, cachePolicy: cachePolicy, timeoutInterval: timeout)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         // Probes stay hermetic and non-interactive (same discipline as the
         // CLI child environment).

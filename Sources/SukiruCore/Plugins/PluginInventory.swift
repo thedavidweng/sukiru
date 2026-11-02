@@ -118,8 +118,10 @@ public struct PluginMarketplace: Codable, Equatable, Sendable, Identifiable {
     public let source: String
     public let scopeRoot: String
     public let path: String?
-    public let plugins: [PluginCatalogEntry]
+    public var plugins: [PluginCatalogEntry]
     public var evidence: String?
+    /// The name the host shows for the marketplace when it differs from the identifier.
+    public var displayName: String?
     /// The settings scope that declares the marketplace (`user`, `project`,
     /// Claude's `local` or Droid's `org`); a declaration in each scope is its own entry.
     public var scope: String = "user"
@@ -155,6 +157,26 @@ public struct PluginMarketplace: Codable, Equatable, Sendable, Identifiable {
                 ? ":\(source.utf8.count):\(source):\(ref ?? ""):\(sourceType ?? "")" : "")
             + (host == .codex
                 ? ":\(source.utf8.count):\(source):\(ref ?? ""):\(localSource)" : "")
+    }
+
+    /// Droid records an ISO 8601 cache time and Antigravity an HTTP date; `updatedAt`
+    /// keeps the host's string for the CLI.
+    public var updatedDate: Date? {
+        guard let updatedAt else { return nil }
+        if let date = Self.iso8601(updatedAt) { return date }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "EEE, d MMM yyyy HH:mm:ss zzz"
+        return formatter.date(from: updatedAt)
+    }
+
+    private static func iso8601(_ value: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: value) { return date }
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.date(from: value)
     }
 }
 
@@ -224,5 +246,46 @@ public struct PluginInventory: Codable, Equatable, Sendable {
         return installations.filter {
             $0.host == .claude && $0.identifier == "\(entry.name)@\(marketplace.name)"
         }
+    }
+
+    /// The listing that describes an installation well enough to lend it a name and
+    /// icon. Claude, Codex and Droid record `plugin@marketplace`, so their match is
+    /// exact. Antigravity and Cursor record only a plugin name, which matches when
+    /// exactly one listing carries that name; such a match is display only and is
+    /// no evidence that the installation came from that listing.
+    public func catalogEntry(for installation: PluginInstallation) -> PluginCatalogEntry? {
+        switch installation.host {
+        case .claude, .codex, .droid:
+            guard let (plugin, name) = PluginInventoryReader.droidPluginID(installation.identifier)
+            else { return nil }
+            guard installation.host != .claude || claudeHasUniqueSource(name) else { return nil }
+            let marketplace = marketplaces.first {
+                $0.host == installation.host && $0.name == name
+                    && (installation.host != .codex
+                        || ($0.scope == installation.scope
+                            && $0.scopeRoot == installation.scopeRoot))
+                    && $0.plugins.contains { $0.name == plugin }
+            }
+            return marketplace?.plugins.first { $0.name == plugin }
+        case .antigravity, .cursor:
+            let listings = marketplaces.filter { $0.host == installation.host }
+                .flatMap { $0.plugins.filter { $0.name == installation.identifier } }
+            return listings.count == 1 ? listings[0] : nil
+        case .opencode:
+            return nil
+        }
+    }
+
+    /// Cursor installs the official catalog's plugins into a cache folder named after the
+    /// registration of that marketplace, so a cached payload with the listing's name in that
+    /// folder is the local evidence an official listing was installed.
+    public func cursorHasInstalled(
+        _ entry: PluginCatalogEntry, in marketplace: PluginMarketplace
+    ) -> Bool {
+        marketplace.isCursorOfficialCatalog
+            && installations.contains {
+                $0.host == .cursor && $0.source == marketplace.name
+                    && $0.identifier == entry.name
+            }
     }
 }

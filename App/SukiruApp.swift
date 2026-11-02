@@ -8,6 +8,15 @@ struct SukiruApp: App {
     @StateObject private var state = AppState()
     @StateObject private var updater = AppUpdater()
 
+    init() {
+        // Plugin icons and Cursor's catalog stay on disk, so a later launch paints them
+        // without the network. The caps keep that cache from growing with browsing.
+        URLCache.shared = URLCache(
+            memoryCapacity: 8 * 1024 * 1024, diskCapacity: 32 * 1024 * 1024,
+            directory: URL(fileURLWithPath: NSHomeDirectory())
+                .appending(path: "Library/Caches/app.sukiru"))
+    }
+
     var body: some Scene {
         WindowGroup("Sukiru") {
             RootView()
@@ -277,8 +286,8 @@ private struct PluginCommands: Commands {
             }
             .keyboardShortcut("r", modifiers: [.command, .control])
             .disabled(
-                state.pluginActionsBusy || state.activeCatalogEntry == nil
-                    || !state.pluginHost.managesMarketplaces)
+                state.pluginActionsBusy
+                    || state.activeCatalogEntry?.marketplace.allowsMarketplaceActions != true)
             Button("Remove Marketplace") {
                 if let selected = state.activeCatalogEntry {
                     state.manageMarketplace(selected.marketplace, action: "marketplace-remove")
@@ -286,13 +295,13 @@ private struct PluginCommands: Commands {
             }
             .keyboardShortcut(.delete, modifiers: [.command, .control])
             .disabled(
-                state.pluginActionsBusy || state.activeCatalogEntry == nil
-                    || !state.pluginHost.managesMarketplaces
+                state.pluginActionsBusy
+                    || state.activeCatalogEntry?.marketplace.allowsMarketplaceActions != true
                     || state.activeCatalogEntry?.marketplace.scope == "org")
             Menu("Marketplaces") {
                 ForEach(
-                    (state.report?.pluginInventory?.marketplaces ?? []).filter {
-                        $0.host == state.pluginHost && $0.host.managesMarketplaces
+                    state.pluginMarketplaces(for: state.pluginHost).filter {
+                        $0.allowsMarketplaceActions
                     }
                 ) { marketplace in
                     Menu("\(marketplace.name) - \(marketplace.scopeRoot)") {

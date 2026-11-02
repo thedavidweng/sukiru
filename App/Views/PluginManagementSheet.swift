@@ -75,7 +75,7 @@ struct PluginManagementSheet: View {
     /// Repository installs go through `agy plugin install`, which manages user plugins only.
     private var scopePicker: some View {
         Picker("Scope", selection: $state.pluginManagement.scopeRoot) {
-            Text("User Library").tag(state.environment.home)
+            Text("User scope").tag(state.environment.home)
             ForEach(state.projectRoots, id: \.self) { root in
                 Text(verbatim: root).tag(root)
             }

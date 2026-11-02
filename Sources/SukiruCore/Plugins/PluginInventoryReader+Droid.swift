@@ -262,7 +262,8 @@ extension PluginInventoryReader {
             evidence: level.scope == "org" ? "org-managed" : (record == nil ? "declared" : nil),
             scope: level.scope,
             ref: source?["ref"] as? String ?? source?["sha"] as? String, localSource: local,
-            updatedAt: record?["lastUpdated"] as? String, catalogState: catalogState)
+            updatedAt: record?["lastUpdated"] as? String, sourceType: source?["source"] as? String,
+            catalogState: catalogState)
     }
 
     static func droidSourceLabel(_ source: [String: Any]?) -> String {

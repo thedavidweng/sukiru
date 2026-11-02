@@ -73,13 +73,16 @@ final class SukiruUITests: XCTestCase {
         XCTAssertTrue(
             app.staticTexts["Cached payload; installation unknown"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Unknown"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Not Checked"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Not Checked"].exists)
 
         app.radioButtons["Marketplace"].click()
-        XCTAssertTrue(
-            app.staticTexts["Git ref: refs/heads/main"].waitForExistence(timeout: 5))
+        let source = app.staticTexts.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@", "sukiru.plugins.marketplace.source.cursor:")
+        ).firstMatch
+        XCTAssertTrue(source.waitForExistence(timeout: 5))
+        XCTAssertTrue(source.label.contains("refs/heads/main"))
         XCTAssertTrue(app.staticTexts["cached-demo"].exists)
-        XCTAssertFalse(app.staticTexts["Same name installed"].exists)
         app.staticTexts["remote-demo"].click()
         XCTAssertTrue(app.staticTexts["A cached listing"].firstMatch.waitForExistence(timeout: 5))
         let filter = app.searchFields.firstMatch
@@ -275,8 +278,7 @@ final class SukiruUITests: XCTestCase {
         droid.click()
         app.radioButtons["Marketplace"].click()
         XCTAssertTrue(
-            app.staticTexts["Organization settings manage this marketplace."].waitForExistence(
-                timeout: 10))
+            app.staticTexts["Organization settings"].waitForExistence(timeout: 10))
         let id = "sukiru.plugins.marketplace.actions.droid:\(home.path):corp:org"
         let actions = app.menuButtons.matching(
             NSPredicate(format: "identifier == %@", id)
@@ -342,7 +344,7 @@ final class SukiruUITests: XCTestCase {
         app.radioButtons["Marketplace"].firstMatch.click()
         let row = app.descendants(matching: .any)["sukiru.plugins.marketplace.row.demo"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["Cached catalog; registration scope unknown"].exists)
+        XCTAssertTrue(app.staticTexts["User scope"].exists)
         let actions = app.menuButtons.matching(
             NSPredicate(
                 format: "identifier BEGINSWITH %@", "sukiru.plugins.marketplace.actions.claude:")

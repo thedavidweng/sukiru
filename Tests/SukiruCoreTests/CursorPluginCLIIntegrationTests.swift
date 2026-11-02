@@ -289,4 +289,78 @@ extension CursorPluginCLIIntegrationTests {
             })
     }
 
+    @Test("A cached payload holding only a Claude marketplace catalog is read")
+    func claudeCatalogLocation() throws {
+        let tree = try TempTree()
+        let home = try tree.dir("home")
+        let payload = "home/.cursor/plugins/marketplaces/example.com/team/repo/one"
+        try tree.file(
+            "\(payload)/.claude-plugin/marketplace.json",
+            contents: """
+                {"name":"claude-format","plugins":[
+                  {"name":"demo","source":"./plugins/demo","logo":"assets/logo.svg"}]}
+                """)
+        try tree.file("\(payload)/assets/logo.svg", contents: "<svg/>")
+        let payloadPath = tree.canonicalPath + "/" + payload
+        let result = try CLIRunner.run(
+            ["plugins", "marketplaces", "list", "--host", "cursor"],
+            environment: CLIRunner.fixtureEnvironment(home: home))
+        #expect(result.exitCode == 0)
+        let catalogs = try #require(
+            try JSONSerialization.jsonObject(with: result.stdout) as? [[String: Any]])
+        #expect(catalogs.count == 1)
+        #expect(catalogs.first?["name"] as? String == "claude-format")
+        #expect(catalogs.first?["path"] as? String == payloadPath)
+        let entry = try #require((catalogs.first?["plugins"] as? [[String: Any]])?.first)
+        #expect(entry["source"] as? String == "./plugins/demo")
+        #expect(entry["logo"] as? String == payloadPath + "/assets/logo.svg")
+    }
+
+    @Test("A cached payload holding only an Agent Plugins catalog resolves from its root")
+    func agentPluginCatalogLocation() throws {
+        let tree = try TempTree()
+        let home = try tree.dir("home")
+        let payload = "home/.cursor/plugins/marketplaces/example"
+        try tree.file(
+            "\(payload)/.agents/plugins/marketplace.json",
+            contents: """
+                {"name":"agent-format","plugins":[
+                  {"name":"demo","source":{"path":"./plugins/demo"}}]}
+                """)
+        let payloadPath = tree.canonicalPath + "/" + payload
+        let result = try CLIRunner.run(
+            ["plugins", "marketplaces", "list", "--host", "cursor"],
+            environment: CLIRunner.fixtureEnvironment(home: home))
+        let catalogs = try #require(
+            try JSONSerialization.jsonObject(with: result.stdout) as? [[String: Any]])
+        #expect(catalogs.count == 1)
+        #expect(catalogs.first?["name"] as? String == "agent-format")
+        #expect(catalogs.first?["path"] as? String == payloadPath)
+        let entry = try #require((catalogs.first?["plugins"] as? [[String: Any]])?.first)
+        #expect(entry["source"] as? String == "./plugins/demo")
+    }
+
+    @Test("One cached payload yields one catalog and prefers the Cursor location")
+    func catalogLocationPrecedence() throws {
+        let tree = try TempTree()
+        let home = try tree.dir("home")
+        let payload = "home/.cursor/plugins/marketplaces/example"
+        try tree.file(
+            "\(payload)/.claude-plugin/marketplace.json",
+            contents: #"{"name":"claude","plugins":[{"name":"claude","source":"./a"}]}"#)
+        try tree.file(
+            "\(payload)/.cursor-plugin/marketplace.json",
+            contents: #"{"name":"cursor","plugins":[{"name":"cursor","source":"./b"}]}"#)
+        let result = try CLIRunner.run(
+            ["plugins", "marketplaces", "list", "--host", "cursor"],
+            environment: CLIRunner.fixtureEnvironment(home: home))
+        let catalogs = try #require(
+            try JSONSerialization.jsonObject(with: result.stdout) as? [[String: Any]])
+        #expect(catalogs.count == 1)
+        #expect(catalogs.first?["name"] as? String == "cursor")
+        #expect(
+            (catalogs.first?["plugins"] as? [[String: Any]])?.compactMap { $0["name"] as? String }
+                == ["cursor"])
+    }
+
 }

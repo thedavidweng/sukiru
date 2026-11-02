@@ -2,6 +2,17 @@ import SukiruCore
 
 extension PluginMarketplace {
     func catalogID(_ entry: PluginCatalogEntry) -> String { id + "\n" + entry.name }
+
+    /// A marketplace Sukiru registers, refreshes and removes. Cursor manages its
+    /// account-level registrations and official catalog itself, and Codex mutates only
+    /// user scope, so those get no menu.
+    var allowsMarketplaceActions: Bool {
+        guard host.managesMarketplaces else { return false }
+        switch host {
+        case .codex, .cursor: return scope == "user"
+        default: return true
+        }
+    }
 }
 
 extension PluginCatalogEntry {
@@ -26,8 +37,7 @@ extension AppState {
 
     var selectedCatalogEntry: (entry: PluginCatalogEntry, marketplace: PluginMarketplace)? {
         guard let id = selectedCatalogEntryID else { return nil }
-        for marketplace in report?.pluginInventory?.marketplaces ?? []
-        where marketplace.host == pluginHost {
+        for marketplace in pluginMarketplaces(for: pluginHost) {
             if let entry = marketplace.plugins.first(where: { marketplace.catalogID($0) == id }) {
                 return (entry, marketplace)
             }

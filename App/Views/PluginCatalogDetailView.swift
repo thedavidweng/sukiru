@@ -22,10 +22,19 @@ struct PluginCatalogDetailView: View {
                 if let summary = entry.summary {
                     Text(verbatim: summary)
                 }
-                LabeledContent("Marketplace", value: marketplace.name)
+                LabeledContent("Marketplace", value: marketplace.displayName ?? marketplace.name)
                 LabeledContent("Plugin", value: entry.name)
-                LabeledContent("Version", value: entry.version ?? String(localized: "Unknown"))
-                LabeledContent("Source", value: entry.source)
+                if let version = entry.version {
+                    LabeledContent("Version", value: version)
+                }
+                if let source = sourceLink(entry) {
+                    LabeledContent("Source") {
+                        Link(source.absoluteString, destination: source)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .help(source.absoluteString)
+                    }
+                }
                 if let author = entry.author {
                     LabeledContent("Author", value: author)
                 }
@@ -55,6 +64,18 @@ struct PluginCatalogDetailView: View {
         .textSelection(.enabled)
     }
 
+    /// A listing's source is where its payload lives. A path inside the marketplace
+    /// checkout, a host cache folder or an install archive is not a page a user opens,
+    /// and a catalog may repeat a link the Project Links section already shows.
+    private func sourceLink(_ entry: PluginCatalogEntry) -> URL? {
+        guard let range = entry.source.range(of: "https://"),
+            let url = URL(string: String(entry.source[range.lowerBound...])),
+            !["zip", "tar", "gz", "tgz"].contains(url.pathExtension),
+            url.absoluteString != entry.homepage, url.absoluteString != entry.repository
+        else { return nil }
+        return url
+    }
+
     @ViewBuilder
     private func installNote(
         _ entry: PluginCatalogEntry, marketplace: PluginMarketplace
@@ -81,8 +102,7 @@ struct PluginCatalogDetailView: View {
             }
         } else if marketplace.host == .cursor {
             Section {
-                Text("Cached catalog; registration scope unknown")
-                Text("Installation, enablement and runtime loading are unknown.")
+                Text("Sukiru only browses Cursor's catalog; install in Customize, then Refresh.")
                     .foregroundStyle(.secondary)
             }
         } else if marketplace.host == .droid {

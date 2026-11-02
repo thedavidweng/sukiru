@@ -19,63 +19,157 @@
     },
     "error.plugin.chooseConfiguredMarketplace" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose a plugin from a configured host marketplace." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请从宿主已配置的市场中选择插件。" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a plugin from a configured host marketplace."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请从宿主已配置的市场中选择插件。"
+          }
+        }
       }
     },
     "error.plugin.expectedMarketplacePlugins" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Expected a marketplace plugins array." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "市场目录中的 plugins 应为数组。" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expected a marketplace plugins array."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "市场目录中的 plugins 应为数组。"
+          }
+        }
       }
     },
     "error.plugin.invalidMarketplaceEntry" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Invalid marketplace plugin entry." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "市场插件条目无效。" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid marketplace plugin entry."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "市场插件条目无效。"
+          }
+        }
       }
     },
     "error.plugin.invalidCursorCatalogEntry" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cursor catalog entry requires a name and source path." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Cursor 目录条目必须包含名称和来源路径。" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cursor catalog entry requires a name and source path."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cursor 目录条目必须包含名称和来源路径。"
+          }
+        }
       }
     },
     "error.plugin.invalidCursorMarketplace" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cursor marketplace requires a name and plugin entries." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Cursor 市场必须包含名称和插件条目。" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cursor marketplace requires a name and plugin entries."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cursor 市场必须包含名称和插件条目。"
+          }
+        }
       }
     },
     "%@ - %@" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ - %2$@" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ - %2$@" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ - %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ - %2$@"
+          }
+        }
       }
     },
     "error.plugin.marketplaceSourceConflict %@" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Marketplace %@ refers to multiple sources." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "市场 %@ 对应多个来源。" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marketplace %@ refers to multiple sources."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "市场 %@ 对应多个来源。"
+          }
+        }
       }
     },
     "error.plugin.selectedCodexMarketplace" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "The selected Codex marketplace is not available in user scope." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "所选 Codex 市场在用户范围内不可用。" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The selected Codex marketplace is not available in user scope."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所选 Codex 市场在用户范围内不可用。"
+          }
+        }
       }
     },
     "error.plugin.marketplaceNotDeclared %@ %@ %@" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Marketplace %1$@ is not declared in %2$@ scope at %3$@." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "市场 %1$@ 未在 %3$@ 的 %2$@ 范围中声明。" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marketplace %1$@ is not declared in %2$@ scope at %3$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "市场 %1$@ 未在 %3$@ 的 %2$@ 范围中声明。"
+          }
+        }
       }
     },
     "Manage marketplaces in Antigravity." : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请在 Antigravity 中管理市场。" } } }
-    },
-    "Add a marketplace to Cursor to see its cached catalog." : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "为 Cursor 添加市场后，即可查看缓存的目录。" } } }
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在 Antigravity 中管理市场。"
+          }
+        }
+      }
     },
     "In Cursor, open Customize or use /plugin to install %@. Select %@, then refresh Sukiru." : {
       "localizations" : {
@@ -107,16 +201,6 @@
         }
       }
     },
-    "Installation, enablement and runtime loading are unknown." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "安装、启用和运行时加载状态未知。"
-          }
-        }
-      }
-    },
     "Cursor installs individual plugins in Customize or its interactive /plugin workflow. Choose the project where you want to install it." : {
       "localizations" : {
         "zh-Hans" : {
@@ -128,28 +212,62 @@
       }
     },
     "Catalog could not be read" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法读取目录" } } }
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取目录"
+          }
+        }
+      }
     },
     "Catalog not found" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未找到目录" } } }
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到目录"
+          }
+        }
+      }
     },
     "Local catalog" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "本地目录" } } }
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地目录"
+          }
+        }
+      }
     },
     "Git marketplace" : {
-      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Git 市场" } } }
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Git 市场"
+          }
+        }
+      }
     },
     "Add a local catalog or a Git marketplace to Codex." : {
       "localizations" : {
         "zh-Hans" : {
-          "stringUnit" : { "state" : "translated", "value" : "为 Codex 添加本地目录或 Git 市场。" }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "为 Codex 添加本地目录或 Git 市场。"
+          }
         }
       }
     },
     "Codex installs %@@%@ in user scope. Local catalogs are used in place; Git marketplaces are refreshed by Codex." : {
       "localizations" : {
         "zh-Hans" : {
-          "stringUnit" : { "state" : "translated", "value" : "Codex 在用户范围内安装 %1$@@%2$@。本地目录直接使用，Git 市场由 Codex 刷新。" }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex 在用户范围内安装 %1$@@%2$@。本地目录直接使用，Git 市场由 Codex 刷新。"
+          }
         }
       }
     },
@@ -159,16 +277,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Droid 尚未获取"
-          }
-        }
-      }
-    },
-    "Organization settings manage this marketplace." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "此市场由组织设置管理。"
           }
         }
       }
@@ -393,32 +501,12 @@
         }
       }
     },
-    "An installed plugin has this directory name; that does not prove it came from this listing" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已有插件使用这个目录名；这不能证明它来自此市场条目"
-          }
-        }
-      }
-    },
     "Author" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "作者"
-          }
-        }
-      }
-    },
-    "Catalog cached by the host: %@" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "宿主缓存目录的时间：%@"
           }
         }
       }
@@ -539,16 +627,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "项目链接"
-          }
-        }
-      }
-    },
-    "Same name installed" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已装同名插件"
           }
         }
       }
@@ -739,256 +817,256 @@
       }
     },
     "pnpm Package Permissions" : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "pnpm Package Permissions"
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pnpm Package Permissions"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "pnpm 软件包权限"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pnpm 软件包权限"
           }
         }
       }
     },
     "Permission" : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Permission"
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permission"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "权限"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "权限"
           }
         }
       }
     },
     "Verified skill links are installed" : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verified skill links are installed"
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verified skill links are installed"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已安装经验证的技能链接"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已安装经验证的技能链接"
           }
         }
       }
     },
     "No verified skill links" : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No verified skill links"
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No verified skill links"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "没有经验证的技能链接"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有经验证的技能链接"
           }
         }
       }
     },
     "Permission applies to every skill in this package." : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Permission applies to every skill in this package."
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permission applies to every skill in this package."
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "权限适用于此软件包中的所有技能。"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "权限适用于此软件包中的所有技能。"
           }
         }
       }
     },
     "Review package permissions with pnpm, then refresh Sukiru." : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Review package permissions with pnpm, then refresh Sukiru."
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review package permissions with pnpm, then refresh Sukiru."
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请使用 pnpm 检查软件包权限，然后刷新 Sukiru。"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请使用 pnpm 检查软件包权限，然后刷新 Sukiru。"
           }
         }
       }
     },
     "Inspect package-wide permission and verified installation evidence" : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Inspect package-wide permission and verified installation evidence"
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inspect package-wide permission and verified installation evidence"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "查看软件包权限和经验证的安装证据"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看软件包权限和经验证的安装证据"
           }
         }
       }
     },
     "Awaiting Approval" : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Awaiting Approval"
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Awaiting Approval"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "等待批准"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等待批准"
           }
         }
       }
     },
     "Approved" : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Approved"
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approved"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已批准"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已批准"
           }
         }
       }
     },
     "Denied" : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Denied"
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denied"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已拒绝"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已拒绝"
           }
         }
       }
     },
     "Unknown Permission" : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unknown Permission"
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unknown Permission"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "权限未知"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "权限未知"
           }
         }
       }
     },
     "Installed entry name" : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Installed entry name"
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installed entry name"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已安装条目名称"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已安装条目名称"
           }
         }
       }
     },
     "Package identity" : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Package identity"
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Package identity"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "软件包标识"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "软件包标识"
           }
         }
       }
     },
     "Conflicting pnpm ownership" : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conflicting pnpm ownership"
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conflicting pnpm ownership"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "pnpm 所有权冲突"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pnpm 所有权冲突"
           }
         }
       }
     },
     "pnpm ownership conflicts with another manager. Inspect the project before changing this entry." : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "pnpm ownership conflicts with another manager. Inspect the project before changing this entry."
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pnpm ownership conflicts with another manager. Inspect the project before changing this entry."
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "pnpm 所有权与其他管理器冲突。更改此条目前请检查项目。"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pnpm 所有权与其他管理器冲突。更改此条目前请检查项目。"
           }
         }
       }
@@ -1780,16 +1858,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "损坏的符号链接"
-          }
-        }
-      }
-    },
-    "Cached catalog; registration scope unknown" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "缓存目录；注册作用域未知"
           }
         }
       }
@@ -4457,16 +4525,6 @@
         }
       }
     },
-    "Not Checked" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "未检查"
-          }
-        }
-      }
-    },
     "Not Run" : {
       "comment" : "Status of a batch command that never ran because an earlier one failed.",
       "localizations" : {
@@ -4867,23 +4925,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "预览此宿主支持的操作或能力限制"
-          }
-        }
-      }
-    },
-    "Preview unavailable for this result.\nThe install re-resolves the exact skill through the official CLI." : {
-      "comment" : "Search detail pane: a result whose SKILL.md could not be fetched; the install still works because the CLI re-resolves the exact skill.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Preview unavailable for this result.\nThe install re-resolves the exact skill through the official CLI."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法预览此结果。\n安装时会通过官方 CLI 重新解析确切技能。"
           }
         }
       }
@@ -5846,16 +5887,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "运行搜索"
-          }
-        }
-      }
-    },
-    "Runtime" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "运行时"
           }
         }
       }
@@ -7082,7 +7113,7 @@
       }
     },
     "User scope" : {
-      "comment" : "Library section header for user-scope skills.",
+      "comment" : "Scope label and section header for user-scope items: skills, plugins and hooks. Plugins and hooks use it instead of a library name, which would read as a skill library.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -11655,6 +11686,171 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$lld 个钩子，%2$lld 个扩展"
+          }
+        }
+      }
+    },
+    "Claude Code records this plugin as installed in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code records this plugin as installed in %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code 记录的安装范围：%@"
+          }
+        }
+      }
+    },
+    "Complete catalog at" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完整目录见"
+          }
+        }
+      }
+    },
+    "Cursor lists every plugin in its catalog on cursor.com/marketplace" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cursor 在 cursor.com/marketplace 列出其目录中的全部插件"
+          }
+        }
+      }
+    },
+    "Cursor's registered marketplaces could not be read." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取 Cursor 已注册的市场。"
+          }
+        }
+      }
+    },
+    "Global scope" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全局范围"
+          }
+        }
+      }
+    },
+    "No settings file declares this marketplace, so Claude Code added it in user scope" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No settings file declares this marketplace, so Claude Code added it in user scope"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有设置文件声明此市场，因此 Claude Code 按用户范围添加。"
+          }
+        }
+      }
+    },
+    "Not cached" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未缓存"
+          }
+        }
+      }
+    },
+    "Preview unavailable for this result.\nThe install re-resolves the exact skill through the official CLI." : {
+      "comment" : "Search detail pane: a result whose SKILL.md could not be fetched; the install still works because the CLI re-resolves the exact skill.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preview unavailable for this result.\nThe install re-resolves the exact skill through the official CLI."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法预览此结果。\n安装时会通过官方 CLI 重新解析确切技能。"
+          }
+        }
+      }
+    },
+    "Reading Cursor's marketplaces…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在读取 Cursor 的市场…"
+          }
+        }
+      }
+    },
+    "Refresh to list the marketplaces Cursor has registered." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刷新后会列出 Cursor 已注册的市场。"
+          }
+        }
+      }
+    },
+    "Sukiru only browses Cursor's catalog; install in Customize, then Refresh." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sukiru 仅浏览 Cursor 的目录；请在 Customize 中安装，然后刷新。"
+          }
+        }
+      }
+    },
+    "Team scope" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "团队范围"
+          }
+        }
+      }
+    },
+    "The official Cursor catalog could not be loaded." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法载入 Cursor 的官方目录。"
+          }
+        }
+      }
+    },
+    "Updated %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updated %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@更新"
           }
         }
       }

@@ -1,6 +1,13 @@
 import Foundation
 
 extension PluginInventoryReader {
+    /// Cursor accepts a repository whose marketplace manifest lives in any of these locations.
+    /// Order is precedence: one payload yields one catalog, not one per file.
+    private static let cursorCatalogFiles = [
+        ".cursor-plugin/marketplace.json", ".claude-plugin/marketplace.json",
+        ".agents/plugins/marketplace.json"
+    ]
+
     /// Cached manifests describe a catalog, not its current registration or scope.
     func cursorCatalogs(issues: inout [Issue]) -> [PluginMarketplace] {
         let root = HostPathResolver.join(environment.home, ".cursor/plugins/marketplaces")
@@ -14,23 +21,31 @@ extension PluginInventoryReader {
                         kind: "plugin-config", path: url.path, message: error.localizedDescription))
                 return true
             })
-        var result: [PluginMarketplace] = []
+        var catalogFiles: [String: (manifest: String, rank: Int)] = [:]
         while let file = enumerator?.nextObject() as? URL {
-            guard file.path.hasSuffix("/.cursor-plugin/marketplace.json"),
-                cursorContained(file.path, in: root),
-                let manifest = json(file.path, issues: &issues)
+            guard cursorContained(file.path, in: root),
+                let rank = Self.cursorCatalogFiles.firstIndex(where: {
+                    file.path.hasSuffix("/" + $0)
+                })
             else { continue }
+            let payload = String(file.path.dropLast(Self.cursorCatalogFiles[rank].count + 1))
+            if let found = catalogFiles[payload], found.rank <= rank { continue }
+            catalogFiles[payload] = (file.path, rank)
+        }
+        var result: [PluginMarketplace] = []
+        for (payload, catalog) in catalogFiles.sorted(by: { $0.key < $1.key }) {
+            guard let manifest = json(catalog.manifest, issues: &issues) else { continue }
             guard let name = manifest["name"] as? String,
                 let entries = manifest["plugins"] as? [Any]
             else {
                 issues.append(
                     Issue(
-                        kind: "plugin-manifest", path: file.path,
+                        kind: "plugin-manifest", path: catalog.manifest,
                         message: "Cursor marketplace requires a name and plugin entries"))
                 continue
             }
-            let payload = file.deletingLastPathComponent().deletingLastPathComponent().path
-            let plugins = cursorEntries(entries, manifestPath: file.path, issues: &issues)
+            let plugins = cursorEntries(
+                entries, manifestPath: catalog.manifest, root: payload, issues: &issues)
             result.append(
                 PluginMarketplace(
                     host: .cursor, name: name, source: payload, scopeRoot: environment.home,
@@ -40,8 +55,11 @@ extension PluginInventoryReader {
         issues += readErrors
         return result
     }
+
+    /// Sources and logos resolve from the payload root, the directory that holds the
+    /// catalog file's `.cursor-plugin`/`.claude-plugin`/`.agents` parent.
     private func cursorEntries(
-        _ entries: [Any], manifestPath: String, issues: inout [Issue]
+        _ entries: [Any], manifestPath: String, root: String, issues: inout [Issue]
     ) -> [PluginCatalogEntry] {
         entries.compactMap { value -> PluginCatalogEntry? in
             guard let entry = value as? [String: Any] else {
@@ -53,9 +71,11 @@ extension PluginInventoryReader {
             }
             let source: String?
             if let path = entry["source"] as? String {
-                source = path
+                source = path.isEmpty ? nil : path
+            } else if let object = entry["source"] as? [String: Any] {
+                source = object["path"] as? String ?? Self.claudeSourceLabel(object)
             } else {
-                source = (entry["source"] as? [String: Any])?["path"] as? String
+                source = nil
             }
             guard let name = entry["name"] as? String, !name.isEmpty,
                 let source, !source.isEmpty
@@ -78,8 +98,6 @@ extension PluginInventoryReader {
                 (entry["keywords"] as? [String] ?? [])
                 + (entry["tags"] as? [String] ?? [])
             if let logo = entry["logo"] as? String {
-                let root = URL(fileURLWithPath: manifestPath)
-                    .deletingLastPathComponent().deletingLastPathComponent().path
                 let path = HostPathResolver.join(root, logo)
                 if logo.hasPrefix("https://") {
                     listing.logo = logo

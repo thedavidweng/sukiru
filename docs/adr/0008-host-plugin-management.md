@@ -242,6 +242,56 @@ ones, and Sukiru adds, refreshes and removes them through `droid plugin
 marketplace`; a project declaration is removed from that project's settings.
 See the [Droid evidence](../droid-plugin-interface-evidence.md).
 
+Listing details (2026-11-02). Most catalogs other than Antigravity's list a name, a
+description and a path. When a listing's relative source resolves inside the host's
+marketplace checkout, the plugin's own manifest fills only the fields the listing
+omits, and a checkout of a GitHub repository links the listing to its directory there
+(`/tree/<ref or HEAD>/<path>`; never for Droid `git-subdir` or local marketplaces). A
+listing with no declared icon keeps the system plugin symbol; Sukiru does not substitute
+avatars or generated artwork. These are display details, not provenance.
+
+## Amendment (2026-11-02): Cursor's registered and official marketplaces
+
+Cursor's Marketplace page shows what Cursor itself registers, not only the catalogs that
+happen to be cached here. `agent plugin marketplace list --format json` supplies the
+account's registrations and the official catalog is read from the public `cursor/plugins`
+repository. Both are read only when the user opens that page (once per session) or
+refreshes it: a launch or a scan runs no host command and makes no request, and neither
+read is stored (ADR-0008 keeps no catalog). Until they answer the page shows progress,
+not the cached catalogs, which would read as the whole marketplace.
+
+A registration whose catalog is not cached on this Mac is listed as "Not cached" instead
+of with entries, and a cached catalog Cursor does not register is not shown as registered.
+The official catalog is presented as Cursor's marketplace (its registration's display name
+when reported) with a link to cursor.com/marketplace, which holds the complete catalog;
+each listing links to its directory in the repository. A cached payload in the folder Cursor
+names after that registration marks an official listing as Installed; that match is display
+only. Installing stays interactive: Cursor has no install command, so Sukiru shows the
+Customize / cursor.com/marketplace instructions.
+
+## Amendment (2026-11-02): a purgeable display cache, never authority
+
+The "neither read is stored" rule and the progress-only page of the amendment above are
+amended for speed. Sukiru may keep what the last successful read produced: the official
+catalog in a bounded HTTP cache (8 MB memory, 32 MB disk) and the validated
+`agent plugin marketplace list --format json` registrations as a small JSON file, both in
+`~/Library/Caches/app.sukiru` alongside the plugin icon cache. This is a display cache, not
+a ledger: it is written only from a read that succeeded, it is never consulted as
+installation, enablement, provenance or registration truth, and deleting it changes nothing
+but the next first paint.
+
+On opening Cursor's marketplace page Sukiru paints that cache, then revalidates
+(registrations through `agent`, the catalog over HTTP with its ordinary ETag/304
+revalidation) and replaces both the file and the page. Progress is shown only when there is
+nothing cached to paint; a revalidation does not flash a spinner over marketplaces already
+on screen, and Refresh (⌘R) starts one. A revalidation that fails keeps the cached rows and
+reports that source's ordinary failure line instead of replacing the page with an error.
+Plugin icons are stored the same way and are read without revalidation, because a host
+versions an icon's address rather than changing its bytes.
+
+Scan reports, skill search results, and `SKILL.md` previews are not cached on disk: they
+follow the same shared HTTP cache's own semantics and nothing more.
+
 ## Amendment (2026-10-05): version contract and host-specific limits
 
 Exact version matching refused every host release after the one inspected. A

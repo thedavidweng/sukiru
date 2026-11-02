@@ -57,19 +57,14 @@ struct PluginLogo: View {
     private nonisolated static let byteLimit = 1 << 20
 
     private nonisolated static func load(_ url: URL) async -> NSImage? {
-        guard let (bytes, response) = try? await URLSession.shared.bytes(from: url),
+        // A host versions an icon's address instead of changing its bytes, so a stored
+        // copy is used as is on later launches and offline.
+        let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
             (response as? HTTPURLResponse)?.statusCode == 200,
-            response.expectedContentLength <= byteLimit
+            response.expectedContentLength <= byteLimit,
+            data.count <= byteLimit
         else { return nil }
-        var data = Data()
-        do {
-            for try await byte in bytes {
-                data.append(byte)
-                if data.count > byteLimit { return nil }
-            }
-        } catch {
-            return nil
-        }
         return NSImage(data: data)
     }
 }

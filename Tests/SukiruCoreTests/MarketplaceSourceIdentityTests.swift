@@ -163,6 +163,25 @@ struct MarketplaceSourceIdentityTests {
         #expect(try fixture.plan([fixture.request("install", "demo@team")]).exitCode == 0)
     }
 
+    @Test("A host's cache time parses from an HTTP date or ISO 8601")
+    func cacheTimestamps() throws {
+        func record(_ updatedAt: String) -> PluginMarketplace {
+            PluginMarketplace(
+                host: .droid, name: "team", source: "example/team", scopeRoot: "/",
+                path: nil, plugins: [], evidence: nil, updatedAt: updatedAt)
+        }
+        let iso = ISO8601DateFormatter()
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        #expect(
+            record("Fri, 30 Oct 2026 16:18:00 GMT").updatedDate
+                == iso.date(from: "2026-10-30T16:18:00Z"))
+        #expect(
+            record("2026-11-02T07:50:14.943Z").updatedDate
+                == fractional.date(from: "2026-11-02T07:50:14.943Z"))
+        #expect(record("not a date").updatedDate == nil)
+    }
+
     private func read(_ fixture: PluginHostFixture) -> PluginInventory {
         PluginInventoryReader(
             environment: SukiruEnvironment(reader: DictionaryEnvironmentReader(fixture.environment))

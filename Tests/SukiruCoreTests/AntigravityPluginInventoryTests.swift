@@ -45,7 +45,8 @@ struct AntigravityPluginInventoryTests {
                  {"name":"stripe","displayName":"Stripe","version":"0.0.1","description":"Payments",
                   "logo":"https://www.gstatic.com/s.svg",
                   "author":{"name":"Stripe"},"repository":"https://github.com/stripe/ai",
-                  "category":"Developer Tools","keywords":["payments"],"suggestedPrompts":["List products"]},
+                  "category":"Developer Tools","keywords":["payments"],"suggestedPrompts":["List products"],
+                  "source":{"type":"archive","url":"https://www.gstatic.com/stripe.zip"}},
                  {"name":"multi","category":["Security","Productivity"]}]}
                 """)
         try tree.file(
@@ -62,6 +63,8 @@ struct AntigravityPluginInventoryTests {
         #expect(stripe.displayName == "Stripe" && stripe.summary == "Payments")
         #expect(stripe.logo == "https://www.gstatic.com/s.svg")
         #expect(stripe.author == "Stripe" && stripe.repository == "https://github.com/stripe/ai")
+        // The catalog's cache directory is not where a listing comes from.
+        #expect(stripe.source == "https://www.gstatic.com/stripe.zip")
         #expect(
             stripe.categories == ["Developer Tools"] && stripe.suggestedPrompts == ["List products"]
         )

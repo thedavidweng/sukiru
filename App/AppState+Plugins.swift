@@ -17,8 +17,8 @@ struct PluginManagementState {
     /// The install target is a GitHub repository rather than a marketplace listing.
     var repositoryInstall = false
     var error: String?
-    /// Why a removal planned straight from the plugin list could not be previewed.
-    var removalError: String?
+    /// Why an operation planned without this sheet could not be previewed.
+    var directError: String?
 }
 
 extension AppState {
@@ -108,15 +108,28 @@ extension AppState {
     /// Removes plugins the way Finder deletes a selection: one reviewed batch
     /// in Pending Changes, without a per-plugin sheet first.
     func removePlugins(_ plugins: [PluginInstallation]) {
-        let requests = plugins.filter { $0.actions.contains("remove") }.map { plugin in
+        previewPluginRequests(
+            plugins.filter { $0.actions.contains("remove") }.map { plugin in
+                PluginLifecycleRequest(
+                    host: plugin.host, action: "remove", target: plugin.identifier,
+                    scope: plugin.scope, scopeRoot: plugin.scopeRoot)
+            })
+    }
+
+    /// Factory's official marketplace needs no input, so it skips the sheet.
+    func addFactoryMarketplace() {
+        previewPluginRequests([
             PluginLifecycleRequest(
-                host: plugin.host, action: "remove", target: plugin.identifier,
-                scope: plugin.scope, scopeRoot: plugin.scopeRoot)
-        }
+                host: .droid, action: "marketplace-add", target: "Factory-AI/factory-plugins",
+                scope: "user", scopeRoot: environment.home)
+        ])
+    }
+
+    private func previewPluginRequests(_ requests: [PluginLifecycleRequest]) {
         guard !requests.isEmpty else { return }
-        pluginManagement.removalError = nil
+        pluginManagement.directError = nil
         planPluginOperations(requests) { [weak self] error in
-            self?.pluginManagement.removalError = error
+            self?.pluginManagement.directError = error
         }
     }
 

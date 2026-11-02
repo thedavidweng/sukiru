@@ -81,7 +81,7 @@ struct HookLibraryView: View {
                 let byScope = Dictionary(grouping: entries, by: \.source.scopeRoot)
                 ForEach(byScope.keys.sorted(), id: \.self) { root in
                     Section(
-                        root == state.environment.home ? String(localized: "User Library") : root
+                        root == state.environment.home ? String(localized: "User scope") : root
                     ) {
                         ForEach(byScope[root] ?? []) { hook in
                             VStack(alignment: .leading, spacing: 4) {
