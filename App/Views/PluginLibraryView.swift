@@ -55,18 +55,28 @@ struct PluginLibraryView: View {
             state.selectedCatalogEntryID = nil
             filter = ""
         }
-        .toolbar {
+        // The page picker stays out of the toolbar: there it widens the content
+        // column's toolbar section past the column, so the toolbar's divider no
+        // longer lines up with the list's.
+        .surfaceBar {
             if host.hasMarketplaceBrowser {
-                ToolbarItem {
+                HStack {
                     Picker("Show", selection: $state.showsPluginMarketplace) {
                         Text("Installed").tag(false)
                         Text("Marketplace").tag(true)
                     }
                     .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .fixedSize()
                     .accessibilityIdentifier("sukiru.plugins.page")
                     .help("Switch between installed plugins and this host's marketplace")
+                    Spacer()
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
             }
+        }
+        .toolbar {
             ToolbarItem {
                 addMenu
             }

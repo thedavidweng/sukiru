@@ -34,6 +34,13 @@ Organizer).
   the `Settings` scene, global actions use the window toolbar, modals use
   system sheets, alerts, and `confirmationDialog`, and previews go through
   Quick Look.
+- **Toolbar sections fit their column.** A column's toolbar holds only
+  fixed-width icon items; segmented pickers and other text-sized controls go
+  in a scope bar under the toolbar (`surfaceBar`), as in Finder search. On
+  macOS 26 a section that is too wide does not move items into the overflow
+  menu, even in a customizable toolbar: it grows past its column, so the
+  toolbar divider no longer lines up with the split view's.
+  `ToolbarAlignmentUITests` checks this at the narrowest column width.
 - **Inherit new capabilities; never imitate them.** New system looks (such as
   Liquid Glass in macOS 26) must come automatically from standard controls.
   When a new API is needed, gate it with `#available` as a progressive
