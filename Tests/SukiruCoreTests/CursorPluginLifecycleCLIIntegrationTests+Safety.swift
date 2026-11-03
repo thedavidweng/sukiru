@@ -134,7 +134,7 @@ extension CursorPluginLifecycleCLIIntegrationTests {
         let command = try #require((batch["commands"] as? [[String: Any]])?.first)
         #expect(command["argv"] as? [String] == ["agent", "plugin", "marketplace", action, target])
         #expect(command["workingDirectory"] == nil)
-        #expect((command["captureRoots"] as? [String])?.contains(home + "/.cursor") == true)
+        #expect((command["captureRoots"] as? [String])?.contains(home + "/.cursor/plugins") == true)
     }
 
     @Test(

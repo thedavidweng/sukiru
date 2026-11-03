@@ -64,7 +64,7 @@ struct CursorPluginLifecycleCLIIntegrationTests {
         )
         #expect((command["dangerFlags"] as? [String])?.contains("backend-state-change") == true)
         #expect((command["warning"] as? String)?.contains("account sync") == true)
-        #expect((command["captureRoots"] as? [String])?.contains(home + "/.cursor") == true)
+        #expect((command["captureRoots"] as? [String])?.contains(home + "/.cursor/plugins") == true)
         #expect(!FileManager.default.fileExists(atPath: marker))
     }
 

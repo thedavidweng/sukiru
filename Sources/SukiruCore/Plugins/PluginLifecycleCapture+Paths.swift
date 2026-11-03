@@ -8,11 +8,17 @@ extension PluginLifecycleCapture {
             let config =
                 environment.externalValue(for: "CLAUDE_CONFIG_DIR")
                 ?? HostPathResolver.join(home, ".claude")
-            var roots = [config, HostPathResolver.join(home, ".claude.json")]
+            var roots =
+                Self.claudeSettings(in: config) + [
+                    HostPathResolver.join(config, "plugins"),
+                    HostPathResolver.join(home, ".claude.json")
+                ]
             if let cache = environment.externalValue(for: "CLAUDE_CODE_PLUGIN_CACHE_DIR") {
                 roots.append(cache)
             }
-            roots += environment.projectRoots.map { HostPathResolver.join($0, ".claude") }
+            roots += environment.projectRoots.flatMap {
+                Self.claudeSettings(in: HostPathResolver.join($0, ".claude"))
+            }
             return roots
         case .codex:
             var roots = [
@@ -25,7 +31,7 @@ extension PluginLifecycleCapture {
             }
             return roots
         case .opencode: return openCodeRoots()
-        case .cursor: return [HostPathResolver.join(home, ".cursor")]
+        case .cursor: return [HostPathResolver.join(home, ".cursor/plugins")]
         case .antigravity:
             return [
                 HostPathResolver.join(home, ".gemini/config"),
@@ -41,6 +47,12 @@ extension PluginLifecycleCapture {
                 HostPathResolver.join(home, ".factory/settings.json")
             ] + environment.projectRoots.map { HostPathResolver.join($0, ".factory/settings.json") }
         }
+    }
+
+    /// Plugin commands write enablement and marketplace declarations here; the rest of a
+    /// Claude config directory is session history the commands never touch.
+    static func claudeSettings(in directory: String) -> [String] {
+        ["settings.json", "settings.local.json"].map { HostPathResolver.join(directory, $0) }
     }
 
     private func openCodeRoots() -> [String] {
@@ -88,51 +100,4 @@ extension PluginLifecycleCapture {
         }
         return "/tmp"
     }
-
-    private func npmEnvironmentRoots(_ process: [String: String]) -> [String] {
-        let options = ["npm_config_cache", "npm_config_logs_dir", "npm_config_logs-dir"]
-        return process.filter { options.contains($0.key.lowercased()) }.map(\.value)
-    }
-
-    func npmRoots() throws -> [String] {
-        var roots = [HostPathResolver.join(environment.home, ".npm")]
-        let process = ProcessInfo.processInfo.environment
-        if !environment.homeIsOverridden { roots += npmEnvironmentRoots(process) }
-        var configs = [HostPathResolver.join(environment.home, ".npmrc")]
-        configs += environment.projectRoots.map { HostPathResolver.join($0, ".npmrc") }
-        if !environment.homeIsOverridden {
-            for key in [
-                "npm_config_userconfig", "NPM_CONFIG_USERCONFIG", "npm_config_globalconfig",
-                "NPM_CONFIG_GLOBALCONFIG"
-            ] {
-                if let config = process[key] { configs.append(config) }
-            }
-            if let prefix = process["npm_config_prefix"] ?? process["NPM_CONFIG_PREFIX"] {
-                configs.append(HostPathResolver.join(prefix, "etc/npmrc"))
-            }
-            if let npm = CLIExecutor(environment: environment).resolveExecutable("npm") {
-                configs.append(
-                    npm.deletingLastPathComponent().deletingLastPathComponent()
-                        .appendingPathComponent("etc/npmrc").path)
-            }
-        }
-        for path in configs where FileManager.default.fileExists(atPath: path) {
-            let text = try String(contentsOfFile: path, encoding: .utf8)
-            for line in text.split(separator: "\n") {
-                let parts = line.split(separator: "=", maxSplits: 1).map {
-                    $0.trimmingCharacters(in: .whitespaces)
-                }
-                if parts.count == 2 && ["cache", "logs-dir"].contains(parts[0].lowercased()) {
-                    let value = parts[1].replacingOccurrences(of: "${HOME}", with: environment.home)
-                    guard value.hasPrefix("/"), !value.contains("${") else {
-                        throw PluginLifecycleError(
-                            message: "Cannot resolve effective npm cache/log directory in " + path)
-                    }
-                    roots.append(value)
-                }
-            }
-        }
-        return roots
-    }
-
 }

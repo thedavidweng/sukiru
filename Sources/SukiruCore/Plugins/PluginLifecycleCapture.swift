@@ -31,14 +31,6 @@ struct PluginLifecycleCapture {
         let local = try addedMarketplaceRoots(request: request)
         paths += local.paths
         approval = approval || local.requiresHostApproval
-        let acquiresPackages = [
-            "install", "replace", "list", "check", "update", "marketplace-add",
-            "marketplace-refresh"
-        ]
-        let usesNpm = ![.cursor, .antigravity].contains(request.host)
-        if usesNpm, acquiresPackages.contains(request.action) {
-            paths += try npmRoots()
-        }
         for path in paths {
             guard path.hasPrefix("/"), path != "/", path != environment.home else {
                 throw PluginLifecycleError(message: "Unbounded capture root: " + path)
@@ -66,7 +58,7 @@ struct PluginLifecycleCapture {
             }
             for entry in records.values.flatMap({ $0 }) {
                 if let project = entry["projectPath"] as? String {
-                    paths.append(HostPathResolver.join(project, ".claude"))
+                    paths += Self.claudeSettings(in: HostPathResolver.join(project, ".claude"))
                 }
             }
         }

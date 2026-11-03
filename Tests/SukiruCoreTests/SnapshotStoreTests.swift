@@ -18,6 +18,21 @@ struct SnapshotStoreCaptureTests {
         #expect(store.snapshotsRoot() == tree.home.path + suffix)
     }
 
+    @Test("Capture refuses roots that expand past the file limit and names the largest")
+    func captureSizeLimit() throws {
+        let limit = SnapshotStore.captureEntryLimit
+        #expect(throws: Never.self) {
+            try SnapshotStore.checkCaptureSize([("/a", limit - 1), ("/b", 1)])
+        }
+        #expect(
+            throws: SnapshotError.captureFailed(
+                "\(limit + 1) files exceed the snapshot limit of \(limit); "
+                    + "the largest capture root is /b (\(limit - 9) files)")
+        ) {
+            try SnapshotStore.checkCaptureSize([("/a", 10), ("/b", limit - 9)])
+        }
+    }
+
     @Test("Capture stores byte-exact copies of both ledger files")
     func ledgerCopiesByteExact() throws {
         let tree = try Support.makeTree()

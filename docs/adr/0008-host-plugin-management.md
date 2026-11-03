@@ -319,3 +319,25 @@ Several boundaries above are now enforced per host:
   its `.agents/plugins/marketplace.json` catalog.
 - One-click repairs that need `npx` are skipped when Node is unavailable, in
   both the app and the CLI.
+
+## Amendment (2026-11-02): snapshot bounds that exclude shared caches and history
+
+Whole-root capture made one plugin operation copy hundreds of thousands of
+files into Sukiru's snapshot directory, most of them the npm cache. The
+2026-10-03 snapshot amendment is narrowed:
+
+- The npm cache and logs are not captured. They are shared, content-addressed
+  state that every package tool writes; restoring them undoes nothing. Package
+  acquisitions that previously captured them state that file rollback does not
+  cover the npm cache and logs.
+- Claude Code captures its plugin root (`plugins`, plus
+  `CLAUDE_CODE_PLUGIN_CACHE_DIR` when set), the user and project
+  `settings.json` and `settings.local.json`, and `~/.claude.json`, not the
+  whole config directory with its session history.
+- Cursor captures `~/.cursor/plugins`, not `~/.cursor`.
+- Codex keeps the whole `$CODEX_HOME`, because its plugin manager's writes are
+  not bounded to `plugins/` by the evidence.
+
+A snapshot whose capture roots hold more than 50,000 files is refused before
+anything is copied, naming the largest root. As before, a capture that cannot
+complete prevents the batch from running.

@@ -147,6 +147,46 @@ struct RollbackGenericIntegrationTests {
         printf '%s' 'batch addition' > "$HOME/batch-created/file"
         """
 
+    @Test("A root inside another root is copied once and still restores byte exact")
+    func nestedRootsCopiedOnce() throws {
+        let tree = try TempTree()
+        let root = try tree.dir("host")
+        try tree.file("host/nested/config", contents: "snapshot nested")
+        try tree.file("external/config", contents: "snapshot external")
+        try tree.symlink("host/alias", to: tree.path + "/external")
+        let original = try TreeChecksum.manifest(root: root)
+        let script = try tree.executable(
+            "bin/mutate",
+            contents: """
+                #!/bin/sh
+                printf '%s' 'batch nested' > "$HOME/host/nested/config"
+                printf '%s' 'batch external' > "$HOME/external/config"
+                """)
+        let throughLink = root + "/alias/config"
+        let command = BatchCommand(
+            argv: [script], displayString: script, owningCLI: .vercel,
+            intent: "Mutate nested isolated host files", dangerFlags: [], warning: nil,
+            captureRoots: [root, root + "/nested", root + "/nested/config", throughLink])
+        let environment = ExecutorTestSupport.environment(home: tree.path)
+        let result = try CLIExecutor(environment: environment).execute(
+            batch: ExecutorTestSupport.batch(commands: [command]),
+            report: ExecutorTestSupport.userReport(home: tree.path))
+        let snapshot =
+            tree.path + "/Library/Application Support/Sukiru/snapshots/" + result.record.snapshotID
+        let stored = try SnapshotStore.genericRoots(snapshotDirectory: snapshot)
+        #expect(Set(stored.keys) == [root, throughLink])
+        let copies = try FileManager.default.contentsOfDirectory(atPath: snapshot + "/generic")
+        #expect(copies.count == 2)
+        let rollback = try CLIRunner.run(
+            ["rollback", "--yes", "--batch", "batch-1"],
+            environment: CLIRunner.fixtureEnvironment(home: tree.path, roots: []))
+        #expect(rollback.exitCode == 0)
+        #expect(try TreeChecksum.manifest(root: root) == original)
+        #expect(
+            try String(contentsOfFile: tree.path + "/external/config", encoding: .utf8)
+                == "snapshot external")
+    }
+
     @Test("Unreadable explicit file prevents commands from running")
     func captureFailurePreventsExecution() throws {
         let tree = try TempTree()

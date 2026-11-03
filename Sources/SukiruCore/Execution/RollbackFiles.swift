@@ -81,7 +81,8 @@ struct RollbackFiles: Codable {
 
     static func capture(roots: [String]) throws -> RollbackFiles {
         var entries: [String: Entry] = [:]
-        for root in roots { try collect(root, into: &entries) }
+        // An ancestor's walk already recorded every root inside it the same way.
+        for root in roots.sorted() where entries[root] == nil { try collect(root, into: &entries) }
         var containers = Set<String>()
         for root in roots {
             var parent = URL(fileURLWithPath: root).deletingLastPathComponent().path

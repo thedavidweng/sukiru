@@ -2,7 +2,7 @@ import Foundation
 import Testing
 
 extension PluginLifecycleCLIIntegrationTests {
-    @Test("OpenCode capture includes temporary state and configured npm cache and logs")
+    @Test("OpenCode capture includes temporary state but leaves out the npm cache and logs")
     func openCodeCapturePaths() throws {
         let tree = try TempTree()
         let home = try tree.dir("home")
@@ -31,8 +31,10 @@ extension PluginLifecycleCLIIntegrationTests {
         let roots = try #require(command["captureRoots"] as? [String])
         #expect(roots.contains(home + "/opencode"))
         #expect(roots.contains(home + "/.local/share/opencode"))
-        #expect(roots.contains(cache))
-        #expect(roots.contains(logs))
+        #expect(!roots.contains(cache))
+        #expect(!roots.contains(logs))
+        #expect(!roots.contains(home + "/.npm"))
+        #expect((command["warning"] as? String)?.contains("does not cover the npm cache") == true)
     }
 
     @Test("Malformed Claude records refuse a capture plan")
@@ -94,7 +96,7 @@ extension PluginLifecycleCLIIntegrationTests {
         #expect(!FileManager.default.fileExists(atPath: marker))
     }
 
-    @Test("Claude disable previews official scope and complete host roots")
+    @Test("Claude disable previews official scope and plugin roots, not session history")
     func disablePlan() throws {
         let tree = try TempTree()
         let home = try tree.dir("home")
@@ -126,7 +128,11 @@ extension PluginLifecycleCLIIntegrationTests {
             commands.first?["argv"] as? [String] == [
                 "claude", "plugin", "disable", "demo@team", "--scope", "user", "--json"
             ])
-        #expect((commands.first?["captureRoots"] as? [String])?.contains(home + "/.claude") == true)
+        let roots = try #require(commands.first?["captureRoots"] as? [String])
+        #expect(roots.contains(home + "/.claude/plugins"))
+        #expect(roots.contains(home + "/.claude/settings.json"))
+        #expect(roots.contains(home + "/.claude.json"))
+        #expect(!roots.contains(home + "/.claude"))
     }
 
     @Test("OpenCode runtime check previews disclose effects without starting a session")

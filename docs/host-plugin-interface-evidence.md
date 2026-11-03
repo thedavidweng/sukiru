@@ -421,7 +421,9 @@ Do not infer installability or effective loading from a setting alone.
 Snapshot candidate: the complete plugin root, every applicable settings file,
 and any external local marketplace/plugin paths named in marketplace entries.
 Because host records can be moved to dated recovery filenames, snapshot the
-whole root, not only two known JSON files.
+whole plugin root, not only two known JSON files. The rest of the config
+directory (sessions, history, backups) is not a plugin write target and is not
+captured ([ADR-0008 amendment 2026-11-02](adr/0008-host-plugin-management.md#amendment-2026-11-02-snapshot-bounds-that-exclude-shared-caches-and-history)).
 
 ### Codex
 
@@ -612,8 +614,9 @@ into `cli.json` even when the requested package is absent. The
 creates data/config/state/log/bin/repository/temporary directories at startup.
 The [NPM config reader](https://github.com/anomalyco/opencode/blob/v2.0.22/packages/util/src/npm-config.ts)
 loads the effective npm configuration; its cache can be outside OpenCode's
-package-generation directory. Resolve and capture that cache for acquisition
-operations rather than claiming the OpenCode roots alone cover all writes.
+package-generation directory. The OpenCode roots therefore do not cover all
+writes; the npm cache and logs are left out of snapshots and the confirmation
+states that rollback does not cover them.
 
 ### Codex local operations and remote backend mutations are distinct
 
@@ -627,8 +630,8 @@ The [marketplace CLI](https://github.com/openai/codex/blob/rust-v0.160.0/codex-r
 dispatches add/upgrade/remove without starting an agent session. For npm plugin
 sources, [materialization](https://github.com/openai/codex/blob/rust-v0.160.0/codex-rs/core-plugins/src/npm_source.rs)
 uses `npm pack --ignore-scripts`; it does not install package dependencies.
-Its inherited effective npm cache/log paths must join capture bounds when
-that source type is supported.
+Its inherited effective npm cache/log paths are writes outside the snapshot;
+the confirmation states that rollback does not cover them.
 
 The same CLI branches specially on `openai-curated-remote`.
 [Remote mutations](https://github.com/openai/codex/blob/rust-v0.160.0/codex-rs/core-plugins/src/remote_mutations.rs)
@@ -678,7 +681,7 @@ Each mutation is advertised only when its installed help is verified; an
 explicit Git ref additionally requires `add --help` to expose `--git-ref`.
 Duplicate names/URLs and ambiguous targets are refused. `team` and `global`
 registrations are host/admin-owned and direct users to Dashboard/Customize.
-Personal marketplace mutations capture the Cursor root through the existing
+Personal marketplace mutations capture `~/.cursor/plugins` through the existing
 batch pipeline, require backend-effects consent and retain execution output,
 post-state diff and local rollback. Server indexing/account sync are external
 effects and cannot be promised reversible by restoring local files.

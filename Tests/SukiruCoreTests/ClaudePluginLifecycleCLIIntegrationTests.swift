@@ -107,8 +107,9 @@ extension ClaudePluginLifecycleCLIIntegrationTests {
     func aliasedCaptureRollback() throws {
         let fixture = try Self.claude(
             onRun:
-                "mkdir -p \"$HOME/.claude/created\"; printf batch > \"$HOME/.claude/created/file\"")
-        let alias = try fixture.tree.symlink("alias", to: fixture.home + "/.claude")
+                "mkdir -p \"$HOME/.claude/plugins/created\"; "
+                + "printf batch > \"$HOME/.claude/plugins/created/file\"")
+        let alias = try fixture.tree.symlink("alias", to: fixture.home + "/.claude/plugins")
         try fixture.tree.file(
             "catalog/.claude-plugin/marketplace.json",
             contents: """
@@ -116,13 +117,14 @@ extension ClaudePluginLifecycleCLIIntegrationTests {
                 """)
         let result = try fixture.execute([fixture.request("marketplace-add", "example/other")])
         #expect(result.exitCode == 0, "\(result.stderrText)")
-        #expect(FileManager.default.fileExists(atPath: fixture.home + "/.claude/created/file"))
+        #expect(
+            FileManager.default.fileExists(atPath: fixture.home + "/.claude/plugins/created/file"))
         let rollback = try fixture.rollback(result)
         #expect(rollback.exitCode == 0)
         let record = try #require(try rollback.jsonObject())
         let items = try #require(record["items"] as? [[String: Any]])
         #expect(!items.contains { $0["category"] as? String == "unrestorable-with-reason" })
-        #expect(!FileManager.default.fileExists(atPath: fixture.home + "/.claude/created"))
+        #expect(!FileManager.default.fileExists(atPath: fixture.home + "/.claude/plugins/created"))
     }
 
     @Test(

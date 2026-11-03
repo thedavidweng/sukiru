@@ -20,6 +20,18 @@ extension PluginLifecyclePlanner {
         return []
     }
 
+    /// The npm cache is shared, content-addressed state: snapshots leave it out, so
+    /// rollback cannot remove what an acquisition downloaded there.
+    func npmCacheNote(_ request: PluginLifecycleRequest) -> String {
+        let acquires = [
+            "install", "replace", "list", "check", "update", "marketplace-add",
+            "marketplace-refresh"
+        ]
+        guard ![.cursor, .antigravity].contains(request.host), acquires.contains(request.action)
+        else { return "" }
+        return " File rollback does not cover the npm cache and logs."
+    }
+
     func effectsWarning(_ request: PluginLifecycleRequest, version: String) -> String {
         guard !effectsFlags(request, version: version).isEmpty else { return "" }
         if request.host == .cursor {

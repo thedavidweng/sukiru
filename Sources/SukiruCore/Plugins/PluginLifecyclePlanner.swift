@@ -113,7 +113,7 @@ public struct PluginLifecyclePlanner: Sendable {
         let impact =
             try impact(request, inventory: inventory)
             + (v1ConfigRoot.map { " Actual configuration target: \($0)." } ?? "")
-            + effectsWarning(request, version: version)
+            + effectsWarning(request, version: version) + npmCacheNote(request)
         let extraPaths = try PluginCaptureLinks.expand(
             v1ConfigRoot.map { [$0] } ?? [], environment: environment)
         let capturePaths = Array(Set(capture.paths + extraPaths)).sorted()

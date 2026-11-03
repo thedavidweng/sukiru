@@ -91,7 +91,7 @@ struct PluginLifecycleCLIIntegrationTests {
         let batch = try #require(record["batch"] as? [String: Any])
         let command = try #require((batch["commands"] as? [[String: Any]])?.first)
         let capture = try #require(command["captureRoots"] as? [String])
-        #expect(capture.contains(unadded + "/.claude"))
+        #expect(capture.contains(unadded + "/.claude/settings.json"))
         #expect(capture.contains(payload))
         #expect((command["warning"] as? String)?.contains(unadded) == true)
         #expect((command["warning"] as? String)?.contains("1.2.3") == true)
@@ -140,7 +140,7 @@ struct PluginLifecycleCLIIntegrationTests {
     @Test(
         "Incomplete capture refuses the subprocess even with effects consent",
         arguments: [
-            ["claude", "2.1.288", "disable", ".claude"],
+            ["claude", "2.1.288", "disable", ".claude/plugins"],
             ["opencode", "v1.18.34", "replace", ".config/opencode"],
             ["opencode", "v2.0.22", "update", ".config/opencode"]
         ])
