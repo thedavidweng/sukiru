@@ -186,3 +186,18 @@
   if (shot.complete && shot.naturalWidth) start();
   else shot.addEventListener("load", start, { once: true });
 })();
+
+// Host list: each agent rises and lights up once when the list scrolls into view.
+(function () {
+  var list = document.querySelector(".host-cloud");
+  if (!list || !("IntersectionObserver" in window)) {
+    if (list) list.classList.add("is-visible");
+    return;
+  }
+  var observer = new IntersectionObserver(function (entries) {
+    if (!entries[0].isIntersecting) return;
+    list.classList.add("is-visible");
+    observer.disconnect();
+  }, { threshold: 0.2 });
+  observer.observe(list);
+})();
