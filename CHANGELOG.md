@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.19.0](https://github.com/thedavidweng/sukiru/compare/v1.18.0...v1.19.0) (2026-11-02)
+
+
+### ✨ Features
+
+* **plugins:** browse marketplaces within each host ([#112](https://github.com/thedavidweng/sukiru/issues/112)) ([8e16b0b](https://github.com/thedavidweng/sukiru/commit/8e16b0b4407cd969ee0820b8bea5c7ca117710a9))
+* **plugins:** unify marketplace browsing across hosts ([6d05e18](https://github.com/thedavidweng/sukiru/commit/6d05e18c094fa93ae0f7d1a2755b7bb204475a83))
+
+
+### 🐛 Bug Fixes
+
+* **plugins:** keep the toolbar aligned with the plugin list ([c258053](https://github.com/thedavidweng/sukiru/commit/c2580533d75946453c9e0f73f5d18dbf67bd1ec9))
+
+
+### ⚡ Performance
+
+* **plugins:** read only the tail of the OpenCode log ([761f88b](https://github.com/thedavidweng/sukiru/commit/761f88b1bad370cc350cab37ead65ad1fe0f4ddc))
+
 ## [1.18.0](https://github.com/thedavidweng/sukiru/compare/v1.17.0...v1.18.0) (2026-11-01)
 
 
