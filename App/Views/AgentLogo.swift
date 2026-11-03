@@ -8,7 +8,12 @@ struct AgentLogo: View {
     var size: CGFloat = 18
 
     var body: some View {
-        if let assetName = Self.assetName(for: hostID) {
+        if let emoji = Self.emoji(for: hostID) {
+            Text(verbatim: emoji)
+                .font(.system(size: size * 0.85))
+                .frame(width: size, height: size)
+                .accessibilityHidden(true)
+        } else if let assetName = Self.assetName(for: hostID) {
             Image(assetName)
                 .resizable()
                 .renderingMode(.template)
@@ -19,9 +24,18 @@ struct AgentLogo: View {
         }
     }
 
+    /// Agents whose official mark is an emoji, rendered as text rather than artwork.
+    static func emoji(for hostID: String) -> String? {
+        hostID == "loaf" ? "🍞" : nil
+    }
+
+    static func hasArtwork(for hostID: String) -> Bool {
+        emoji(for: hostID) != nil || assetName(for: hostID) != nil
+    }
+
     static func assetName(for hostID: String) -> String? {
         switch hostID {
-        case "adal", "aider-desk", "amp", "antigravity", "astrbot", "augment", "bob",
+        case "adal", "aider-desk", "amp", "antigravity", "astrbot", "augment", "bob", "jazz",
             "claude-code", "cline", "codearts-agent", "codebuddy", "codemaker", "codestudio",
             "codex", "command-code", "continue", "cortex", "crush", "cursor", "deepagents",
             "devin", "dexto", "droid", "dsh", "firebender", "forgecode", "fx", "gemini-cli",
@@ -68,7 +82,7 @@ struct AgentIconStrip: View {
     private let limit = 3
 
     private var illustratedHosts: [LibraryHostsSection.HostEntry] {
-        hosts.filter { AgentLogo.assetName(for: $0.hostID) != nil }
+        hosts.filter { AgentLogo.hasArtwork(for: $0.hostID) }
     }
 
     var body: some View {
