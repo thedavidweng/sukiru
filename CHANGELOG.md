@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.20.0](https://github.com/thedavidweng/sukiru/compare/v1.19.0...v1.20.0) (2026-11-03)
+
+
+### ✨ Features
+
+* **site:** list supported coding agents on homepage ([#114](https://github.com/thedavidweng/sukiru/issues/114)) ([67b24b3](https://github.com/thedavidweng/sukiru/commit/67b24b33494fcab6e2fe68e87c8e9cf7150535a2))
+* **site:** show agent icons and reveal on homepage ([#116](https://github.com/thedavidweng/sukiru/issues/116)) ([4035fdc](https://github.com/thedavidweng/sukiru/commit/4035fdcc9411d0c24245b1bbaf70b6836860f5d2))
+
+
+### 🐛 Bug Fixes
+
+* **snapshots:** bound plugin capture to files hosts write ([0cfec5b](https://github.com/thedavidweng/sukiru/commit/0cfec5b81c5229f306dcb2a320cb2d5a113d851c))
+
 ## [1.19.0](https://github.com/thedavidweng/sukiru/compare/v1.18.0...v1.19.0) (2026-11-02)
 
 
