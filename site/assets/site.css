@@ -303,6 +303,18 @@ html[lang="zh-Hans"] .card h3 { letter-spacing: 0; }
   border-radius: 5px; padding: 1px 6px; white-space: nowrap;
 }
 
+/* ——— Host cloud ——— */
+.host-cloud {
+  list-style: none; max-width: 980px; margin: 44px auto 0;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+}
+.host-cloud li {
+  background: var(--chip-bg); border: 1px solid var(--chip-border);
+  border-radius: 9999px; padding: 7px 14px;
+  font-size: 14px; line-height: 1.29; letter-spacing: -0.224px; color: var(--fg); white-space: nowrap;
+}
+html[lang="zh-Hans"] .host-cloud li { letter-spacing: 0; }
+
 /* ——— Footer (apple.com software-page style: 12px, tight, hairlines) ——— */
 footer { border-top: 1px solid var(--hairline); padding: 48px 24px 40px; font-size: 12px; }
 footer .cols {
