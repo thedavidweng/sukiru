@@ -74,7 +74,8 @@ struct PluginOperationOptions {
         let environment = try cliEnvironment(roots: inputs.roots)
         guard let hostName = inputs.host, let host = resolvedPluginHost(for: hostName) else {
             throw CLIError(
-                "Choose --host claude-code, codex, opencode, cursor, antigravity, or droid")
+                "Choose --host claude-code, codex, opencode, cursor, antigravity, droid, "
+                    + "or hermes-agent")
         }
         let targetScope = try inputs.installTarget(environment: environment)
         let root: String
@@ -241,7 +242,7 @@ extension CLI {
                     CLIOption(
                         "host", takesValue: true,
                         help:
-                            "Agent Host: claude-code, codex, opencode, cursor, antigravity, or droid.",
+                            "Agent Host: claude-code, codex, opencode, cursor, antigravity, droid, or hermes-agent.",
                         required: true)
                 ] + outputOptions
             ) { arguments in

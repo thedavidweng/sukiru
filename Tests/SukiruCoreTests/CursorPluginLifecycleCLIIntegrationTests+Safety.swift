@@ -134,7 +134,7 @@ extension CursorPluginLifecycleCLIIntegrationTests {
         let command = try #require((batch["commands"] as? [[String: Any]])?.first)
         #expect(command["argv"] as? [String] == ["agent", "plugin", "marketplace", action, target])
         #expect(command["workingDirectory"] == nil)
-        #expect((command["captureRoots"] as? [String])?.contains(home + "/.cursor/plugins") == true)
+        #expect((command["captureRoots"] as? [String] ?? []).isEmpty)
     }
 
     @Test(
@@ -186,35 +186,29 @@ extension CursorPluginLifecycleCLIIntegrationTests {
         }
     }
 
-    @Test(
-        "Cursor capture and command failures preserve recoverable state", arguments: [false, true])
-    func executionFailure(captureFails: Bool) throws {
+    @Test("A Cursor command failure still records its batch and snapshot")
+    func executionFailure() throws {
         let tree = try TempTree()
         let home = try tree.dir("home")
-        try tree.dir("home/.cursor/plugins")
         let marker = tree.path + "/mutation"
         try cursorShim(
             tree,
             registrations:
                 #"[{"name":"personal","scope":"user","gitUrl":"https://example.com/repo"}]"#,
             mutation: "touch '\(marker)'; exit 9")
-        if captureFails { #expect(mkfifo(home + "/.cursor/plugins/fifo", 0o600) == 0) }
         let result = try CLIRunner.run(
             [
                 "plugins", "marketplaces", "refresh", "personal", "--host", "cursor", "--scope",
-                "user",
-                "--yes", "--confirm-dangerous"
+                "user", "--yes", "--confirm-dangerous"
             ],
             environment: CLIRunner.fixtureEnvironment(
                 home: home, path: tree.path + "/bin:/usr/bin:/bin"))
         #expect(result.exitCode == 1)
-        #expect(FileManager.default.fileExists(atPath: marker) == !captureFails)
-        if !captureFails {
-            let record = try #require(try result.jsonObject())
-            #expect(record["batchStatus"] as? String == "failed")
-            #expect((record["commands"] as? [[String: Any]])?.first?["exitCode"] as? Int == 9)
-            #expect(record["snapshotID"] is String)
-        }
+        #expect(FileManager.default.fileExists(atPath: marker))
+        let record = try #require(try result.jsonObject())
+        #expect(record["batchStatus"] as? String == "failed")
+        #expect((record["commands"] as? [[String: Any]])?.first?["exitCode"] as? Int == 9)
+        #expect(record["snapshotID"] is String)
     }
 
     @Test(
@@ -288,7 +282,7 @@ extension CursorPluginLifecycleCLIIntegrationTests {
         #expect(try result.jsonObject()?["batch"] != nil)
     }
 
-    private func cursorShim(
+    func cursorShim(
         _ tree: TempTree, registrations: String, mutation: String = "exit 91",
         missingRemove: Bool = false,
         missingFormat: Bool = false,

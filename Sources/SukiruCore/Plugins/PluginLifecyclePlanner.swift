@@ -14,6 +14,7 @@ public struct PluginLifecyclePlanner: Sendable {
             return try antigravityCapabilities(probe: probe, version: version)
         }
         if host == .droid { return try droidCapabilities(probe: probe, version: version) }
+        if host == .hermes { return try hermesCapabilities(probe: probe, version: version) }
         try probe.help(host: host, arguments: ["plugin"], requiredFlags: [])
         var native: [String] = []
         var limits: [String: String] = [:]
@@ -155,6 +156,7 @@ public struct PluginLifecyclePlanner: Sendable {
         if request.host == .droid {
             return try droidArguments(request, inventory: inventory, probe: probe)
         }
+        if request.host == .hermes { return try hermesArguments(request, probe: probe) }
         let args = try arguments(request, inventory: inventory, version: version)
         try probe.help(
             host: request.host,
@@ -177,6 +179,7 @@ public struct PluginLifecyclePlanner: Sendable {
         case .cursor: cursorLimitation(request)
         case .antigravity: antigravityLimitation(request, version: version, inventory: inventory)
         case .droid: droidLimitation(request, version: version, inventory: inventory)
+        case .hermes: hermesLimitation(request, version: version, inventory: inventory)
         }
     }
 
@@ -225,6 +228,7 @@ public struct PluginLifecyclePlanner: Sendable {
         case .cursor: .cursor
         case .antigravity: .antigravity
         case .droid: .droid
+        case .hermes: .hermes
         }
     }
 

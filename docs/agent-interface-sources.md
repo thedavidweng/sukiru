@@ -1,6 +1,6 @@
 # Agent interface sources
 
-Version: 2026-11-02
+Version: 2026-11-03
 
 The version is the date of the most recent change to this file. Update it, and the row's
 Checked date, whenever a source is re-verified or a command or key changes.
@@ -30,7 +30,11 @@ Sukiru tries the host's command first, when its CLI is on `PATH` and
 | oh-my-pi | MCP server remove, on/off | none | `~/.omp/agent/mcp.json` `mcpServers.<name>.enabled` | [MCP config](https://github.com/can1357/oh-my-pi/blob/main/docs/mcp-config.md) | 2026-10-30 |
 | DSH | Bundle plugin remove | `dsh plugin --profile <p> remove <pkg>` | `~/.dsh/profiles/<p>/package.json` dependencies; patch-layer `insert` lines stay manual | [CLI](https://deepseekdocs.com/en/docs/user-guide/cli), [Plugins](https://deepseekdocs.com/en/docs/user-guide/plugins), [Configuration](https://deepseekdocs.com/en/docs/user-guide/configuration) | 2026-10-30 (docs only) |
 | DSH | Plugin on/off | none (plugin panel) | none | [Plugins](https://deepseekdocs.com/en/docs/user-guide/plugins) | 2026-10-30 |
-| Hermes | Plugin remove, on/off | `hermes plugins remove\|disable\|enable <name>` | `~/.hermes/config.yaml` `plugins.enabled` / `plugins.disabled` | [Plugins](https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins), `hermes plugins --help` | 2026-10-30 (v0.22.5) |
+| Hermes | Plugin remove, on/off | `hermes plugins remove\|disable\|enable <name>` | `~/.hermes/config.yaml` `plugins.enabled` / `plugins.disabled` | [Plugins](https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins), `hermes plugins --help` | 2026-11-03 (v0.22.7) |
+| Hermes | Plugin install (catalog name or GitHub repo, disabled) | `hermes plugins install <name\|owner/repo\|url> --no-enable` | `~/.hermes/plugins/<name>/` (clone) with `.hermes-catalog.json` provenance | [Plugins](https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins), `hermes plugins install --help` | 2026-11-03 (v0.22.7) |
+| Hermes | Plugin enable from the marketplace view (no tool override) | `hermes plugins enable <name> --no-allow-tool-override` | `plugins.enabled`, `plugins.entries.<name>.allow_tool_override` in `config.yaml` | `hermes plugins enable --help` | 2026-11-03 (v0.22.7) |
+| Hermes | Plugin update, check for updates | `hermes plugins update <name>`; `hermes plugins check-updates --json` (read-only) | `~/.hermes/plugins/<name>/` | `hermes plugins update --help`, `hermes plugins check-updates --help` | 2026-11-03 (v0.22.7) |
+| Hermes | Plugin catalog browse (display only) | none; read `~/.hermes/cache/plugin-catalog.json` (`entries`, `removed`, `generated_at`) that Hermes writes | none | `hermes plugins search --json` shape, `hermes-agent/hermes_cli/plugin_catalog.py` | 2026-11-03 (v0.22.7) |
 | Hermes | MCP server remove, on/off | `hermes mcp remove <name>` | `mcp_servers.<name>.enabled` | [MCP](https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp) | 2026-10-30 (v0.22.5) |
 | Amp | Plugin file on/off | none | none; Sukiru moves the file to `~/.config/amp/disabled-extensions` (ADR-0008 local-file exception) | [Amp docs](https://ampcode.com/docs) | 2026-10-30 |
 | OpenCode | Local plugin file on/off | none | none; moved to `<config>/disabled-extensions` | [Plugins](https://opencode.ai/docs/plugins/) | 2026-10-30 (v2.2.2) |

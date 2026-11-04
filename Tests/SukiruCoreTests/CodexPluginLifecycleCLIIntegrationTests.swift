@@ -40,7 +40,6 @@ struct CodexPluginLifecycleCLIIntegrationTests {
                 {"source_type":"git","source":"https://example.test/team.git",
                 "ref_name":"main","sparse_paths":[],"revision":"fixture"}
                 """)
-        try fixture.tree.file("home/.codex/plugins/data/demo-team/state", contents: "kept\n")
         return fixture
     }
 
@@ -66,19 +65,20 @@ struct CodexPluginLifecycleCLIIntegrationTests {
     }
 
     @Test(
-        "Install, remove and marketplace changes keep their diff and roll back",
+        "Install, remove and marketplace changes keep their diff and roll back config.toml",
         arguments: [
             ["install", "demo@team"], ["remove", "demo@team"],
             ["marketplace-refresh", "team"], ["marketplace-remove", "team"]
         ])
     func roundTrip(values: [String]) throws {
-        let fixture = try Self.codex(onRun: "rm -rf \"$HOME/.codex/plugins/data\"")
-        let state = fixture.home + "/.codex/plugins/data/demo-team/state"
+        let fixture = try Self.codex(onRun: "printf changed > \"$HOME/.codex/config.toml\"")
+        let config = fixture.home + "/.codex/config.toml"
+        let original = try String(contentsOfFile: config, encoding: .utf8)
         let result = try fixture.execute([fixture.request(values[0], values[1])])
         #expect(result.exitCode == 0, "\(result.stderrText)")
-        #expect(!FileManager.default.fileExists(atPath: state))
+        #expect(try String(contentsOfFile: config, encoding: .utf8) == "changed")
         #expect(try fixture.rollback(result).exitCode == 0)
-        #expect(try String(contentsOfFile: state, encoding: .utf8) == "kept\n")
+        #expect(try String(contentsOfFile: config, encoding: .utf8) == original)
     }
 
     @Test("Project scope, unconfigured sources and local marketplace refresh are refused")
@@ -109,7 +109,7 @@ struct CodexPluginLifecycleCLIIntegrationTests {
         #expect(!warning.contains("cascades to installations"))
     }
 
-    @Test("Local marketplace add captures plugin sources named by the Codex catalog")
+    @Test("Local marketplace add captures config.toml, not the plugin sources its catalog names")
     func localAddCapture() throws {
         let fixture = try Self.codex()
         let external = try fixture.tree.dir("external-plugin")
@@ -120,7 +120,8 @@ struct CodexPluginLifecycleCLIIntegrationTests {
             fixture.request("marketplace-add", fixture.tree.path + "/new-catalog")
         ])
         let capture = try #require(try result.plannedCommands().first?["captureRoots"] as? [String])
-        #expect(capture.contains(external))
+        #expect(capture.contains(fixture.home + "/.codex/config.toml"))
+        #expect(!capture.contains(external))
     }
 
     @Test("Inventory reads scope, ref and source type passively despite subtables and comments")

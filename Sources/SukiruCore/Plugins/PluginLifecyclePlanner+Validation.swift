@@ -6,7 +6,8 @@ extension PluginLifecyclePlanner {
             request.target != "*"
                 || (request.host == .opencode
                     && ["list", "check", "update"].contains(request.action))
-                || (request.host == .antigravity && ["list", "import"].contains(request.action)),
+                || (request.host == .antigravity && ["list", "import"].contains(request.action))
+                || (request.host == .hermes && request.action == "check"),
             !request.target.hasPrefix("-")
                 || (request.host == .antigravity
                     && request.target.range(of: #"^-\d+$"#, options: .regularExpression) != nil),
@@ -24,6 +25,12 @@ extension PluginLifecyclePlanner {
                         "Marketplace and strict options apply to Antigravity link and validate only"
                 )
             }
+        }
+        let hermesName =
+            request.host == .hermes && !["install", "check"].contains(request.action)
+        if hermesName, !HermesPluginName.isValid(request.target) {
+            throw PluginLifecycleError(
+                message: "Hermes plugin names are letters, digits, '.', '_' or '-'")
         }
         if let gitRef = request.gitRef {
             guard request.host == .cursor, request.action == "marketplace-add",

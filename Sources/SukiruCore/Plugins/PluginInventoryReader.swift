@@ -16,6 +16,7 @@ public struct PluginInventoryReader: Sendable {
         var cursorIssues: [Issue] = []
         var antigravityIssues: [Issue] = []
         var droidIssues: [Issue] = []
+        var hermesIssues: [Issue] = []
         let claude = readClaude(roots: roots, scope: request.scope, issues: &claudeIssues)
         let codex = readCodex(roots: roots, scope: request.scope, issues: &codexIssues)
         let openCode = readOpenCode(roots: roots, scope: request.scope, issues: &openCodeIssues)
@@ -23,6 +24,9 @@ public struct PluginInventoryReader: Sendable {
         let antigravity = readAntigravity(
             roots: roots, scope: request.scope, issues: &antigravityIssues)
         let droid = readDroid(roots: roots, scope: request.scope, issues: &droidIssues)
+        let hermes = readHermes(scope: request.scope, issues: &hermesIssues)
+        let hermesMarketplaces =
+            request.scope.includes(.user) ? hermesCatalogs(issues: &hermesIssues) : []
         let cursorMarketplaces =
             request.scope.includes(.user) ? cursorCatalogs(issues: &cursorIssues) : []
         let antigravityMarketplaces =
@@ -34,16 +38,18 @@ public struct PluginInventoryReader: Sendable {
             + cursorIssues.map { PluginInventoryIssue(host: .cursor, $0) }
             + antigravityIssues.map { PluginInventoryIssue(host: .antigravity, $0) }
             + droidIssues.map { PluginInventoryIssue(host: .droid, $0) }
+            + hermesIssues.map { PluginInventoryIssue(host: .hermes, $0) }
         let discovered =
             claude.installations + codex.installations + openCode + cursor + antigravity
-            + droid.installations
+            + droid.installations + hermes
         let installations = discovered.sorted {
             $0.id < $1.id
         }
         return PluginInventory(
             installations: installations,
             marketplaces: (claude.marketplaces + codex.marketplaces + cursorMarketplaces
-                + antigravityMarketplaces + droid.marketplaces).map(withPluginDetails).sorted {
+                + antigravityMarketplaces + droid.marketplaces + hermesMarketplaces)
+                .map(withPluginDetails).sorted {
                     $0.id < $1.id
                 },
             issues: issues.sorted { ($0.path, $0.kind) < ($1.path, $1.kind) },

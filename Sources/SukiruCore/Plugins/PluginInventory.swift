@@ -7,6 +7,7 @@ public enum PluginHost: String, Codable, CaseIterable, Sendable {
     case cursor
     case antigravity
     case droid
+    case hermes
 
     public var executable: String {
         switch self {
@@ -196,6 +197,13 @@ public struct PluginCatalogEntry: Codable, Equatable, Sendable {
     public var categories: [String]?
     public var keywords: [String]?
     public var suggestedPrompts: [String]?
+    /// Hermes's curation tier (`official`, `verified` or `community`), as its catalog records it.
+    public var tier: String?
+    /// Hermes's informational warnings, shown before installing.
+    public var knownIssues: [String]?
+    /// Environment variables the plugin needs; Hermes asks for them during installation.
+    public var requiredEnvironment: [String]?
+    public var platforms: [String]?
 }
 
 /// An inventory read error attributed to the host whose files produced it.
@@ -267,7 +275,7 @@ public struct PluginInventory: Codable, Equatable, Sendable {
                     && $0.plugins.contains { $0.name == plugin }
             }
             return marketplace?.plugins.first { $0.name == plugin }
-        case .antigravity, .cursor:
+        case .antigravity, .cursor, .hermes:
             let listings = marketplaces.filter { $0.host == installation.host }
                 .flatMap { $0.plugins.filter { $0.name == installation.identifier } }
             return listings.count == 1 ? listings[0] : nil

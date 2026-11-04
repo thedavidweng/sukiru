@@ -24,7 +24,9 @@ struct PluginManagementState {
 extension AppState {
     func manageCatalogEntry(_ entry: PluginCatalogEntry, marketplace: PluginMarketplace) {
         manageMarketplace(marketplace, action: "install")
-        pluginManagement.target = "\(entry.name)@\(marketplace.name)"
+        // Hermes installs a catalog entry by its bare name; the catalog pins its commit.
+        pluginManagement.target =
+            marketplace.host == .hermes ? entry.name : "\(entry.name)@\(marketplace.name)"
         pluginManagement.selectedMarketplaceID = marketplace.host == .codex ? marketplace.id : nil
         // An org marketplace is installable from user or project scope, not from org scope.
         if marketplace.scope == "org" {

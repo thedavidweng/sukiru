@@ -350,6 +350,7 @@ func resolvedPluginHost(for host: String) -> PluginHost? {
     case "cursor": .cursor
     case "antigravity", "antigravity-cli": .antigravity
     case "droid": .droid
+    case "hermes-agent": .hermes
     default: nil
     }
 }
