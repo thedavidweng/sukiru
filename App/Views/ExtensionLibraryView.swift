@@ -21,15 +21,18 @@ struct ExtensionLibraryView: View {
             }
         }
         .listStyle(.inset)
-        .navigationTitle(state.hookState.showsMCP ? "MCP Servers" : "Extensions")
-        .navigationSubtitle(Text(verbatim: host.displayName))
+        .navigationTitle(Text(verbatim: host.displayName))
+        .navigationSubtitle(
+            state.hookState.showsMCP
+                ? Text("\(items.count) MCP servers") : Text("\(items.count) extensions")
+        )
         .accessibilityIdentifier("sukiru.extensions.list")
         .help("Inspect what this host loads; scanning never runs it")
         .overlay {
             if items.isEmpty {
                 ContentUnavailableView(
                     state.hookState.showsMCP ? "No MCP Servers" : "No Extensions",
-                    systemImage: "puzzlepiece.extension",
+                    systemImage: ExtensionIcon.symbol(mcp: state.hookState.showsMCP),
                     description: Text("This host's user configuration declares none."))
             }
         }
@@ -42,7 +45,7 @@ struct ExtensionLibraryView: View {
                 ForEach(entries) { item in
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
-                            Text(verbatim: item.name)
+                            Text(verbatim: item.name).fontWeight(.semibold)
                             Spacer()
                             if item.enabled == false {
                                 Text("Disabled").foregroundStyle(.secondary)
@@ -71,7 +74,7 @@ struct ExtensionDetailView: View {
     var body: some View {
         if let item = state.selectedExtension {
             Form {
-                Section(item.category.title) {
+                Section {
                     LabeledContent("Host", value: item.host.displayName)
                     LabeledContent("Name", value: item.name)
                     LabeledContent("Status") { Text(item.statusTitle) }
@@ -87,6 +90,12 @@ struct ExtensionDetailView: View {
                     LabeledContent("Producer", value: item.producer)
                     Text(verbatim: item.path).font(.callout.monospaced())
                     ForEach(item.evidence, id: \.self) { Text(verbatim: $0) }
+                } header: {
+                    Text(verbatim: item.name)
+                        .font(.title.weight(.semibold))
+                        .textCase(nil)
+                        .foregroundStyle(.primary)
+                        .padding(.bottom, 8)
                 }
                 Section("Actions") {
                     Button("Show in Finder") { state.revealInFinder([item.path]) }
@@ -130,9 +139,15 @@ struct ExtensionDetailView: View {
             .textSelection(.enabled)
         } else {
             ContentUnavailableView(
-                "Select an entry to inspect it", systemImage: "puzzlepiece.extension")
+                "Select an entry to inspect it",
+                systemImage: ExtensionIcon.symbol(mcp: state.hookState.showsMCP))
         }
     }
+}
+
+/// One symbol per extension kind, shared by the list, its empty state and the inspector.
+enum ExtensionIcon {
+    static func symbol(mcp: Bool) -> String { mcp ? "server.rack" : "shippingbox" }
 }
 
 extension AgentExtension {

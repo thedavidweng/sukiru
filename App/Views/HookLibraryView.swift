@@ -31,8 +31,6 @@ struct HookLibraryView: View {
                     !$0.health.isProblem
                         && ![.externallyManaged, .sourceManaged].contains($0.health)
                 })
-            let issues =
-                state.report?.hookInventory?.issues.filter { $0.host == state.hookState.host } ?? []
             if !issues.isEmpty {
                 Section("Inspection Issues") {
                     ForEach(issues) { issue in
@@ -48,13 +46,24 @@ struct HookLibraryView: View {
             }
         }
         .listStyle(.inset)
-        .navigationTitle("Hooks")
-        .navigationSubtitle(Text(verbatim: state.hookState.host.displayName))
+        .navigationTitle(Text(verbatim: state.hookState.host.displayName))
+        .navigationSubtitle(Text("\(hooks.count) hooks"))
+        .overlay {
+            if hooks.isEmpty && issues.isEmpty {
+                if search.isEmpty {
+                    ContentUnavailableView(
+                        "No hooks", systemImage: "bolt.horizontal",
+                        description: Text("This host's settings declare no hooks."))
+                } else {
+                    ContentUnavailableView.search(text: search)
+                }
+            }
+        }
         .searchable(text: $search, prompt: "Filter Hooks")
         .accessibilityIdentifier("sukiru.hooks.list")
         .help("Inspect configured hooks; scanning never executes them")
         .toolbar {
-            ToolbarItem {
+            ColumnAction {
                 Button {
                     state.hookState.editor = .add(state.hookState.host)
                 } label: {
@@ -70,6 +79,10 @@ struct HookLibraryView: View {
         }
     }
 
+    private var issues: [HookInventoryIssue] {
+        state.report?.hookInventory?.issues.filter { $0.host == state.hookState.host } ?? []
+    }
+
     private var canAddHooks: Bool {
         [.claude, .codex].contains(state.hookState.host) && state.report?.hookInventory != nil
     }
@@ -80,15 +93,14 @@ struct HookLibraryView: View {
             Section(title) {
                 let byScope = Dictionary(grouping: entries, by: \.source.scopeRoot)
                 ForEach(byScope.keys.sorted(), id: \.self) { root in
-                    Section(
-                        root == state.environment.home ? String(localized: "User scope") : root
-                    ) {
+                    Section {
                         ForEach(byScope[root] ?? []) { hook in
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack {
-                                    Text(verbatim: hook.event)
+                                    Text(verbatim: hook.event).fontWeight(.semibold)
                                     Spacer()
-                                    Text(hook.health.title).foregroundStyle(.secondary)
+                                    Text(hook.health.title).font(.caption).foregroundStyle(
+                                        .secondary)
                                 }
                                 Text(
                                     verbatim: state.hookProducerTitle(hook) + " · "
@@ -101,6 +113,15 @@ struct HookLibraryView: View {
                             .tag(hook.id)
                             .accessibilityIdentifier("sukiru.hooks.row.\(hook.id)")
                         }
+                    } header: {
+                        ListSectionHeader(
+                            title: Text(
+                                root == state.environment.home
+                                    ? String(localized: "User scope")
+                                    : URL(fileURLWithPath: root).lastPathComponent
+                            )
+                            .help(root),
+                            count: byScope[root]?.count ?? 0)
                     }
                 }
             }

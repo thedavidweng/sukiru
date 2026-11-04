@@ -2904,17 +2904,6 @@
         }
       }
     },
-    "Filter Library" : {
-      "comment" : "Library: placeholder of the toolbar field that filters installed skills.",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "筛选资源库"
-          }
-        }
-      }
-    },
     "Filter Plugins" : {
       "localizations" : {
         "zh-Hans" : {
@@ -11851,6 +11840,136 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@更新"
+          }
+        }
+      }
+    },
+    "%lld MCP servers" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 个 MCP 服务器"
+          }
+        }
+      }
+    },
+    "%lld extensions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 个扩展"
+          }
+        }
+      }
+    },
+    "%lld hooks" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 个钩子"
+          }
+        }
+      }
+    },
+    "Environment" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "环境变量"
+          }
+        }
+      }
+    },
+    "Filter Skills" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "筛选技能"
+          }
+        }
+      }
+    },
+    "No hooks" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有钩子"
+          }
+        }
+      }
+    },
+    "This host's settings declare no hooks." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此宿主的设置未声明钩子。"
+          }
+        }
+      }
+    },
+    "Known Issues" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已知问题"
+          }
+        }
+      }
+    },
+    "Platforms" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "平台"
+          }
+        }
+      }
+    },
+    "Tier" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等级"
+          }
+        }
+      }
+    },
+    "Nous has not verified this community plugin. Read its repository before you enable it." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nous 尚未验证此社区插件。启用前请先阅读其仓库。"
+          }
+        }
+      }
+    },
+    "Hermes updates a plugin only when it has a recorded source; check for updates in Hermes" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hermes 仅在插件有记录的来源时更新；请在 Hermes 中检查更新"
+          }
+        }
+      }
+    },
+    "Install runs hermes plugins install %@ --no-enable. The plugin starts disabled; enable it separately. Hermes installs the repository and commit its catalog pins, and skips Python dependencies unless you prepare them in Hermes." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "运行 hermes plugins install %@ --no-enable。插件以禁用状态开始，请单独启用。Hermes 会安装目录固定的仓库和提交，除非你在 Hermes 中预先准备，否则会跳过 Python 依赖。"
           }
         }
       }

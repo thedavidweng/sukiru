@@ -192,7 +192,7 @@ struct PluginCatalogDetailView: View {
         if #available(macOS 26.0, *) {
             ToolbarSpacer(.flexible)
         }
-        ToolbarItem {
+        ColumnAction {
             Button {
                 if let selected = state.selectedCatalogEntry {
                     state.manageCatalogEntry(selected.entry, marketplace: selected.marketplace)

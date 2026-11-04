@@ -76,7 +76,7 @@ struct HookDetailView: View {
             .textSelection(.enabled)
         } else {
             ContentUnavailableView(
-                "Select a hook to inspect it", systemImage: "bolt.horizontal.circle")
+                "Select a hook to inspect it", systemImage: "bolt.horizontal")
         }
     }
 

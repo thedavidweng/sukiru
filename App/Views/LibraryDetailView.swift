@@ -34,7 +34,7 @@ struct LibraryDetailView: View {
                 .formStyle(.grouped)
             } else {
                 ContentUnavailableView {
-                    Label("Select a skill to inspect it", systemImage: "doc.text.magnifyingglass")
+                    Label("Select a skill to inspect it", systemImage: "square.stack")
                 }
             }
         }
@@ -49,7 +49,7 @@ struct LibraryDetailView: View {
         if #available(macOS 26.0, *) {
             ToolbarSpacer(.flexible)
         }
-        ToolbarItemGroup {
+        ColumnAction {
             Button {
                 state.quickLookSelectedSkill()
             } label: {
@@ -60,7 +60,8 @@ struct LibraryDetailView: View {
             )
             .disabled(!state.canQuickLookSelectedSkill())
             .help("Quick Look the selected skill's SKILL.md (⌘Y).")
-
+        }
+        ColumnAction {
             Button {
                 state.revealInFinder(paths)
             } label: {

@@ -140,7 +140,7 @@ struct LibraryView: View {
             ContentUnavailableView {
                 HStack(spacing: 0) {
                     AXToken(token: "sukiru.library.empty")
-                    Label("No skills found", systemImage: "tray")
+                    Label("No skills found", systemImage: "square.stack")
                 }
             } description: {
                 Text(emptyNote)
@@ -189,7 +189,7 @@ struct LibraryView: View {
                 }
             }
         }
-        .searchable(text: $filter, placement: .toolbar, prompt: Text("Filter Library"))
+        .searchable(text: $filter, placement: .toolbar, prompt: Text("Filter Skills"))
         .onChange(of: visible.map(\.selfID), initial: true) { _, visible in
             state.selectedSkillIDs.formIntersection(visible)
         }
@@ -206,7 +206,7 @@ struct LibraryView: View {
                     }
                 }
             } else if groups.isEmpty {
-                ContentUnavailableView("No Skills", systemImage: "tray")
+                ContentUnavailableView("No Skills", systemImage: "square.stack")
             }
         }
     }
@@ -298,36 +298,34 @@ struct LibraryView: View {
 extension LibraryView {
     @ViewBuilder
     private func header(_ group: SkillGroup) -> some View {
-        HStack(spacing: 6) {
-            switch group.kind {
-            case .user:
-                AXToken(token: "sukiru.library.section.user")
-                Text("User Library")
-            case .project(let root):
-                AXToken(token: "sukiru.library.section.project.\(AXTokens.path(root))")
-                Text(verbatim: URL(fileURLWithPath: root).lastPathComponent)
-                    .lineLimit(1)
-                    .help(root)
-            }
-            Spacer(minLength: 8)
-            Text(group.skills.count, format: .number)
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
+        ListSectionHeader(title: groupTitle(group), count: group.skills.count)
+            .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder
+    private func groupTitle(_ group: SkillGroup) -> some View {
+        switch group.kind {
+        case .user:
+            AXToken(token: "sukiru.library.section.user")
+            Text("User scope")
+        case .project(let root):
+            AXToken(token: "sukiru.library.section.project.\(AXTokens.path(root))")
+            Text(verbatim: URL(fileURLWithPath: root).lastPathComponent)
+                .help(root)
         }
-        .accessibilityElement(children: .contain)
     }
 }
 
 extension LibraryView {
     @ToolbarContentBuilder fileprivate var libraryToolbar: some ToolbarContent {
         let scoped = state.skillsInLibraryScope
-        ToolbarItem {
+        ColumnAction {
             CheckForUpdatesButton(skills: scoped)
         }
-        ToolbarItem {
+        ColumnAction {
             UpdateAllButton(skills: scoped)
         }
-        ToolbarItem {
+        ColumnAction {
             let disabled = state.report == nil || state.batchMutationInFlight
             Button {
                 showingHostRemoval = true
@@ -338,7 +336,7 @@ extension LibraryView {
             .axButtonToken("sukiru.library.hostRemoval", disabled: disabled)
             .help("Remove the skills one agent loads in one scope (adds to Pending Changes)")
         }
-        ToolbarItem {
+        ColumnAction {
             filterMenu
         }
     }

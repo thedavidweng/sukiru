@@ -10,7 +10,7 @@ struct RootView: View {
     var body: some View {
         NavigationSplitView {
             SidebarView()
-                .navigationSplitViewColumnWidth(min: 180, ideal: 210, max: 280)
+                .navigationSplitViewColumnWidth(min: 210, ideal: 240, max: 300)
         } content: {
             content
                 .navigationSplitViewColumnWidth(min: 380, ideal: 460)
@@ -54,7 +54,7 @@ struct RootView: View {
     /// means external changes appear only after it.
     @ToolbarContentBuilder
     private func refreshToolbar() -> some ToolbarContent {
-        ToolbarItem {
+        ColumnAction {
             Button {
                 state.refresh()
             } label: {

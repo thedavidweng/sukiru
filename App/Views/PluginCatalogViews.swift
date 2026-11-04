@@ -32,7 +32,17 @@ struct PluginCatalogList: View {
                 let showsEmpty =
                     filter.isEmpty || [.cursor, .antigravity].contains(marketplace.host)
                 Section {
-                    HStack(alignment: .top) {
+                    ForEach(entries(marketplace), id: \.name) { entry in
+                        PluginCatalogRow(
+                            entry: entry, installation: installation(entry, in: marketplace)
+                        )
+                        .tag(marketplace.catalogID(entry))
+                    }
+                    if marketplace.plugins.isEmpty, showsEmpty {
+                        Text(emptyCatalogMessage(marketplace)).foregroundStyle(.secondary)
+                    }
+                } header: {
+                    HStack(alignment: .firstTextBaseline) {
                         PluginCatalogHeading(marketplace: marketplace)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         if marketplace.allowsMarketplaceActions {
@@ -58,6 +68,8 @@ struct PluginCatalogList: View {
                             } label: {
                                 Label("Marketplace Actions", systemImage: "ellipsis.circle")
                             }
+                            .menuStyle(.borderlessButton)
+                            .menuIndicator(.hidden)
                             .labelStyle(.iconOnly)
                             .accessibilityIdentifier(
                                 "sukiru.plugins.marketplace.actions.\(marketplace.id)"
@@ -65,15 +77,6 @@ struct PluginCatalogList: View {
                             .help("Preview an operation for this marketplace")
                             .fixedSize()
                         }
-                    }
-                    ForEach(entries(marketplace), id: \.name) { entry in
-                        PluginCatalogRow(
-                            entry: entry, installation: installation(entry, in: marketplace)
-                        )
-                        .tag(marketplace.catalogID(entry))
-                    }
-                    if marketplace.plugins.isEmpty, showsEmpty {
-                        Text(emptyCatalogMessage(marketplace)).foregroundStyle(.secondary)
                     }
                 }
             }
@@ -100,7 +103,7 @@ struct PluginCatalogList: View {
         .overlay {
             if marketplaces.isEmpty, state.pluginHost == .claude, inspectionIssues.isEmpty {
                 ContentUnavailableView {
-                    Label("No configured marketplaces", systemImage: "shippingbox")
+                    Label("No configured marketplaces", systemImage: "storefront")
                 } actions: {
                     Button("Add Marketplace…") {
                         state.newPluginOperation(host: .claude, action: "marketplace-add")
@@ -110,13 +113,13 @@ struct PluginCatalogList: View {
                 }
             } else if marketplaces.isEmpty, state.pluginHost == .codex, inspectionIssues.isEmpty {
                 ContentUnavailableView {
-                    Label("No configured marketplaces", systemImage: "shippingbox")
+                    Label("No configured marketplaces", systemImage: "storefront")
                 } description: {
                     Text("Add a local catalog or a Git marketplace to Codex.")
                 }
             } else if marketplaces.isEmpty, state.pluginHost == .droid, inspectionIssues.isEmpty {
                 ContentUnavailableView {
-                    Label("No marketplaces", systemImage: "shippingbox")
+                    Label("No marketplaces", systemImage: "storefront")
                 } description: {
                     Text("Add a marketplace to Droid; Sukiru lists the catalogs Droid has fetched.")
                 } actions: {
@@ -127,7 +130,7 @@ struct PluginCatalogList: View {
                 }
             } else if marketplaces.isEmpty, inspectionIssues.isEmpty, !isReadingCursor {
                 ContentUnavailableView {
-                    Label("No cached marketplace catalog", systemImage: "shippingbox")
+                    Label("No cached marketplace catalog", systemImage: "storefront")
                 } description: {
                     if state.pluginHost == .antigravity {
                         Text("Manage marketplaces in Antigravity.")
@@ -296,7 +299,8 @@ private struct PluginCatalogRow: View {
                 Text(verbatim: summary)
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                    .lineLimit(2)
+                    .lineLimit(3)
+                    .help(summary)
             }
             let details = [entry.categories?.joined(separator: ", "), entry.version].compactMap {
                 $0
