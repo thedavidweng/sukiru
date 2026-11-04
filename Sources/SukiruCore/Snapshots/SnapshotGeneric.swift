@@ -56,6 +56,10 @@ extension SnapshotStore {
         return try JSONDecoder().decode([String: String].self, from: bytes)
     }
 
+    /// The stored copy that supplies each captured entry. A root's own copy supplies its entry.
+    /// A directory copy supplies the entries below it, except those reached through a link: the
+    /// copy holds that link, so reading below it reaches the live target. Those entries come from
+    /// the root whose own copy holds them, so every entry has exactly one source.
     static func genericSources(snapshotDirectory: String) throws -> [String: String] {
         let roots = try genericRoots(snapshotDirectory: snapshotDirectory)
         let before = try RollbackFiles.load(from: snapshotDirectory, name: "before.json")
@@ -63,12 +67,25 @@ extension SnapshotStore {
         for (path, relative) in roots {
             try Self.validateStoredPath(relative, snapshotID: snapshotDirectory)
             let stored = HostPathResolver.join(snapshotDirectory, relative)
-            let directory = before.entries[path]?.kind == "directory"
-            for entry in before.entries.keys
-            where entry == path || (directory && entry.hasPrefix(path + "/")) {
+            if before.entries[path] != nil { sources[path] = stored }
+            guard before.entries[path]?.kind == "directory" else { continue }
+            for entry in before.entries.keys where entry.hasPrefix(path + "/") {
+                guard !Self.passesThroughLink(entry, below: path, in: before) else { continue }
                 sources[entry] = stored + entry.dropFirst(path.count)
             }
         }
         return sources
+    }
+
+    /// Whether a link lies strictly between `root` and `entry`.
+    private static func passesThroughLink(
+        _ entry: String, below root: String, in before: RollbackFiles
+    ) -> Bool {
+        var parent = URL(fileURLWithPath: entry).deletingLastPathComponent().path
+        while parent.count > root.count {
+            if before.entries[parent]?.kind == "link" { return true }
+            parent = URL(fileURLWithPath: parent).deletingLastPathComponent().path
+        }
+        return false
     }
 }
