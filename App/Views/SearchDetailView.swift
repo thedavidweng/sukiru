@@ -55,7 +55,7 @@ struct SearchDetailView: View {
     @ToolbarContentBuilder
     private func toolbar() -> some ToolbarContent {
         let installable = state.canInstallSelectedSearchResults
-        ToolbarItem {
+        ColumnAction {
             Button {
                 state.presentInstallSheet()
             } label: {

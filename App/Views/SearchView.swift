@@ -64,7 +64,7 @@ struct SearchView: View {
                 .padding(.vertical, 8)
             }
             .toolbar {
-                ToolbarItem {
+                ColumnAction {
                     Button {
                         state.presentRepositoryInstallSheet()
                     } label: {

@@ -9,7 +9,33 @@ struct PluginCatalogHeading: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             name
-            caption
+            if marketplace.isCursorOfficialCatalog {
+                // The repository holds part of the official catalog; the rest is only on
+                // Cursor's own page.
+                HStack(spacing: 4) {
+                    Text("Complete catalog at")
+                    Link(destination: Self.catalogPage) {
+                        Text(verbatim: "cursor.com/marketplace")
+                    }
+                    .help("Cursor lists every plugin in its catalog on cursor.com/marketplace")
+                    .accessibilityIdentifier(
+                        "sukiru.plugins.marketplace.catalogPage.\(marketplace.id)")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            } else {
+                if let source {
+                    Text(verbatim: source)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .help(sourceHelp)
+                        .accessibilityIdentifier(
+                            "sukiru.plugins.marketplace.source.\(marketplace.id)")
+                }
+                metadata
+            }
         }
     }
 
@@ -17,39 +43,21 @@ struct PluginCatalogHeading: View {
     private var name: some View {
         if marketplace.host == .antigravity {
             Text(verbatim: marketplace.name)
+                .font(.headline)
                 .help("Manage marketplaces in Antigravity.")
         } else {
             Text(verbatim: marketplace.displayName ?? marketplace.name)
+                .font(.headline)
         }
     }
 
-    private var caption: some View {
+    /// The registration scope and how old the cached catalog is, on one line.
+    private var metadata: some View {
         HStack(spacing: 6) {
-            if marketplace.isCursorOfficialCatalog {
-                // The repository holds part of the official catalog; the rest is only on
-                // Cursor's own page.
-                Text("Complete catalog at")
-                Link(destination: Self.catalogPage) {
-                    Text(verbatim: "cursor.com/marketplace")
-                }
-                .foregroundStyle(.tint)
-                .help("Cursor lists every plugin in its catalog on cursor.com/marketplace")
-                .accessibilityIdentifier(
-                    "sukiru.plugins.marketplace.catalogPage.\(marketplace.id)")
-            } else {
-                if let source {
-                    Text(verbatim: source)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .help(sourceHelp)
-                        .accessibilityIdentifier(
-                            "sukiru.plugins.marketplace.source.\(marketplace.id)")
-                }
-                scope
-                if let updated = marketplace.updatedDate {
-                    Text("Updated \(updated, format: .relative(presentation: .named))")
-                        .help(updated.formatted(date: .abbreviated, time: .shortened))
-                }
+            scope
+            if let updated = marketplace.updatedDate {
+                Text("Updated \(updated, format: .relative(presentation: .named))")
+                    .help(updated.formatted(date: .abbreviated, time: .shortened))
             }
         }
         .font(.caption)

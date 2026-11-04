@@ -9,3 +9,14 @@ excluded:
   - .build
   - DerivedData
   - Sukiru.xcodeproj
+
+custom_rules:
+  toolbar_item_via_column_action:
+    name: "Toolbar items go through ColumnAction"
+    regex: '\bToolbarItem(Group)?\s*[({]'
+    excluded: '.*/ColumnAction\.swift'
+    message: >-
+      Declare toolbar controls with ColumnAction (App/Views/ColumnAction.swift), not
+      ToolbarItem or ToolbarItemGroup: a bare item or group renders with a different glass
+      from the rest of the app.
+    severity: error

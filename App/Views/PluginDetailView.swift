@@ -166,7 +166,7 @@ struct PluginDetailView: View {
         if #available(macOS 26.0, *) {
             ToolbarSpacer(.flexible)
         }
-        ToolbarItemGroup {
+        ColumnAction {
             Button {
                 state.revealInFinder(paths)
             } label: {
@@ -175,6 +175,8 @@ struct PluginDetailView: View {
             .disabled(paths.isEmpty)
             .accessibilityIdentifier("sukiru.plugins.reveal")
             .help("Show the plugin's recorded path in Finder")
+        }
+        ColumnAction {
             Button {
                 if let single { state.managePlugin(single, action: "update") }
             } label: {
@@ -189,6 +191,8 @@ struct PluginDetailView: View {
             .help(
                 single.map { $0.actions.contains("update") ? updateHelp : $0.noUpdateReason }
                     ?? updateHelp)
+        }
+        ColumnAction {
             Button(role: .destructive) {
                 state.removePlugins(removable)
             } label: {

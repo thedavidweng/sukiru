@@ -105,7 +105,7 @@ struct HealthView: View {
     @ToolbarContentBuilder private var healthToolbar: some ToolbarContent {
         let fixable = state.fixableEntries(problemEntries)
         let fixDisabled = fixable.isEmpty || state.batchMutationInFlight
-        ToolbarItem {
+        ColumnAction {
             Button {
                 state.fixAll(fixable)
             } label: {
@@ -116,7 +116,7 @@ struct HealthView: View {
             .help("Repair every problem that needs no choice, together with queued repairs")
         }
         if state.queuedChangeCount > 0 {
-            ToolbarItem {
+            ColumnAction {
                 Button {
                     state.checkout()
                 } label: {

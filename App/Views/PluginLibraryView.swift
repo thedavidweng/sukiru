@@ -101,7 +101,7 @@ struct PluginLibraryView: View {
             }
         }
         .toolbar {
-            ToolbarItem {
+            ColumnAction {
                 addMenu
             }
         }
@@ -210,18 +210,16 @@ struct PluginLibraryView: View {
     }
 
     private func header(root: String, count: Int) -> some View {
-        HStack(spacing: 6) {
-            if root == state.environment.home {
-                Text("User scope")
-            } else {
-                Text(verbatim: URL(fileURLWithPath: root).lastPathComponent)
-                    .lineLimit(1)
-                    .help(root)
-            }
-            Spacer(minLength: 8)
-            Text(count, format: .number)
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
+        ListSectionHeader(title: scopeTitle(root), count: count)
+    }
+
+    @ViewBuilder
+    private func scopeTitle(_ root: String) -> some View {
+        if root == state.environment.home {
+            Text("User scope")
+        } else {
+            Text(verbatim: URL(fileURLWithPath: root).lastPathComponent)
+                .help(root)
         }
     }
 
@@ -247,7 +245,8 @@ private struct PluginRow: View {
                     Text(verbatim: summary)
                         .font(.callout)
                         .foregroundStyle(.secondary)
-                        .lineLimit(2)
+                        .lineLimit(3)
+                        .help(summary)
                 }
                 if !details.isEmpty {
                     Text(verbatim: details.joined(separator: " · "))
