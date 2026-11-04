@@ -31,8 +31,6 @@ struct HookLibraryView: View {
                     !$0.health.isProblem
                         && ![.externallyManaged, .sourceManaged].contains($0.health)
                 })
-            let issues =
-                state.report?.hookInventory?.issues.filter { $0.host == state.hookState.host } ?? []
             if !issues.isEmpty {
                 Section("Inspection Issues") {
                     ForEach(issues) { issue in
@@ -51,7 +49,7 @@ struct HookLibraryView: View {
         .navigationTitle(Text(verbatim: state.hookState.host.displayName))
         .navigationSubtitle(Text("\(hooks.count) hooks"))
         .overlay {
-            if hooks.isEmpty {
+            if hooks.isEmpty && issues.isEmpty {
                 if search.isEmpty {
                     ContentUnavailableView(
                         "No hooks", systemImage: "bolt.horizontal",
@@ -79,6 +77,10 @@ struct HookLibraryView: View {
         .sheet(item: $state.hookState.editor) { target in
             HookEditorSheet(target: target)
         }
+    }
+
+    private var issues: [HookInventoryIssue] {
+        state.report?.hookInventory?.issues.filter { $0.host == state.hookState.host } ?? []
     }
 
     private var canAddHooks: Bool {
@@ -116,7 +118,9 @@ struct HookLibraryView: View {
                             title: Text(
                                 root == state.environment.home
                                     ? String(localized: "User scope")
-                                    : URL(fileURLWithPath: root).lastPathComponent),
+                                    : URL(fileURLWithPath: root).lastPathComponent
+                            )
+                            .help(root),
                             count: byScope[root]?.count ?? 0)
                     }
                 }

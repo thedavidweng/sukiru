@@ -12,6 +12,7 @@ struct ColumnAction<Content: View>: ToolbarContent {
         self.content = content()
     }
 
+    @ToolbarContentBuilder
     var body: some ToolbarContent {
         ToolbarItem {
             content
