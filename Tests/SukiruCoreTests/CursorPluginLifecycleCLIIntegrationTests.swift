@@ -64,7 +64,7 @@ struct CursorPluginLifecycleCLIIntegrationTests {
         )
         #expect((command["dangerFlags"] as? [String])?.contains("backend-state-change") == true)
         #expect((command["warning"] as? String)?.contains("account sync") == true)
-        #expect((command["captureRoots"] as? [String])?.contains(home + "/.cursor/plugins") == true)
+        #expect((command["captureRoots"] as? [String] ?? []).isEmpty)
         #expect(!FileManager.default.fileExists(atPath: marker))
     }
 
@@ -111,57 +111,36 @@ struct CursorPluginLifecycleCLIIntegrationTests {
                 == "Review")
     }
 
-    @Test(
-        "Cursor marketplace refresh reports observations rather than trusting exit zero",
-        arguments: [false, true])
-    func refreshObservation(changes: Bool) throws {
+    @Test("Cursor marketplace refresh is not captured, so its cached payload stays as refreshed")
+    func refreshIsNotCaptured() throws {
         let tree = try TempTree()
         let home = try tree.dir("home")
         let manifest = try tree.file(
             "home/.cursor/plugins/cache/personal/demo/one/plugin.json",
             contents: "{\"name\":\"demo\",\"version\":\"1\"}")
-        let mutation =
-            changes ? "echo '{\"name\":\"demo\",\"version\":\"2\"}' > '\(manifest)'" : ":"
-        try tree.executable(
-            "bin/agent",
-            contents: """
-                #!/bin/sh
-                case "$*" in
-                --version) echo 2026.08.25-3e8eec8;;
-                'plugin marketplace list --help') echo "Usage: agent plugin marketplace list --format text json";;
-                *--help*) echo "Usage: agent $*";;
-                'plugin marketplace list --format json')
-                  echo '[{"name":"personal","scope":"user","gitUrl":"https://example.com/plugins.git"}]';;
-                'plugin marketplace update personal') \(mutation); echo 'Updated: 0 plugins indexed';;
-                *) exit 91;;
-                esac
-                """)
+        let mutation = "echo '{\"name\":\"demo\",\"version\":\"2\"}' > '\(manifest)'"
+        try cursorShim(
+            tree,
+            registrations:
+                #"[{"name":"personal","scope":"user","gitUrl":"https://example.com/plugins.git"}]"#,
+            mutation: mutation)
         let env = CLIRunner.fixtureEnvironment(home: home, path: tree.path + "/bin:/usr/bin:/bin")
         let args = [
             "plugins", "marketplaces", "refresh", "personal", "--host", "cursor", "--scope", "user",
             "--yes"
         ]
-        let refused = try CLIRunner.run(args, environment: env)
-        #expect(refused.exitCode == 1)
+        #expect(try CLIRunner.run(args, environment: env).exitCode == 1)
         let executed = try CLIRunner.run(args + ["--confirm-dangerous"], environment: env)
         #expect(executed.exitCode == 0)
         let record = try #require(try executed.jsonObject())
         let command = try #require((record["commands"] as? [[String: Any]])?.first)
         #expect(command["exitCode"] as? Int == 0)
-        let diagnostics = try #require(command["diagnostics"] as? String)
-        #expect(
-            diagnostics.contains(
-                changes
-                    ? "Observed local catalog/payload changes"
-                    : "No observable local catalog/payload change"))
-        let stdout = try #require(command["stdoutFile"] as? String)
-        #expect(try String(contentsOfFile: stdout, encoding: .utf8).contains("0 plugins indexed"))
         let id = try #require(record["batchID"] as? String)
         #expect(
             try CLIRunner.run(["rollback", "--batch", id, "--yes"], environment: env).exitCode == 0)
         #expect(
             try String(contentsOfFile: manifest, encoding: .utf8)
-                == "{\"name\":\"demo\",\"version\":\"1\"}")
+                == "{\"name\":\"demo\",\"version\":\"2\"}\n")
     }
 
     @Test("Cursor add refuses duplicate source registrations")

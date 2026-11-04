@@ -79,8 +79,8 @@ installations offer details only, as `/plugins` does. `strictKnownMarketplaces` 
 
 ## Capture and rollback
 
-Every Droid command captures `~/.factory/plugins`, `~/.factory/settings.json` and each
-added project's `.factory/settings.json`. Install, update and marketplace add or refresh
-also capture npm roots, because npm-sourced plugins install through
-`npm install --ignore-scripts`. Settings edits
-capture only the edited file.
+Every Droid command captures `~/.factory/settings.json`, each added project's
+`.factory/settings.json`, and the registry records under `~/.factory/plugins/installed_plugins`
+and `~/.factory/plugins/known_marketplaces`. Plugin trees, marketplace checkouts and npm
+packages (npm-sourced plugins install through `npm install --ignore-scripts`) are not captured.
+See [ADR 0008](adr/0008-host-plugin-management.md#amendment-2026-11-03-configuration-and-registry-rollback-for-every-host).

@@ -211,7 +211,8 @@ extension PluginLifecyclePlanner {
                 + droidProjectDeclarations(request.target, inventory)
         }
         return text
-            + " Captured files can be restored; loading after the operation remains unknown."
+            + " Sukiru restores captured settings and registry records, not removed checkouts "
+            + "or plugin files; loading after the operation remains unknown."
             + droidPolicy(request)
     }
 

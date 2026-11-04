@@ -4,7 +4,7 @@ import Testing
 @Suite("Explicit OpenCode runtime operations")
 struct PluginRuntimeCLIIntegrationTests {
     @Test(
-        "Runtime list check and update require consent and restore captured partial effects",
+        "Runtime list check and update require consent; their state is reported, not restored",
         arguments: ["list", "check", "update"], ["user", "project"])
     func runtimeOperation(action: String, scope: String) throws {
         let tree = try TempTree()
@@ -47,7 +47,8 @@ struct PluginRuntimeCLIIntegrationTests {
         let id = try #require(record["batchID"] as? String)
         let rollback = try CLIRunner.run(["rollback", "--yes", "--batch", id], environment: env)
         #expect(rollback.exitCode == 0)
-        #expect(try String(contentsOfFile: state, encoding: .utf8) == original)
+        // Runtime state is a payload outside capture, so the rollback leaves the host's write.
+        #expect(try String(contentsOfFile: state, encoding: .utf8) == root + ":plugin " + action)
         try verifyEffectsHistory(record)
     }
     private func installShim(tree: TempTree, state: String, exitCode: Int) throws {

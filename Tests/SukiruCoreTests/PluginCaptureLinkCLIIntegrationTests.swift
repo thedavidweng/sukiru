@@ -11,11 +11,11 @@ struct PluginCaptureLinkCLIIntegrationTests {
         let home = try tree.dir("home")
         let external = try tree.dir("external")
         let newTarget = try tree.dir("new-target")
-        let original = try tree.file("external/plugins/demo", contents: "original")
+        let original = try tree.file("external/config.toml", contents: "original")
         let unrelated = try tree.file("external/unrelated", contents: "untouched")
-        let newFile = try tree.file("new-target/plugins/demo", contents: "new target bytes")
-        let link = home + "/.agents"
-        try tree.symlink("home/.agents", to: external)
+        let newFile = try tree.file("new-target/config.toml", contents: "new target bytes")
+        let link = home + "/.codex"
+        try tree.symlink("home/.codex", to: external)
         try codexStub(in: tree)
         try tree.file(
             "requests.json",
@@ -109,7 +109,7 @@ struct PluginCaptureLinkCLIIntegrationTests {
                 case "$*" in
                 --version) echo 'codex-cli 0.160.0';;
                 *--help*) echo '--json';;
-                *) printf changed > "$HOME/.agents/plugins/demo"; echo '{}';;
+                *) printf changed > "$HOME/.codex/config.toml"; echo '{}';;
                 esac
                 """)
     }

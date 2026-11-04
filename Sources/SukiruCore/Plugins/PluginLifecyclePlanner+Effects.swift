@@ -27,9 +27,10 @@ extension PluginLifecyclePlanner {
             "install", "replace", "list", "check", "update", "marketplace-add",
             "marketplace-refresh"
         ]
-        guard ![.cursor, .antigravity].contains(request.host), acquires.contains(request.action)
+        guard ![.cursor, .antigravity, .hermes].contains(request.host),
+            acquires.contains(request.action)
         else { return "" }
-        return " File rollback does not cover the npm cache and logs."
+        return " The npm cache and logs are not captured or restored."
     }
 
     func effectsWarning(_ request: PluginLifecycleRequest, version: String) -> String {
@@ -37,12 +38,12 @@ extension PluginLifecyclePlanner {
         if request.host == .cursor {
             return
                 " Cursor may change server-side indexing and account sync. "
-                + "File rollback restores local files only; it cannot reverse these external effects. "
+                + "Sukiru restores captured configuration only; it cannot reverse these external effects. "
                 + "Explicit consent is required. A successful exit does not establish an observed content advance."
         }
         if request.host == .codex {
             return " This operation changes remote backend installation state. "
-                + "File rollback restores captured local files only; it does not reverse backend installation changes. "
+                + "Sukiru restores captured configuration only; it does not reverse backend installation changes. "
                 + "Explicit consent to these effects is required before execution."
         }
         let target =
@@ -50,7 +51,7 @@ extension PluginLifecyclePlanner {
         return
             " This official operation may start/connect to a host and initialize plugin code for \(target). "
             + "Plugin code may change files outside captured roots or external state; "
-            + "file rollback cannot undo those effects. "
+            + "Sukiru cannot undo those effects. "
             + (request.action == "replace"
                 ? "Force replacement replaces the configured version. " : "")
             + (["check", "update"].contains(request.action)

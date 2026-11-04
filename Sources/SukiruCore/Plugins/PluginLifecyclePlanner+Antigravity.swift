@@ -136,9 +136,9 @@ extension PluginLifecyclePlanner {
         return
             (source
             ?? "\(request.action.capitalized) \(request.target) through agy plugin in user scope. ")
-            + "User plugin payloads, preferences, import records and cached catalogs are captured. "
+            + "Preferences and import records are captured; plugin payloads and cached catalogs are not. "
             + "Installation or import may replace existing plugins; restart Antigravity to discover new directories. "
-            + "File rollback does not undo running services or external authentication."
+            + "Sukiru does not restore payloads, and it does not undo running services or external authentication."
     }
 
     private func antigravityInstallSource(
@@ -160,7 +160,8 @@ extension PluginLifecyclePlanner {
         case .repository(let url):
             return "Install from the GitHub repository \(url), not from a marketplace. "
                 + "agy clones the default branch, so the contents can differ from any marketplace listing. "
-                + "A failed clone can leave a partial directory in ~/.gemini/config/plugins; rollback removes it. "
+                + "A failed clone can leave a partial directory in ~/.gemini/config/plugins, "
+                + "which Sukiru does not remove. "
         case .directory(let path):
             return "Install the local directory \(path) by copying it into the user profile. "
         }

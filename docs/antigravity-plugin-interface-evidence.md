@@ -79,7 +79,8 @@ defaults to it. Observed instead:
 
 Sukiru therefore always passes `<plugin>@<marketplace>` for a marketplace listing,
 normalizes repository input to `https://github.com/<owner>/<repo>` (GitHub only),
-and keeps the payload root in the snapshot so rollback removes a partial clone.
+and does not remove a partial clone: payload roots are not captured, so rollback leaves it
+(see [ADR 0008](adr/0008-host-plugin-management.md#amendment-2026-11-03-configuration-and-registry-rollback-for-every-host)).
 
 ## Local state, identity, and capture boundaries
 
@@ -148,9 +149,10 @@ Observed non-secret schema:
 and `suggestedPrompts`. A partner `repository` can be a whole product repository
 rather than the plugin source, so Sukiru never installs a listing from it. This is a cached catalog, not installation
 provenance. Matching names do not justify associating an installed plugin with
-that catalog. Capture the native cache/config/payload paths relevant to each
-reviewed action, including absent paths and symlinks; do not invent a Sukiru
-installation ledger.
+that catalog. Capture the native configuration and registry paths relevant to each
+reviewed action, including absent paths and symlinks; payloads and caches are not captured
+([ADR 0008](adr/0008-host-plugin-management.md#amendment-2026-11-03-configuration-and-registry-rollback-for-every-host)).
+Do not invent a Sukiru installation ledger.
 
 ## Components and configuration
 

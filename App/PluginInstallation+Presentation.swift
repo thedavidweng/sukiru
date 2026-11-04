@@ -50,6 +50,7 @@ extension PluginHost {
         case .cursor: "Cursor"
         case .antigravity: "Antigravity"
         case .droid: "Droid"
+        case .hermes: "Hermes"
         }
     }
 
@@ -76,12 +77,13 @@ extension PluginHost {
         case .antigravity:
             ["install", "enable", "disable", "remove", "list", "import", "validate", "link"]
         case .droid: PluginLifecyclePlanner.droidActions
+        case .hermes: PluginLifecyclePlanner.hermesActions
         }
     }
 
     /// Hosts whose marketplace is browsed inside their own Plugins tab.
     var hasMarketplaceBrowser: Bool {
-        [.claude, .antigravity, .codex, .cursor, .droid].contains(self)
+        [.claude, .antigravity, .codex, .cursor, .droid, .hermes].contains(self)
     }
 
     /// Hosts whose marketplaces Sukiru registers, refreshes and removes.
@@ -93,7 +95,7 @@ extension PluginInstallation {
         switch host {
         case .claude, .codex, .cursor:
             String(identifier.prefix { $0 != "@" })
-        case .antigravity:
+        case .antigravity, .hermes:
             name ?? identifier
         case .droid:
             PluginInventoryReader.droidPluginID(identifier)?.plugin ?? identifier
@@ -125,6 +127,8 @@ extension PluginInstallation {
             enablementActions + ["remove"]
         case .droid:
             scope == "org" ? [] : enablementActions + ["update", "remove"]
+        case .hermes:
+            enablementActions + ["update", "remove"]
         case .antigravity:
             enablementActions + ["validate"]
                 + (path == HostPathResolver.join(scopeRoot, ".gemini/config/plugins/" + identifier)
@@ -181,6 +185,8 @@ extension PluginInstallation {
             "This plugin has no update the host can run here"
         case .droid:
             "Organization settings set this plugin's version"
+        case .hermes:
+            "Hermes updates a plugin only when it has a recorded source; check for updates in Hermes"
         }
     }
 

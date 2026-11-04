@@ -38,6 +38,9 @@ struct PluginCatalogDetailView: View {
                 if let author = entry.author {
                     LabeledContent("Author", value: author)
                 }
+                if let tier = entry.tier {
+                    LabeledContent("Tier", value: tier.capitalized)
+                }
                 if let license = entry.license {
                     LabeledContent("License", value: license)
                 }
@@ -47,6 +50,7 @@ struct PluginCatalogDetailView: View {
                 if let keywords = entry.keywords, !keywords.isEmpty {
                     LabeledContent("Keywords", value: keywords.joined(separator: ", "))
                 }
+                requirementRows(entry)
             } header: {
                 HStack(spacing: 12) {
                     PluginLogo(address: entry.logo, size: 40)
@@ -62,6 +66,16 @@ struct PluginCatalogDetailView: View {
         }
         .formStyle(.grouped)
         .textSelection(.enabled)
+    }
+
+    @ViewBuilder
+    private func requirementRows(_ entry: PluginCatalogEntry) -> some View {
+        if let platforms = entry.platforms, !platforms.isEmpty {
+            LabeledContent("Platforms", value: platforms.joined(separator: ", "))
+        }
+        if let variables = entry.requiredEnvironment, !variables.isEmpty {
+            LabeledContent("Environment", value: variables.joined(separator: ", "))
+        }
     }
 
     /// A listing's source is where its payload lives. A path inside the marketplace
@@ -105,6 +119,8 @@ struct PluginCatalogDetailView: View {
                 Text("Sukiru only browses Cursor's catalog; install in Customize, then Refresh.")
                     .foregroundStyle(.secondary)
             }
+        } else if marketplace.host == .hermes {
+            hermesNote(entry)
         } else if marketplace.host == .droid {
             Section {
                 Text(
@@ -112,6 +128,30 @@ struct PluginCatalogDetailView: View {
                     Install runs droid plugin install \(entry.name)@\(marketplace.name) \
                     in the scope you choose. Droid fetches Git and npm sources itself, and \
                     organization policy can limit which marketplaces and plugins it accepts.
+                    """
+                )
+                .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func hermesNote(_ entry: PluginCatalogEntry) -> some View {
+        Section {
+            Text(
+                """
+                Install runs hermes plugins install \(entry.name) --no-enable. The plugin \
+                starts disabled; enable it separately. Hermes installs the repository and \
+                commit its catalog pins, and skips Python dependencies unless you prepare \
+                them in Hermes.
+                """
+            )
+            .foregroundStyle(.secondary)
+            if entry.tier == "community" {
+                Text(
+                    """
+                    Nous has not verified this community plugin. Read its repository \
+                    before you enable it.
                     """
                 )
                 .foregroundStyle(.secondary)
@@ -133,6 +173,11 @@ struct PluginCatalogDetailView: View {
                     Link(label, destination: url)
                         .help(url.absoluteString)
                 }
+            }
+        }
+        if let issues = entry.knownIssues, !issues.isEmpty {
+            Section("Known Issues") {
+                ForEach(issues, id: \.self) { Text(verbatim: $0) }
             }
         }
         if let prompts = entry.suggestedPrompts, !prompts.isEmpty {

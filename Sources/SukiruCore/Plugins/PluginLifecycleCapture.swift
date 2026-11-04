@@ -8,6 +8,10 @@ struct PluginLifecycleCapture {
         let requiresHostApproval: Bool
     }
 
+    /// Plugin operations capture host configuration and registry records only. Installed
+    /// payloads (plugin code, marketplace checkouts, caches, persistent data) are not captured:
+    /// copying them back does not restore what an install, update or removal changed (Python
+    /// packages, services, secrets), and their removal is confirmed up front instead.
     func roots(request: PluginLifecycleRequest, inventory: PluginInventory) throws -> Result {
         guard
             !inventory.issues.contains(where: {
@@ -19,18 +23,11 @@ struct PluginLifecycleCapture {
         }
         var paths = baseRoots(host: request.host)
         if request.host == .claude { paths += try claudeRecordRoots() }
-        var approval = false
-        let catalogs = try marketplaceRoots(request: request, inventory: inventory)
-        paths += catalogs.paths
-        approval = catalogs.requiresHostApproval
-        for installation in inventory.installations where installation.host == request.host {
-            if let path = installation.path { paths.append(path) }
-            if installation.identifier.hasPrefix("/") { paths.append(installation.identifier) }
-            if installation.source.hasPrefix("/") { paths.append(installation.source) }
-        }
-        let local = try addedMarketplaceRoots(request: request)
-        paths += local.paths
-        approval = approval || local.requiresHostApproval
+        if request.host == .droid { paths += droidRecordRoots() }
+        let approval =
+            try marketplaceApproval(request: request, inventory: inventory)
+            || knownMarketplaceApproval(request: request)
+            || addedMarketplaceApproval(request: request)
         for path in paths {
             guard path.hasPrefix("/"), path != "/", path != environment.home else {
                 throw PluginLifecycleError(message: "Unbounded capture root: " + path)
@@ -40,6 +37,8 @@ struct PluginLifecycleCapture {
         return Result(paths: complete, requiresHostApproval: approval)
     }
 
+    /// Claude's installation and marketplace registries, in the plugin root and the cache root
+    /// when it differs. Only the registry files are captured, never the payloads they name.
     private func claudeRecordRoots() throws -> [String] {
         let config =
             environment.externalValue(for: "CLAUDE_CONFIG_DIR")
@@ -49,9 +48,10 @@ struct PluginLifecycleCapture {
             ?? HostPathResolver.join(config, "plugins")
         var paths: [String] = []
         for root in Set([cache, HostPathResolver.join(config, "plugins")]) {
+            paths.append(HostPathResolver.join(root, "installed_plugins.json"))
+            paths.append(HostPathResolver.join(root, "known_marketplaces.json"))
             guard let object = try json(at: HostPathResolver.join(root, "installed_plugins.json"))
             else { continue }
-            collectPaths(object, relativeTo: root, paths: &paths)
             guard let records = object["plugins"] as? [String: [[String: Any]]] else {
                 throw PluginLifecycleError(
                     message: "Cannot enumerate installed Claude plugin records")
@@ -65,58 +65,53 @@ struct PluginLifecycleCapture {
         return paths
     }
 
-    private func marketplaceRoots(
+    /// Droid keeps one JSON record per installation and per known marketplace; the records are
+    /// the registry, while the plugin and marketplace trees beside them are payloads.
+    private func droidRecordRoots() -> [String] {
+        let root = HostPathResolver.join(environment.home, ".factory/plugins")
+        return ["installed_plugins", "known_marketplaces"].map {
+            HostPathResolver.join(root, $0)
+        }
+    }
+
+    /// Approval comes from the catalogs a marketplace declares; their paths are payloads.
+    private func marketplaceApproval(
         request: PluginLifecycleRequest, inventory: PluginInventory
-    ) throws -> Result {
-        var paths: [String] = []
+    ) throws -> Bool {
         var approval = false
-        let marketplaces = inventory.marketplaces.filter { $0.host == request.host }
-        for marketplace in marketplaces {
-            if let path = marketplace.path { paths.append(path) }
-            if marketplace.source.hasPrefix("/") { paths.append(marketplace.source) }
+        for marketplace in inventory.marketplaces where marketplace.host == request.host {
             guard let path = marketplace.path else { continue }
             let manifests = [
                 ".claude-plugin/marketplace.json", ".agents/plugins/marketplace.json",
                 ".cursor-plugin/marketplace.json", ".factory-plugin/marketplace.json"
             ]
             for relative in manifests {
-                let manifest = HostPathResolver.join(path, relative)
-                if let object = try json(at: manifest) {
+                if let object = try json(at: HostPathResolver.join(path, relative)) {
                     approval =
                         try catalogApproval(object, request: request, marketplace: marketplace)
                         || approval
-                    collectPaths(object, relativeTo: path, paths: &paths)
                 }
             }
         }
-        let known = try knownMarketplaceRoots(request: request)
-        paths += known.paths
-        approval = approval || known.requiresHostApproval
-        return Result(paths: paths, requiresHostApproval: approval)
+        return approval
     }
 
-    private func knownMarketplaceRoots(request: PluginLifecycleRequest) throws -> Result {
-        var paths: [String] = []
-        var approval = false
+    private func knownMarketplaceApproval(request: PluginLifecycleRequest) throws -> Bool {
         let fetchesCatalog = ["install", "update", "marketplace-refresh"].contains(request.action)
-        if request.host == .claude && fetchesCatalog {
-            let config =
-                environment.externalValue(for: "CLAUDE_CONFIG_DIR")
-                ?? HostPathResolver.join(environment.home, ".claude")
-            let cache =
-                environment.externalValue(for: "CLAUDE_CODE_PLUGIN_CACHE_DIR")
-                ?? HostPathResolver.join(config, "plugins")
-            let known = try json(at: HostPathResolver.join(cache, "known_marketplaces.json"))
-            let name =
-                request.action == "marketplace-refresh"
-                ? request.target
-                : request.target.split(separator: "@", maxSplits: 1).last.map(String.init)
-            if let name, let source = known?[name] as? [String: Any] {
-                approval = approval || containsApproval(source)
-                collectPaths(source, relativeTo: config, paths: &paths)
-            }
-        }
-        return Result(paths: paths, requiresHostApproval: approval)
+        guard request.host == .claude, fetchesCatalog else { return false }
+        let config =
+            environment.externalValue(for: "CLAUDE_CONFIG_DIR")
+            ?? HostPathResolver.join(environment.home, ".claude")
+        let cache =
+            environment.externalValue(for: "CLAUDE_CODE_PLUGIN_CACHE_DIR")
+            ?? HostPathResolver.join(config, "plugins")
+        let known = try json(at: HostPathResolver.join(cache, "known_marketplaces.json"))
+        let name =
+            request.action == "marketplace-refresh"
+            ? request.target
+            : request.target.split(separator: "@", maxSplits: 1).last.map(String.init)
+        guard let name, let source = known?[name] as? [String: Any] else { return false }
+        return containsApproval(source)
     }
 
     private func catalogApproval(
@@ -140,28 +135,25 @@ struct PluginLifecycleCapture {
         return approval
     }
 
-    private func addedMarketplaceRoots(request: PluginLifecycleRequest) throws -> Result {
-        var paths: [String] = []
-        var approval = false
+    /// A local marketplace added from a path: only its declared approvals matter here.
+    private func addedMarketplaceApproval(request: PluginLifecycleRequest) throws -> Bool {
         let localTarget = request.target.hasPrefix("/") || request.target.hasPrefix(".")
-        if request.action == "marketplace-add", localTarget {
-            let path = URL(fileURLWithPath: request.scopeRoot).appendingPathComponent(
-                request.target
-            ).standardizedFileURL.path
-            let absolute = request.target.hasPrefix("/") ? request.target : path
-            paths.append(absolute)
-            for manifest in [
-                absolute, HostPathResolver.join(absolute, ".claude-plugin/marketplace.json"),
-                HostPathResolver.join(absolute, ".agents/plugins/marketplace.json"),
-                HostPathResolver.join(absolute, ".factory-plugin/marketplace.json")
-            ] {
-                if manifest.hasSuffix(".json"), let object = try json(at: manifest) {
-                    approval = approval || containsApproval(object)
-                    collectPaths(object, relativeTo: absolute, paths: &paths)
-                }
+        guard request.action == "marketplace-add", localTarget else { return false }
+        let path = URL(fileURLWithPath: request.scopeRoot).appendingPathComponent(
+            request.target
+        ).standardizedFileURL.path
+        let absolute = request.target.hasPrefix("/") ? request.target : path
+        var approval = false
+        for manifest in [
+            absolute, HostPathResolver.join(absolute, ".claude-plugin/marketplace.json"),
+            HostPathResolver.join(absolute, ".agents/plugins/marketplace.json"),
+            HostPathResolver.join(absolute, ".factory-plugin/marketplace.json")
+        ] where manifest.hasSuffix(".json") {
+            if let object = try json(at: manifest) {
+                approval = approval || containsApproval(object)
             }
         }
-        return Result(paths: paths, requiresHostApproval: approval)
+        return approval
     }
 
     private func json(at path: String) throws -> [String: Any]? {
@@ -191,25 +183,5 @@ struct PluginLifecycleCapture {
     private func isLocked(_ entry: [String: Any]) -> Bool {
         guard let source = entry["source"] as? [String: Any] else { return false }
         return source["sha"] != nil || source["version"] != nil
-    }
-
-    private func collectPaths(_ value: Any, relativeTo root: String, paths: inout [String]) {
-        if let object = value as? [String: Any] {
-            for (key, child) in object {
-                let pathKeys = ["path", "source", "installPath", "installLocation"]
-                if pathKeys.contains(key), let path = child as? String {
-                    if path.hasPrefix("/") {
-                        paths.append(path)
-                    } else if path.hasPrefix("./") || path.hasPrefix("../") {
-                        paths.append(
-                            URL(fileURLWithPath: root).appendingPathComponent(path)
-                                .standardizedFileURL.path)
-                    }
-                }
-                collectPaths(child, relativeTo: root, paths: &paths)
-            }
-        } else if let array = value as? [Any] {
-            for child in array { collectPaths(child, relativeTo: root, paths: &paths) }
-        }
     }
 }

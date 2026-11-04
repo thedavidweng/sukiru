@@ -6,6 +6,7 @@ extension PluginLifecyclePlanner {
     ) throws -> String {
         if request.host == .antigravity { return antigravityImpact(request, inventory: inventory) }
         if request.host == .droid { return droidImpact(request, inventory: inventory) }
+        if request.host == .hermes { return hermesImpact(request) }
         let affected = inventory.installations.filter {
             $0.host == request.host
                 && ($0.identifier == request.target || $0.source == request.target)
@@ -26,7 +27,8 @@ extension PluginLifecyclePlanner {
             return
                 "\(request.action) \(request.target)\(ref) for the personal Cursor marketplace. "
                 + "Removal may uninstall its plugins. "
-                + "Catalog/payload changes will be inspected after execution; runtime loading remains unknown."
+                + "Sukiru does not capture or observe Cursor's catalog and payload changes; "
+                + "runtime loading remains unknown."
         }
         if request.action == "marketplace-refresh" {
             return
@@ -36,7 +38,7 @@ extension PluginLifecyclePlanner {
         return
             "\(request.action.capitalized) \(request.target) in \(request.scope): \(request.scopeRoot). "
             + "Observed installations: \(affected.isEmpty ? "none" : affected). Host approval remains required; "
-            + "saved options, secrets and data are within captured file roots. "
+            + "Plugin files, saved options, secrets and data are not captured, so Sukiru cannot restore them. "
             + "Loading after the operation remains unknown."
     }
 
@@ -51,7 +53,7 @@ extension PluginLifecyclePlanner {
                 "Remove marketplace \(request.target) from Codex user configuration and delete its "
                 + "installed marketplace snapshot. Codex documents no plugin-uninstall cascade; "
                 + "installations from it stay configured: \(observed). "
-                + "Complete captured file state can be restored."
+                + "Sukiru restores config.toml; the deleted marketplace snapshot is not restored."
         }
         let remaining = inventory.marketplaces.filter {
             $0.host == .claude && $0.name == request.target
@@ -64,15 +66,15 @@ extension PluginLifecyclePlanner {
                 "Remove marketplace \(request.target) from \(request.scope). "
                 + "It stays declared in \(scopes.joined(separator: "; ")), "
                 + "so this is not its final scope and its installations are not uninstalled. "
-                + "Complete captured file state can be restored."
+                + "Sukiru restores the registry and settings files; the marketplace checkout is not restored."
         }
         let cascade = try claudeCascade(marketplace: request.target)
         return
             "Remove marketplace \(request.target) from \(request.scope). "
             + "This may be the final scope; removal may cascade to installations: "
             + "\(cascade.isEmpty ? "none observed" : cascade). "
-            + "Payloads, saved options, secrets and data may be deleted; "
-            + "complete captured file state can be restored."
+            + "Payloads, saved options, secrets and data may be deleted, and Sukiru does not "
+            + "restore them. The registry and settings files are restored."
     }
 
     private func openCodeImpact(
@@ -125,7 +127,7 @@ extension PluginLifecyclePlanner {
         var text =
             "Uninstall \(request.target) from \(request.scope): \(request.scopeRoot). "
             + "Sukiru does not pass --keep-data, so Claude may delete the plugin's persistent data, "
-            + "including saved options and secrets; captured files, including that data, can be restored. "
+            + "including saved options and secrets, and Sukiru does not restore that data. "
         if others.isEmpty {
             text += "No other scope has this plugin installed. "
         } else {

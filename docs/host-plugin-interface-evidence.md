@@ -3,8 +3,9 @@
 ## Marketplace scope decisions (2026-10-31)
 
 Droid's lifecycle and host-owned marketplace browser are supported; see
-[Droid evidence](droid-plugin-interface-evidence.md). OpenClaude, Muse, Grok Build,
-Hermes Agent, GitHub Copilot CLI, Gemini CLI, Qwen Code and Kiro are deferred until
+[Droid evidence](droid-plugin-interface-evidence.md). Hermes Agent's catalog browser and
+native lifecycle are supported as of 2026-11-03; see [Hermes evidence](#hermes-agent-v0227-2026-11-03).
+OpenClaude, Muse, Grok Build, GitHub Copilot CLI, Gemini CLI, Qwen Code and Kiro are deferred until
 their individual lifecycle and catalog contracts are verified. Pi's package gallery
 is outside this Agent Plugin increment. OpenCode, Devin and Amp are outside this
 marketplace work.
@@ -462,13 +463,11 @@ payload; an unreferenced cache is not by itself a configured installation.
 Sources: [plugin store](https://github.com/openai/codex/blob/main/codex-rs/core-plugins/src/store.rs),
 [installed marketplace roots](https://github.com/openai/codex/blob/main/codex-rs/core-plugins/src/installed_marketplaces.rs).
 
-Snapshot candidate: entire `$CODEX_HOME` for CLI plugin operations, every
-applicable project `.codex/config.toml`, local/personal `.agents/plugins/`
-catalog and payload locations, and any configured local source outside those
-roots. The marketplace root for Git sources is
-`$CODEX_HOME/.tmp/marketplaces/<name>`; local marketplace source roots are
-used in place. The source tree is authoritative for local source content, not
-the fetched-marketplace cache.
+Snapshot capture (2026-11-03): `$CODEX_HOME/config.toml` and each applicable project
+`.codex/config.toml`. Plugin cache, persistent data, and fetched Git marketplace checkouts
+(`$CODEX_HOME/.tmp/marketplaces/<name>`) are payloads and are not captured, nor are local
+marketplace catalogs and the sources they name. Local marketplace source trees are used in
+place. See [ADR 0008](adr/0008-host-plugin-management.md#amendment-2026-11-03-configuration-and-registry-rollback-for-every-host).
 
 ### OpenCode v1
 
@@ -681,9 +680,11 @@ Each mutation is advertised only when its installed help is verified; an
 explicit Git ref additionally requires `add --help` to expose `--git-ref`.
 Duplicate names/URLs and ambiguous targets are refused. `team` and `global`
 registrations are host/admin-owned and direct users to Dashboard/Customize.
-Personal marketplace mutations capture `~/.cursor/plugins` through the existing
-batch pipeline, require backend-effects consent and retain execution output,
-post-state diff and local rollback. Server indexing/account sync are external
+Personal marketplace mutations go through the batch pipeline, require backend-effects
+consent and retain execution output and post-state diff. They capture nothing: the cached
+catalogs and payloads under `~/.cursor/plugins` are not captured, and the file that holds
+registrations has not been located, so rollback does not restore them (see
+[ADR 0008](adr/0008-host-plugin-management.md#amendment-2026-11-03-configuration-and-registry-rollback-for-every-host)). Server indexing/account sync are external
 effects and cannot be promised reversible by restoring local files.
 
 Refresh diagnostics compare captured local catalog/payload state rather than
@@ -796,3 +797,32 @@ Tests should distinguish host-exposed commands from Sukiru-executable routes:
 - A capture plan lacking an operation's effective configuration/package/npm
   cache paths cannot claim complete protection; capture failure prevents the
   subprocess from starting.
+
+## Hermes Agent v0.22.7 (2026-11-03)
+
+Verified on the local `hermes` (v0.22.7, git install). Help was read with
+`hermes plugins --help`, `hermes skills --help`, and each subcommand's `--help`. Read-only
+commands ran against the real home. Mutations ran only with `HERMES_HOME` pointed at a
+scratch directory, through the host binary directly.
+
+| Operation | Native contract | Evidence |
+| --- | --- | --- |
+| Catalog | `hermes plugins search --json [term]` returns `results` with `name`, `repo`, `sha`, `tier`, `category`, `version`, `image`, `docs_url`, `title`, `maintainer`, `capabilities`, `known_issues`. 975 entries at the time of the check. | `Sources/SukiruCore/Plugins/PluginInventoryReader+Hermes.swift` reads the same data from `~/.hermes/cache/plugin-catalog.json`, which Hermes writes. |
+| Installed | `hermes plugins list --json`: `name`, `status` (`enabled` / `not enabled`), `source` (`bundled`, `user`, `catalog:<tier>@<sha>`), `removed`. | Sukiru reads `~/.hermes/plugins/<dir>/plugin.yaml`, `.hermes-catalog.json`, and `config.yaml` `plugins.enabled`. |
+| Install | `hermes plugins install <catalog-name \| owner/repo \| url> [--no-enable] [--ref SHA] [--yes-deps \| --no-deps]`. The live run pinned `homeassistant` at `4d492b1d`, cloned the repository, and created `plugins/homeassistant/.hermes-catalog.json`. It printed an environment-variable prompt (`HASS_TOKEN`) with no terminal, and wrote no `.env`. | Isolated `HERMES_HOME`, not the real home. |
+| Enable | `hermes plugins enable <name> [--no-allow-tool-override]`. With no terminal it printed `Resolving Python dependencies…` and `Installing Python dependencies…` without a question, then wrote `plugins.enabled` and `plugins.entries.<name>.allow_tool_override: false`. | Isolated run, same as above. |
+| Disable / remove | `hermes plugins disable <name>` (config only). `hermes plugins remove <name>` deleted the directory. Both finished without a terminal. | Isolated run. |
+| Update / check | `hermes plugins update <name>`; `hermes plugins check-updates --json` (read-only). | Help only. The update path was not run. |
+
+Consequences recorded in the planner:
+
+- An install preview states that Python dependencies are skipped without a terminal, and that required environment variables are asked for in Hermes.
+- An enable preview states that Python dependencies are prepared, and that those packages are outside file rollback.
+- Rollback scope: only `config.yaml` is captured. Plugin directories are not, because a Git clone plus its Python dependencies cannot be restored by copying files back. The same rule applies to every host; [ADR 0008](adr/0008-host-plugin-management.md#amendment-2026-11-03-configuration-and-registry-rollback-for-every-host) records the decision. A remove deletes the directory the removed plugin owned, and Sukiru cannot restore it.
+- Catalog fields shown from `known_issues`, `capabilities.requires_env`, `platforms`, `tier` (a community entry carries a note), and `homepage_url` as a fallback for `docs_url`. Antigravity supplies none of the first four; they are optional on the shared listing model.
+- `--no-allow-tool-override` keeps the tool-override grant unset. Declared capabilities still follow Hermes's own consent.
+- Verified contract baseline: 0.22.7 within major 0. Older 0.22.x releases are refused with host instructions.
+
+Not verified: a Hermes update applied to an installed plugin, behavior when a capability consent screen appears
+without a terminal, and the marketplace view in the running desktop app.
+

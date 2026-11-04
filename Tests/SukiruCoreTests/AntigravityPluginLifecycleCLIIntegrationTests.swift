@@ -151,7 +151,7 @@ struct AntigravityPluginLifecycleTests {
     }
 
     @Test(
-        "User-scoped CLI enablement previews matching project plugins and captures ancestor discovery"
+        "User-scoped CLI enablement previews matching project plugins and captures ancestor registries"
     )
     func sharedScopeImpact() throws {
         let fixture = try PluginHostFixture(
@@ -159,6 +159,7 @@ struct AntigravityPluginLifecycleTests {
             projects: ["repo/sub"])
         try fixture.tree.dir("repo/.git")
         try fixture.tree.file("repo/.agents/plugins/demo/plugin.json", contents: "{}")
+        try fixture.tree.file("repo/.agents/plugins.json", contents: "{}")
         try fixture.tree.file("home/.gemini/config/plugins/demo/plugin.json", contents: "{}")
         let result = try CLIRunner.run(
             ["plugins", "disable", "demo", "--host", "antigravity", "--scope", "user", "--dry-run"],
@@ -168,7 +169,8 @@ struct AntigravityPluginLifecycleTests {
         let intent = try #require(command["intent"] as? String)
         #expect(intent.contains("user:") && intent.contains("project:"))
         let roots = try #require(command["captureRoots"] as? [String])
-        #expect(roots.contains(fixture.tree.path + "/repo/.agents"))
+        #expect(roots.contains(fixture.tree.path + "/repo/.agents/plugins.json"))
+        #expect(!roots.contains(fixture.tree.path + "/repo/.agents/plugins/demo"))
         #expect(fixture.invocations.isEmpty)
     }
 
@@ -183,7 +185,7 @@ struct AntigravityPluginLifecycleTests {
     }
 
     @Test(
-        "Native mutations capture payloads, preferences, import records and catalogs for rollback")
+        "Native mutations roll back preferences and import records; payloads and caches are not restored")
     func rollback() throws {
         let fixture = try PluginHostFixture(
             host: "antigravity", version: "1.4.7", help: help,
@@ -206,11 +208,14 @@ struct AntigravityPluginLifecycleTests {
         #expect(try String(contentsOfFile: settings, encoding: .utf8).contains("false"))
         let restored = try fixture.rollback(result)
         #expect(restored.exitCode == 0, "\(restored.stderrText)")
-        #expect(try String(contentsOfFile: manifest, encoding: .utf8) == "{\"version\":\"old\"}")
         #expect(try String(contentsOfFile: settings, encoding: .utf8) == "{\"plugins\":{}}")
         #expect(
             !FileManager.default.fileExists(
                 atPath: fixture.home + "/.gemini/config/import_manifest.json"))
-        #expect(!FileManager.default.fileExists(atPath: fixture.home + "/.gemini/antigravity-cli"))
+        // Payloads and caches are outside capture, so the rollback leaves them as the host wrote them.
+        #expect(try String(contentsOfFile: manifest, encoding: .utf8) == "{\"version\":\"new\"}\n")
+        #expect(
+            FileManager.default.fileExists(
+                atPath: fixture.home + "/.gemini/antigravity-cli/cache/marketplaces/new"))
     }
 }

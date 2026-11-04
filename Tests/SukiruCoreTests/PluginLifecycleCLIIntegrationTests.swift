@@ -45,7 +45,7 @@ struct PluginLifecycleCLIIntegrationTests {
         #expect(!FileManager.default.fileExists(atPath: marker))
     }
 
-    @Test("Claude removal preview includes every recorded project in the cascade and capture")
+    @Test("Claude removal preview captures every recorded project's settings, never payloads")
     func marketplaceCascade() throws {
         let tree = try TempTree()
         let home = try tree.dir("home")
@@ -92,7 +92,7 @@ struct PluginLifecycleCLIIntegrationTests {
         let command = try #require((batch["commands"] as? [[String: Any]])?.first)
         let capture = try #require(command["captureRoots"] as? [String])
         #expect(capture.contains(unadded + "/.claude/settings.json"))
-        #expect(capture.contains(payload))
+        #expect(!capture.contains(payload))
         #expect((command["warning"] as? String)?.contains(unadded) == true)
         #expect((command["warning"] as? String)?.contains("1.2.3") == true)
     }
@@ -140,15 +140,15 @@ struct PluginLifecycleCLIIntegrationTests {
     @Test(
         "Incomplete capture refuses the subprocess even with effects consent",
         arguments: [
-            ["claude", "2.1.288", "disable", ".claude/plugins"],
-            ["opencode", "v1.18.34", "replace", ".config/opencode"],
-            ["opencode", "v2.0.22", "update", ".config/opencode"]
+            ["claude", "2.1.288", "disable", ".claude", "settings.json"],
+            ["opencode", "v1.18.34", "replace", ".config/opencode", "unbounded-fifo"],
+            ["opencode", "v2.0.22", "update", ".config/opencode", "unbounded-fifo"]
         ])
     func captureFailure(values: [String]) throws {
         let tree = try TempTree()
         let home = try tree.dir("home")
         try tree.dir("home/" + values[3])
-        let fifo = home + "/" + values[3] + "/unbounded-fifo"
+        let fifo = home + "/" + values[3] + "/" + values[4]
         #expect(mkfifo(fifo, 0o600) == 0)
         let marker = tree.path + "/mutation"
         try tree.executable(
@@ -179,16 +179,17 @@ struct PluginLifecycleCLIIntegrationTests {
     }
 
     @Test(
-        "Success and approval refusal both retain file diffs and byte exact rollback",
+        "Success and approval refusal both retain file diffs; settings roll back, plugin data does not",
         arguments: [0, 3])
     func executionRoundTrip(exitCode: Int) throws {
         let tree = try TempTree()
         let home = try tree.dir("home")
-        let originalText = "saved options and secrets\n"
+        let originalText = #"{"enabledPlugins":{"demo@team":true}}"# + "\n"
         let original = Data(originalText.utf8)
-        let payload = try tree.file(
+        let settings = try tree.file("home/.claude/settings.json", contents: originalText)
+        let data = try tree.file(
             "home/.claude/plugins/data/demo/options",
-            contents: originalText)
+            contents: "saved options and secrets\n")
         try tree.executable(
             "bin/claude",
             contents: """
@@ -197,8 +198,9 @@ struct PluginLifecycleCLIIntegrationTests {
                 --version) echo '2.1.288 (Claude Code)';;
                 *--help*) echo 'disable --scope --json';;
                 'plugin disable demo@team --scope user --json')
-                  printf changed > '\(payload)'
-                  printf '{"result":"partial"}\n'
+                  printf '{"enabledPlugins":{"demo@team":false}}' > '\(settings)'
+                  printf changed > '\(data)'
+                  printf '{"result":"partial"}\\n'
                   echo 'host approval required' >&2
                   exit \(exitCode);;
                 *) exit 91;;
@@ -221,15 +223,16 @@ struct PluginLifecycleCLIIntegrationTests {
         let batchID = try #require(record["batchID"] as? String)
         let diff = try #require(record["diff"] as? [String: Any])
         #expect(
-            (diff["entries"] as? [[String: Any]])?.contains { $0["path"] as? String == payload }
+            (diff["entries"] as? [[String: Any]])?.contains { $0["path"] as? String == settings }
                 == true)
-        #expect(try Data(contentsOf: URL(fileURLWithPath: payload)) == Data("changed".utf8))
         let rollback = try CLIRunner.run(
             ["rollback", "--yes", "--batch", batchID], environment: env)
         #expect(
             rollback.exitCode == 0,
             "\(String(bytes: rollback.stderr, encoding: .utf8) ?? "non-UTF8 stderr")")
-        #expect(try Data(contentsOf: URL(fileURLWithPath: payload)) == original)
+        #expect(try Data(contentsOf: URL(fileURLWithPath: settings)) == original)
+        // Plugin data is a payload, outside capture: the rollback leaves the host's change in place.
+        #expect(try Data(contentsOf: URL(fileURLWithPath: data)) == Data("changed".utf8))
     }
 
 }

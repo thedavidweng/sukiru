@@ -341,3 +341,92 @@ files into Sukiru's snapshot directory, most of them the npm cache. The
 A snapshot whose capture roots hold more than 50,000 files is refused before
 anything is copied, naming the largest root. As before, a capture that cannot
 complete prevents the batch from running.
+
+## Amendment (2026-11-03): Hermes Agent's catalog and native lifecycle
+
+Hermes Agent joins the Plugins tab with the same split as Antigravity: Installed
+lists user plugins from `~/.hermes/plugins`, and Marketplace lists Hermes's own
+curated catalog. The catalog is the file Hermes writes at
+`~/.hermes/cache/plugin-catalog.json`, read passively on each scan like
+Antigravity's cache. Sukiru keeps no catalog of its own, and a listing is
+display only; removed entries are dropped because Hermes refuses to install them.
+
+Every catalog entry, whatever its tier (official, verified or community), is a Git
+repository pinned to a commit. Installing by catalog name therefore clones that
+repository at the pinned commit. Hermes also accepts a GitHub `owner/repo` or
+URL; that clones the default branch, and the preview says so. Installs always pass
+`--no-enable`, so a plugin starts disabled, and enabling is a separate command
+with `--no-allow-tool-override`. Non-interactive runs skip Python dependencies at
+install; enabling prepares them, and those packages are outside file rollback.
+
+Operations are the host's own: `install`, `enable`, `disable`, `remove`, `update`
+and `check-updates` (read-only). Hermes plugins are user-scoped, so project
+scope is refused. Bundled plugins are not listed, because Sukiru's scan does not
+read Hermes's bundled directories. Hermes's own commands for MCP servers, skills
+and marketplace-style taps are outside this amendment.
+
+## Amendment (2026-11-03): no file rollback for Hermes plugin payloads
+
+The 2026-10-03 rule that every plugin command restores captured files does not
+hold for Hermes. A Hermes plugin is a Git clone, and its Python dependencies are
+installed beside it. Restoring the directory would not restore an installed
+state, and the packages and any secrets Hermes writes stay outside file rollback.
+A rollback that looks complete but is not is worse than an honest refusal.
+
+For Hermes, Sukiru captures `~/.hermes/config.yaml` only, because enablement is
+text and reverses cleanly. Install, update and remove do not capture the plugin
+directory. The impact preview says so: undo an install with remove; remove is
+irreversible for anything saved inside the directory, so it stays a confirmed
+deletion. Sukiru keeps no ledger of its own for this. The host's registry (the
+plugin directories, their `.hermes-catalog.json` provenance, and `config.yaml`) is
+the record, and the next scan reads it.
+
+The rule now applies to every host; see the amendment below.
+
+## Amendment (2026-11-03): configuration and registry rollback for every host
+
+Snapshot rollback protects host configuration and registry records. It does not
+protect installed plugin payloads, and no host's plugin commands capture them now.
+
+A plugin operation changes more than the files under the plugin root. Installs and
+updates fetch code, install dependencies (Python or npm packages), start services and
+write secrets or data. Copying a payload directory back restores its bytes, not the
+installed state those changes produced, so the rollback would look complete while it
+was not. Removal deletes a payload and its saved data, and reinstalling restores code,
+not that data. Undoing an install is removal; removal stays a confirmed deletion that
+is labeled irreversible for anything it holds.
+
+Captured for plugin commands:
+
+- Claude Code: the user and project `settings.json` and `settings.local.json`,
+  `~/.claude.json`, and `installed_plugins.json` and `known_marketplaces.json` in the
+  plugin root and in `CLAUDE_CODE_PLUGIN_CACHE_DIR` when set.
+- Codex: `$CODEX_HOME/config.toml` and each project's `.codex/config.toml`.
+- OpenCode: the configuration directory, `OPENCODE_CONFIG` when set, and
+  `opencode.json(c)`, `tui.json(c)` and `cli.json(c)` in the home and project roots.
+- Antigravity: `~/.gemini/config/config.json`, `import_manifest.json`, `plugins.json`,
+  and each project's `.agents/plugins.json`.
+- Droid: `~/.factory/settings.json`, each project's `.factory/settings.json`, and the
+  registry records under `~/.factory/plugins/installed_plugins` and
+  `~/.factory/plugins/known_marketplaces`.
+- Hermes: `~/.hermes/config.yaml`.
+- Cursor: nothing. Its marketplace registrations are not in a file Sukiru has located.
+
+Not captured: plugin directories and payloads, marketplace checkouts, caches, persistent
+plugin data, npm and Python packages, local marketplace source trees, and session history.
+Local file moves keep their own capture (`PluginLocalDisable`, `CursorLocalDisable`):
+moving a discovered plugin file aside is the reversible action itself.
+
+Consequences the previews state:
+
+- Cursor marketplace add, refresh and remove are not restored by rollback, because their
+  registration file is unknown. The refresh observation that compared the batch diff of
+  `~/.cursor/plugins` is removed, so a refresh reports its exit status only.
+- Claude Code uninstall may delete saved options and secrets, which rollback does not
+  restore. Codex and Antigravity payload and data roots are likewise outside rollback.
+- Each host's configuration files still get the 2026-10-03 conflict detection.
+
+This supersedes, for plugin payloads, the 2026-10-03 rule that plugin commands capture
+installed payloads, the 2026-11-02 capture list, and the Cursor refresh observation in the
+2026-10-04 Cursor amendment. The 50,000-file bound stays, and the Hermes amendment above is an
+instance of this rule.

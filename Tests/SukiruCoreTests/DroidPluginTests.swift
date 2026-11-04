@@ -166,7 +166,9 @@ extension DroidPluginTests {
         #expect(commands.allSatisfy { $0["owningCLI"] as? String == "droid" })
         #expect(commands[1]["workingDirectory"] as? String == project)
         let roots = try #require(commands[0]["captureRoots"] as? [String])
-        #expect(roots.contains(fixture.home + "/.factory/plugins"))
+        #expect(roots.contains(fixture.home + "/.factory/plugins/installed_plugins"))
+        #expect(roots.contains(fixture.home + "/.factory/plugins/known_marketplaces"))
+        #expect(!roots.contains(fixture.home + "/.factory/plugins"))
         #expect(roots.contains(fixture.home + "/.factory/settings.json"))
         #expect(roots.contains(project + "/.factory/settings.json"))
         let intents = commands.compactMap { $0["intent"] as? String }
@@ -249,7 +251,7 @@ extension DroidPluginTests {
         #expect(fixture.invocations.isEmpty && unknown.invocations.isEmpty)
     }
 
-    @Test("A native install captures Droid's plugin state for rollback")
+    @Test("A native install rolls back Droid's settings and registry records, not plugin trees")
     func rollback() throws {
         let fixture = try PluginHostFixture(
             host: "droid", version: "1.1.0", help: help,
