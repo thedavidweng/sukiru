@@ -37,7 +37,8 @@ extension PluginLifecycleCLIIntegrationTests {
         #expect(!roots.contains(logs))
         #expect(!roots.contains(home + "/.npm"))
         #expect(
-            (command["warning"] as? String)?.contains("npm cache and logs are not captured") == true)
+            (command["warning"] as? String)?.contains("npm cache and logs are not captured") == true
+        )
     }
 
     @Test("Malformed Claude records refuse a capture plan")

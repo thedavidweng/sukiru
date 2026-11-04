@@ -20,9 +20,10 @@ extension PluginLifecycleCapture {
                 HostPathResolver.join(
                     environment.externalValue(for: "CODEX_HOME")
                         ?? HostPathResolver.join(home, ".codex"), "config.toml")
-            ] + environment.projectRoots.map {
-                HostPathResolver.join($0, ".codex/config.toml")
-            }
+            ]
+                + environment.projectRoots.map {
+                    HostPathResolver.join($0, ".codex/config.toml")
+                }
         case .opencode: return openCodeRoots()
         case .cursor:
             // Cursor's marketplace registrations are not in a file Sukiru can locate, so
@@ -34,15 +35,18 @@ extension PluginLifecycleCapture {
                 HostPathResolver.join(config, "config.json"),
                 HostPathResolver.join(config, "import_manifest.json"),
                 HostPathResolver.join(config, "plugins.json")
-            ] + environment.projectRoots.flatMap {
-                PluginInventoryReader(environment: environment).antigravityProjectLocations($0)
-                    .map { HostPathResolver.join($0, "plugins.json") }
-            }
+            ]
+                + environment.projectRoots.flatMap {
+                    PluginInventoryReader(environment: environment).antigravityProjectLocations($0)
+                        .map { HostPathResolver.join($0, "plugins.json") }
+                }
         case .hermes:
             return [HostPathResolver.join(home, ".hermes/config.yaml")]
         case .droid:
             return [HostPathResolver.join(home, ".factory/settings.json")]
-                + environment.projectRoots.map { HostPathResolver.join($0, ".factory/settings.json") }
+                + environment.projectRoots.map {
+                    HostPathResolver.join($0, ".factory/settings.json")
+                }
         }
     }
 

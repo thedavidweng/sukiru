@@ -43,7 +43,8 @@ struct HermesPluginLifecycleTests {
         #expect(throws: PluginLifecycleError.self) { try planner.validate(request) }
     }
 
-    @Test("Hermes captures only config.yaml, not plugin directories, so payloads are not rolled back")
+    @Test(
+        "Hermes captures only config.yaml, not plugin directories, so payloads are not rolled back")
     func captureScope() throws {
         let home = "/h"
         let installed = PluginInstallation(
@@ -54,7 +55,8 @@ struct HermesPluginLifecycleTests {
         let request = PluginLifecycleRequest(
             host: .hermes, action: "remove", target: "x", scope: "user", scopeRoot: home)
         let result = try PluginLifecycleCapture(
-            environment: SukiruEnvironment(reader: DictionaryEnvironmentReader(["SUKIRU_HOME": home]))
+            environment: SukiruEnvironment(
+                reader: DictionaryEnvironmentReader(["SUKIRU_HOME": home]))
         ).roots(request: request, inventory: inventory)
         #expect(result.paths == [home + "/.hermes/config.yaml"])
     }

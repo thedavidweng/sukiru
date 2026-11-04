@@ -185,7 +185,8 @@ struct AntigravityPluginLifecycleTests {
     }
 
     @Test(
-        "Native mutations roll back preferences and import records; payloads and caches are not restored")
+        "Native mutations roll back preferences and import records; payloads and caches are not restored"
+    )
     func rollback() throws {
         let fixture = try PluginHostFixture(
             host: "antigravity", version: "1.4.7", help: help,

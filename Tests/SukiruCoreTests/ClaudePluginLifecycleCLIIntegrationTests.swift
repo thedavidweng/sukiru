@@ -111,8 +111,10 @@ extension ClaudePluginLifecycleCLIIntegrationTests {
         let fixture = try Self.claude(onRun: "printf '{}' > \"$HOME/.claude/settings.json\"")
         let settings = fixture.home + "/.claude/settings.json"
         try FileManager.default.removeItem(atPath: settings)
-        let original = try fixture.tree.file("external/original.json", contents: #"{"original":true}"#)
-        let replacement = try fixture.tree.file("external/replacement.json", contents: #"{"later":true}"#)
+        let original = try fixture.tree.file(
+            "external/original.json", contents: #"{"original":true}"#)
+        let replacement = try fixture.tree.file(
+            "external/replacement.json", contents: #"{"later":true}"#)
         let link = try fixture.tree.symlink("home/.claude/settings.json", to: original)
         let executed = try fixture.execute([fixture.request("marketplace-add", "example/other")])
         #expect(executed.exitCode == 0, "\(executed.stderrText)")
