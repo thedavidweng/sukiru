@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.21.0](https://github.com/thedavidweng/sukiru/compare/v1.20.0...v1.21.0) (2026-11-05)
+
+
+### ✨ Features
+
+* **hosts:** deploy global skills into installed agents ([#82](https://github.com/thedavidweng/sukiru/issues/82)) ([#126](https://github.com/thedavidweng/sukiru/issues/126)) ([f530a67](https://github.com/thedavidweng/sukiru/commit/f530a6752138c84cad3d42a2a980d9e7075182fc))
+* **library:** move a skill between the installer ledgers ([#127](https://github.com/thedavidweng/sukiru/issues/127)) ([9833457](https://github.com/thedavidweng/sukiru/commit/98334577069b6fce96b6f1fbb2f02f779c27e5c5))
+* **plugins:** support Hermes Agent plugins and scope rollback to config ([#117](https://github.com/thedavidweng/sukiru/issues/117)) ([2ccb473](https://github.com/thedavidweng/sukiru/commit/2ccb473cabd9138df0850d29927299cbb1c99859))
+* **plugins:** support Hermes Agent plugins and scope rollback to config ([#124](https://github.com/thedavidweng/sukiru/issues/124)) ([8d3241a](https://github.com/thedavidweng/sukiru/commit/8d3241acbe6dade2f980f56d7e7fef759a794466))
+
+
+### 🐛 Bug Fixes
+
+* **ui:** finish list consistency and drop the description height probe ([#125](https://github.com/thedavidweng/sukiru/issues/125)) ([5cb212d](https://github.com/thedavidweng/sukiru/commit/5cb212de41ad7599a52e78c2f47bcf73043b3f38))
+* **ui:** unify toolbar, list headers and empty states across surfaces ([#123](https://github.com/thedavidweng/sukiru/issues/123)) ([0b53ad0](https://github.com/thedavidweng/sukiru/commit/0b53ad05fe3063b3858e6cd312155c95833e9b58))
+
+
+### ♻️ Refactoring
+
+* **app:** observe AppState with @Observable ([e86686e](https://github.com/thedavidweng/sukiru/commit/e86686ee405e611f66498857bdcc3f1a7132483d))
+* **app:** observe AppState with @Observable ([e86686e](https://github.com/thedavidweng/sukiru/commit/e86686ee405e611f66498857bdcc3f1a7132483d)), closes [#119](https://github.com/thedavidweng/sukiru/issues/119)
+
 ## [1.20.0](https://github.com/thedavidweng/sukiru/compare/v1.19.0...v1.20.0) (2026-11-03)
 
 
