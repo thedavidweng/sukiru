@@ -6,7 +6,7 @@ import SwiftUI
 /// and the result with Undo. A snapshot is taken before the first command,
 /// so a confirmed batch stays reversible (ADR-0007).
 struct BatchConfirmSheet: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     /// The window-level rollback confirmation cannot present over this
     /// sheet, so Undo confirms here.
     @State private var confirmingUndo = false

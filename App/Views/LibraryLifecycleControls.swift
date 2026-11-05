@@ -51,7 +51,7 @@ extension Skill {
 /// check found a newer version. Restore Files is a gh write, so it is hidden
 /// rather than shown permanently disabled when gh writes are withheld.
 struct LibraryLifecycleControls: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     let skill: Skill
 
@@ -158,7 +158,7 @@ struct LibraryLifecycleControls: View {
 /// Library toolbar: queues an update for every skill an installer owns
 /// among `skills`, then opens the batch confirmation (like Fix All).
 struct UpdateAllButton: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     let skills: [Skill]
 
@@ -184,7 +184,7 @@ struct UpdateAllButton: View {
 
 /// Lists the folders the last update check could not check.
 struct UpdateCheckFailureAlert: ViewModifier {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     func body(content: Content) -> some View {
         content.alert(
@@ -203,7 +203,7 @@ struct UpdateCheckFailureAlert: ViewModifier {
 /// Library toolbar: asks gh which GitHub-ledger skills have upstream
 /// updates (`gh skill update --dry-run`, read-only).
 struct CheckForUpdatesButton: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     let skills: [Skill]
 

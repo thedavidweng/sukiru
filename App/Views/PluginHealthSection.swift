@@ -2,7 +2,7 @@ import SukiruCore
 import SwiftUI
 
 struct PluginHealthSection: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let findings: [PluginHealthFinding]
 
     var body: some View {

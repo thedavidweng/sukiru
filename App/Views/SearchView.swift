@@ -14,10 +14,11 @@ import SwiftUI
 /// always available (a pure network read, zero CLIs), gh is
 /// offered only when gh ≥ 2.90.0 is live.
 struct SearchView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     @State private var pendingSearch: Task<Void, Never>?
 
     var body: some View {
+        @Bindable var state = state
         // The list stays even when empty, so the column starts with a scroll
         // view and the toolbar matches every other surface.
         resultsList
@@ -89,6 +90,7 @@ struct SearchView: View {
     /// unavailable the picker shows only skills.sh (GitHub-side
     /// features clearly absent, everything else works).
     private var backendPicker: some View {
+        @Bindable var state = state
         let ghAvailable = state.capabilities?.github.available ?? true
         return HStack(spacing: 0) {
             AXToken(token: "sukiru.search.backend")

@@ -5,9 +5,10 @@ import SwiftUI
 /// detail for Library, Snapshots, and Search). State lives in `AppState`, so selection and
 /// disclosure state survive surface switches and resizes.
 struct RootView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
+        @Bindable var state = state
         NavigationSplitView {
             SidebarView()
                 .navigationSplitViewColumnWidth(min: 210, ideal: 240, max: 300)

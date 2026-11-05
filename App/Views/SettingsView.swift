@@ -33,7 +33,7 @@ struct SettingsView: View {
 // MARK: - Projects
 
 private struct ProjectsSettingsPane: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         let counts = skillCounts
@@ -137,7 +137,7 @@ private struct ProjectsSettingsPane: View {
 // MARK: - Installers
 
 private struct InstallersSettingsPane: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     @AppStorage(AppState.installAsCopiesDefaultsKey) private var installAsCopies = false
 
     var body: some View {

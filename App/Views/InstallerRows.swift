@@ -48,7 +48,7 @@ struct InstallerStatusSymbol: View {
 /// needs it, or ahead of time with Download; Update appears when the
 /// registry has a newer release. npx runs only on those user actions.
 struct SkillsCLIRow: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let status: InstallerStatus?
 
     var body: some View {
@@ -104,7 +104,7 @@ struct SkillsCLIRow: View {
 /// One CLI: a status symbol, its probe summary and location, and the action
 /// that fits its state (Install, Update/Reinstall, or Show in Finder).
 struct InstallerRow: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let tool: InstallerTool
     let title: LocalizedStringKey
     let token: String

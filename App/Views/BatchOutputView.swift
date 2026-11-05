@@ -3,7 +3,7 @@ import SwiftUI
 /// The running batch's commands and their live output, read-only and
 /// selectable like terminal scrollback, kept scrolled to the newest line.
 struct BatchOutputView: View {
-    @ObservedObject var log: BatchOutputLog
+    let log: BatchOutputLog
 
     var body: some View {
         GroupBox {

@@ -4,7 +4,7 @@ import SwiftUI
 /// One host's add-ons: auto-loaded extensions, packages, plugins, or MCP servers. Sukiru
 /// never loads their code.
 struct ExtensionLibraryView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     @State private var filter = ""
 
     private var host: ExtensionHost { state.hookState.extensionHost }
@@ -21,6 +21,7 @@ struct ExtensionLibraryView: View {
     }
 
     var body: some View {
+        @Bindable var state = state
         List(selection: $state.hookState.selectedExtensionID) {
             ForEach(categories, id: \.self) { category in
                 section(category.title, items.filter { $0.category == category })
@@ -92,7 +93,7 @@ struct ExtensionLibraryView: View {
 }
 
 struct ExtensionDetailView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         if let item = state.selectedExtension {

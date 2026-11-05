@@ -15,9 +15,10 @@ import SwiftUI
 /// - **Result** — the terminal record banner (`PendingResultBanners`) while
 ///   the post-mutation auto-refresh repopulates every other surface.
 struct PendingChangesView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
+        @Bindable var state = state
         // The scroll view stays even when empty, so the column starts with
         // one and the toolbar matches every other surface.
         ScrollView {

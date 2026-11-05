@@ -1,3 +1,4 @@
+import Observation
 import Sparkle
 import SwiftUI
 
@@ -5,12 +6,16 @@ import SwiftUI
 /// Settings mirrors the automatic-check preference. Debug builds never start
 /// it, so a development build is never replaced by a release.
 @MainActor
-final class AppUpdater: ObservableObject {
-    @Published private(set) var canCheckForUpdates = false
-    @Published var automaticallyChecksForUpdates: Bool {
+@Observable
+final class AppUpdater {
+    private(set) var canCheckForUpdates = false
+    var automaticallyChecksForUpdates: Bool {
         didSet { controller.updater.automaticallyChecksForUpdates = automaticallyChecksForUpdates }
     }
-    private let controller: SPUStandardUpdaterController
+    @ObservationIgnored private let controller: SPUStandardUpdaterController
+    /// Sparkle reports session changes by KVO only; the mirror above keeps
+    /// SwiftUI's observation of the menu item and its label.
+    @ObservationIgnored private var canCheckObservation: NSKeyValueObservation?
 
     init() {
         #if DEBUG
@@ -21,7 +26,11 @@ final class AppUpdater: ObservableObject {
         controller = SPUStandardUpdaterController(
             startingUpdater: starting, updaterDelegate: nil, userDriverDelegate: nil)
         automaticallyChecksForUpdates = controller.updater.automaticallyChecksForUpdates
-        controller.updater.publisher(for: \.canCheckForUpdates).assign(to: &$canCheckForUpdates)
+        canCheckObservation = controller.updater.observe(
+            \.canCheckForUpdates, options: [.initial, .new]
+        ) { [weak self] updater, _ in
+            MainActor.assumeIsolated { self?.canCheckForUpdates = updater.canCheckForUpdates }
+        }
     }
 
     func checkForUpdates() {

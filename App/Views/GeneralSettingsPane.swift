@@ -2,10 +2,11 @@ import SwiftUI
 
 /// App-wide preferences, such as the UI language override.
 struct GeneralSettingsPane: View {
-    @EnvironmentObject private var updater: AppUpdater
+    @Environment(AppUpdater.self) private var updater
     @State private var language = AppLanguage.override
 
     var body: some View {
+        @Bindable var updater = updater
         Form {
             Section {
                 Picker("Language", selection: $language) {

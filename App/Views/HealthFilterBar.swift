@@ -7,7 +7,7 @@ import SwiftUI
 /// `sukiru.health.filter.workspace` token; each option button carries
 /// `sukiru.health.filter.workspace.<sanitized-id>`.
 struct HealthFilterBar: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         HStack(spacing: 8) {
@@ -79,7 +79,7 @@ struct HealthFilterBar: View {
 /// Banner shown while the Health surface is focused on one skill by the
 /// Library "show findings" deep-link.
 struct HealthFocusBanner: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let focus: AppState.HealthFocus
 
     /// `user` or `project:<root>`, shown as "User scope" or the project

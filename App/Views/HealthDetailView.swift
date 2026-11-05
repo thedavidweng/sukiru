@@ -4,7 +4,7 @@ import SwiftUI
 /// Inspects the selected finding: the implicated skill's full inspector when
 /// there is one, otherwise the problem's explanation and evidence.
 struct HealthDetailView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         if let finding = state.selectedFinding() {

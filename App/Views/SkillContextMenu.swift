@@ -7,7 +7,7 @@ import SwiftUI
 /// one last. Items the detail hides because they can never apply here are
 /// hidden here too; Update and Uninstall stay visible but disabled.
 struct SkillContextMenu: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     let skill: Skill
 
@@ -119,7 +119,7 @@ struct SkillContextMenu: View {
 
 /// Group actions are available only when every selected skill supports them.
 struct SkillsSelectionActions: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let skills: [Skill]
 
     var body: some View {

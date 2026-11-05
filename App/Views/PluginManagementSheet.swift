@@ -2,7 +2,7 @@ import SukiruCore
 import SwiftUI
 
 struct PluginManagementSheet: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -73,7 +73,8 @@ struct PluginManagementSheet: View {
     }
 
     /// Repository installs go through `agy plugin install`, which manages user plugins only.
-    private var scopePicker: some View {
+    @ViewBuilder private var scopePicker: some View {
+        @Bindable var state = state
         Picker("Scope", selection: $state.pluginManagement.scopeRoot) {
             Text("User scope").tag(state.environment.home)
             ForEach(state.projectRoots, id: \.self) { root in
@@ -90,6 +91,7 @@ struct PluginManagementSheet: View {
 
     @ViewBuilder
     private var operationFields: some View {
+        @Bindable var state = state
         Picker("Operation", selection: $state.pluginManagement.action) {
             ForEach(operations, id: \.self) { action in
                 Text(verbatim: PluginActionTitle.title(action)).tag(action)
@@ -142,6 +144,7 @@ struct PluginManagementSheet: View {
 
     @ViewBuilder
     private var repositoryFields: some View {
+        @Bindable var state = state
         TextField("owner/repo or GitHub URL", text: $state.pluginManagement.target)
             .accessibilityIdentifier("sukiru.plugins.operation.repository")
             .help("A GitHub repository that contains an Antigravity plugin")
@@ -156,6 +159,7 @@ struct PluginManagementSheet: View {
 
     @ViewBuilder
     private var antigravityOptions: some View {
+        @Bindable var state = state
         if state.pluginManagement.action == "link" {
             TextField("Marketplace", text: $state.pluginManagement.marketplace)
                 .accessibilityIdentifier("sukiru.plugins.operation.marketplace")

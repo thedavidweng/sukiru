@@ -4,9 +4,10 @@ import SwiftUI
 /// The repository half of the install sheet: the typed source, the chosen
 /// installer's listing of it, and the skills to install.
 struct RepositorySkillPicker: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
+        @Bindable var state = state
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 0) {
                 AXToken(token: "sukiru.search.install.source")
@@ -66,7 +67,9 @@ struct RepositorySkillPicker: View {
         }
     }
 
+    @ViewBuilder
     private func skillList(_ skills: [RepositorySkill]) -> some View {
+        @Bindable var state = state
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text("\(state.repositoryInstall.selection.count) of \(skills.count) selected")

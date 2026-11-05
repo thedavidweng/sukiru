@@ -3,7 +3,7 @@ import SwiftUI
 
 /// Every on-disk placement of a skill, each one revealable in Finder.
 struct LibraryLocationsSection: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     let skill: Skill
 

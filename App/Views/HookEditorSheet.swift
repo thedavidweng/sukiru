@@ -4,7 +4,7 @@ import SwiftUI
 /// Add Hook / Edit: one command handler in a documented standalone source.
 /// Nothing is written here; the change joins Pending Changes for review (ADR-0014).
 struct HookEditorSheet: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     @Environment(\.dismiss) private var dismiss
 
     let target: HookEditorTarget

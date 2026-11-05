@@ -5,7 +5,7 @@ import SwiftUI
 /// Library inspector: name and description, where it comes from, the files
 /// it ships, and its raw SKILL.md. Install sits in the window toolbar.
 struct SearchDetailView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         Group {

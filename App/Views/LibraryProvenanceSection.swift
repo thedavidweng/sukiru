@@ -5,7 +5,7 @@ import SwiftUI
 /// ambiguous or capability-blocked skill the notices explain why those
 /// records are not acted on.
 struct LibraryProvenanceSection: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     let skill: Skill
 
@@ -190,7 +190,7 @@ struct LibraryProvenanceSection: View {
 /// field starts at the recorded ref, stripped to the branch or tag name gh
 /// `--pin` resolves.
 struct PinSheet: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     @Environment(\.dismiss) private var dismiss
 
     let skill: Skill

@@ -12,7 +12,7 @@ import SwiftUI
 /// the pane renders `sukiru.snapshots.diff.empty` with a
 /// "No changes" line.
 struct SnapshotsDetailView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         Group {
