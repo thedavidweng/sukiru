@@ -1,0 +1,7 @@
+#!/bin/sh
+# Capability probe fixture: a gh new enough for `gh skill`, without running it.
+case "$*" in
+  "--version") echo "gh version 2.103.3 (2026-10-26)" ;;
+  "skill --help") echo "Usage: gh skill install <repository> [<skill>] [flags]" ;;
+  *) exit 64 ;;
+esac

@@ -113,6 +113,16 @@ interactive `gh skill update` asks for the source and injects provenance.
 Adoption requires choosing a ledger, so it is a user decision.
 _Avoid_: import
 
+**Installer Migration** (转籍):
+Moving a skill that one ledger owns alone to the other ledger, by delegating
+both halves to the official CLIs: the source CLI drops its record and, where
+the source is the Vercel ledger, its placements, then the destination CLI
+re-installs from the recorded provenance. The destination follows ownership;
+an incomplete record, a missing destination CLI, or a pin the destination
+cannot carry withholds the move. Distinct from Adoption (which brings in an
+ownerless skill) and from resolving a Double-booked skill (ADR 0018).
+_Avoid_: transfer, backend switch
+
 **Double-booked** (双重记账):
 Both ledgers claim the same skill. The repair must let the user decide which
 ledger to keep; there is no objectively correct answer.

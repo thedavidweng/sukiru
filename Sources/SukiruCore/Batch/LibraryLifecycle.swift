@@ -12,6 +12,11 @@ public enum LifecycleAction: String, Codable, Equatable, Sendable, CaseIterable 
     /// Re-download the recorded version over local edits (GitHub ledger
     /// only).
     case restore
+    /// Move the skill to the other installer's ledger
+    /// (`CommandBatchBuilder.githubMigrationCommands` and
+    /// `vercelMigrationCommands`). The destination follows the skill's
+    /// current ownership: the other ledger.
+    case migrate
 
     /// The synthetic finding-ref rule ID (like `new-install`): the executor's
     /// snapshot, bounds, and rescan derive their scope from finding refs.
@@ -80,6 +85,12 @@ public enum LifecycleBlocker: Equatable, Sendable {
     case alreadyPinned
     /// The skill is not pinned (Unpin applies to pinned skills).
     case notPinned
+    /// Migration needs the source ledger's recorded repository, and for the
+    /// Vercel ledger also the skill's repo-relative `SKILL.md` path.
+    case incompleteProvenance
+    /// A pinned skill cannot move to the Vercel ledger, which has no pin:
+    /// the move would silently clear it and install the default branch.
+    case migratingPinnedSkill
 
     /// Human-readable refusal (English by design, like other core refusals).
     var message: String {
@@ -113,6 +124,12 @@ public enum LifecycleBlocker: Equatable, Sendable {
             return "the skill is already pinned; unpin it first to change the pin"
         case .notPinned:
             return "the skill is not pinned"
+        case .incompleteProvenance:
+            return "the owning ledger's record does not name the repository and skill path "
+                + "the other installer needs"
+        case .migratingPinnedSkill:
+            return "the skill is pinned to a ref, and the Vercel ledger has no pin; unpin it "
+                + "first to move it"
         }
     }
 
@@ -129,7 +146,8 @@ extension CommandBatchBuilder {
     /// uninstall deletes files directly, so it needs no `gh`. Pin, unpin,
     /// and restore are GitHub-ledger writes, so they carry the same
     /// capability and `githubWriteBlocker` guards as a gh update, plus their
-    /// pin-state preconditions.
+    /// pin-state preconditions. Migration carries the destination ledger's
+    /// capability plus the guards its commands need.
     public static func lifecycleBlocker(
         skill: Skill, action: LifecycleAction, capabilities: CapabilityReport?,
         report: ScanReport? = nil
@@ -149,14 +167,66 @@ extension CommandBatchBuilder {
         case .ownerless:
             return .ownerless
         case .vercel:
-            guard action == .update || action == .uninstall else {
-                return .githubLedgerOnly
-            }
-            return capabilities?.npx.canRunSkills == false ? .needsNpx : nil
+            return vercelLifecycleBlocker(
+                skill: skill, action: action, capabilities: capabilities, report: report)
         case .github:
             return githubLifecycleBlocker(
                 skill: skill, action: action, capabilities: capabilities, report: report)
         }
+    }
+
+    /// The Vercel-ledger branch of `lifecycleBlocker`: update and uninstall
+    /// need npx, a move to the GitHub ledger needs gh and the lock's GitHub
+    /// coordinates, and every other action belongs to the GitHub ledger.
+    private static func vercelLifecycleBlocker(
+        skill: Skill, action: LifecycleAction, capabilities: CapabilityReport?,
+        report: ScanReport?
+    ) -> LifecycleBlocker? {
+        if action == .migrate {
+            return vercelMigrationBlocker(
+                skill: skill, capabilities: capabilities, report: report)
+        }
+        guard action == .update || action == .uninstall else {
+            return .githubLedgerOnly
+        }
+        return capabilities?.npx.canRunSkills == false ? .needsNpx : nil
+    }
+
+    /// A Vercel-ledger skill moving to the GitHub ledger needs gh, a GitHub
+    /// source with the repo-relative `SKILL.md` path (gh downloads by path),
+    /// and a gh write that would not cost another Vercel record its data.
+    /// The batch removes this skill's record first, so the guard treats it
+    /// as the replaced record.
+    private static func vercelMigrationBlocker(
+        skill: Skill, capabilities: CapabilityReport?, report: ScanReport?
+    ) -> LifecycleBlocker? {
+        if capabilities?.github.available == false {
+            return .needsGitHubCLI
+        }
+        guard let record = skill.provenance.vercel, record.sourceType == "github",
+            record.source?.isEmpty == false, record.skillPath?.isEmpty == false
+        else { return .incompleteProvenance }
+        return report.flatMap {
+            githubWriteBlocker(skillName: skill.name, report: $0, replacing: skill)
+        }
+    }
+
+    /// A GitHub-ledger skill moving to the Vercel ledger needs npx, and a
+    /// repository to install from. A pin exists only in the GitHub ledger,
+    /// so the move is refused rather than silently clearing it.
+    private static func githubMigrationBlocker(
+        skill: Skill, capabilities: CapabilityReport?
+    ) -> LifecycleBlocker? {
+        if capabilities?.npx.canRunSkills == false {
+            return .needsNpx
+        }
+        if skill.provenance.github?.pinned == true {
+            return .migratingPinnedSkill
+        }
+        guard skill.provenance.github?.repo.isEmpty == false else {
+            return .incompleteProvenance
+        }
+        return nil
     }
 
     private static func hasPnpmNameCollision(skill: Skill, report: ScanReport?) -> Bool {
@@ -167,11 +237,15 @@ extension CommandBatchBuilder {
     /// The GitHub-ledger branch of `lifecycleBlocker`: uninstall is a direct
     /// deletion needing no `gh`; every other action is a gh write, so it
     /// carries the capability and `githubWriteBlocker` guards plus the
-    /// pin-state preconditions.
+    /// pin-state preconditions. A move to the Vercel ledger is the reverse:
+    /// an npx write that needs no gh.
     private static func githubLifecycleBlocker(
         skill: Skill, action: LifecycleAction, capabilities: CapabilityReport?,
         report: ScanReport?
     ) -> LifecycleBlocker? {
+        if action == .migrate {
+            return githubMigrationBlocker(skill: skill, capabilities: capabilities)
+        }
         guard action != .uninstall else { return nil }
         if capabilities?.github.available == false {
             return .needsGitHubCLI

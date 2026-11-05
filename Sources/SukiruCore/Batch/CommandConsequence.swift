@@ -38,6 +38,10 @@ public enum CommandConsequence: Codable, Equatable, Sendable {
     /// `npx skills remove` drops the lock entry and deletes every listed
     /// placement, agent-made copies included.
     case removesLockedSkill(skill: String, deleting: [String])
+    /// A gh re-install moves a skill from the Vercel ledger to the GitHub
+    /// ledger: gh writes a real copy into every skills folder the skill
+    /// occupied, rather than links to a shared copy.
+    case migratesToGitHub
     /// A new install enters the Vercel lockfile ledger.
     case entersVercelLedger
     /// A new install writes gh provenance into the frontmatter, and records
@@ -83,6 +87,11 @@ public enum CommandConsequence: Codable, Equatable, Sendable {
         case .removesLockedSkill(let skill, let paths):
             return "The lock entry for '\(skill)' is removed and these are deleted, "
                 + "including copies an agent made itself: \(paths.joined(separator: ", "))."
+        case .migratesToGitHub:
+            return "Content is re-downloaded from the recorded GitHub source into every "
+                + "skills folder that held the skill, so local edits are lost. gh writes a "
+                + "real copy in each folder rather than a link to a shared copy. "
+                + Self.githubLockNote
         case .entersVercelLedger:
             return "Installing with npx skills enters the skill into the Vercel lockfile"
                 + " ledger: the canonical copy lands in .agents/skills and host "

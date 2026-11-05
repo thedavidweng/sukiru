@@ -86,6 +86,64 @@ extension CommandBatchBuilder {
 
     // MARK: - link ↔ copy
 
+    /// The targeted re-install shape for a project-scope skill
+    /// (probe-verified against skills@1.5.26): an untargeted
+    /// `npx skills add … --skill <name>` refreshes ONLY the canonical
+    /// `.agents/skills` copy — drifted or gh-overwritten copies in other
+    /// host dirs are left untouched, findings included. So when the skill
+    /// has placements outside the canonical store, the reinstall names
+    /// every placement's host (`-a <host>…`, the canonical store via its
+    /// pinned `codex` host entry) and adds `--copy` when a physical copy
+    /// lives outside the canonical store. Symlink-only extra placements
+    /// install in link mode (no `--copy`). Canonical-only placements and
+    /// user scope keep the plain shape.
+    func reinstallTargets(skill: Skill, finding: Finding) throws -> (
+        agents: [String], copy: Bool
+    ) {
+        try Self.reinstallTargets(skill: skill, root: projectRoot(of: finding))
+    }
+
+    /// The same shape for a caller that has no finding: a bucket's project
+    /// root, or nil for user scope (where an untargeted `npx skills add`
+    /// already covers every agent).
+    static func reinstallTargets(skill: Skill, root: String?) throws -> (
+        agents: [String], copy: Bool
+    ) {
+        guard let root else { return ([], false) }
+        let canonicalDir = root + "/" + HostTable.canonicalProjectSkillDir
+        var agents = Set<String>()
+        var hasCanonical = false
+        var hasExternalCopy = false
+        for placement in skill.placements where placement.kind != .brokenSymlink {
+            let skillsDir = Self.parentDir(placement.path)
+            if skillsDir == canonicalDir {
+                hasCanonical = true
+                continue
+            }
+            guard skillsDir.hasPrefix(root + "/") else {
+                throw DecisionProblem(
+                    message: "cannot repair '\(skill.name)': placement '\(placement.path)' "
+                        + "lies outside the project root; a targeted reinstall cannot "
+                        + "be derived")
+            }
+            let relative = String(skillsDir.dropFirst(root.count + 1))
+            guard let host = HostTable.host(forProjectSkillDir: relative) else {
+                throw DecisionProblem(
+                    message: "cannot repair '\(skill.name)': no known host installs into "
+                        + "'\(relative)'; a targeted reinstall cannot be derived")
+            }
+            agents.insert(host)
+            if placement.kind == .directory {
+                hasExternalCopy = true
+            }
+        }
+        guard !agents.isEmpty else { return ([], false) }
+        if hasCanonical {
+            agents.insert(HostTable.canonicalStoreHost)
+        }
+        return (agents.sorted(), hasExternalCopy)
+    }
+
     func relinkCommands(
         entry: DecisionEntry, finding: Finding, report: ScanReport
     ) throws -> [BatchCommand] {
