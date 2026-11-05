@@ -11,6 +11,9 @@
     "showInUniversalPrompt": "false for antigravity, antigravity-cli, deepagents, dexto, firebender, loaf, sarvam-code: hides the host from the CLI's interactive universal-agents prompt only; it does not change getUniversalAgents, so Sukiru does not model it.",
     "createProjectSkillsDirByDefault": "true for claude-code: the CLI creates .claude/skills in a project without an existing .claude dir; install-side only."
   },
+  "documentedOverrides": {
+    "antigravity/antigravity-cli globalSkillDirRelative": "The vendor documents every Antigravity surface reading personal global skills from ~/.gemini/config/skills; the IDE also reads legacy ~/.gemini/antigravity/skills, the CLI also reads ~/.gemini/antigravity-cli/skills and ~/.gemini/skills. The pinned CLI table names only the two legacy folders as install dirs, so Sukiru reads the vendor's folder and keeps the pinned folders as legacy roots. Their installSkillDirRelative keeps host-removal planning on the folder the pinned CLI actually cleans. ~/.gemini/skills stays gemini-cli's global root even though the CLI also reads it: sharing one physical root across a primary and a legacy entry is not modeled. Sources: https://antigravity.google/docs/skills and https://antigravity.google/docs/customization-discovery, checked 2026-11-05 against agy 1.5.1 (its builtin migrate-workflows skill names ~/.gemini/config/skills/<name>/SKILL.md)."
+  },
   "globalBaseResolution": {
     "Home": "$HOME (fallback $USERPROFILE)",
     "Xdg": "$XDG_CONFIG_HOME if set and non-empty, else $HOME/.config",
@@ -23,6 +26,7 @@
     "extraMarkers": "Tested against $HOME only (agents.rs:164-166).",
     "legacyProjectSkillDirs": "Relative to the project root, like projectSkillDir. Dirs the pinned CLI no longer installs into but users may still hold; scanned READ-ONLY (never an install or -a target).",
     "legacyGlobalSkillDirs": "Relative to the RESOLVED BASE, like globalSkillDirRelative. Scanned READ-ONLY when the dir exists; never an install target.",
+    "installSkillDirRelative": "Relative to the RESOLVED BASE. Where the PINNED INSTALLER writes and cleans this host's global skills when the host's documented read folder differs; host-removal planning uses it because npx only deletes there and in the shared store. null means globalSkillDirRelative.",
     "globalSkillDirBase": "When set, the base globalSkillDirRelative resolves against instead of globalBase (resolved the same way); detection and legacyGlobalSkillDirs keep globalBase. null means globalBase."
   },
   "detectionOrder": [
@@ -94,17 +98,18 @@
       "id": "antigravity",
       "displayName": "Antigravity",
       "projectSkillDir": ".agents/skills",
-      "globalSkillDirRelative": ".gemini/antigravity/skills",
+      "globalSkillDirRelative": ".gemini/config/skills",
       "detectionMarker": ".gemini/antigravity",
       "envHomeVar": null,
       "envFallbackDir": null,
       "extraMarkers": [],
       "globalBase": "Home",
       "globalSkillDirBase": null,
+      "installSkillDirRelative": ".gemini/antigravity/skills",
       "detectInProject": false,
       "showInUniversalList": true,
       "legacyProjectSkillDirs": [],
-      "legacyGlobalSkillDirs": [],
+      "legacyGlobalSkillDirs": [".gemini/antigravity/skills"],
       "ghAgentId": "antigravity",
       "notes": null
     },
@@ -112,17 +117,18 @@
       "id": "antigravity-cli",
       "displayName": "Antigravity CLI",
       "projectSkillDir": ".agents/skills",
-      "globalSkillDirRelative": ".gemini/antigravity-cli/skills",
+      "globalSkillDirRelative": ".gemini/config/skills",
       "detectionMarker": ".gemini/antigravity-cli",
       "envHomeVar": null,
       "envFallbackDir": null,
       "extraMarkers": [],
       "globalBase": "Home",
       "globalSkillDirBase": null,
+      "installSkillDirRelative": ".gemini/antigravity-cli/skills",
       "detectInProject": false,
       "showInUniversalList": true,
       "legacyProjectSkillDirs": [],
-      "legacyGlobalSkillDirs": [],
+      "legacyGlobalSkillDirs": [".gemini/antigravity-cli/skills"],
       "ghAgentId": "antigravity-cli",
       "notes": null
     },

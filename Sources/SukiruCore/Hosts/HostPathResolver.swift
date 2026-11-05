@@ -85,6 +85,17 @@ public struct HostPathResolver: Sendable {
         Self.join(projectRoot, host.projectSkillDir)
     }
 
+    /// Where the pinned installer writes and cleans this host's global
+    /// skills. Usually the read folder; a host whose documented read folder
+    /// differs keeps the installer's own path so removal plans stay accurate.
+    public func installSkillsRoot(for host: HostSpec) -> String {
+        guard let relative = host.installSkillDirRelative else {
+            return globalSkillsRoot(for: host)
+        }
+        let root = host.globalSkillDirBase.map { base($0, for: host) } ?? configHome(for: host)
+        return Self.join(root, relative)
+    }
+
     /// The host's legacy global skills roots (read-only scan locations).
     public func legacyGlobalSkillsRoots(for host: HostSpec) -> [String] {
         host.legacyGlobalSkillDirs.map { Self.join(configHome(for: host), $0) }

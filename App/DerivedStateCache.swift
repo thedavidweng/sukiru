@@ -12,6 +12,7 @@ final class DerivedStateCache {
     var markdownURLs: (reportRevision: Int, urls: [String: URL?])?
     var agents: AgentIndex?
     var hostEntries: HostEntryCache?
+    var linkTargets: (reportRevision: Int, targets: [String: [HostLinkTarget]])?
     var findings: FindingIndex?
 }
 

@@ -72,6 +72,35 @@ extension AppState {
         }
     }
 
+    /// Installed agents that can read a global skill's shared copy but do not
+    /// hold it. Resolved once per report: the Library detail asks on every
+    /// render, and host detection probes the filesystem.
+    func linkTargets(for skill: Skill) -> [HostLinkTarget] {
+        if derived.linkTargets?.reportRevision != reportRevision {
+            derived.linkTargets = (reportRevision, [:])
+        }
+        let id = Self.skillID(skill)
+        if let cached = derived.linkTargets?.targets[id] { return cached }
+        guard report != nil else { return [] }
+        let targets = HostLinkPlanner(environment: environment).targets(for: skill)
+        derived.linkTargets?.targets[id] = targets
+        return targets
+    }
+
+    /// Library: deploy one global skill into a chosen installed agent by
+    /// linking the shared copy into the agent's global skills folder.
+    func linkSkill(_ skill: Skill, into host: String) {
+        do {
+            propose(
+                try HostLinkPlanner(environment: environment).batch(skill: skill, host: host),
+                skipped: [])
+        } catch let error as BatchBuildError {
+            propose(nil, skipped: error.problems)
+        } catch {
+            propose(nil, skipped: [UserFacingError.message(for: error)])
+        }
+    }
+
     /// The `files-without-lock` finding that marks a skill as an orphan.
     func orphanFinding(for skill: Skill) -> Finding? {
         findingEntries(for: skill).map(\.finding).first { $0.ruleID == "files-without-lock" }

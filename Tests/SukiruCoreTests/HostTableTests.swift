@@ -91,7 +91,10 @@ struct HostTableTests {
         let withLegacy = HostTable.hosts.filter {
             !$0.legacyProjectSkillDirs.isEmpty || !$0.legacyGlobalSkillDirs.isEmpty
         }
-        #expect(withLegacy.map(\.id) == ["codex", "droid", "fx", "kilo", "pi"])
+        #expect(
+            withLegacy.map(\.id) == [
+                "antigravity", "antigravity-cli", "codex", "droid", "fx", "kilo", "pi"
+            ])
         #expect(HostTable.host(id: "codex")?.legacyGlobalSkillDirs == ["skills"])
         #expect(HostTable.host(id: "pi")?.legacyGlobalSkillDirs == [".pi/agent/skills"])
         #expect(HostTable.host(id: "droid")?.legacyProjectSkillDirs == [".factory/skills"])
@@ -103,6 +106,42 @@ struct HostTableTests {
                 #expect(!projectDirs.contains(dir), "\(dir) is a current project dir")
                 #expect(HostTable.host(forProjectSkillDir: dir) == nil)
             }
+        }
+    }
+
+    @Test("Every Antigravity surface reads the vendor's personal skills folder")
+    func antigravityDocumentedGlobalFolder() throws {
+        let environment = SukiruEnvironment(
+            reader: DictionaryEnvironmentReader(["HOME": "/h"]))
+        let resolver = HostPathResolver(
+            environment: environment, fileSystem: DefaultFileSystemProbe())
+        for id in ["antigravity", "antigravity-cli"] {
+            let host = try #require(HostTable.host(id: id))
+            #expect(resolver.globalSkillsRoot(for: host) == "/h/.gemini/config/skills")
+        }
+        // The pinned installer still writes into these folders; they stay
+        // readable, and host-removal planning follows the installer.
+        #expect(
+            HostTable.host(id: "antigravity")?.legacyGlobalSkillDirs
+                == [".gemini/antigravity/skills"])
+        #expect(
+            HostTable.host(id: "antigravity-cli")?.legacyGlobalSkillDirs
+                == [".gemini/antigravity-cli/skills"])
+        let antigravity = try #require(HostTable.host(id: "antigravity"))
+        let cli = try #require(HostTable.host(id: "antigravity-cli"))
+        #expect(
+            resolver.installSkillsRoot(for: antigravity) == "/h/.gemini/antigravity/skills")
+        #expect(
+            resolver.installSkillsRoot(for: cli) == "/h/.gemini/antigravity-cli/skills")
+    }
+
+    @Test("An installer folder that differs from the read folder stays scanned")
+    func installFoldersAreLegacyRoots() {
+        for host in HostTable.hosts {
+            guard let install = host.installSkillDirRelative else { continue }
+            #expect(
+                host.legacyGlobalSkillDirs.contains(install),
+                "\(host.id) install folder \(install) is not a scanned legacy root")
         }
     }
 

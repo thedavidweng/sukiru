@@ -3,7 +3,8 @@ import Foundation
 /// The direct file operations a batch may carry as `sukiru-fileop <verb>
 /// <path>…` commands (ADR-0007). None writes a ledger: they act only where no
 /// official CLI can — an ownerless payload, a dead link, the link ↔ copy
-/// mode of a host-folder placement, or a leftover host folder. The executor parses the argv back into
+/// mode of a host-folder placement, a host's missing global link, or a
+/// leftover host folder. The executor parses the argv back into
 /// this type, so a malformed or unknown verb never runs.
 public enum FileOperation: Equatable, Sendable {
     /// Delete an ownerless skill directory.
@@ -14,6 +15,9 @@ public enum FileOperation: Equatable, Sendable {
     /// Replace a physical copy (or a link elsewhere) with a symlink to
     /// `target`.
     case relink(path: String, target: String)
+    /// Create a symlink at `path` pointing at `target`, creating the parent
+    /// folder when the host never made one. The path must not exist yet.
+    case link(path: String, target: String)
     /// Replace a symlink with an independent copy of the directory it
     /// resolves to.
     case materialize(String)
@@ -41,51 +45,10 @@ public enum FileOperation: Equatable, Sendable {
         guard argv.first == Self.executable, argv.count >= 3 else {
             return nil
         }
-        switch (argv[1], argv.count) {
-        case ("replace-hook-source", 5), ("delete-hook-helper", 4), ("replace-config-source", 7),
-            ("delete-agent-extension", 4), ("remove-hermes-plugin", 5), ("edit-agent-config", 5),
-            ("move-agent-extension", 5):
-            guard let operation = Self.sourceOperation(argv) else { return nil }
-            self = operation
-        case ("delete-directory", 3):
-            self = .deleteDirectory(argv[2])
-        case ("delete-link", 3):
-            self = .deleteLink(argv[2])
-        case ("relink", 4):
-            self = .relink(path: argv[2], target: argv[3])
-        case ("materialize", 3):
-            self = .materialize(argv[2])
-        case ("remove-leftover-skills-dir", 3):
-            self = .removeLeftoverSkillsDir(argv[2])
-        case ("move-plugin", 4):
-            self = .movePlugin(path: argv[2], destination: argv[3])
-        default:
+        guard let operation = Self.sourceOperation(argv) ?? Self.pathOperation(argv) else {
             return nil
         }
-    }
-
-    /// The hook and config source edits, which carry a scanned content hash.
-    private static func sourceOperation(_ argv: [String]) -> FileOperation? {
-        switch argv[1] {
-        case "replace-hook-source":
-            .replaceHookSource(path: argv[2], hash: argv[3], contents: argv[4])
-        case "delete-hook-helper":
-            .deleteHookHelper(path: argv[2], hash: argv[3])
-        case "delete-agent-extension":
-            .deleteAgentExtension(path: argv[2], hash: argv[3])
-        case "remove-hermes-plugin":
-            .removeHermesPlugin(path: argv[2], hash: argv[3], name: argv[4])
-        case "edit-agent-config":
-            .editAgentConfig(path: argv[2], hash: argv[3], edits: argv[4])
-        case "move-agent-extension":
-            .moveAgentExtension(path: argv[2], hash: argv[3], destination: argv[4])
-        case "replace-config-source" where ["true", "false"].contains(argv[6]):
-            .replaceConfigSource(
-                path: argv[2], hash: argv[3], contents: argv[4], pluginID: argv[5],
-                enabled: argv[6] == "true")
-        default:
-            nil
-        }
+        self = operation
     }
 
     var argv: [String] {
@@ -113,6 +76,8 @@ public enum FileOperation: Equatable, Sendable {
             return [Self.executable, "delete-link", path]
         case .relink(let path, let target):
             return [Self.executable, "relink", path, target]
+        case .link(let path, let target):
+            return [Self.executable, "link", path, target]
         case .materialize(let path):
             return [Self.executable, "materialize", path]
         case .removeLeftoverSkillsDir(let path):
@@ -147,6 +112,8 @@ public enum FileOperation: Equatable, Sendable {
             try Self.deleteLink(path, probe: probe)
         case .relink(let path, let target):
             try Self.relink(path, to: target, probe: probe)
+        case .link(let path, let target):
+            try Self.link(path, to: target, probe: probe)
         case .materialize(let path):
             guard case .symlink? = probe.entryKind(atPath: path),
                 let resolved = probe.resolvedPath(atPath: path),
@@ -275,6 +242,23 @@ public enum FileOperation: Equatable, Sendable {
         }
     }
 
+    /// Creates a link only where nothing exists yet: the host folder may be
+    /// missing (the batch creates it) but another entry with the skill's
+    /// name is never overwritten.
+    private static func link(
+        _ path: String, to target: String, probe: DefaultFileSystemProbe
+    ) throws {
+        guard probe.entryKind(atPath: path) == nil else {
+            throw FileOperationError("'\(path)' already exists")
+        }
+        guard probe.isDirectory(atPath: target) else {
+            throw FileOperationError("link target '\(target)' is not a directory")
+        }
+        let parent = URL(fileURLWithPath: path).deletingLastPathComponent().path
+        try FileManager.default.createDirectory(atPath: parent, withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(atPath: path, withDestinationPath: target)
+    }
+
     /// Moves `path` aside, creates its replacement, then drops the original;
     /// a failed replacement puts the original back.
     private static func replace(_ path: String, with create: () throws -> Void) throws {
@@ -291,6 +275,48 @@ public enum FileOperation: Equatable, Sendable {
             throw error
         }
         try fileManager.removeItem(atPath: aside)
+    }
+}
+
+/// The argv tables behind `init?(argv:)`: one place for every operation
+/// a batch file may carry, so a malformed or unknown verb never runs.
+extension FileOperation {
+    /// The hook and config source edits, which carry a scanned content hash.
+    private static func sourceOperation(_ argv: [String]) -> FileOperation? {
+        switch (argv[1], argv.count) {
+        case ("replace-hook-source", 5):
+            .replaceHookSource(path: argv[2], hash: argv[3], contents: argv[4])
+        case ("delete-hook-helper", 4):
+            .deleteHookHelper(path: argv[2], hash: argv[3])
+        case ("delete-agent-extension", 4):
+            .deleteAgentExtension(path: argv[2], hash: argv[3])
+        case ("remove-hermes-plugin", 5):
+            .removeHermesPlugin(path: argv[2], hash: argv[3], name: argv[4])
+        case ("edit-agent-config", 5):
+            .editAgentConfig(path: argv[2], hash: argv[3], edits: argv[4])
+        case ("move-agent-extension", 5):
+            .moveAgentExtension(path: argv[2], hash: argv[3], destination: argv[4])
+        case ("replace-config-source", 7) where ["true", "false"].contains(argv[6]):
+            .replaceConfigSource(
+                path: argv[2], hash: argv[3], contents: argv[4], pluginID: argv[5],
+                enabled: argv[6] == "true")
+        default:
+            nil
+        }
+    }
+
+    /// Placement and plugin operations, which carry paths only.
+    private static func pathOperation(_ argv: [String]) -> FileOperation? {
+        switch (argv[1], argv.count) {
+        case ("delete-directory", 3): .deleteDirectory(argv[2])
+        case ("delete-link", 3): .deleteLink(argv[2])
+        case ("relink", 4): .relink(path: argv[2], target: argv[3])
+        case ("link", 4): .link(path: argv[2], target: argv[3])
+        case ("materialize", 3): .materialize(argv[2])
+        case ("remove-leftover-skills-dir", 3): .removeLeftoverSkillsDir(argv[2])
+        case ("move-plugin", 4): .movePlugin(path: argv[2], destination: argv[3])
+        default: nil
+        }
     }
 }
 

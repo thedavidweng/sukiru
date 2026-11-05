@@ -207,6 +207,25 @@ struct SkillMode {
     }
 }
 
+struct SkillLink {
+    var selection: SkillSelection
+    var host: String
+    var output: OutputOptions
+    var mutation: MutationOptions
+    func run() throws {
+        // --host names the destination, not a placement filter: the Skill has
+        // no placement there yet, so filtering by it would never select one.
+        var inputs = selection.inputs
+        inputs.host = nil
+        let environment = try cliEnvironment(roots: inputs.roots)
+        let report = try ScanEngine(environment: environment).scan(inputs.mutationRequest)
+        let selection = SkillSelection(name: selection.name, path: selection.path, inputs: inputs)
+        let batch = try HostLinkPlanner(environment: environment).batch(
+            skill: try selection.select(in: report), host: host)
+        try mutation.apply(batch, report: report, environment: environment, output: output)
+    }
+}
+
 struct SkillCheckUpdates {
     var inputs: ScopeOptions
     var output: OutputOptions
@@ -343,6 +362,19 @@ extension CLI {
             let command = SkillMode(
                 selection: try SkillSelection(arguments), output: OutputOptions(arguments),
                 mutation: try MutationOptions(arguments), mode: try arguments.enumeration("mode"))
+            try command.run()
+        },
+        CLICommand(
+            path: "skills link",
+            abstract: "Link a global Skill into an installed Agent Host.",
+            options: selectionOptions + outputOptions + mutationOptions,
+            argument: CLIPositional(
+                name: "name", required: true,
+                help: "Skill name; use --path to disambiguate placements.")
+        ) { arguments in
+            let command = SkillLink(
+                selection: try SkillSelection(arguments), host: try arguments.required("host"),
+                output: OutputOptions(arguments), mutation: try MutationOptions(arguments))
             try command.run()
         },
         CLICommand(

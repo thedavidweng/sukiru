@@ -164,3 +164,11 @@ The real skill directory in the scope's shared skills directory
 (`~/.agents/skills` or the project's `.agents/skills`). Each host directory
 should hold a link to it.
 _Avoid_: canonical, store
+
+**Host Link Deployment** (宿主链接部署):
+A link the user asks Sukiru to create from a detected Agent Host's global
+skills folder to the scope's Shared Copy, for an agent whose global folder is
+not the shared store. It is an action, never a Problem: a host holding a
+different subset is a choice, and no ledger records the intended hosts. It
+writes no ledger and runs in a snapshot like every other link operation.
+_Avoid_: install, auto-deploy

@@ -5,6 +5,8 @@ import SwiftUI
 /// carrying `sukiru.library.detail.hosts` on its header and
 /// `sukiru.library.detail.host.<hostID>` on each row.
 struct LibraryHostsSection: View {
+    @EnvironmentObject private var state: AppState
+
     let skill: Skill
     let entries: [HostEntry]
 
@@ -19,6 +21,7 @@ struct LibraryHostsSection: View {
     var body: some View {
         let installed = entries.filter(\.installed)
         let leftovers = entries.filter { !$0.installed }
+        let targets = state.linkTargets(for: skill)
         Section {
             if skill.placements.contains(where: \.internal) {
                 Text("Internal skill, hidden from host-facing listings.")
@@ -43,11 +46,35 @@ struct LibraryHostsSection: View {
                         .badge(leftovers.count)
                 }
             }
+            if !targets.isEmpty {
+                linkRow(targets)
+            }
         } header: {
             TokenSectionHeader(
                 token: "sukiru.library.detail.hosts", title: "Hosts",
                 count: installed.isEmpty ? nil : installed.count
             )
+        }
+    }
+
+    /// Deployment, not repair: an agent that reads a different subset of the
+    /// shared store is a choice, so this is a user-initiated action instead
+    /// of a Problem.
+    private func linkRow(_ targets: [HostLinkTarget]) -> some View {
+        HStack {
+            Text("Some installed agents do not see this skill.")
+                .foregroundStyle(.secondary)
+            Spacer()
+            Menu("Link into Agent…") {
+                ForEach(targets, id: \.skillsRoot) { target in
+                    Button(target.displayName) {
+                        state.linkSkill(skill, into: target.hostID)
+                    }
+                }
+            }
+            .fixedSize()
+            .help("Create a link to the shared copy in the agent's global skills folder")
+            .disabled(state.batchMutationInFlight)
         }
     }
 

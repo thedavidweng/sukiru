@@ -256,7 +256,7 @@ struct BatchConfirmSheet: View {
 /// Plain-language lines describing what a batch changes, counted by kind.
 struct BatchSummary {
     private enum Kind: CaseIterable {
-        case deleteLink, relink, relinkDiverged, materialize, deleteDirectory
+        case deleteLink, relink, relinkDiverged, link, materialize, deleteDirectory
         case removeLeftover, disablePlugin, hostPlugin, remove, install, reinstall, pin, unpin,
             update, hookCleanup, hookChange, addOnChange
 
@@ -279,6 +279,7 @@ struct BatchSummary {
             switch operation {
             case .deleteLink: .deleteLink
             case .relink: discardsLocalChanges ? .relinkDiverged : .relink
+            case .link: .link
             case .materialize: .materialize
             case .deleteDirectory: .deleteDirectory
             case .removeLeftoverSkillsDir: .removeLeftover
@@ -334,6 +335,7 @@ struct BatchSummary {
             case .deleteLink: String(localized: "summary.deleteLink \(count)")
             case .relink: String(localized: "summary.relink \(count)")
             case .relinkDiverged: String(localized: "summary.relinkDiverged \(count)")
+            case .link: String(localized: "summary.link \(count)")
             case .materialize: String(localized: "summary.materialize \(count)")
             case .deleteDirectory: String(localized: "summary.deleteDirectory \(count)")
             case .removeLeftover: String(localized: "summary.removeLeftover \(count)")

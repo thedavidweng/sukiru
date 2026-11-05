@@ -33,6 +33,24 @@ extension BatchCommandFactory {
                 + "deletion.")
     }
 
+    /// Creates a host's missing global link to the shared-store copy. No
+    /// official CLI performs this for a universal agent whose global folder
+    /// differs from the shared store (the pinned `skills` release returns the
+    /// shared path before creating the agent link), and it writes no ledger.
+    static func link(
+        name: String, path: String, storePath: String, hosts: String, intent: String
+    ) -> BatchCommand {
+        fileOperation(
+            .link(path: path, target: storePath),
+            display: "link " + BatchCommand.display(for: [path]) + " → "
+                + BatchCommand.display(for: [storePath]),
+            intent: intent,
+            flags: [.directFileOperation],
+            warning: "Direct file operation: '\(path)' becomes a link to '\(storePath)' so "
+                + "\(hosts) reads '\(name)'. The snapshot captures the link and any folder the "
+                + "batch creates; rollback removes them.")
+    }
+
     /// Replaces a host-folder copy with a link to the shared-store copy.
     /// `diverged` marks a copy whose content differs from the store's, so
     /// its local edits are discarded (kept only in the snapshot).

@@ -3251,6 +3251,28 @@
         }
       }
     },
+    "Create a link to the shared copy in the agent's global skills folder" : {
+      "comment" : "Library detail hosts region: help for the link-into-agent menu.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在智能体的全局技能文件夹中创建指向共享副本的链接"
+          }
+        }
+      }
+    },
+    "Some installed agents do not see this skill." : {
+      "comment" : "Library detail hosts region: a global skill can be linked into detected agents that read a different global folder.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "部分已安装的智能体看不到此技能。"
+          }
+        }
+      }
+    },
     "I agree to the disclosed plugin and external state effects" : {
       "localizations" : {
         "en" : {
@@ -3851,6 +3873,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将 %1$@ 链接到 %2$@"
+          }
+        }
+      }
+    },
+    "Link into Agent…" : {
+      "comment" : "Library detail hosts region: menu of installed agents whose global skills folder does not hold this skill.",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "链接到智能体…"
           }
         }
       }
@@ -7649,6 +7682,23 @@
         }
       }
     },
+    "command.warning.link" : {
+      "comment" : "Batch review note.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This creates the agent's missing link to the shared copy. Rollback removes the link and any folder the batch created."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这会为该智能体创建指向共享副本的缺失链接。回滚会删除该链接以及批次新建的文件夹。"
+          }
+        }
+      }
+    },
     "command.warning.materialize" : {
       "comment" : "Batch review note.",
       "localizations" : {
@@ -10055,6 +10105,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安装 %lld 个技能"
+          }
+        }
+      }
+    },
+    "summary.link %lld" : {
+      "comment" : "Batch confirmation summary line, counted by kind.",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Link %lld skill into an agent"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Link %lld skills into agents"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将 %lld 个技能链接到智能体"
           }
         }
       }
