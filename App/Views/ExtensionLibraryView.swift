@@ -36,6 +36,9 @@ struct ExtensionLibraryView: View {
         .onChange(of: host) { _, _ in
             filter = ""
         }
+        .onChange(of: state.hookState.showsMCP) { _, _ in
+            filter = ""
+        }
         .accessibilityIdentifier("sukiru.extensions.list")
         .help("Inspect what this host loads; scanning never runs it")
         .overlay {
