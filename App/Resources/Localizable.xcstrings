@@ -1190,7 +1190,7 @@
     "%lld" : {
       "shouldTranslate" : false
     },
-    "%lld Plugins Selected" : {
+    "%lld plugins selected" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2894,12 +2894,32 @@
         }
       }
     },
+    "Filter Extensions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "筛选扩展"
+          }
+        }
+      }
+    },
     "Filter Hooks" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "筛选钩子"
+          }
+        }
+      }
+    },
+    "Filter MCP Servers" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "筛选 MCP 服务器"
           }
         }
       }
@@ -4311,7 +4331,7 @@
         }
       }
     },
-    "No Matching Skills" : {
+    "No matching skills" : {
       "comment" : "Library empty state when the active filters hide every skill.",
       "localizations" : {
         "zh-Hans" : {
@@ -6302,13 +6322,13 @@
         }
       }
     },
-    "No Skills" : {
+    "No skills in this scope" : {
       "comment" : "Library empty state: the selected scope holds no skills.",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "没有技能"
+            "value" : "此范围内没有技能"
           }
         }
       }
@@ -9640,7 +9660,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld Skills Selected"
+            "value" : "%lld skills selected"
           }
         },
         "zh-Hans" : {
@@ -11431,22 +11451,22 @@
         }
       }
     },
-    "No Extensions" : {
+    "No extensions found" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "没有扩展"
+            "value" : "未找到扩展"
           }
         }
       }
     },
-    "No MCP Servers" : {
+    "No MCP servers found" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "没有 MCP 服务器"
+            "value" : "未找到 MCP 服务器"
           }
         }
       }
@@ -11894,12 +11914,12 @@
         }
       }
     },
-    "No hooks" : {
+    "No hooks found" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "没有钩子"
+            "value" : "未找到钩子"
           }
         }
       }

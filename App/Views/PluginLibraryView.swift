@@ -245,7 +245,7 @@ private struct PluginRow: View {
                     Text(verbatim: summary)
                         .font(.callout)
                         .foregroundStyle(.secondary)
-                        .lineLimit(3)
+                        .lineLimit(1)
                         .help(summary)
                 }
                 if !details.isEmpty {

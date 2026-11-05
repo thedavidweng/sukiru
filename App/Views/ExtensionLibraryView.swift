@@ -5,10 +5,16 @@ import SwiftUI
 /// never loads their code.
 struct ExtensionLibraryView: View {
     @EnvironmentObject private var state: AppState
+    @State private var filter = ""
 
     private var host: ExtensionHost { state.hookState.extensionHost }
     private var items: [AgentExtension] {
-        state.extensions(for: host, mcp: state.hookState.showsMCP)
+        state.extensions(for: host, mcp: state.hookState.showsMCP).filter { item in
+            filter.isEmpty
+                || item.name.localizedCaseInsensitiveContains(filter)
+                || item.producer.localizedCaseInsensitiveContains(filter)
+                || (item.detail ?? item.path).localizedCaseInsensitiveContains(filter)
+        }
     }
     private var categories: [ExtensionCategory] {
         host.categories.filter { ($0 == .mcpServer) == state.hookState.showsMCP }
@@ -26,16 +32,30 @@ struct ExtensionLibraryView: View {
             state.hookState.showsMCP
                 ? Text("\(items.count) MCP servers") : Text("\(items.count) extensions")
         )
+        .searchable(text: $filter, placement: .toolbar, prompt: Text(filterPrompt))
+        .onChange(of: host) { _, _ in
+            filter = ""
+        }
         .accessibilityIdentifier("sukiru.extensions.list")
         .help("Inspect what this host loads; scanning never runs it")
         .overlay {
             if items.isEmpty {
-                ContentUnavailableView(
-                    state.hookState.showsMCP ? "No MCP Servers" : "No Extensions",
-                    systemImage: ExtensionIcon.symbol(mcp: state.hookState.showsMCP),
-                    description: Text("This host's user configuration declares none."))
+                if filter.isEmpty {
+                    ContentUnavailableView(
+                        state.hookState.showsMCP
+                            ? "No MCP servers found" : "No extensions found",
+                        systemImage: ExtensionIcon.symbol(mcp: state.hookState.showsMCP),
+                        description: Text("This host's user configuration declares none."))
+                } else {
+                    ContentUnavailableView.search(text: filter)
+                }
             }
         }
+    }
+
+    /// The filter names the list it narrows, as on the hooks and plugins lists.
+    private var filterPrompt: LocalizedStringKey {
+        state.hookState.showsMCP ? "Filter MCP Servers" : "Filter Extensions"
     }
 
     @ViewBuilder

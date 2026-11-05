@@ -198,7 +198,7 @@ struct LibraryView: View {
                 ContentUnavailableView.search(text: filter)
             } else if groups.isEmpty && isFiltering {
                 ContentUnavailableView {
-                    Label("No Matching Skills", systemImage: "line.3.horizontal.decrease.circle")
+                    Label("No matching skills", systemImage: "line.3.horizontal.decrease.circle")
                 } actions: {
                     Button("Clear Filters") {
                         attentionOnly = false
@@ -206,7 +206,7 @@ struct LibraryView: View {
                     }
                 }
             } else if groups.isEmpty {
-                ContentUnavailableView("No Skills", systemImage: "square.stack")
+                ContentUnavailableView("No skills in this scope", systemImage: "square.stack")
             }
         }
     }

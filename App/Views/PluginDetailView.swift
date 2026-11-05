@@ -133,7 +133,7 @@ struct PluginDetailView: View {
                 .textSelection(.enabled)
             } else if state.selectedPluginIDs.count > 1 {
                 ContentUnavailableView(
-                    "\(state.selectedPluginIDs.count) Plugins Selected",
+                    "\(state.selectedPluginIDs.count) plugins selected",
                     systemImage: "puzzlepiece.extension")
             } else {
                 ContentUnavailableView(

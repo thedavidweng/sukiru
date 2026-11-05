@@ -299,7 +299,7 @@ private struct PluginCatalogRow: View {
                 Text(verbatim: summary)
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                    .lineLimit(3)
+                    .lineLimit(1)
                     .help(summary)
             }
             let details = [entry.categories?.joined(separator: ", "), entry.version].compactMap {
