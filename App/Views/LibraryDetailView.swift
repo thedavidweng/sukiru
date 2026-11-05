@@ -310,11 +310,10 @@ private struct ExpandableDescription: View {
             .fixedSize(horizontal: false, vertical: true)
             .hidden()
             .accessibilityHidden(true)
-            .background(
-                GeometryReader { proxy in
-                    Color.clear.onChange(of: proxy.size.height, initial: true) { _, new in
-                        height.wrappedValue = new
-                    }
-                })
+            .onGeometryChange(for: CGFloat.self) {
+                $0.size.height
+            } action: { new in
+                height.wrappedValue = new
+            }
     }
 }

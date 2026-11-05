@@ -52,7 +52,7 @@ struct HookLibraryView: View {
             if hooks.isEmpty && issues.isEmpty {
                 if search.isEmpty {
                     ContentUnavailableView(
-                        "No hooks", systemImage: "bolt.horizontal",
+                        "No hooks found", systemImage: "bolt.horizontal",
                         description: Text("This host's settings declare no hooks."))
                 } else {
                     ContentUnavailableView.search(text: search)
@@ -90,7 +90,7 @@ struct HookLibraryView: View {
     @ViewBuilder
     private func hookSection(_ title: LocalizedStringKey, entries: [AgentHook]) -> some View {
         if !entries.isEmpty {
-            Section(title) {
+            Section {
                 let byScope = Dictionary(grouping: entries, by: \.source.scopeRoot)
                 ForEach(byScope.keys.sorted(), id: \.self) { root in
                     Section {
@@ -124,6 +124,8 @@ struct HookLibraryView: View {
                             count: byScope[root]?.count ?? 0)
                     }
                 }
+            } header: {
+                ListSectionHeader(title: Text(title), count: entries.count)
             }
         }
     }
