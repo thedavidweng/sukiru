@@ -12,6 +12,10 @@ import Foundation
 ///   `HostSpec.GlobalBase`), never to `$HOME` directly. `globalSkillDirBase`,
 ///   when set, replaces `globalBase` for this one path, so a host can keep its
 ///   config home for detection and legacy dirs while installing elsewhere.
+/// - `installSkillDirRelative`, relative like `globalSkillDirRelative`, is
+///   where the pinned installer writes and cleans the host's global skills
+///   when the host's documented read folder differs. Host-removal planning
+///   uses it; nil means the same folder as `globalSkillDirRelative`.
 /// - `detectionMarker` is an existence probe; the empty string means "probe the
 ///   resolved config home itself and never fall through to `$HOME`".
 /// - `extraMarkers` are probed against `$HOME` only.
@@ -43,6 +47,7 @@ public struct HostSpec: Equatable, Sendable, Codable {
     public let extraMarkers: [String]
     public let globalBase: GlobalBase
     public let globalSkillDirBase: GlobalBase?
+    public let installSkillDirRelative: String?
     public let detectInProject: Bool
     public let showInUniversalList: Bool
     public let legacyProjectSkillDirs: [String]
@@ -60,6 +65,7 @@ public struct HostSpec: Equatable, Sendable, Codable {
         extraMarkers: [String],
         globalBase: GlobalBase,
         globalSkillDirBase: GlobalBase? = nil,
+        installSkillDirRelative: String? = nil,
         detectInProject: Bool,
         showInUniversalList: Bool,
         legacyProjectSkillDirs: [String],
@@ -76,6 +82,7 @@ public struct HostSpec: Equatable, Sendable, Codable {
         self.extraMarkers = extraMarkers
         self.globalBase = globalBase
         self.globalSkillDirBase = globalSkillDirBase
+        self.installSkillDirRelative = installSkillDirRelative
         self.detectInProject = detectInProject
         self.showInUniversalList = showInUniversalList
         self.legacyProjectSkillDirs = legacyProjectSkillDirs
@@ -94,6 +101,7 @@ public struct HostSpec: Equatable, Sendable, Codable {
         case extraMarkers
         case globalBase
         case globalSkillDirBase
+        case installSkillDirRelative
         case detectInProject
         case showInUniversalList
         case legacyProjectSkillDirs

@@ -1,6 +1,6 @@
 # Agent interface sources
 
-Version: 2026-11-03
+Version: 2026-11-05
 
 The version is the date of the most recent change to this file. Update it, and the row's
 Checked date, whenever a source is re-verified or a command or key changes.
@@ -146,3 +146,17 @@ Tinycloud and Zenflow.
 
 `agent` (Cursor) and `acli` (Rovo Dev) are generic names: another tool's `agent` command,
 or ACLI installed without Rovo Dev, also counts as installed.
+
+## Skill folders
+
+Skill folders are discovery locations, not commands: `research/host-table.json` records
+each host's global and project folders plus the read-only legacy folders, and
+`Scripts/generate-host-table.sh` emits `HostTableData.swift` from it. The table starts as
+a port of the pinned `skills` release, but a host's current documentation wins when the
+two disagree. Antigravity is the first documented override: the App, CLI and IDE read
+`~/.gemini/config/skills`, the IDE also reads legacy `~/.gemini/antigravity/skills`, and
+the CLI also reads `~/.gemini/antigravity-cli/skills` and `~/.gemini/skills`. The pinned
+installer still names only the two legacy folders, so `npx skills add -g` never populates
+the documented one; `installSkillDirRelative` keeps host-removal planning pointed at the
+folder that installer actually cleans. Evidence and sources are in
+[antigravity-plugin-interface-evidence.md](antigravity-plugin-interface-evidence.md#skill-directories).

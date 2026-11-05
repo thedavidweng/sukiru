@@ -35,6 +35,8 @@ appends="$(
           + (if .globalBase != "Home" then ", base: ." + (.globalBase | ascii_downcase) else "" end)
           + (if .globalSkillDirBase != null
                then ", skillBase: ." + (.globalSkillDirBase | ascii_downcase) else "" end)
+          + (if .installSkillDirRelative != null
+               then ", install: " + (.installSkillDirRelative | @json) else "" end)
           + (if .detectInProject then ", detectInProject: true" else "" end)
           + (if .showInUniversalList == false then ", universal: false" else "" end)
           + (if (.legacyProjectSkillDirs | length) > 0
@@ -92,6 +94,7 @@ num_chunks=$(((total + per_chunk - 1) / per_chunk))
         extra extraMarkers: [String] = [],
         base globalBase: HostSpec.GlobalBase = .home,
         skillBase globalSkillDirBase: HostSpec.GlobalBase? = nil,
+        install installSkillDirRelative: String? = nil,
         detectInProject: Bool = false,
         universal showInUniversalList: Bool = true,
         legacyProject legacyProjectSkillDirs: [String] = [],
@@ -109,6 +112,7 @@ num_chunks=$(((total + per_chunk - 1) / per_chunk))
             extraMarkers: extraMarkers,
             globalBase: globalBase,
             globalSkillDirBase: globalSkillDirBase,
+            installSkillDirRelative: installSkillDirRelative,
             detectInProject: detectInProject,
             showInUniversalList: showInUniversalList,
             legacyProjectSkillDirs: legacyProjectSkillDirs,

@@ -71,7 +71,9 @@ Website: <https://sukiru.blahaj.uk/>
 - 📚 **Library**: See each skill's owner, provenance, pinned ref, and where it
   is placed across agents. Switch a skill between link and copy mode, and
   update or uninstall it (or update everything at once) through the installer
-  that owns it. GitHub-installed skills can also be pinned to a ref,
+  that owns it. A global skill can also be linked into an installed agent whose
+  global skills folder differs from the shared store, since no installer
+  command deploys it there. GitHub-installed skills can also be pinned to a ref,
   unpinned, or restored to the recorded version over local edits. Check for
   Updates asks `gh skill` which GitHub-installed skills have newer versions
   without changing anything.
@@ -111,8 +113,8 @@ Website: <https://sukiru.blahaj.uk/>
 - **Zero ledger.** Sukiru never writes installer records. Ledger changes go
   through the official CLIs only. Sukiru performs file operations directly
   only for link management that no CLI offers (deleting a broken link,
-  replacing a copy with a link, turning a link into a copy), always inside a
-  snapshot.
+  replacing a copy with a link, turning a link into a copy, creating a host's
+  missing global link), always inside a snapshot.
 - **Ownership routes repairs.** There is no global "backend" setting. A skill
   owned by `npx skills` is repaired with `npx skills`, and the same goes for
   `gh skill`.
@@ -260,6 +262,7 @@ sukiru skills update --all --dry-run
 sukiru skills uninstall --all --host claude-code --scope user --dry-run
 sukiru skills pin NAME --ref v1 --dry-run
 sukiru skills mode NAME --mode link --dry-run
+sukiru skills link NAME --host antigravity-cli --dry-run
 sukiru skills adopt NAME --installer vercel --source OWNER/REPO --dry-run
 sukiru skills check-updates --json   # explicit official remote check
 sukiru search swift --backend github --json

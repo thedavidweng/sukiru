@@ -40,6 +40,8 @@ extension BatchCommand {
             return dangerFlags.contains(.discardsLocalChanges)
                 ? String(localized: "command.warning.relinkDiverged")
                 : String(localized: "command.warning.relink")
+        case .link:
+            return String(localized: "command.warning.link")
         case .materialize:
             return String(localized: "command.warning.materialize")
         case .removeLeftoverSkillsDir:
@@ -93,7 +95,7 @@ extension FileOperation {
             return String(localized: "Delete the folder \(Self.display(path))")
         case .deleteLink(let path):
             return String(localized: "Delete the link \(Self.display(path))")
-        case .relink(let path, let target):
+        case .relink(let path, let target), .link(let path, let target):
             return String(
                 localized: "Link \(Self.display(path)) to \(Self.display(target))",
                 comment: "Direct file operation: the first path becomes a link to the second.")

@@ -39,7 +39,7 @@ public struct HostRemovalContext: Sendable {
             for host in HostTable.hosts {
                 let root =
                     project.map { resolver.projectSkillsRoot(for: host, projectRoot: $0) }
-                    ?? resolver.globalSkillsRoot(for: host)
+                    ?? resolver.installSkillsRoot(for: host)
                 native[host.id] = root
                 let installRoot = Self.isUniversal(host) ? shared : root
                 install[host.id] = installRoot

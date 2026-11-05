@@ -18,12 +18,14 @@ extension HostTable {
             spec("amp", "Amp", ".agents/skills", "agents/skills", "amp", base: .xdg, gh: "amp"))
         hosts.append(
             spec(
-                "antigravity", "Antigravity", ".agents/skills", ".gemini/antigravity/skills",
-                ".gemini/antigravity", gh: "antigravity"))
+                "antigravity", "Antigravity", ".agents/skills", ".gemini/config/skills",
+                ".gemini/antigravity", install: ".gemini/antigravity/skills",
+                legacyGlobal: [".gemini/antigravity/skills"], gh: "antigravity"))
         hosts.append(
             spec(
-                "antigravity-cli", "Antigravity CLI", ".agents/skills",
-                ".gemini/antigravity-cli/skills", ".gemini/antigravity-cli", gh: "antigravity-cli"))
+                "antigravity-cli", "Antigravity CLI", ".agents/skills", ".gemini/config/skills",
+                ".gemini/antigravity-cli", install: ".gemini/antigravity-cli/skills",
+                legacyGlobal: [".gemini/antigravity-cli/skills"], gh: "antigravity-cli"))
         hosts.append(
             spec(
                 "astrbot", "AstrBot", "data/skills", ".astrbot/data/skills", ".astrbot",
@@ -284,6 +286,7 @@ extension HostTable {
         extra extraMarkers: [String] = [],
         base globalBase: HostSpec.GlobalBase = .home,
         skillBase globalSkillDirBase: HostSpec.GlobalBase? = nil,
+        install installSkillDirRelative: String? = nil,
         detectInProject: Bool = false,
         universal showInUniversalList: Bool = true,
         legacyProject legacyProjectSkillDirs: [String] = [],
@@ -301,6 +304,7 @@ extension HostTable {
             extraMarkers: extraMarkers,
             globalBase: globalBase,
             globalSkillDirBase: globalSkillDirBase,
+            installSkillDirRelative: installSkillDirRelative,
             detectInProject: detectInProject,
             showInUniversalList: showInUniversalList,
             legacyProjectSkillDirs: legacyProjectSkillDirs,

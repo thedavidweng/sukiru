@@ -259,3 +259,37 @@ Marketplace directory IDs can be signed 64-bit hashes and differ from names.
 These RPCs are first-party installed guidance, not a verified public versioned
 API; CLI lifecycle remains the externally verifiable shell contract. Source:
 `~/.gemini/antigravity-cli/builtin/skills/plugin/SKILL.md`.
+
+## Skill directories
+
+Verified 2026-11-05 against the vendor documentation, `agy` 1.5.1, and its
+first-party `migrate-workflows` skill, which names
+`~/.gemini/config/skills/<name>/SKILL.md` as the global destination.
+
+| Surface | Global | Project |
+| --- | --- | --- |
+| Antigravity App | `~/.gemini/config/skills` | `<workspace>/.agents/skills`, plus each parent up to the repository root |
+| Antigravity CLI | `~/.gemini/config/skills`, `~/.gemini/antigravity-cli/skills`, `~/.gemini/skills` | same |
+| Antigravity IDE | `~/.gemini/config/skills`; legacy `~/.gemini/antigravity/skills` | same |
+
+`~/.gemini/config/skills` is the personal folder the App and CLI share, and a
+personal discovery manifest (`~/.gemini/config/skills.json`) can add folders
+outside it. The per-surface lists come from
+[Agent skills](https://antigravity.google/docs/skills/) and
+[Customization discovery](https://antigravity.google/docs/customization-discovery);
+the CLI's extra folders take priority over the personal folder.
+
+The host table follows these paths, with the first-party legacy folders as
+read-only roots, because the pinned `skills` release instead names
+`~/.gemini/antigravity/skills` (App) and `~/.gemini/antigravity-cli/skills`
+(CLI). Those two folders stay in the table as `installSkillDirRelative`, so
+host-removal planning keeps matching the folder `npx skills remove` cleans; a
+link deployed into the documented folder is outside the installer's reach.
+The pinned installer's global install also returns the shared store before
+creating an agent link (`isGlobal && isUniversalAgent`) for every universal
+agent with its own global folder. Probe: `npx skills@1.7.6 add <dir> --skill
+foo -a antigravity-cli -g` installed only `~/.agents/skills/foo`. Upstream
+reports are
+[vercel-labs/skills#1851](https://github.com/vercel-labs/skills/issues/1851) and
+[#1874](https://github.com/vercel-labs/skills/issues/1874); PR #2567 is
+unrelated (it documents runtime use of discovered skills, not this bug).

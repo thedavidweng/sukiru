@@ -299,12 +299,40 @@ struct FileOperationTests {
             try FileManager.default.contentsOfDirectory(atPath: tree.path + "/host") == ["tool"])
     }
 
+    @Test("link creates a missing folder and refuses to overwrite an entry")
+    func linkOperation() throws {
+        let tree = try TempTree()
+        let store = try tree.file("store/tool/SKILL.md", contents: "shared")
+        let storeDir = URL(fileURLWithPath: store).deletingLastPathComponent().path
+        let host = tree.path + "/host/tool"
+        let probe = DefaultFileSystemProbe()
+
+        try FileOperation.link(path: host, target: storeDir).perform()
+        #expect(probe.entryKind(atPath: host) == .symlink(target: storeDir))
+        #expect(try String(contentsOfFile: host + "/SKILL.md", encoding: .utf8) == "shared")
+
+        #expect(throws: FileOperationError.self) {
+            try FileOperation.link(path: host, target: storeDir).perform()
+        }
+        let occupied = try tree.dir("host2/tool")
+        #expect(throws: FileOperationError.self) {
+            try FileOperation.link(path: occupied, target: storeDir).perform()
+        }
+        let file = try tree.file("plain.txt", contents: "not a skill")
+        #expect(throws: FileOperationError.self) {
+            try FileOperation.link(path: tree.path + "/other/tool", target: file).perform()
+        }
+    }
+
     @Test("Unknown verbs and wrong arity never parse")
     func parsing() {
         #expect(FileOperation(argv: ["sukiru-fileop", "chmod", "/x"]) == nil)
         #expect(FileOperation(argv: ["sukiru-fileop", "relink", "/x"]) == nil)
+        #expect(FileOperation(argv: ["sukiru-fileop", "link", "/x"]) == nil)
         #expect(FileOperation(argv: ["rm", "delete-link", "/x"]) == nil)
         let relink = FileOperation.relink(path: "/a", target: "/b")
         #expect(FileOperation(argv: relink.argv) == relink)
+        let link = FileOperation.link(path: "/a", target: "/b")
+        #expect(FileOperation(argv: link.argv) == link)
     }
 }
