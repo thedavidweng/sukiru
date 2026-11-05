@@ -12,9 +12,10 @@ import SwiftUI
 /// The history is on-disk state — it survives relaunches
 /// and reloads after every app-initiated mutation.
 struct SnapshotsView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
+        @Bindable var state = state
         List(selection: $state.selectedHistoryID) {
             ForEach(state.historyRows) { row in
                 switch row {

@@ -9,7 +9,7 @@ import SwiftUI
 /// with the concrete
 /// paths, lock entries, and hash values the scan emitted.
 struct FindingRow: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let row: HealthView.FindingRowItem
 
     private var finding: Finding { row.entry.finding }
@@ -273,7 +273,7 @@ struct FindingRow: View {
 /// What a name collision means and what, if anything, to do about it, so no
 /// collision row is left without a next step.
 private struct CollisionGuidance: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let finding: Finding
 
     var body: some View {

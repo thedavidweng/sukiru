@@ -4,7 +4,7 @@ import SwiftUI
 /// window rather than the Snapshots list, so the Repair menu's rollback
 /// command confirms from any surface.
 struct HistoryConfirmations: ViewModifier {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     func body(content: Content) -> some View {
         content

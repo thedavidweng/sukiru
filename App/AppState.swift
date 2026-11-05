@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import Observation
 import SukiruCore
 
 /// The app's single observable state object (views are
@@ -11,7 +12,8 @@ import SukiruCore
 /// subprocesses or disk walks. Selection and disclosure state live here so
 /// they survive surface switches.
 @MainActor
-final class AppState: ObservableObject {
+@Observable
+final class AppState {
     /// Scan lifecycle. `homeMissing` is the fatal condition (`SUKIRU_HOME`
     /// set but nonexistent): an explicit error state instead of a misleading
     /// empty library.
@@ -31,158 +33,158 @@ final class AppState: ObservableObject {
         let scopeGroup: String
     }
 
-    @Published var surface: Surface = .library
-    @Published var libraryScope: LibraryScope = .all
-    @Published var pluginHost: PluginHost = .claude
-    @Published var selectedPluginIDs: Set<String> = []
+    var surface: Surface = .library
+    var libraryScope: LibraryScope = .all
+    var pluginHost: PluginHost = .claude
+    var selectedPluginIDs: Set<String> = []
     /// The Plugins tab shows the host's marketplace instead of its installations.
-    @Published var showsPluginMarketplace = false
-    @Published var selectedCatalogEntryID: String?
+    var showsPluginMarketplace = false
+    var selectedCatalogEntryID: String?
     /// Cursor's own marketplace list and official catalog, read on Refresh (ADR-0008).
-    @Published var cursorCatalog = CursorCatalogState()
-    @Published var pluginManagement = PluginManagementState()
-    @Published var hookState = HookNavigationState()
-    @Published private(set) var scanPhase: ScanPhase = .loading
-    @Published private(set) var report: ScanReport? {
+    var cursorCatalog = CursorCatalogState()
+    var pluginManagement = PluginManagementState()
+    var hookState = HookNavigationState()
+    private(set) var scanPhase: ScanPhase = .loading
+    private(set) var report: ScanReport? {
         didSet { reportRevision &+= 1 }
     }
     /// Host table ids of the agents installed on this Mac, as of the last scan.
-    @Published var detectedAgentIDs: Set<String> = []
+    var detectedAgentIDs: Set<String> = []
     /// Bumps on every report change; keys the derived-state caches.
     private(set) var reportRevision = 0
     /// Health and lookup derivations, rebuilt only when their inputs change
     /// rather than on every render.
     let derived = DerivedStateCache()
-    @Published var skillDescriptions: [String: String] = [:]
+    var skillDescriptions: [String: String] = [:]
     /// nil while the (async, background) capability probes are in flight.
-    @Published private(set) var capabilities: CapabilityReport?
+    private(set) var capabilities: CapabilityReport?
     /// Runtime project-roots list. `SUKIRU_ROOTS` wins when set (the
     /// CLI-identical fixture path); otherwise the list the user built in
     /// Settings is restored from user defaults.
-    @Published private(set) var projectRoots: [String]
+    private(set) var projectRoots: [String]
     /// True while a user-requested capability re-probe runs.
-    @Published var capabilityCheckRunning = false
+    var capabilityCheckRunning = false
     /// The installer CLI currently being installed or updated via Homebrew.
-    @Published var installerInFlight: InstallerTool?
+    var installerInFlight: InstallerTool?
     /// The tail of a failed Homebrew run, per tool, shown under its row.
-    @Published var installerFailures: [InstallerTool: String] = [:]
+    var installerFailures: [InstallerTool: String] = [:]
     /// Node.js version managers found on this Mac, in display priority.
-    @Published var nodeManagers: [NodeVersionManager] = []
+    var nodeManagers: [NodeVersionManager] = []
     /// Where each installer CLI resolves on PATH, as of the last check.
-    @Published var installedPaths: [InstallerTool: String] = [:]
+    var installedPaths: [InstallerTool: String] = [:]
     /// The skills CLI's latest registry release, once the update check
     /// answers; nil when unknown (offline, or the CLI is not downloaded).
-    @Published var skillsLatestVersion: String?
+    var skillsLatestVersion: String?
     /// True while the user-requested skills CLI download/update runs.
-    @Published var skillsFetchInFlight = false
+    var skillsFetchInFlight = false
     /// The tail of a failed skills CLI download, shown under its row.
-    @Published var skillsFetchFailure: String?
+    var skillsFetchFailure: String?
     /// Selected Library skills (identity via `Self.skillID`), surviving surface switches.
-    @Published var selectedSkillIDs: Set<String> = []
+    var selectedSkillIDs: Set<String> = []
     /// Expanded finding rows in Health, surviving surface switches.
-    @Published var expandedFindings: Set<String> = []
+    var expandedFindings: Set<String> = []
     /// Active Health skill focus (Library deep-link), nil = unfiltered.
-    @Published var healthFocus: HealthFocus?
+    var healthFocus: HealthFocus?
     /// Active Health workspace filter: a workspace id from
     /// the report (`user`, `host:<id>`…), nil = all.
-    @Published var healthWorkspaceFilter: String?
+    var healthWorkspaceFilter: String?
     /// Selected finding row in Health (stable id via `Self.findingID`); the
     /// keyboard reveal/evidence menus act on it.
-    @Published var selectedFindingIDs: Set<String> = []
+    var selectedFindingIDs: Set<String> = []
     /// True while a Health "check now" run is in flight (non-reentrant).
     /// Held for a minimum duration so the running state is
     /// observable on sub-100ms fixture scans.
-    @Published private(set) var healthCheckRunning = false
+    private(set) var healthCheckRunning = false
 
     // MARK: - Repair / Command Batch state
 
     /// The finding a repair is being chosen for (Health "Fix…" deep-link);
     /// non-nil while the decision panel is up.
-    @Published var repairDraft: RepairDraft?
+    var repairDraft: RepairDraft?
     /// The proposed batch awaiting confirmation; nil when none is on the table.
-    @Published var pendingBatch: CommandBatch?
-    @Published var effectsApprovedBatchID: String?
+    var pendingBatch: CommandBatch?
+    var effectsApprovedBatchID: String?
     /// The single confirmation every batch needs to run (ADR-0007) is up.
-    @Published var showingBatchConfirm = false
+    var showingBatchConfirm = false
     /// Repairs a Fix All could not include, with the reason for each.
-    @Published var fixSkipped: [String] = []
+    var fixSkipped: [String] = []
     /// Repairs queued from Health, checked out together as one batch.
-    @Published var cart: [CartItem] = []
+    var cart: [CartItem] = []
     /// Library updates, uninstalls, and host removals, checked out with the cart.
-    @Published var lifecycleQueue: [LifecycleRequest] = []
-    @Published var hostRemovalQueue: [HostRemovalRequest] = []
-    @Published var updateCheck = UpdateCheckState()
+    var lifecycleQueue: [LifecycleRequest] = []
+    var hostRemovalQueue: [HostRemovalRequest] = []
+    var updateCheck = UpdateCheckState()
     /// The skill whose pin ref, or orphan whose source, is being chosen, and
     /// each orphan's source lookup (by `skillID`) for its row and sheet.
-    @Published var pinSheetSkill: Skill?
-    @Published var sourceSheetSkill: Skill?
-    @Published var sourceLookups: [String: SourceLookup] = [:]
+    var pinSheetSkill: Skill?
+    var sourceSheetSkill: Skill?
+    var sourceLookups: [String: SourceLookup] = [:]
     /// Batch-construction refusal text (stale finding, ownership rule), shown
     /// inline. Core diagnostic text, English by design, like CLI stderr.
-    @Published var repairError: String?
+    var repairError: String?
     /// A capability-blocked repair attempt: a localized inline hint, apart
     /// from `repairError` so the copy flows through the string catalog.
-    @Published var repairBlockNotice: RepairBlock?
+    var repairBlockNotice: RepairBlock?
     /// True while a batch execution OR a rollback is in flight. Gates
     /// Execute and every rollback affordance (no rollback
     /// mid-execution; executions are globally serialized).
-    @Published var batchMutationInFlight = false
+    var batchMutationInFlight = false
     /// The most recent in-app execution (succeeded or failed) — the result
     /// banner on Pending Changes.
-    @Published var lastExecutionRecord: ExecutionRecord?
+    var lastExecutionRecord: ExecutionRecord?
     /// A pre-command execution refusal (lock busy, snapshot failure).
-    @Published var lastExecutionFailure: String?
+    var lastExecutionFailure: String?
     let batchOutput = BatchOutputLog()
     /// Snapshots history rows (batch executions + rollback events) from the
     /// on-disk records — persisted across relaunches.
-    @Published var historyRows: [HistoryRow] = []
+    var historyRows: [HistoryRow] = []
     /// Selected history row in Snapshots (drives the diff pane + rollback cmd).
-    @Published var selectedHistoryID: String?
+    var selectedHistoryID: String?
     /// The batch whose rollback, and the batches whose deletion, await
     /// confirmation.
-    @Published var historyPendingRollback: String?
-    @Published var historyPendingDeletion: Set<String> = []
+    var historyPendingRollback: String?
+    var historyPendingDeletion: Set<String> = []
     /// Rollback refusal/error text, surfaced on the Snapshots surface.
-    @Published var rollbackReview: RollbackPreview?
-    @Published var rollbackError: String?
+    var rollbackReview: RollbackPreview?
+    var rollbackError: String?
     /// Whether the double-booked arbitration sheet is presented.
-    @Published var showingArbitrationSheet = false
+    var showingArbitrationSheet = false
     /// Whether the ownerless adopt sheet is presented.
-    @Published var showingAdoptSheet = false
+    var showingAdoptSheet = false
     /// Adopt-sheet inputs: both user-supplied, never prefilled.
-    @Published var adoptRepo = ""
-    @Published var adoptPath = ""
+    var adoptRepo = ""
+    var adoptPath = ""
 
     // MARK: - Search / Install state
 
     /// The query being run, the optional GitHub owner it is limited to, and
     /// the active backend: the skills.sh API (network read) or
     /// `gh skill search` (needs gh ≥ 2.90).
-    @Published var searchQuery = ""
-    @Published var searchOwnerTokens: [SearchOwnerToken] = []
-    @Published var searchBackend: SkillSearchResult.Backend = .skillsDotSh
+    var searchQuery = ""
+    var searchOwnerTokens: [SearchOwnerToken] = []
+    var searchBackend: SkillSearchResult.Backend = .skillsDotSh
     /// Search lifecycle, selected row, and its fetched skill preview.
-    @Published var searchPhase: SearchPhase = .idle
-    @Published var selectedSearchResultIDs: Set<String> = []
-    @Published var searchPreview: SkillPreview?
-    @Published var searchPreviewLoading = false
+    var searchPhase: SearchPhase = .idle
+    var selectedSearchResultIDs: Set<String> = []
+    var searchPreview: SkillPreview?
+    var searchPreviewLoading = false
     /// Install sheet presentation, installer choice (Vercel
     /// default — broader coverage) and target scope.
-    @Published var showingInstallSheet = false
-    @Published var installInstaller: InstallerChoice = .vercel
-    @Published var installTarget: InstallTarget = .user
+    var showingInstallSheet = false
+    var installInstaller: InstallerChoice = .vercel
+    var installTarget: InstallTarget = .user
     /// gh-ledger install host (--agent, from the common host set) and --pin.
-    @Published var ghInstallAgent = "codex"
-    @Published var ghPinRef = ""
+    var ghInstallAgent = "codex"
+    var ghPinRef = ""
     /// Vercel install hosts (`-a`; empty keeps the CLI's default), offered
     /// from the hosts detected when the sheet opened.
-    @Published var vercelInstallAgents: Set<String> = []
-    @Published var vercelInstallAgentOptions: [HostSpec] = []
+    var vercelInstallAgents: Set<String> = []
+    var vercelInstallAgentOptions: [HostSpec] = []
     /// What the sheet installs, and the typed-repository flow's state.
-    @Published var installOrigin: InstallOrigin = .searchResult
-    @Published var repositoryInstall = RepositoryInstall()
+    var installOrigin: InstallOrigin = .searchResult
+    var repositoryInstall = RepositoryInstall()
     /// Install-batch build refusal (stale source, malformed repo).
-    @Published var installError: String?
+    var installError: String?
 
     /// The launch environment (SUKIRU_HOME / SUKIRU_ROOTS / XDG overrides),
     /// identical wiring to the CLI. Read-only; root edits via
@@ -206,7 +208,7 @@ final class AppState: ObservableObject {
     /// Kicks off the launch sequence: fatal-environment pre-check (cheap
     /// synchronous `exists`), then the initial scan and the capability probes
     /// — both asynchronous, so the first frame renders immediately.
-    private var started = false
+    @ObservationIgnored private var started = false
 
     func start() {
         guard !started else { return }
@@ -253,10 +255,10 @@ final class AppState: ObservableObject {
 
     /// Monotonic counters identifying the latest requested scan, search and
     /// agent detection; stale completions are dropped instead of clobbering newer state.
-    var scanGeneration = 0
-    var searchGeneration = 0
-    var searchPreviewGeneration = 0
-    var agentDetectionGeneration = 0
+    @ObservationIgnored var scanGeneration = 0
+    @ObservationIgnored var searchGeneration = 0
+    @ObservationIgnored var searchPreviewGeneration = 0
+    @ObservationIgnored var agentDetectionGeneration = 0
     /// Minimum time the running state stays visible once a scan starts.
     private static let minimumRunVisibility: Duration = .milliseconds(600)
 

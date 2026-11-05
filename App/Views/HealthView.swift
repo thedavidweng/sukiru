@@ -16,7 +16,7 @@ import SwiftUI
 /// switches. A health check is a rescan — the findings
 /// derive from the scan report.
 struct HealthView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         Group {
@@ -152,6 +152,7 @@ struct HealthView: View {
     // MARK: - findings
 
     private var findingsList: some View {
+        @Bindable var state = state
         let entries = state.visibleHealthEntries()
         let issues = state.visibleIssues()
         return List(selection: $state.selectedFindingIDs) {
@@ -276,7 +277,7 @@ struct HealthView: View {
 /// start collapsed, except while focused on one skill, where every finding is
 /// what was asked for.
 private struct ProblemSection: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let group: AppState.ProblemGroup
     let rows: [HealthView.FindingRowItem]
     @State private var expanded: Bool?

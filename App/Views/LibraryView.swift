@@ -12,7 +12,7 @@ import SwiftUI
 /// and logs an NSTableView reentrancy warning that AppKit says will become an
 /// assert. Rows stay in the AX tree and pointer/keyboard scrolling reaches them.
 struct LibraryView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     /// Name filter, transient view state (the app keeps no ledger).
     @State private var filter = ""
@@ -211,9 +211,11 @@ struct LibraryView: View {
         }
     }
 
+    @ViewBuilder
     private func skillTable<Rows: TableRowContent>(
         _ visible: [Skill], @TableRowBuilder<LibraryRow> rows: () -> Rows
     ) -> some View where Rows.TableRowValue == LibraryRow {
+        @Bindable var state = state
         Table(of: LibraryRow.self, selection: $state.selectedSkillIDs) {
             TableColumn("Skill") { row in
                 SkillRow(model: state.rowModel(for: row.skill))

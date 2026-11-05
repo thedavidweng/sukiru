@@ -8,7 +8,7 @@ import SwiftUI
 /// adoption in Pending Changes; adopting reinstalls the skill through
 /// `npx skills`, so it gains a lock entry and can be updated.
 struct OrphanSourceSheet: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let skill: Skill
     @State private var source = ""
 

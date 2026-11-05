@@ -5,8 +5,8 @@ import SwiftUI
 @main
 struct SukiruApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @StateObject private var state = AppState()
-    @StateObject private var updater = AppUpdater()
+    @State private var state = AppState()
+    @State private var updater = AppUpdater()
 
     init() {
         // Plugin icons and Cursor's catalog stay on disk, so a later launch paints them
@@ -20,7 +20,7 @@ struct SukiruApp: App {
     var body: some Scene {
         WindowGroup("Sukiru") {
             RootView()
-                .environmentObject(state)
+                .environment(state)
                 .frame(minWidth: 940, idealWidth: 1120, minHeight: 540, idealHeight: 680)
                 .onAppear { state.start() }
         }
@@ -55,7 +55,7 @@ struct SukiruApp: App {
                 .disabled(!state.canQuickLookSelectedSkill())
                 Menu("Selected Skills") {
                     SkillsSelectionActions(skills: state.selectedSkills)
-                        .environmentObject(state)
+                        .environment(state)
                 }
                 .disabled(state.surface != .library || state.selectedSkills.count < 2)
                 // Deep-link without a mouse (Full Keyboard Access off
@@ -211,8 +211,8 @@ struct SukiruApp: App {
         // window like any native app, not in the sidebar.
         Settings {
             SettingsView()
-                .environmentObject(state)
-                .environmentObject(updater)
+                .environment(state)
+                .environment(updater)
         }
     }
 
@@ -255,7 +255,7 @@ struct SukiruApp: App {
 }
 
 private struct PluginCommands: Commands {
-    @ObservedObject var state: AppState
+    let state: AppState
 
     var body: some Commands {
         CommandMenu("Plugins") {

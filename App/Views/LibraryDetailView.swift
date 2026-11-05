@@ -4,7 +4,7 @@ import SwiftUI
 /// The selected skill's inspector: a single grouped form, read top to bottom
 /// like a Passwords entry, with the file actions in the window toolbar.
 struct LibraryDetailView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         let skill = state.selectedSkill()
@@ -74,7 +74,7 @@ struct LibraryDetailView: View {
 }
 
 struct SkillDetailForm: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let skill: Skill
 
     var body: some View {

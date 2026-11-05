@@ -4,7 +4,7 @@ import SwiftUI
 /// The retention limits for snapshots and execution records, shared with the
 /// CLI through `settings.json`, plus current usage and "Clear History…".
 struct HistorySettingsSection: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     @State private var policy = RetentionPolicy.default
     @State private var usage = HistoryUsage(batches: 0, bytes: 0)
     @State private var loaded = false

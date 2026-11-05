@@ -4,11 +4,12 @@ import SwiftUI
 /// One host's cached marketplace catalogs. Listing details come from the host's
 /// cache, so a same-name installation is shown as a name match, not as provenance.
 struct PluginCatalogList: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let marketplaces: [PluginMarketplace]
     let filter: String
 
     var body: some View {
+        @Bindable var state = state
         List(selection: $state.selectedCatalogEntryID) {
             if !readProblems.isEmpty || isReadingCursor {
                 Section {

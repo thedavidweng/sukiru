@@ -8,7 +8,7 @@ import SwiftUI
 /// Sukiru rescans. A host with no command for a direction shows the switch
 /// dimmed, like a setting managed elsewhere.
 struct PluginEnabledToggle: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let plugin: PluginInstallation
 
     var body: some View {
@@ -63,7 +63,7 @@ extension PluginInstallation {
 /// inspection and file actions, then removal last; a multiple selection gets
 /// the actions that apply to all of it.
 struct PluginContextMenu: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let plugins: [PluginInstallation]
 
     var body: some View {

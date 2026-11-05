@@ -2,7 +2,7 @@ import SukiruCore
 import SwiftUI
 
 struct PluginCatalogDetailView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         Group {

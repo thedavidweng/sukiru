@@ -2,7 +2,7 @@ import SukiruCore
 import SwiftUI
 
 struct HookLibraryView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     @State private var search = ""
 
     private var hooks: [AgentHook] {
@@ -18,6 +18,7 @@ struct HookLibraryView: View {
     }
 
     var body: some View {
+        @Bindable var state = state
         List(selection: $state.hookState.selectedID) {
             hookSection("Needs Attention", entries: hooks.filter { $0.health.isProblem })
             hookSection(

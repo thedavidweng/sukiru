@@ -8,7 +8,7 @@ import SwiftUI
 /// (`sukiru.pending.hint.needsNode` / `sukiru.pending.hint.needsGH`), never
 /// as buttons that would build a doomed batch.
 struct RepairDraftPanel: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let draft: AppState.RepairDraft
 
     var body: some View {
@@ -96,7 +96,7 @@ struct RepairBlockedHint: View {
 /// `.failed` — the latter naming the failed command's diagnostics so a
 /// missing CLI or non-zero exit is never silent).
 struct PendingResultBanners: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         if let failure = state.lastExecutionFailure {

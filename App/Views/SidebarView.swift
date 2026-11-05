@@ -6,7 +6,7 @@ import SwiftUI
 /// plugins, hooks, extensions, and MCP servers. One destination is selected
 /// at a time.
 struct SidebarView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     @AppStorage(SidebarArrangement.projectsKey) private var projects = SidebarArrangement.standard
     @AppStorage(SidebarArrangement.agentsKey) private var agents = SidebarArrangement.standard
     /// Agent ids, comma-separated; installed agents start expanded.

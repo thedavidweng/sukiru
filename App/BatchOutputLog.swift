@@ -1,13 +1,14 @@
 import Foundation
+import Observation
 import SukiruCore
 
 /// The live transcript of a running batch: each command line, then what the
 /// command has printed so far, polled from the output files the executor
-/// writes. Kept out of `AppState`'s published state so each refresh redraws
-/// only the transcript.
+/// writes. Kept out of `AppState` so each refresh redraws only the transcript.
 @MainActor
-final class BatchOutputLog: ObservableObject {
-    @Published private(set) var text = ""
+@Observable
+final class BatchOutputLog {
+    private(set) var text = ""
 
     private struct Entry {
         let header: String
@@ -20,8 +21,8 @@ final class BatchOutputLog: ObservableObject {
     private static let maxRawBytes = 256 * 1024
     private static let maxLines = 1000
 
-    private var entries: [Entry] = []
-    private var timer: Timer?
+    @ObservationIgnored private var entries: [Entry] = []
+    @ObservationIgnored private var timer: Timer?
 
     func reset() {
         timer?.invalidate()

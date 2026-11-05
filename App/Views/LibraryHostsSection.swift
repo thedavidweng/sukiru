@@ -5,7 +5,7 @@ import SwiftUI
 /// carrying `sukiru.library.detail.hosts` on its header and
 /// `sukiru.library.detail.host.<hostID>` on each row.
 struct LibraryHostsSection: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     let skill: Skill
     let entries: [HostEntry]

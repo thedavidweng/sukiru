@@ -2,7 +2,7 @@ import SukiruCore
 import SwiftUI
 
 struct RollbackConflictSheet: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let preview: RollbackPreview
     @State private var choices: [String: RollbackChoice] = [:]
 

@@ -4,7 +4,7 @@ import SwiftUI
 /// The raw SKILL.md, read off the main actor, as the last section of the
 /// skill inspector.
 struct SkillContentSection: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     let skill: Skill
     @State private var content: String?

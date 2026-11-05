@@ -2,7 +2,7 @@ import SukiruCore
 import SwiftUI
 
 struct HookDetailView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         if let hook = state.selectedHook {
@@ -83,7 +83,7 @@ struct HookDetailView: View {
 }
 
 struct HookActions: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     let hook: AgentHook
 
     private var managingPlugin: PluginInstallation? {

@@ -4,7 +4,7 @@ import SwiftUI
 /// Which projects and agents the sidebar shows, and in what order, like
 /// Finder's Sidebar settings.
 struct SidebarSettingsPane: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     @AppStorage(SidebarArrangement.projectsKey) private var projects = SidebarArrangement.standard
     @AppStorage(SidebarArrangement.agentsKey) private var agents = SidebarArrangement.standard
 

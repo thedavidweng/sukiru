@@ -2,7 +2,7 @@ import SukiruCore
 import SwiftUI
 
 struct PluginDetailView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         if state.showsPluginMarketplace && state.pluginHost.hasMarketplaceBrowser {

@@ -7,7 +7,7 @@ import SwiftUI
 /// rebuilds the request against fresh disk evidence and asks for the usual
 /// single confirmation (ADR 0012).
 struct HostRemovalSheet: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     @Environment(\.dismiss) private var dismiss
 
     @State private var bucket = "user"
@@ -112,7 +112,7 @@ struct HostRemovalSheet: View {
 /// The plan's three lists and its consequences, in the order the CLI
 /// preview prints them.
 private struct HostRemovalPreview: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     let plan: HostRemovalPlan
 

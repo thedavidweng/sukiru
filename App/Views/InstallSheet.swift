@@ -9,7 +9,7 @@ import SwiftUI
 /// "Add to Pending Changes" builds the Command Batch and lands it on the
 /// standard review → execute → rollback flow.
 struct InstallSheet: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -111,7 +111,8 @@ struct InstallSheet: View {
 
     // MARK: - installer choice
 
-    private var installerChoice: some View {
+    @ViewBuilder private var installerChoice: some View {
+        @Bindable var state = state
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 0) {
                 AXToken(token: "sukiru.search.install.installer")
@@ -156,7 +157,8 @@ struct InstallSheet: View {
 
     // MARK: - target scope
 
-    private var targetScope: some View {
+    @ViewBuilder private var targetScope: some View {
+        @Bindable var state = state
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 0) {
                 AXToken(token: "sukiru.search.install.scope")
@@ -226,7 +228,8 @@ struct InstallSheet: View {
     /// gh-only fields: the target agent (--agent, required) and the optional
     /// pin ref. The agent list is `HostTable.ghInstallAgentOptions`; user
     /// picks one.
-    private var githubAgentFields: some View {
+    @ViewBuilder private var githubAgentFields: some View {
+        @Bindable var state = state
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 AXToken(token: "sukiru.search.install.agent")

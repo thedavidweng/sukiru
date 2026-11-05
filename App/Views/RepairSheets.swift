@@ -7,7 +7,7 @@ import SwiftUI
 /// preselected, Return does not confirm). Dismissing the sheet (Cancel /
 /// Escape) creates no batch; only an explicit choice builds one.
 struct ArbitrationSheet: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     /// keep-github re-anchors through `gh skill install`; with gh
     /// unavailable the choice is disabled and says why.
@@ -108,7 +108,7 @@ struct ArbitrationSheet: View {
 /// visible: upstream content keeps extra local files but overwrites
 /// colliding ones.
 struct AdoptSheet: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
 
     private var canProceed: Bool {
         !state.adoptRepo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -116,6 +116,7 @@ struct AdoptSheet: View {
     }
 
     var body: some View {
+        @Bindable var state = state
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 0) {
                 AXToken(token: "sukiru.pending.adopt.title")

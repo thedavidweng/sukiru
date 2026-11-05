@@ -4,7 +4,7 @@ import SwiftUI
 /// One host's plugins. Each host's plugin system is proprietary, so the list
 /// never mixes hosts; it groups that host's installations by scope.
 struct PluginLibraryView: View {
-    @EnvironmentObject private var state: AppState
+    @Environment(AppState.self) private var state
     @State private var filter = ""
 
     private var host: PluginHost { state.pluginHost }
@@ -45,6 +45,7 @@ struct PluginLibraryView: View {
     }
 
     var body: some View {
+        @Bindable var state = state
         Group {
             if showsMarketplace {
                 PluginCatalogList(marketplaces: marketplaces, filter: filter)
@@ -149,7 +150,8 @@ struct PluginLibraryView: View {
         .help("Install a plugin or browse configured marketplaces")
     }
 
-    private var installedList: some View {
+    @ViewBuilder private var installedList: some View {
+        @Bindable var state = state
         List(selection: $state.selectedPluginIDs) {
             ForEach(groups, id: \.root) { group in
                 Section {
