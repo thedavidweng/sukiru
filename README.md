@@ -74,7 +74,10 @@ Website: <https://sukiru.blahaj.uk/>
   that owns it. A global skill can also be linked into an installed agent whose
   global skills folder differs from the shared store, since no installer
   command deploys it there. GitHub-installed skills can also be pinned to a ref,
-  unpinned, or restored to the recorded version over local edits. Check for
+  unpinned, or restored to the recorded version over local edits. A skill can
+  move to the other installer's ledger when its record names the source; both
+  the removal from the old ledger and the re-install are official CLI
+  commands in one confirmed, snapshotted batch. Check for
   Updates asks `gh skill` which GitHub-installed skills have newer versions
   without changing anything.
   Long descriptions stay within three lines in the inspector; hover to read the full text.
@@ -264,6 +267,7 @@ sukiru skills pin NAME --ref v1 --dry-run
 sukiru skills mode NAME --mode link --dry-run
 sukiru skills link NAME --host antigravity-cli --dry-run
 sukiru skills adopt NAME --installer vercel --source OWNER/REPO --dry-run
+sukiru skills migrate NAME --installer github --dry-run
 sukiru skills check-updates --json   # explicit official remote check
 sukiru search swift --backend github --json
 sukiru install OWNER/REPO --skill NAME --installer vercel --scope user --dry-run
@@ -331,6 +335,19 @@ through other folders; `--json` returns the same plan alongside its batch.
 Use `--scope project --root /absolute/project` for one project. Shared Copy
 deletion is disclosed before execution and requires `--confirm-dangerous`.
 The Library GUI action is pending; this workflow is currently available in the CLI.
+
+`skills migrate` moves one Skill to the other installer's ledger, using the
+repository and path already recorded. The destination follows the current
+owner: a Vercel-locked Skill moves to `gh skill`, a GitHub-provenanced Skill
+moves to `npx skills`. The move to `gh skill` runs the danger-flagged `npx
+skills remove` first, because only the Vercel CLI can drop its record and it
+deletes by name; `gh skill install` then rebuilds every skills folder the
+Skill held, as real copies rather than links to a shared copy. The move to
+`npx skills` is one `npx skills add` whose overwrite also erases the GitHub
+frontmatter provenance. Both are one snapshotted batch. A Skill is left out
+with a reason when its record lacks the repository or path the destination
+needs, when the destination CLI is missing, or when it is pinned (the Vercel
+ledger has no pin).
 
 Use generated `--help` on any family to discover update, uninstall, pin,
 unpin, restore, enable/disable, and marketplace operations. Generate shell

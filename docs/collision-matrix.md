@@ -159,3 +159,37 @@ The Vercel lock in the same project (not updated):
   "computedHash": "8844f550…"
 }
 ```
+
+## Follow-up (2026-11-05): installer migration shapes
+
+Run with `gh 2.103.3`, `skills@1.7.6` and Node v26.13.0, in isolated HOMEs
+(`HOME` and `GH_TOKEN` explicit), calibrating the Library's move between the
+ledgers (ADR-0018). Test skill: `stale-docs-cleanup` (source
+`thedavidweng/skills`).
+
+- **`skillPath` is repo-relative.** `skills` records
+  `maintenance/stale-docs-cleanup/SKILL.md`, which is exactly what
+  `gh skill install <repo> <path>` takes. 28 of the 122 entries in a real
+  global lock carry no `skillPath` (well-known sources), so those cannot move
+  to the GitHub ledger and are withheld.
+- **A full removal is the only way to drop the Vercel record.**
+  `npx skills remove <name> -g -y` deleted the lock entry, the shared copy and
+  every host link. The scoped form `npx skills remove <name> -a claude-code -g
+  -y` deleted only that host's link and kept the shared copy, the other links
+  **and the lock entry** (`remove -a` narrows placements, not the record).
+- **gh rebuilds one folder per install.**
+  `gh skill install <repo> <path> --force --dir <dir>` after the removal
+  recreated only the named folder, with `metadata.github-*` and a companion
+  record (whole-second stamps); ownership read `github`, and the host link the
+  removal deleted was **not** recreated. Two installs into two folders left two
+  identical copies, which the analyzer reports as `cross-host-duplicate`
+  subtype `exact` (the copy-instead-of-link problem).
+- **The move back is one command.** `npx skills add <repo> --skill <name> -g
+  -y` over a gh-installed shared copy rewrote it and every host copy npx
+  reaches, erased `metadata.github-*`, and rewrote the lock entry with npx's
+  fields (gh's whole-second `installedAt` survives, so `isGitHubCompanion`
+  turns false). Ownership read `vercel`; the only remaining duplicate was the
+  `alias` note of the restored link layout.
+- **Round trip verified.** Vercel → GitHub → Vercel in one sandbox flipped
+  ownership `vercel` → `github` → `vercel` with no double booking at any step;
+  `RealCLIEndToEndTests+Migration` repeats it as an automated test.

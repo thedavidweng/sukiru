@@ -12072,6 +12072,108 @@
           }
         }
       }
+    },
+    "Move to gh skill" : {
+      "comment" : "Library skill action and queued change: move the skill to the installer whose ledger is gh skill.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to gh skill"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切换到 gh skill"
+          }
+        }
+      }
+    },
+    "Move to npx skills" : {
+      "comment" : "Library skill action and queued change: move the skill to the installer whose ledger is npx skills.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to npx skills"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切换到 npx skills"
+          }
+        }
+      }
+    },
+    "Move to the Other Installer" : {
+      "comment" : "Queued Library change: move the skill to the other installer's ledger.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to the Other Installer"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切换到另一个安装器"
+          }
+        }
+      }
+    },
+    "Reinstall this skill under gh skill (adds to Pending Changes)" : {
+      "comment" : "Library detail and selection menu: help for the move to gh skill action.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reinstall this skill under gh skill (adds to Pending Changes)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "改用 gh skill 重新安装此技能（加入待处理更改）"
+          }
+        }
+      }
+    },
+    "Reinstall this skill under npx skills (adds to Pending Changes)" : {
+      "comment" : "Library detail and selection menu: help for the move to npx skills action.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reinstall this skill under npx skills (adds to Pending Changes)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "改用 npx skills 重新安装此技能（加入待处理更改）"
+          }
+        }
+      }
+    },
+    "consequence.migratesToGitHub" : {
+      "comment" : "Batch review note for a move from the Vercel ledger to the GitHub ledger.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Content is re-downloaded from the recorded GitHub source into every skills folder that held the skill, so local edits are lost. gh writes a real copy in each folder rather than a link to a shared copy. gh also records the skill by name in the Vercel ledger's global lock (~/.agents/.skill-lock.json); rewriting that file drops npx's display-only fields (plugin groups, last selected agents)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内容会从记录的 GitHub 源重新下载到原先存放该技能的每个技能文件夹，本地修改会丢失。gh 会在每个文件夹写入真实副本，而不是指向共享副本的链接。gh 还会按名称将该技能记入 Vercel 账本的全局锁（~/.agents/.skill-lock.json）；重写该文件会丢弃 npx 仅用于显示的字段（插件分组、上次选择的智能体）。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

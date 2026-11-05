@@ -60,6 +60,7 @@ struct SkillContextMenu: View {
             }
             .disabled(state.lifecycleBlocker(.update, for: skill) != nil)
             pinItem
+            migrationItem
             if state.offersRestore(for: skill) {
                 Button("Restore Files") {
                     state.queueLifecycle(.restore, for: skill)
@@ -85,6 +86,16 @@ struct SkillContextMenu: View {
                     state.pinSheetSkill = skill
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private var migrationItem: some View {
+        if state.offersMigration(for: skill) {
+            Button(skill.migrationTitle) {
+                state.queueLifecycle(.migrate, for: skill)
+            }
+            .help(skill.migrationHelp)
         }
     }
 
@@ -117,6 +128,7 @@ struct SkillsSelectionActions: View {
                 .disabled(!canQueue(.update))
                 .accessibilityIdentifier("sukiru.library.selection.update")
                 .help("Update")
+            migrationItem
             if skills.allSatisfy({ state.offersRestore(for: $0) }) {
                 Button("Restore Files") { queue(.restore) }
                     .disabled(!canQueue(.restore))
@@ -181,6 +193,23 @@ struct SkillsSelectionActions: View {
             .help("Uninstall")
         }
         .disabled(state.batchMutationInFlight)
+    }
+
+    /// Group migration leaves one ledger, so every selected skill must
+    /// belong to the same one; a mixed selection offers nothing.
+    @ViewBuilder
+    private var migrationItem: some View {
+        if let first = skills.first, Self.oneLedger(skills, first.ownership) {
+            Button(first.migrationTitle) { queue(.migrate) }
+                .disabled(!canQueue(.migrate))
+                .accessibilityIdentifier("sukiru.library.selection.migrate")
+                .help(first.migrationHelp)
+        }
+    }
+
+    private static func oneLedger(_ skills: [Skill], _ ownership: Ownership) -> Bool {
+        (ownership == .vercel || ownership == .github)
+            && skills.allSatisfy { $0.ownership == ownership }
     }
 
     private func hasQueuedChange(_ skill: Skill) -> Bool {

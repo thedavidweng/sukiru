@@ -25,6 +25,15 @@ extension AppState {
         skill.ownership == .github && lifecycleBlocker(.restore, for: skill) == nil
     }
 
+    /// Moving a skill to the other installer's ledger follows its ownership:
+    /// one ledger owns it today, the other ledger receives it, and nothing
+    /// may already be queued for it.
+    func offersMigration(for skill: Skill) -> Bool {
+        guard skill.ownership == .vercel || skill.ownership == .github else { return false }
+        return queuedLifecycle(for: skill) == nil
+            && lifecycleBlocker(.migrate, for: skill) == nil
+    }
+
     func queuedLifecycle(for skill: Skill) -> LifecycleRequest? {
         let id = Self.skillID(skill)
         return lifecycleQueue.first { Self.skillID($0.skill) == id }

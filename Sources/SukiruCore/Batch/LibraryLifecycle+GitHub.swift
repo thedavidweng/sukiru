@@ -16,7 +16,8 @@ extension CommandBatchBuilder {
         for request in requests.sorted(by: { $0.id < $1.id }) {
             do {
                 let bucket = try self.bucket(of: request, report: report)
-                try groups.add(request, bucket: bucket, dirs: placementDirs(request.skill))
+                try groups.add(
+                    request, bucket: bucket, dirs: placementDirs(request.skill))
                 planned.refs.append(
                     FindingRef(
                         findingID: request.id, ruleID: request.action.ruleID,
@@ -135,6 +136,86 @@ extension CommandBatchBuilder {
                 consequence: .mergeOverwritesCollidingFiles)
         }
     }
+
+    /// Move a Vercel-ledger skill to the GitHub ledger:
+    /// `gh skill install <owner/repo> <skillPath> --force --dir <dir>` per
+    /// skills folder the skill occupies. Only the Vercel CLI can drop a
+    /// Vercel record, and its removal deletes every placement by name
+    /// across ownership (docs/collision-matrix.md scenario 6), so the batch
+    /// runs the danger-flagged `npx skills remove` FIRST and rebuilds each
+    /// folder afterwards; installing first would have npx delete the fresh
+    /// gh copy. The batch snapshot covers the transient window.
+    ///
+    /// Every folder is named, links included: skipping one would silently
+    /// take the skill away from the hosts reading it.
+    static func githubMigrationCommands(_ skill: Skill) throws -> [BatchCommand] {
+        guard let record = skill.provenance.vercel, record.sourceType == "github",
+            let source = record.source, !source.isEmpty,
+            let skillPath = record.skillPath, !skillPath.isEmpty
+        else {
+            throw DecisionProblem(
+                message: "cannot migrate '\(skill.name)': the Vercel lock entry records no "
+                    + "GitHub repository and skill path for gh skill install")
+        }
+        let dirs = migrationDirs(skill)
+        guard !dirs.isEmpty else {
+            throw DecisionProblem(
+                message: "skill '\(skill.name)' has no skills folder to install into")
+        }
+        // gh requires the exact SKILL.md path (a bare directory fails with
+        // "no skills found"), as with pin and restore.
+        let path = skillPath.hasSuffix(".md") ? skillPath : skillPath + "/SKILL.md"
+        let repo = BatchCommandFactory.ownerRepo(from: source)
+        return dirs.map { dir in
+            BatchCommandFactory.githubInstall(
+                repo: repo, path: path, dir: dir,
+                intent: "Migrate '\(skill.name)' to the GitHub ledger (requested in the "
+                    + "Library): gh skill install re-downloads it from \(repo) into \(dir) "
+                    + "with metadata.github-* provenance.",
+                consequence: .migratesToGitHub)
+        }
+    }
+
+    /// Every skills folder holding a placement of the skill, links included,
+    /// deduplicated and sorted. `npx skills remove` deletes them all, so the
+    /// GitHub-ledger re-install must rebuild each one.
+    static func migrationDirs(_ skill: Skill) -> [String] {
+        Array(
+            Set(
+                skill.placements.filter { $0.kind != .brokenSymlink }.map {
+                    parentDir($0.path)
+                }
+            )
+        ).sorted()
+    }
+
+    /// Move a GitHub-ledger skill to the Vercel ledger: one
+    /// `npx skills add <source> --skill <name> …`. The re-install rewrites
+    /// the skill's files, which erases the gh frontmatter provenance and
+    /// gives the Vercel lock the record, so no removal step exists (gh has
+    /// none) and no host loses its placement. Project scope names every host
+    /// the CLI must refresh, as the drift repair does.
+    static func vercelMigrationCommands(
+        _ skill: Skill, bucket: String
+    ) throws -> [BatchCommand] {
+        guard let repo = skill.provenance.github?.repo, !repo.isEmpty else {
+            throw DecisionProblem(
+                message: "cannot migrate '\(skill.name)': the recorded GitHub provenance "
+                    + "names no repository")
+        }
+        let targets = try Self.reinstallTargets(
+            skill: skill, root: projectRoot(ofBucket: bucket))
+        return [
+            BatchCommandFactory.vercelReinstall(
+                name: skill.name, source: BatchCommandFactory.ownerRepo(from: repo),
+                scope: skill.scope, agents: targets.agents, copy: targets.copy,
+                intent: "Migrate '\(skill.name)' to the Vercel ledger (requested in the "
+                    + "Library): npx skills add re-installs it from \(repo), records it in "
+                    + "the Vercel lock, and overwrites the gh frontmatter provenance.",
+                consequence: .resetsToUpstreamErasingGitHubProvenance,
+                workingDirectory: projectRoot(ofBucket: bucket))
+        ]
+    }
 }
 
 /// Library commands collected across requests: removals and per-skill gh
@@ -147,7 +228,9 @@ struct LifecycleGroups {
     private var githubNames: [String: [String]] = [:]
     private var githubUnpinNames: [String: [String]] = [:]
 
-    mutating func add(_ request: LifecycleRequest, bucket: String, dirs: [String]) throws {
+    mutating func add(
+        _ request: LifecycleRequest, bucket: String, dirs: [String]
+    ) throws {
         let skill = request.skill
         switch (request.action, skill.ownership) {
         case (.update, .github):
@@ -166,7 +249,13 @@ struct LifecycleGroups {
         case (.unpin, .github):
             try addGitHubNames(
                 &githubUnpinNames, skill: skill, dirs: dirs, command: "gh skill update --unpin")
-        case (.pin, _), (.unpin, _), (.restore, _):
+        case (.migrate, .vercel):
+            removals.append(Self.vercelMigrationRemoval(skill, bucket: bucket))
+            reinstalls += try CommandBatchBuilder.githubMigrationCommands(skill)
+        case (.migrate, .github):
+            reinstalls += try CommandBatchBuilder.vercelMigrationCommands(
+                skill, bucket: bucket)
+        case (.pin, _), (.unpin, _), (.restore, _), (.migrate, _):
             // Unreachable: `lifecycleBlocker` refuses these pairings first.
             throw DecisionProblem(
                 message: LifecycleBlocker.githubLedgerOnly.refusal(
@@ -192,6 +281,19 @@ struct LifecycleGroups {
             atRisk: BatchCommandFactory.removalAtRisk(skill),
             intent: "Uninstall '\(skill.name)' (requested in the Library): "
                 + "npx skills remove drops its lock entry and placements.",
+            workingDirectory: CommandBatchBuilder.projectRoot(ofBucket: bucket))
+    }
+
+    /// The removal half of a move to the GitHub ledger: the Vercel record
+    /// can only be dropped by the Vercel CLI, which deletes every placement
+    /// by name, so it runs before the gh installs that rebuild them.
+    private static func vercelMigrationRemoval(_ skill: Skill, bucket: String) -> BatchCommand {
+        BatchCommandFactory.vercelRemove(
+            name: skill.name, scope: skill.scope,
+            atRisk: BatchCommandFactory.removalAtRisk(skill),
+            intent: "Migrate '\(skill.name)' to the GitHub ledger (requested in the "
+                + "Library): npx skills remove drops its Vercel lock entry and every "
+                + "placement first; the gh installs after it rebuild them.",
             workingDirectory: CommandBatchBuilder.projectRoot(ofBucket: bucket))
     }
 

@@ -327,6 +327,25 @@ extension CLI {
             try command.run()
         },
         CLICommand(
+            path: "skills migrate",
+            abstract: "Move a Skill to the other installer's ledger.",
+            options: selectionOptions + outputOptions + mutationOptions + [
+                CLIOption(
+                    "installer", takesValue: true,
+                    help: "Destination ledger: vercel (npx skills) or github (gh skill).",
+                    required: true)
+            ],
+            argument: CLIPositional(
+                name: "name", required: true,
+                help: "Skill name; use --path to disambiguate placements.")
+        ) { arguments in
+            let command = SkillMigrate(
+                selection: try SkillSelection(arguments), output: OutputOptions(arguments),
+                mutation: try MutationOptions(arguments),
+                installer: try arguments.enumeration("installer"))
+            try command.run()
+        },
+        CLICommand(
             path: "skills adopt",
             abstract: "Explicitly choose an owner and source for an Ownerless Skill.",
             options: selectionOptions + outputOptions + mutationOptions + [

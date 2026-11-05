@@ -9,17 +9,37 @@ extension LifecycleAction {
         case .pin: "Pin"
         case .unpin: "Unpin"
         case .restore: "Restore Files"
+        case .migrate: "Move to the Other Installer"
         }
     }
 }
 
 extension LifecycleRequest {
-    /// The queued-change label in Pending Changes; a pin names its ref.
+    /// The queued-change label in Pending Changes; a pin names its ref and a
+    /// migration names the ledger it moves to.
     var queueTitle: String {
         if action == .pin, let pinRef {
             return String(localized: "Pin to \(pinRef)")
         }
+        if action == .migrate {
+            return skill.ownership == .vercel
+                ? String(localized: "Move to gh skill") : String(localized: "Move to npx skills")
+        }
         return String(localized: action.title)
+    }
+}
+
+extension Skill {
+    /// The Library's move action, named for the ledger it moves to.
+    var migrationTitle: LocalizedStringKey {
+        ownership == .vercel ? "Move to gh skill" : "Move to npx skills"
+    }
+
+    /// What the move does, as the button's help.
+    var migrationHelp: LocalizedStringKey {
+        ownership == .vercel
+            ? "Reinstall this skill under gh skill (adds to Pending Changes)"
+            : "Reinstall this skill under npx skills (adds to Pending Changes)"
     }
 }
 
@@ -63,6 +83,7 @@ struct LibraryLifecycleControls: View {
             HStack {
                 uninstallButton
                 Spacer()
+                migrateButton
                 restoreButton
                 updateButton(blocked: updateBlocker != nil)
             }
@@ -78,6 +99,22 @@ struct LibraryLifecycleControls: View {
         case .touchesVercelRecord: "library.update.touchesVercelRecord"
         case .dropsVercelLockData: "library.update.dropsVercelLockData"
         default: nil
+        }
+    }
+
+    /// Moves the skill to the other installer's ledger. Hidden rather than
+    /// shown permanently disabled when the move cannot apply (the other
+    /// CLI missing, the ledger's record incomplete, a pin the Vercel ledger
+    /// cannot carry, or a gh write that would cost another Vercel record its
+    /// data), like Restore Files.
+    @ViewBuilder
+    private var migrateButton: some View {
+        if state.offersMigration(for: skill) {
+            Button(skill.migrationTitle) {
+                state.queueLifecycle(.migrate, for: skill)
+            }
+            .axButtonToken("sukiru.library.detail.migrate")
+            .help(skill.migrationHelp)
         }
     }
 

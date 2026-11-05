@@ -21,6 +21,7 @@ are added as amendments or new records that reference the old one.
 | [0015](0015-sparkle-app-updates.md) | In-app updates through Sparkle, the single third-party dependency exception | Accepted, amends 0006 |
 | [0016](0016-third-party-integrations-across-agents.md) | Hooks and extensions third-party apps install across every agent | Accepted, amends 0010 and 0014; amended by 0017 |
 | [0017](0017-native-add-on-management.md) | Remove and disable every agent's extensions, packages, plugins and MCP servers through native commands | Accepted, amends 0014 and 0016 |
+| [0018](0018-installer-migration.md) | Move a Skill between the installer ledgers through both official CLIs | Accepted |
 
 Domain terms are defined in the [glossary](../../CONTEXT.md).
 

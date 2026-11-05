@@ -168,6 +168,8 @@ extension CommandConsequence {
             return String(localized: "consequence.restoresSharedCopy \(Self.list(paths))")
         case .removesLockedSkill(let skill, let paths):
             return String(localized: "consequence.removesLockedSkill \(skill) \(Self.list(paths))")
+        case .migratesToGitHub:
+            return String(localized: "consequence.migratesToGitHub")
         case .entersVercelLedger:
             return String(localized: "consequence.entersVercelLedger")
         case .writesGitHubProvenance(let agent, let pinRef):
